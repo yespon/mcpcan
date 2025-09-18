@@ -95,7 +95,10 @@ func (r *McpTokenRepository) CreateBatch(ctx context.Context, tokens []model.Mcp
 
 // Update updates a token record by primary key
 func (r *McpTokenRepository) Update(ctx context.Context, t *model.McpToken) error {
-	return r.getDB().WithContext(ctx).Save(t).Error
+	if t.ID == 0 {
+		return fmt.Errorf("cannot update token with empty ID")
+	}
+	return r.getDB().WithContext(ctx).Where("id = ?", t.ID).Save(t).Error
 }
 
 // DeleteByID deletes a token by ID
