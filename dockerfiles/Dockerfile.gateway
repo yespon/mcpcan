@@ -5,7 +5,7 @@ COPY ../ /app
 RUN cd /app && make build-backend-gateway
 
 # 运行阶段
-FROM ccr.ccs.tencentyun.com/itqm-private/alpine:3.22
+FROM alpine:3.22
 
 # 设置 apk aliyun 源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
