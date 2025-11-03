@@ -95,7 +95,7 @@
               <div class="flex-sub ml-2 ellipsis-two">{{ row.instanceName }}</div>
               <template #content>
                 <div class="title-instance">
-                  <div>{{ row.instanceName + row.instanceName + row.instanceName }}</div>
+                  <div>{{ row.instanceName }}</div>
                   <div class="text-primary text-bold">ID:{{ row.instanceId }}</div>
                   <div class="text-success text-bold">
                     {{ t('mcp.instance.containerName') }}：{{ row.containerName }}

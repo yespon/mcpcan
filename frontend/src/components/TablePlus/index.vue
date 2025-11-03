@@ -1,7 +1,9 @@
 <template>
-  <Teleport v-if="props.searchContainer && isMounted" :to="props.searchContainer">
+  <!-- defer延迟渲染 -->
+  <Teleport defer :to="props.searchContainer">
     <div class="flex">
       <el-input
+        ref="searchInputRef"
         v-model="formData[formConfig[0].key]"
         v-bind="{ ...formConfig[0].props }"
         @keyup.enter="handleQuery"
@@ -138,6 +140,7 @@ import { Search, Refresh } from '@element-plus/icons-vue'
 import GlareHover from '../Animation/GlareHover.vue'
 
 const { t } = useI18n()
+const searchInputRef = ref()
 interface RequestConfig {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   api: Function
@@ -284,11 +287,12 @@ const initData = async () => {
   }
 }
 
-const isMounted = ref(false)
 onMounted(() => {
-  isMounted.value = true
   initFormData()
+  // 搜索图标按钮注册搜索事件
+  searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
+
 defineExpose({
   initData,
   resetFields,
@@ -305,5 +309,8 @@ defineExpose({
 }
 .el-table--striped .el-table__body tr.el-table__row--striped.current-row td.el-table__cell {
   background-color: var(--ep-bg-purple-color);
+}
+.el-input__suffix {
+  cursor: pointer;
 }
 </style>
