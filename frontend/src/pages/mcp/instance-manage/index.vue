@@ -90,7 +90,7 @@
         </template>
         <template #instanceName="{ row }">
           <div class="flex align-center">
-            <mcp-image :src="row.iconPath" width="32" height="32"></mcp-image>
+            <mcp-image :src="row.iconPath" width="32" height="32" :key="row.instanceId"></mcp-image>
             <el-tooltip effect="dark" placement="top" class="ml-6" :raw-content="true" width="300">
               <div class="flex-sub ml-2 ellipsis-two">{{ row.instanceName }}</div>
               <template #content>
