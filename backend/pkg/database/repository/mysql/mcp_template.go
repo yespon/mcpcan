@@ -154,10 +154,6 @@ func (r *McpTemplateRepository) FindWithPagination(ctx context.Context, page, pa
 	// 应用筛选条件
 	for key, value := range filters {
 		switch key {
-		case "keyword":
-			if keyword, ok := value.(string); ok && keyword != "" {
-				query = query.Where("name LIKE ? OR mcp_server_id LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
-			}
 		case "environment_id":
 			if envId, ok := value.(uint); ok && envId > 0 {
 				query = query.Where("environment_id = ?", envId)
@@ -172,7 +168,7 @@ func (r *McpTemplateRepository) FindWithPagination(ctx context.Context, page, pa
 			}
 		case "name":
 			if name, ok := value.(string); ok && name != "" {
-				query = query.Where("name LIKE ?", "%"+name+"%")
+				query = query.Where("name LIKE ? OR id LIKE ?", "%"+name+"%", "%"+name+"%")
 			}
 		case "mcpProtocol":
 			if mcpProtocol, ok := value.(model.McpProtocol); ok {
