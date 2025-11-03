@@ -7,16 +7,13 @@
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0"/>
 </div>
+<img width="1836" height="912" alt="image" src="https://github.com/user-attachments/assets/cc706fe0-f53a-464c-b8d7-c336fec9802e" />
 
 ## 什么是 MCPCan？
 
 MCPCan 是一个专注于高效管理 MCP（模型上下文协议）服务的开源平台，通过现代化的 Web 界面为 DevOps 和开发团队提供全面的 MCP 服务生命周期管理能力。
 
 MCPCan 支持多协议兼容和转换，能够实现不同 MCP 服务架构之间的无缝集成，同时提供可视化监控、安全认证和一站式部署能力。
-
-<div align="center">
-  <img width="1879" height="896" alt="MCPCan Dashboard" src="https://github.com/user-attachments/assets/ee804f92-7e69-419b-8cfc-d5676783fe3d" />
-</div>
 
 ## 核心特性
 
