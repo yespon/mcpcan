@@ -105,6 +105,21 @@
   },
   "desc": {
     "reason": "原因",
-    "placeholderKey": "请输入关键字搜索"
+    "placeholderKey": "请输入关键字搜索",
+    "initScript": "初始化脚本",
+    "imgAddressTip1": "基于 python:3.12-alpine 镜像构建，轻量且兼容主流容器环境",
+    "imgAddressTip2": "预装组件及版本明确锁定：",
+    "imgAddressTip3": "默认以 mcp-hosting 为启动命令，启动时自动完成 MCP STDIO 协议到 steamable-http 协议的转换，并支持 SSE 协议模式运行",
+    "env": "环境",
+    "tools": "配套工具",
+    "baseCommand": "系统基础命令"
+  },
+  "request": {
+    "error": "请求失败",
+    "authFail": "登录已过期，请重新登录",
+    "networkError": "网络连接失败，请检查网络设置",
+    "system": "系统出错",
+    "relogin": "请重新登录",
+    "KeyPem": "秘钥获取失败"
   }
 }

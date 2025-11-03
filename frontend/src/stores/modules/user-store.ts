@@ -5,8 +5,9 @@ import { defineStore } from 'pinia'
 import { Storage } from '@/utils/storage'
 import { useRouterHooks } from '@/utils/url'
 import { useStorage } from '@vueuse/core'
-import { ElLoading } from 'element-plus'
+import { ElLoading, ElMessage } from 'element-plus'
 import { KEYUTIL, KJUR, RSAKey, hextob64 } from 'jsrsasign'
+import i18n from '@/lang'
 
 const { reload } = useRouterHooks()
 export const useUserStore = defineStore('user', () => {
@@ -42,7 +43,8 @@ export const useUserStore = defineStore('user', () => {
       if (encryptionInfo.value.publicKey) {
         publicKeyPem = atob(encryptionInfo.value.publicKey?.replace(/-/g, '+').replace(/_/g, '/'))
       } else {
-        throw new Error('秘钥获取失败')
+        ElMessage.error(i18n.global.t('request.KeyPem'))
+        throw new Error(i18n.global.t('request.KeyPem'))
       }
 
       // 1. 将PEM公钥转换为ArrayBuffer

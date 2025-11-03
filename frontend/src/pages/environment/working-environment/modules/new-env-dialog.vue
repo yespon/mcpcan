@@ -190,14 +190,22 @@ const handleGetNamespaceList = async () => {
  * @param form - form data
  */
 const init = (form: any) => {
+  dialogInfo.value.visible = true
+
   if (form.id) {
     Object.assign(dialogInfo.value.formData, cloneDeep(form))
     dialogInfo.value.title = t('env.run.formData.edit')
     handleGetNamespaceList()
   } else {
     formRef.value?.resetFields()
+    dialogInfo.value.formData = {
+      id: null,
+      name: '',
+      environment: '',
+      config: '',
+      namespace: '',
+    }
   }
-  dialogInfo.value.visible = true
 }
 
 defineExpose({

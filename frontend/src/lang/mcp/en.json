@@ -7,13 +7,13 @@
       "createTime": "CreateTime",
       "notes": "Desc",
       "form": {
-        "placeholderName": "Name"
+        "placeholderName": "Name and ID"
       },
       "action": {
         "add": "Add",
         "save": "Save Template",
         "saveAndInstance": "Save and Add a Instance",
-         "createInstance":"Create Instance"
+        "createInstance": "Create Instance"
       },
       "pageDesc": {
         "createTitle": "Create a MCP-Server template",
@@ -73,7 +73,7 @@
         "connecting": "Connecting"
       },
       "form": {
-        "placeholderName": "Name",
+        "placeholderName": "Name and ID",
         "placeholderType": "Type",
         "placeholderStatus": "Status",
         "placeholderContainerStatus": "ContainerStatus",

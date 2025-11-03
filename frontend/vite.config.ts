@@ -13,12 +13,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api/authz': {
-        target: 'http://localhost:8082',
+        target: 'http://192.168.6.91:8082',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/api': {
-        target: 'http://localhost:8081',
+        target: 'http://192.168.6.91:8081',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/api/, ''),
       },

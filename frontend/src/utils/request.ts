@@ -5,6 +5,7 @@ import { Storage } from './storage'
 import { ElMessage, ElNotification } from 'element-plus'
 import router from '@/router'
 import baseConfig from '@/config/base_config.ts'
+import { t } from '@/utils/i18n'
 
 /**
  * 创建 HTTP 请求实例
@@ -70,7 +71,7 @@ request.interceptors.response.use(
       handleErrorStatus(code, response.config)
     }
     // 业务错误
-    ElMessage.error(message || '系统出错')
+    ElMessage.error(message || (t('request.system') as string))
     return Promise.reject(new Error(message || 'Business Error'))
   },
   async (error: any) => {
@@ -80,7 +81,7 @@ request.interceptors.response.use(
 
     // 网络错误或服务器无响应
     if (!response) {
-      ElMessage.error('网络连接失败，请检查网络设置')
+      ElMessage.error(t('request.networkError') as string)
       return Promise.reject(error)
     }
 
@@ -93,11 +94,11 @@ request.interceptors.response.use(
 
       case 401:
         // Refresh Token 过期，跳转登录页
-        await redirectToLogin('登录已过期，请重新登录')
+        await redirectToLogin(t('request.authFail') as string)
         return Promise.reject(new Error(message || 'Refresh Token Invalid'))
 
       default:
-        ElMessage.error(message || '请求失败')
+        ElMessage.error(message || (t('request.error') as string))
         return Promise.reject(new Error(message || 'Request Error'))
     }
   },
@@ -148,7 +149,7 @@ async function refreshTokenAndRetry(config: InternalAxiosRequestConfig): Promise
           console.error('Token refresh failed:', error)
           // 刷新失败，清空队列并跳转登录页
           pendingRequests.length = 0
-          await redirectToLogin('登录状态已失效，请重新登录')
+          await redirectToLogin(t('request.authFail') as string)
           // 拒绝所有等待的请求
           pendingRequests.forEach(() => {
             reject(new Error('Token refresh failed'))
@@ -164,11 +165,12 @@ async function refreshTokenAndRetry(config: InternalAxiosRequestConfig): Promise
 /**
  * 重定向到登录页面
  */
-async function redirectToLogin(message: string = '请重新登录'): Promise<void> {
+async function redirectToLogin(message?: string): Promise<void> {
   try {
+    const msg = message || (t('request.relogin') as string)
     ElNotification({
-      title: '提示',
-      message,
+      title: t('common.warn') as string,
+      message: msg,
       type: 'warning',
       duration: 3000,
     })
@@ -193,9 +195,9 @@ async function handleErrorStatus(code: number, config: InternalAxiosRequestConfi
 
     case 403:
       // Refresh Token 过期，跳转登录页
-      await redirectToLogin('登录已过期，请重新登录')
+      await redirectToLogin(t('request.authFail') as string)
     default:
-      ElMessage.error('请求失败')
+      ElMessage.error(t('request.error') as string)
   }
 }
 

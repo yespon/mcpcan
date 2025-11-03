@@ -16,9 +16,9 @@ export const useTemplateTableHooks = () => {
       },
       searchConfig: {
         component: 'el-input',
-        label: t('mcp.template.name'),
+        label: t('mcp.template.form.placeholderName'),
         props: {
-          placeholder: t('mcp.template.name'),
+          placeholder: t('mcp.template.form.placeholderName'),
         },
       },
     },

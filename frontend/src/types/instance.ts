@@ -1,3 +1,4 @@
+import { t } from '@/utils/i18n'
 // serverce status
 export enum InstanceStatus {
   ACTIVE = 'active',
@@ -40,23 +41,23 @@ export enum SourceType {
 }
 
 // the default of instance
-export enum InstanceData {
+export const InstanceData = {
   // IMGADDRESS = 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2', // imgAddress
-  IMGADDRESS = 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2.1', // imgAddress
-  PORT = 8080, // port
-  INITSCRIPT = `#!/bin/bash
-# 初始化脚本
+  IMGADDRESS: 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2.1', // imgAddress
+  PORT: 8080, // port
+  INITSCRIPT: `#!/bin/bash
+# ${t('desc.initScript')}
 echo 'Initialization completed.'
 `, // InitScript
-  TIP_IMGADDRESS = `
-  1. 基于 python:3.12-alpine 镜像构建，轻量且兼容主流容器环境<br />
-  2. 预装组件及版本明确锁定：<br />
-    &nbsp &nbsp 系统基础命令：tar、wget、zip、unzip<br />
-    &nbsp &nbsp Python 环境：Python 3.12.11，配套工具 uv 0.7.12、uvx 0.7.12<br />
-    &nbsp &nbsp Node.js 环境：Node.js v18.20.1，配套工具 npm 9.6.6、npx 9.6.6<br />
+  TIP_IMGADDRESS: `
+  1.${t('desc.imgAddressTip1')}<br />
+  2. ${t('desc.imgAddressTip2')}<br />
+    &nbsp &nbsp ${t('desc.baseCommand')}：tar、wget、zip、unzip<br />
+    &nbsp &nbsp Python ${t('desc.anv')}：Python 3.12.11，${t('desc.tools')} uv 0.7.12、uvx 0.7.12<br />
+    &nbsp &nbsp Node.js ${t('desc.anv')}：Node.js v18.20.1，${t('desc.tools')} npm 9.6.6、npx 9.6.6<br />
   `,
-  TIP_IMGADDRESS_DEFAULT = '3. 默认以 mcp-hosting 为启动命令，启动时自动完成 MCP STDIO 协议到 steamable-http 协议的转换，并支持 SSE 协议模式运行',
-  TIP_MCP_SERVER = `
+  TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} }`,
+  TIP_MCP_SERVER: `
     {
       "mcpServers": {
         "everything": {
@@ -69,9 +70,9 @@ echo 'Initialization completed.'
       }
     }
   `, // placeholderServer
-  PACKAGE_PATH = '/app/codepkg/', // the default of package path
-  COMMAND_TIP = 'mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json', // default start command
-}
+  PACKAGE_PATH: '/app/codepkg/', // the default of package path
+  COMMAND_TIP: 'mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json', // default start command
+} as const
 
 export enum NodeVisible {
   RWO = 'ReadWriteOnce',
@@ -111,7 +112,7 @@ export interface InstanceCreate extends InstanceForm {
   port: number
   environmentVariables: { key: string; value: string }[]
   volumeMounts: { [key: string]: any }[]
-  initScript: InstanceData.INITSCRIPT
+  initScript: string
   command: string
 }
 
