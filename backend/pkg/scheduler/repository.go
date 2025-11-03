@@ -100,7 +100,7 @@ func (r *MemoryTaskRepository) UpdateTaskStatus(taskID string, status TaskStatus
 		return fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
-	// 由于Task接口没有SetStatus方法，这里只能通过类型断言来更新状态
+	// Since Task interface doesn't have SetStatus method, we can only update status through type assertion
 	switch t := task.(type) {
 	case *CronTask:
 		t.setStatus(status)

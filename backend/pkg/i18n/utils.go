@@ -28,11 +28,11 @@ func FormatWithGin(c *gin.Context, code int, args ...interface{}) string {
 func ValidateMessageTemplates() []string {
 	var missing []string
 
-	// 获取所有错误码
+	// Get all error codes
 	allCodes := getAllErrorCodes()
 	loader := GetGlobalMessageLoader()
 
-	// 检查每种语言是否都有对应的消息
+	// Check if each language has corresponding messages
 	for _, lang := range GetSupportedLanguages() {
 		langMessages := loader.GetAllMessages(lang)
 		for _, code := range allCodes {
@@ -45,37 +45,37 @@ func ValidateMessageTemplates() []string {
 	return missing
 }
 
-// getAllErrorCodes 获取所有定义的错误码
+// getAllErrorCodes gets all defined error codes
 func getAllErrorCodes() []int {
 	codes := []int{
-		// 成功
+		// Success
 		CodeSuccess,
 
-		// 通用错误 (1000-1999)
+		// General errors (1000-1999)
 		CodeBadRequest, CodeUnauthorized, CodeForbidden, CodeNotFound,
 		CodeMethodNotAllowed, CodeRequestTimeout, CodeTooManyRequests,
 		CodeInternalError, CodeNotImplemented, CodeServiceUnavailable, CodeGatewayTimeout,
 
-		// 认证相关错误 (2000-2999)
+		// Authentication related errors (2000-2999)
 		CodeInvalidToken, CodeTokenExpired, CodeMissingToken, CodeInvalidCredentials,
 		CodeUserNotFound, CodePasswordIncorrect, CodeUserDisabled, CodeAccountLocked,
 
-		// 授权相关错误 (3000-3999)
+		// Authorization related errors (3000-3999)
 		CodeInsufficientPermissions, CodeAccessDenied, CodeRoleRequired, CodePermissionRequired,
 
-		// 请求签名相关错误 (4000-4999)
+		// Request signature related errors (4000-4999)
 		CodeInvalidSignature, CodeSignatureExpired, CodeMissingSignature, CodeReplayAttack,
 		CodeTimestampInvalid, CodeKeyNotFound, CodeKeyExpired,
 
-		// 业务逻辑错误 (5000-5999)
+		// Business logic errors (5000-5999)
 		CodeBusinessError, CodeDataValidation, CodeDuplicateEntry, CodeForeignKeyViolation,
 		CodeDataConflict, CodeResourceExhausted,
 
-		// 系统错误 (6000-6999)
+		// System errors (6000-6999)
 		CodeDatabaseError, CodeNetworkError, CodeFileSystemError, CodeConfigurationError,
 		CodeTimeoutError, CodeDependencyError,
 
-		// 参数化错误码 (7000-7999)
+		// Parameterized error codes (7000-7999)
 		CodeParameterRequired, CodeParameterInvalid, CodeResourceNotFound, CodeResourceAlreadyExists,
 		CodeOperationFailed, CodeServiceError, CodeConnectionFailed, CodeFileOperationFailed,
 		CodeParseError, CodeValidationFailed,
@@ -84,7 +84,7 @@ func getAllErrorCodes() []int {
 	return codes
 }
 
-// GetErrorCodeByName 根据错误名称获取错误码（用于配置文件等场景）
+// GetErrorCodeByName gets error code by error name (for configuration files and other scenarios)
 func GetErrorCodeByName(name string) (int, bool) {
 	codeMap := map[string]int{
 		"SUCCESS":                  CodeSuccess,
@@ -146,17 +146,17 @@ func GetErrorCodeByName(name string) (int, bool) {
 	return code, exists
 }
 
-// IsClientError 判断是否为客户端错误（4xx类错误）
+// IsClientError determines if it's a client error (4xx class error)
 func IsClientError(code int) bool {
 	return code >= 1000 && code < 5000
 }
 
-// IsServerError 判断是否为服务器错误（5xx类错误）
+// IsServerError determines if it's a server error (5xx class error)
 func IsServerError(code int) bool {
 	return code >= 5000
 }
 
-// GetErrorCategory 获取错误类别
+// GetErrorCategory gets error category
 func GetErrorCategory(code int) string {
 	switch {
 	case code == 0:

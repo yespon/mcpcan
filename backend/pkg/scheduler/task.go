@@ -11,15 +11,15 @@ import (
 
 // BaseTask base task struct
 type BaseTask struct {
-	id          string      // Task ID
-	name        string      // Task name
-	taskType    TaskType    // Task type
-	status      TaskStatus  // Task status
-	funcName    string      // Task function name
-	taskFunc    TaskFunc    // Task execution function
-	createdAt   time.Time   // Creation time
-	lastRunTime *time.Time  // Last run time
-	nextRunTime *time.Time  // Next run time
+	id          string       // Task ID
+	name        string       // Task name
+	taskType    TaskType     // Task type
+	status      TaskStatus   // Task status
+	funcName    string       // Task function name
+	taskFunc    TaskFunc     // Task execution function
+	createdAt   time.Time    // Creation time
+	lastRunTime *time.Time   // Last run time
+	nextRunTime *time.Time   // Next run time
 	mu          sync.RWMutex // Read-write lock
 }
 
@@ -121,9 +121,9 @@ func (t *BaseTask) Cancel() error {
 // CronTask Cron scheduled task
 type CronTask struct {
 	*BaseTask
-	cronExpr string           // Cron expression
-	schedule cron.Schedule    // Cron scheduler
-	entryID  cron.EntryID     // Cron entry ID
+	cronExpr string        // Cron expression
+	schedule cron.Schedule // Cron scheduler
+	entryID  cron.EntryID  // Cron entry ID
 }
 
 // NewCronTask creates new Cron task
@@ -167,14 +167,14 @@ func (ct *CronTask) UpdateNextRunTime() {
 	ct.setNextRunTime(&nextTime)
 }
 
-// TimerTask 一次性定时任务
+// TimerTask one-time timer task
 type TimerTask struct {
 	*BaseTask
-	executeAt time.Time // 执行时间
-	timer     *time.Timer // 定时器
+	executeAt time.Time   // Execution time
+	timer     *time.Timer // Timer
 }
 
-// NewTimerTask 创建新的定时任务
+// NewTimerTask creates new timer task
 func NewTimerTask(id, name string, executeAt time.Time, funcName string, taskFunc TaskFunc) *TimerTask {
 	now := time.Now()
 	task := &TimerTask{
@@ -194,12 +194,12 @@ func NewTimerTask(id, name string, executeAt time.Time, funcName string, taskFun
 	return task
 }
 
-// GetExecuteAt 获取执行时间
+// GetExecuteAt gets execution time
 func (tt *TimerTask) GetExecuteAt() time.Time {
 	return tt.executeAt
 }
 
-// Cancel 取消定时任务
+// Cancel cancels timer task
 func (tt *TimerTask) Cancel() error {
 	if tt.timer != nil {
 		tt.timer.Stop()
@@ -207,7 +207,7 @@ func (tt *TimerTask) Cancel() error {
 	return tt.BaseTask.Cancel()
 }
 
-// SetTimer 设置定时器
+// SetTimer sets timer
 func (tt *TimerTask) SetTimer(timer *time.Timer) {
 	tt.timer = timer
 }

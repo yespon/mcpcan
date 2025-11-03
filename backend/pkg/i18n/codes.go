@@ -19,7 +19,7 @@ const (
 	CodeGatewayTimeout        = 1010
 	CodeInvalidPathParameters = 1011
 
-	// 认证相关错误 (2000-2999)
+	// Authentication related errors (2000-2999)
 	CodeInvalidToken       = 2000
 	CodeTokenExpired       = 2001
 	CodeMissingToken       = 2002
