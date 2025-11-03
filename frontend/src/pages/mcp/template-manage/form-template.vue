@@ -705,6 +705,7 @@ const handleGetTemplateDetail = async () => {
       }))
     : []
   pageInfo.value.formData.volumeMounts = data.volumeMounts || []
+  handleMcpProtocolChange(originForm.value.mcpProtocol)
 }
 
 /**
