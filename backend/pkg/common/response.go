@@ -115,15 +115,122 @@ func bindRawQuery(c *gin.Context, rawQuery string, req interface{}) error {
 			continue
 		}
 
-		// Get value from query parameters
-		if queryValues, exists := values[fieldName]; exists && len(queryValues) > 0 {
-			if err := setFieldValue(field, queryValues[0]); err != nil {
-				continue // Setting failed, skip this field
+		// Get values from query parameters
+		var queryValues []string
+		var exists bool
+
+		// Try exact field name first
+		if queryValues, exists = values[fieldName]; exists {
+			// Check if we have any non-empty values
+			hasNonEmptyValues := false
+			for _, v := range queryValues {
+				if v != "" {
+					hasNonEmptyValues = true
+					break
+				}
+			}
+
+			if hasNonEmptyValues {
+				// Check if it's a single value that contains commas (comma-separated format)
+				if len(queryValues) == 1 && strings.Contains(queryValues[0], ",") {
+					// Split comma-separated values
+					queryValues = strings.Split(queryValues[0], ",")
+					// Trim spaces from each value
+					for j := range queryValues {
+						queryValues[j] = strings.TrimSpace(queryValues[j])
+					}
+				}
+			} else {
+				// All values are empty, treat as empty array for slice/array fields
+				if field.Kind() == reflect.Slice || field.Kind() == reflect.Array {
+					queryValues = []string{}
+				} else {
+					exists = false // For non-array fields, skip empty values
+				}
+			}
+		} else if queryValues, exists = values[fieldName+"[]"]; exists && len(queryValues) > 0 {
+			// Try array format like "ids[]"
+		} else {
+			// Try indexed array format like "types[0]", "types[1]", etc.
+			var indexedMap = make(map[int][]string)
+			var maxIndex = -1
+
+			for key, vals := range values {
+				// Check if key matches pattern like "fieldName[number]"
+				if strings.HasPrefix(key, fieldName+"[") && strings.HasSuffix(key, "]") {
+					// Extract the index part
+					indexPart := key[len(fieldName)+1 : len(key)-1]
+					// Check if it's a valid number or empty (for types[])
+					if indexPart == "" {
+						// Handle types[] format
+						indexedMap[0] = append(indexedMap[0], vals...)
+						if maxIndex < 0 {
+							maxIndex = 0
+						}
+					} else if isNumeric(indexPart) {
+						// Parse the index
+						if index, err := strconv.Atoi(indexPart); err == nil {
+							indexedMap[index] = append(indexedMap[index], vals...)
+							if index > maxIndex {
+								maxIndex = index
+							}
+						}
+					}
+				}
+			}
+
+			if maxIndex >= 0 {
+				// Build ordered array from indexed map
+				var indexedValues []string
+				for i := 0; i <= maxIndex; i++ {
+					if vals, exists := indexedMap[i]; exists {
+						indexedValues = append(indexedValues, vals...)
+					}
+				}
+				if len(indexedValues) > 0 {
+					queryValues = indexedValues
+					exists = true
+				}
+			}
+		}
+
+		if exists {
+			// Filter out empty values for non-empty arrays
+			var filteredValues []string
+			for _, v := range queryValues {
+				if v != "" {
+					filteredValues = append(filteredValues, v)
+				}
+			}
+
+			// Handle array/slice fields or single value fields
+			if field.Kind() == reflect.Slice || field.Kind() == reflect.Array {
+				// For slices/arrays, use all values (including empty arrays)
+				if err := setFieldValues(field, filteredValues); err != nil {
+					continue // Setting failed, skip this field
+				}
+			} else {
+				// For non-array fields, use the first non-empty value
+				if len(filteredValues) > 0 {
+					if err := setFieldValue(field, filteredValues[0]); err != nil {
+						continue // Setting failed, skip this field
+					}
+				}
 			}
 		}
 	}
 
 	return nil
+}
+
+// isNumeric checks if a string contains only digits
+func isNumeric(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return len(s) > 0
 }
 
 // getFieldName gets the field name for binding, prioritizing json tag
@@ -146,6 +253,46 @@ func getFieldName(field reflect.StructField) string {
 
 	// Finally use lowercase field name
 	return strings.ToLower(field.Name)
+}
+
+// setFieldValues sets slice/array field values from multiple string values
+func setFieldValues(field reflect.Value, values []string) error {
+	fieldType := field.Type()
+
+	switch field.Kind() {
+	case reflect.Slice:
+		// Create a new slice with the appropriate element type
+		slice := reflect.MakeSlice(fieldType, len(values), len(values))
+
+		for i, value := range values {
+			elem := slice.Index(i)
+			if err := setFieldValue(elem, value); err != nil {
+				return err
+			}
+		}
+
+		field.Set(slice)
+
+	case reflect.Array:
+		// For arrays, we can only set up to the array's length
+		arrayLen := fieldType.Len()
+		maxLen := len(values)
+		if maxLen > arrayLen {
+			maxLen = arrayLen
+		}
+
+		for i := 0; i < maxLen; i++ {
+			elem := field.Index(i)
+			if err := setFieldValue(elem, values[i]); err != nil {
+				return err
+			}
+		}
+
+	default:
+		return nil // Not a slice or array, skip
+	}
+
+	return nil
 }
 
 // setFieldValue sets the field value based on its type

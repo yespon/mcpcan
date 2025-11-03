@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+
 	codepb "github.com/kymo-mcp/mcpcan/api/market/code"
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"

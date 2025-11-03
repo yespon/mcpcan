@@ -405,18 +405,18 @@ func (s *CodeService) GetCodePackageList(c *gin.Context) {
 	}
 
 	filters := map[string]interface{}{}
-	if req.Keyword != "" {
-		filters["keyword"] = req.Keyword
+	if req.Name != "" {
+		filters["name"] = req.Name
 	}
-	if len(req.PackageType) > 0 {
+	if len(req.Types) > 0 {
 		// Convert to model type
 		var packageTypes []model.PackageType
-		for _, t := range req.PackageType {
+		for _, t := range req.Types {
 			modelType, _ := common.ConvertToModelPackageType(t)
 			packageTypes = append(packageTypes, modelType)
 		}
 		if len(packageTypes) > 0 {
-			filters["packageType"] = packageTypes
+			filters["types"] = packageTypes
 		}
 	}
 	// Query code package list

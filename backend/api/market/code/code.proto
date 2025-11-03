@@ -112,10 +112,10 @@ message CodePackageListRequest {
   int32 page = 1;
   // @inject_tag: json:"pageSize" form:"pageSize" desc:"每页数量"
   int32 pageSize = 2;
-  // @inject_tag: json:"keyword" form:"keyword" desc:"搜索关键词"
-  string keyword = 3;
-  // @inject_tag: json:"packageType" form:"packageType" desc:"包类型"
-  repeated PackageType packageType = 4;
+  // @inject_tag: json:"name" form:"name" desc:"搜索关键词"
+  string name = 3;
+  // @inject_tag: json:"types" form:"types" desc:"包类型"
+  repeated PackageType types = 4;
 }
 
 // CodePackageInfo 代码包信息

@@ -132,13 +132,13 @@ func (r *McpCodePackageRepository) FindWithPagination(ctx context.Context, page,
 	// 如果有关键词，添加搜索条件
 	for key, value := range filters {
 		switch key {
-		case "keyword":
-			if keyword, ok := value.(string); ok && keyword != "" {
-				query = query.Where("original_name LIKE ? OR package_id LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+		case "name":
+			if name, ok := value.(string); ok && name != "" {
+				query = query.Where("original_name LIKE ? OR package_id LIKE ?", "%"+name+"%", "%"+name+"%")
 			}
-		case "packageType":
-			if packageTypes, ok := value.([]model.PackageType); ok && len(packageTypes) > 0 {
-				query = query.Where("package_type IN ?", packageTypes)
+		case "types":
+			if types, ok := value.([]model.PackageType); ok && len(types) > 0 {
+				query = query.Where("package_type IN ?", types)
 			}
 		}
 	}
