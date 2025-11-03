@@ -4,11 +4,11 @@ import { type Code } from '@/types/index'
 
 export const CodeAPI = {
   // 代码包列表
-  list(data: TableData | null) {
+  list(params: TableData | null) {
     return request<any, List<Code>>({
       url: `${baseConfig.baseUrlVersion}/market/code/packages`,
       method: 'GET',
-      data,
+      params,
     })
   },
   // 下载代码包

@@ -41,23 +41,24 @@ export enum SourceType {
 }
 
 // the default of instance
-export const InstanceData = {
-  // IMGADDRESS = 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2', // imgAddress
-  IMGADDRESS: 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2.1', // imgAddress
-  PORT: 8080, // port
-  INITSCRIPT: `#!/bin/bash
+export const InstanceData = computed(() => {
+  return {
+    // IMGADDRESS = 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2', // imgAddress
+    IMGADDRESS: 'ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v2.1', // imgAddress
+    PORT: 8080, // port
+    INITSCRIPT: `#!/bin/bash
 # ${t('desc.initScript')}
 echo 'Initialization completed.'
 `, // InitScript
-  TIP_IMGADDRESS: `
+    TIP_IMGADDRESS: `
   1.${t('desc.imgAddressTip1')}<br />
   2. ${t('desc.imgAddressTip2')}<br />
     &nbsp &nbsp ${t('desc.baseCommand')}：tar、wget、zip、unzip<br />
     &nbsp &nbsp Python ${t('desc.anv')}：Python 3.12.11，${t('desc.tools')} uv 0.7.12、uvx 0.7.12<br />
     &nbsp &nbsp Node.js ${t('desc.anv')}：Node.js v18.20.1，${t('desc.tools')} npm 9.6.6、npx 9.6.6<br />
   `,
-  TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} }`,
-  TIP_MCP_SERVER: `
+    TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} }`,
+    TIP_MCP_SERVER: `
     {
       "mcpServers": {
         "everything": {
@@ -70,9 +71,10 @@ echo 'Initialization completed.'
       }
     }
   `, // placeholderServer
-  PACKAGE_PATH: '/app/codepkg/', // the default of package path
-  COMMAND_TIP: 'mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json', // default start command
-} as const
+    PACKAGE_PATH: '/app/codepkg/', // the default of package path
+    COMMAND_TIP: 'mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json', // default start command
+  }
+})
 
 export enum NodeVisible {
   RWO = 'ReadWriteOnce',

@@ -18,17 +18,17 @@ export const useTemplateFormHooks = () => {
       name: '',
       accessType: '',
       mcpProtocol: '',
-      imgAddress: InstanceData.IMGADDRESS,
+      imgAddress: InstanceData.value.IMGADDRESS,
       mcpServers: '',
       notes: '',
       iconPath: '',
       packageId: '',
       environmentId: '',
-      port: InstanceData.PORT,
+      port: InstanceData.value.PORT,
       servicePath: '',
       environmentVariables: [],
       volumeMounts: [],
-      initScript: InstanceData.INITSCRIPT,
+      initScript: InstanceData.value.INITSCRIPT,
       command: '',
     },
     rules: {
@@ -102,7 +102,7 @@ export const useTemplateFormHooks = () => {
       ],
     },
     tooltip: {
-      imgAddress: InstanceData.TIP_IMGADDRESS + InstanceData.TIP_IMGADDRESS_DEFAULT,
+      imgAddress: InstanceData.value.TIP_IMGADDRESS + InstanceData.value.TIP_IMGADDRESS_DEFAULT,
     },
   })
   const { pvcList } = toRefs(useMcpStoreHook())
@@ -110,7 +110,7 @@ export const useTemplateFormHooks = () => {
    * mcpServers placeholder
    */
   const placeholderServer = computed(() => {
-    return t('mcp.instance.formData.mcpServersPlaceholder') + InstanceData.TIP_MCP_SERVER
+    return t('mcp.instance.formData.mcpServersPlaceholder') + InstanceData.value.TIP_MCP_SERVER
   })
 
   /**

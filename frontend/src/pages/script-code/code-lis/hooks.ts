@@ -25,19 +25,19 @@ export const useCodeTableHooks = () => {
     {
       label: t('code.size'),
       dataIndex: 'size',
-
       customRender: ({ row }: { row: Code }) => {
         return formatFileSize(row.size)
       },
     },
     {
       label: t('code.columns.type'),
-      dataIndex: 'type',
+      dataIndex: 'types',
       searchConfig: {
         component: 'el-select',
         label: t('code.columns.type'),
         props: {
           placeholder: t('code.columns.type'),
+          multiple: true,
           options: [
             { label: t('code.columns.tar'), value: 1 },
             { label: t('code.columns.zip'), value: 2 },

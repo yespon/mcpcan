@@ -70,8 +70,8 @@ const loading = ref(false)
 const isCapsLock = ref(false)
 
 const loginFormData = ref<LoginFormData>({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
   encryptedPassword: '',
 })
 

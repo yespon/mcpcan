@@ -535,11 +535,11 @@ const handleAccessTypeChange = () => {
 const handleMcpProtocolChange = (value: McpProtocol) => {
   if (pageInfo.value.formData.accessType === AccessType.HOSTING && value === McpProtocol.STDIO) {
     pageInfo.value.tooltip.imgAddress =
-      InstanceData.TIP_IMGADDRESS + InstanceData.TIP_IMGADDRESS_DEFAULT
-    pageInfo.value.formData.command = InstanceData.COMMAND_TIP
+      InstanceData.value.TIP_IMGADDRESS + InstanceData.value.TIP_IMGADDRESS_DEFAULT
+    pageInfo.value.formData.command = InstanceData.value.COMMAND_TIP
     return
   }
-  pageInfo.value.tooltip.imgAddress = InstanceData.TIP_IMGADDRESS
+  pageInfo.value.tooltip.imgAddress = InstanceData.value.TIP_IMGADDRESS
   pageInfo.value.formData.command = originForm.value?.command
 }
 
