@@ -8,20 +8,20 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
-// MemoryTaskRepository 内存任务存储实现
+// MemoryTaskRepository memory task repository implementation
 type MemoryTaskRepository struct {
-	tasks map[string]Task // 任务映射
-	mu    sync.RWMutex    // 读写锁
+	tasks map[string]Task // Task mapping
+	mu    sync.RWMutex    // Read-write lock
 }
 
-// NewMemoryTaskRepository 创建新的内存任务存储
+// NewMemoryTaskRepository creates a new memory task repository
 func NewMemoryTaskRepository() *MemoryTaskRepository {
 	return &MemoryTaskRepository{
 		tasks: make(map[string]Task),
 	}
 }
 
-// SaveTask 保存任务
+// SaveTask saves a task
 func (r *MemoryTaskRepository) SaveTask(ctx context.Context, task Task) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -39,24 +39,24 @@ func (r *MemoryTaskRepository) SaveTask(ctx context.Context, task Task) error {
 	return nil
 }
 
-// GetTask 获取任务
+// GetTask gets a task
 func (r *MemoryTaskRepository) GetTask(taskID string) (Task, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	if taskID == "" {
-		return nil, fmt.Errorf("任务ID不能为空")
+		return nil, fmt.Errorf("task ID cannot be empty")
 	}
 
 	task, exists := r.tasks[taskID]
 	if !exists {
-		return nil, fmt.Errorf("任务ID %s 不存在", taskID)
+		return nil, fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
 	return task, nil
 }
 
-// ListTasks 列出任务
+// ListTasks lists tasks
 func (r *MemoryTaskRepository) ListTasks() ([]Task, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -69,35 +69,35 @@ func (r *MemoryTaskRepository) ListTasks() ([]Task, error) {
 	return tasks, nil
 }
 
-// DeleteTask 删除任务
+// DeleteTask deletes a task
 func (r *MemoryTaskRepository) DeleteTask(taskID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if taskID == "" {
-		return fmt.Errorf("任务ID不能为空")
+		return fmt.Errorf("task ID cannot be empty")
 	}
 
 	if _, exists := r.tasks[taskID]; !exists {
-		return fmt.Errorf("任务ID %s 不存在", taskID)
+		return fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
 	delete(r.tasks, taskID)
 	return nil
 }
 
-// UpdateTaskStatus 更新任务状态
+// UpdateTaskStatus updates task status
 func (r *MemoryTaskRepository) UpdateTaskStatus(taskID string, status TaskStatus) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if taskID == "" {
-		return fmt.Errorf("任务ID不能为空")
+		return fmt.Errorf("task ID cannot be empty")
 	}
 
 	task, exists := r.tasks[taskID]
 	if !exists {
-		return fmt.Errorf("任务ID %s 不存在", taskID)
+		return fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
 	// 由于Task接口没有SetStatus方法，这里只能通过类型断言来更新状态
@@ -107,20 +107,20 @@ func (r *MemoryTaskRepository) UpdateTaskStatus(taskID string, status TaskStatus
 	case *TimerTask:
 		t.setStatus(status)
 	default:
-		return fmt.Errorf("不支持的任务类型")
+		return fmt.Errorf("unsupported task type: %T", task)
 	}
 
 	return nil
 }
 
-// GetTaskCount 获取任务数量
+// GetTaskCount gets task count
 func (r *MemoryTaskRepository) GetTaskCount() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return len(r.tasks)
 }
 
-// Clear 清空所有任务
+// Clear clears all tasks
 func (r *MemoryTaskRepository) Clear() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

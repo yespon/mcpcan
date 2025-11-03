@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// GlobalSchedulerEntry 全局调度器入口
+// GlobalSchedulerEntry global scheduler entry
 type GlobalSchedulerEntry struct {
 	ctx         context.Context
 	taskManager TaskManager
@@ -14,22 +14,22 @@ type GlobalSchedulerEntry struct {
 }
 
 var (
-	// globalEntry 全局调度器实例
+	// globalEntry global scheduler instance
 	globalEntry *GlobalSchedulerEntry
-	// globalOnce 确保全局实例只初始化一次
+	// globalOnce ensures global instance is initialized only once
 	globalOnce sync.Once
 )
 
-// GetGlobalScheduler 获取全局调度器实例
+// GetGlobalScheduler gets global scheduler instance
 func GetGlobalScheduler() *GlobalSchedulerEntry {
 	globalOnce.Do(func() {
-		// 创建内存任务存储（可以替换为数据库存储）
+		// Create memory task repository (can be replaced with database storage)
 		taskRepo := NewMemoryTaskRepository()
 
-		// 创建调度器
+		// Create scheduler
 		scheduler := NewTaskScheduler(taskRepo)
 
-		// 创建任务管理器
+		// Create task manager
 		taskManager := NewTaskManager(scheduler)
 
 		globalEntry = &GlobalSchedulerEntry{
@@ -40,74 +40,74 @@ func GetGlobalScheduler() *GlobalSchedulerEntry {
 	return globalEntry
 }
 
-// Start 启动全局调度器
+// Start starts global scheduler
 func (g *GlobalSchedulerEntry) Start() error {
 	return g.taskManager.GetScheduler().Start(g.ctx)
 }
 
-// Stop 停止全局调度器
+// Stop stops global scheduler
 func (g *GlobalSchedulerEntry) Stop() error {
 	return g.taskManager.GetScheduler().Stop()
 }
 
-// GetTaskManager 获取任务管理器
+// GetTaskManager gets task manager
 func (g *GlobalSchedulerEntry) GetTaskManager() TaskManager {
 	return g.taskManager
 }
 
-// RegisterTaskFunc 注册任务函数
+// RegisterTaskFunc registers task function
 func (g *GlobalSchedulerEntry) RegisterTaskFunc(name string, fn TaskFunc) error {
 	return g.taskManager.RegisterTaskFunc(name, fn)
 }
 
-// 便捷函数，直接使用全局实例
+// Convenience functions, directly use global instance
 
-// Start 启动全局调度器（便捷函数）
+// Start starts global scheduler (convenience function)
 func Start(ctx context.Context) error {
 	return GetGlobalScheduler().Start()
 }
 
-// Stop 停止全局调度器（便捷函数）
+// Stop stops global scheduler (convenience function)
 func Stop() error {
 	return GetGlobalScheduler().Stop()
 }
 
-// RegisterTaskFunc 注册任务函数（便捷函数）
+// RegisterTaskFunc registers task function (convenience function)
 func RegisterTaskFunc(name string, fn TaskFunc) error {
 	return GetGlobalScheduler().RegisterTaskFunc(name, fn)
 }
 
-// GetTaskManager 获取任务管理器（便捷函数）
+// GetTaskManager gets task manager (convenience function)
 func GetTaskManager() TaskManager {
 	return GetGlobalScheduler().GetTaskManager()
 }
 
-// CreateCronTask 创建Cron任务（便捷函数）
+// CreateCronTask creates Cron task (convenience function)
 func CreateCronTask(id, name, cronExpr, funcName string) (Task, error) {
 	return GetGlobalScheduler().GetTaskManager().CreateCronTask(id, name, cronExpr, funcName)
 }
 
-// CreateTimerTask 创建定时任务（便捷函数）
+// CreateTimerTask creates timer task (convenience function)
 func CreateTimerTask(id, name string, executeAt time.Time, funcName string) (Task, error) {
 	return GetGlobalScheduler().GetTaskManager().CreateTimerTask(id, name, executeAt, funcName)
 }
 
-// GetTask 获取任务（便捷函数）
+// GetTask gets task (convenience function)
 func GetTask(taskID string) (Task, error) {
 	return GetGlobalScheduler().GetTaskManager().GetScheduler().GetTask(taskID)
 }
 
-// RemoveTask 移除任务（便捷函数）
+// RemoveTask removes task (convenience function)
 func RemoveTask(taskID string) error {
 	return GetGlobalScheduler().GetTaskManager().GetScheduler().RemoveTask(taskID)
 }
 
-// ListTasks 列出所有任务（便捷函数）
+// ListTasks lists all tasks (convenience function)
 func ListTasks() []Task {
 	return GetGlobalScheduler().GetTaskManager().GetScheduler().ListTasks()
 }
 
-// IsRunning 检查调度器是否运行中（便捷函数）
+// IsRunning checks if scheduler is running (convenience function)
 func IsRunning() bool {
 	return GetGlobalScheduler().GetTaskManager().GetScheduler().IsRunning()
 }

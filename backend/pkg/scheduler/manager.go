@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-// DefaultTaskManager 默认任务管理器实现
+// DefaultTaskManager default task manager implementation
 type DefaultTaskManager struct {
-	scheduler Scheduler                // 调度器
-	taskFuncs map[string]TaskFunc      // 注册的任务函数
-	mu        sync.RWMutex             // 读写锁
+	scheduler Scheduler                // scheduler
+	taskFuncs map[string]TaskFunc      // registered task functions
+	mu        sync.RWMutex             // read-write lock
 }
 
-// NewTaskManager 创建新的任务管理器
+// NewTaskManager creates a new task manager
 func NewTaskManager(scheduler Scheduler) *DefaultTaskManager {
 	return &DefaultTaskManager{
 		scheduler: scheduler,
@@ -21,121 +21,121 @@ func NewTaskManager(scheduler Scheduler) *DefaultTaskManager {
 	}
 }
 
-// RegisterTaskFunc 注册任务函数
+// RegisterTaskFunc registers a task function
 func (tm *DefaultTaskManager) RegisterTaskFunc(name string, fn TaskFunc) error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
 	if name == "" {
-		return fmt.Errorf("任务函数名称不能为空")
+		return fmt.Errorf("task function name cannot be empty")
 	}
 
 	if fn == nil {
-		return fmt.Errorf("任务函数不能为空")
+		return fmt.Errorf("task function cannot be nil")
 	}
 
 	if _, exists := tm.taskFuncs[name]; exists {
-		return fmt.Errorf("任务函数 %s 已存在", name)
+		return fmt.Errorf("task function %s already exists", name)
 	}
 
 	tm.taskFuncs[name] = fn
 	return nil
 }
 
-// GetTaskFunc 获取任务函数
+// GetTaskFunc gets a task function
 func (tm *DefaultTaskManager) GetTaskFunc(name string) (TaskFunc, error) {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 
 	fn, exists := tm.taskFuncs[name]
 	if !exists {
-		return nil, fmt.Errorf("任务函数 %s 不存在", name)
+		return nil, fmt.Errorf("task function %s does not exist", name)
 	}
 
 	return fn, nil
 }
 
-// CreateCronTask 创建Cron任务
+// CreateCronTask creates a Cron task
 func (tm *DefaultTaskManager) CreateCronTask(id, name, cronExpr, funcName string) (Task, error) {
 	if id == "" {
-		return nil, fmt.Errorf("任务ID不能为空")
+		return nil, fmt.Errorf("task ID cannot be empty")
 	}
 
 	if name == "" {
-		return nil, fmt.Errorf("任务名称不能为空")
+		return nil, fmt.Errorf("task name cannot be empty")
 	}
 
 	if cronExpr == "" {
-		return nil, fmt.Errorf("Cron表达式不能为空")
+		return nil, fmt.Errorf("cron expression cannot be empty")
 	}
 
 	if funcName == "" {
-		return nil, fmt.Errorf("任务函数名称不能为空")
+		return nil, fmt.Errorf("task function name cannot be empty")
 	}
 
-	// 获取任务函数
+	// Get task function
 	taskFunc, err := tm.GetTaskFunc(funcName)
 	if err != nil {
-		return nil, fmt.Errorf("获取任务函数失败: %w", err)
+		return nil, fmt.Errorf("failed to get task function: %w", err)
 	}
 
-	// 创建Cron任务
+	// Create Cron task
 	task, err := NewCronTask(id, name, cronExpr, funcName, taskFunc)
 	if err != nil {
-		return nil, fmt.Errorf("创建Cron任务失败: %w", err)
+		return nil, fmt.Errorf("failed to create cron task: %w", err)
 	}
 
-	// 添加到调度器
+	// Add to scheduler
 	err = tm.scheduler.AddTask(task)
 	if err != nil {
-		return nil, fmt.Errorf("添加任务到调度器失败: %w", err)
+		return nil, fmt.Errorf("failed to add task to scheduler: %w", err)
 	}
 
 	return task, nil
 }
 
-// CreateTimerTask 创建定时任务
+// CreateTimerTask creates a timer task
 func (tm *DefaultTaskManager) CreateTimerTask(id, name string, executeAt time.Time, funcName string) (Task, error) {
 	if id == "" {
-		return nil, fmt.Errorf("任务ID不能为空")
+		return nil, fmt.Errorf("task ID cannot be empty")
 	}
 
 	if name == "" {
-		return nil, fmt.Errorf("任务名称不能为空")
+		return nil, fmt.Errorf("task name cannot be empty")
 	}
 
 	if funcName == "" {
-		return nil, fmt.Errorf("任务函数名称不能为空")
+		return nil, fmt.Errorf("task function name cannot be empty")
 	}
 
 	if executeAt.Before(time.Now()) {
-		return nil, fmt.Errorf("执行时间不能早于当前时间")
+		return nil, fmt.Errorf("execution time cannot be earlier than current time")
 	}
 
-	// 获取任务函数
+	// Get task function
 	taskFunc, err := tm.GetTaskFunc(funcName)
 	if err != nil {
-		return nil, fmt.Errorf("获取任务函数失败: %w", err)
+		return nil, fmt.Errorf("failed to get task function: %w", err)
 	}
 
-	// 创建定时任务
+	// Create timer task
 	task := NewTimerTask(id, name, executeAt, funcName, taskFunc)
 
-	// 添加到调度器
+	// Add to scheduler
 	err = tm.scheduler.AddTask(task)
 	if err != nil {
-		return nil, fmt.Errorf("添加任务到调度器失败: %w", err)
+		return nil, fmt.Errorf("failed to add task to scheduler: %w", err)
 	}
 
 	return task, nil
 }
 
-// GetScheduler 获取调度器
+// GetScheduler gets the scheduler
 func (tm *DefaultTaskManager) GetScheduler() Scheduler {
 	return tm.scheduler
 }
 
-// ListTaskFuncs 列出所有注册的任务函数
+// ListTaskFuncs lists all registered task functions
 func (tm *DefaultTaskManager) ListTaskFuncs() []string {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
@@ -148,33 +148,33 @@ func (tm *DefaultTaskManager) ListTaskFuncs() []string {
 	return funcs
 }
 
-// RemoveTaskFunc 移除任务函数
+// RemoveTaskFunc removes a task function
 func (tm *DefaultTaskManager) RemoveTaskFunc(name string) error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
 	if _, exists := tm.taskFuncs[name]; !exists {
-		return fmt.Errorf("任务函数 %s 不存在", name)
+		return fmt.Errorf("task function %s does not exist", name)
 	}
 
 	delete(tm.taskFuncs, name)
 	return nil
 }
 
-// GetTaskCount 获取任务数量
+// GetTaskCount gets the number of tasks
 func (tm *DefaultTaskManager) GetTaskCount() int {
 	tasks := tm.scheduler.ListTasks()
 	return len(tasks)
 }
 
-// GetTaskFuncCount 获取注册的任务函数数量
+// GetTaskFuncCount gets the number of registered task functions
 func (tm *DefaultTaskManager) GetTaskFuncCount() int {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 	return len(tm.taskFuncs)
 }
 
-// IsSchedulerRunning 检查调度器是否运行中
+// IsSchedulerRunning checks if the scheduler is running
 func (tm *DefaultTaskManager) IsSchedulerRunning() bool {
 	return tm.scheduler.IsRunning()
 }

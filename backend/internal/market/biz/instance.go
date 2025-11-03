@@ -216,10 +216,10 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.PublicProxyConfig = pb
 	}
 
-	// 保存到数据库
+	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
 	if err != nil {
-		return nil, fmt.Errorf("更新实例失败: %v", err)
+		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
 
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
@@ -242,7 +242,7 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	return resp, nil
 }
 
-// UpdateInstanceForHosting 更新实例
+// UpdateInstanceForHosting updates instance
 func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *instancepb.EditRequest, oriInstance *model.McpInstance) (*instancepb.EditResp, error) {
 	var err error
 	port := req.Port
@@ -277,17 +277,17 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	newContainerCreateOptions, err := GContainerBiz.BuildContainerOptions(ctx, instanceID, oriInstance.McpProtocol, mcpServers, packageID, port, initScript,
 		command, imgAddress, envs, vms, startupTimeout, runningTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("构建容器配置失败: %v", err)
+		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
 	containerCreateOptions, err := common.MarshalAndAssignConfig(newContainerCreateOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal container create containerCreateOptions: %w", err)
 	}
 
-	// 删除旧的容器和svc服务
+	// Delete old container and svc service
 	_, err = GContainerBiz.DeleteContainer(oriInstance)
 	if err != nil {
-		return nil, fmt.Errorf("删除容器失败: %v", err)
+		return nil, fmt.Errorf("failed to delete container: %v", err)
 	}
 
 	// Create target configuration
@@ -313,7 +313,7 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	publicProxyConfig := GInstanceBiz.CreatePublicProxyConfig(instanceID, toMcpProtocol)
 	pb, _ := common.MarshalAndAssignConfig(publicProxyConfig)
 
-	// 更新
+	// Update
 	oriInstance.InstanceName = req.Name
 	oriInstance.Notes = req.Notes
 	oriInstance.Port = int32(port)
@@ -333,7 +333,7 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.ServicePath = req.ServicePath
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
 	if err != nil {
-		return nil, fmt.Errorf("更新实例失败: %v", err)
+		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
 
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
@@ -372,7 +372,7 @@ func (biz *InstanceBiz) CreatePublicProxyConfig(instanceID string, mcpProtocol m
 	}
 }
 
-// GetInstancesByEnvironmentID 根据环境ID获取实例列表
+// GetInstancesByEnvironmentID gets instance list by environment ID
 func (biz *InstanceBiz) GetInstancesByEnvironmentID(ctx context.Context, environmentID uint) ([]*model.McpInstance, error) {
 	return mysql.McpInstanceRepo.FindByEnvironmentID(ctx, environmentID)
 }

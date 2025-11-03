@@ -5,92 +5,92 @@ import (
 	"time"
 )
 
-// TaskFunc 任务执行函数类型
+// TaskFunc task execution function type
 type TaskFunc func(ctx context.Context) error
 
-// TaskStatus 任务状态
+// TaskStatus task status
 type TaskStatus int
 
 const (
-	TaskStatusPending   TaskStatus = iota // 待执行
-	TaskStatusRunning                     // 执行中
-	TaskStatusCompleted                   // 已完成
-	TaskStatusFailed                      // 执行失败
-	TaskStatusCancelled                   // 已取消
+	TaskStatusPending   TaskStatus = iota // Pending
+	TaskStatusRunning                     // Running
+	TaskStatusCompleted                   // Completed
+	TaskStatusFailed                      // Failed
+	TaskStatusCancelled                   // Cancelled
 )
 
-// TaskType 任务类型
+// TaskType task type
 type TaskType int
 
 const (
-	TaskTypeCron  TaskType = iota // Cron 定时任务
-	TaskTypeTimer                 // 一次性定时任务
+	TaskTypeCron  TaskType = iota // Cron scheduled task
+	TaskTypeTimer                 // One-time timer task
 )
 
-// Task 任务接口
+// Task task interface
 type Task interface {
-	// GetID 获取任务ID
+	// GetID gets task ID
 	GetID() string
-	// GetName 获取任务名称
+	// GetName gets task name
 	GetName() string
-	// GetType 获取任务类型
+	// GetType gets task type
 	GetType() TaskType
-	// GetStatus 获取任务状态
+	// GetStatus gets task status
 	GetStatus() TaskStatus
-	// Execute 执行任务
+	// Execute executes task
 	Execute(ctx context.Context) error
-	// Cancel 取消任务
+	// Cancel cancels task
 	Cancel() error
-	// GetNextRunTime 获取下次执行时间
+	// GetNextRunTime gets next run time
 	GetNextRunTime() *time.Time
-	// GetLastRunTime 获取上次执行时间
+	// GetLastRunTime gets last run time
 	GetLastRunTime() *time.Time
-	// GetCreatedAt 获取创建时间
+	// GetCreatedAt gets creation time
 	GetCreatedAt() time.Time
 }
 
-// Scheduler 调度器接口
+// Scheduler scheduler interface
 type Scheduler interface {
-	// Start 启动调度器
+	// Start starts scheduler
 	Start(ctx context.Context) error
-	// Stop 停止调度器
+	// Stop stops scheduler
 	Stop() error
-	// AddTask 添加任务
+	// AddTask adds task
 	AddTask(task Task) error
-	// RemoveTask 移除任务
+	// RemoveTask removes task
 	RemoveTask(taskID string) error
-	// GetTask 获取任务
+	// GetTask gets task
 	GetTask(taskID string) (Task, error)
-	// ListTasks 列出所有任务
+	// ListTasks lists all tasks
 	ListTasks() []Task
-	// IsRunning 检查调度器是否运行中
+	// IsRunning checks if scheduler is running
 	IsRunning() bool
 }
 
-// TaskManager 任务管理器接口
+// TaskManager task manager interface
 type TaskManager interface {
-	// RegisterTaskFunc 注册任务函数
+	// RegisterTaskFunc registers task function
 	RegisterTaskFunc(name string, fn TaskFunc) error
-	// GetTaskFunc 获取任务函数
+	// GetTaskFunc gets task function
 	GetTaskFunc(name string) (TaskFunc, error)
-	// CreateCronTask 创建Cron任务
+	// CreateCronTask creates Cron task
 	CreateCronTask(id, name, cronExpr, funcName string) (Task, error)
-	// CreateTimerTask 创建定时任务
+	// CreateTimerTask creates timer task
 	CreateTimerTask(id, name string, executeAt time.Time, funcName string) (Task, error)
-	// GetScheduler 获取调度器
+	// GetScheduler gets scheduler
 	GetScheduler() Scheduler
 }
 
-// TaskRepository 任务存储接口
+// TaskRepository task repository interface
 type TaskRepository interface {
-	// SaveTask 保存任务
+	// SaveTask saves task
 	SaveTask(ctx context.Context, task Task) error
-	// GetTask 获取任务
+	// GetTask gets task
 	GetTask(taskID string) (Task, error)
-	// ListTasks 列出任务
+	// ListTasks lists tasks
 	ListTasks() ([]Task, error)
-	// DeleteTask 删除任务
+	// DeleteTask deletes task
 	DeleteTask(taskID string) error
-	// UpdateTaskStatus 更新任务状态
+	// UpdateTaskStatus updates task status
 	UpdateTaskStatus(taskID string, status TaskStatus) error
 }

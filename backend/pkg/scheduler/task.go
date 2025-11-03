@@ -9,94 +9,94 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// BaseTask 基础任务结构体
+// BaseTask base task struct
 type BaseTask struct {
-	id          string      // 任务ID
-	name        string      // 任务名称
-	taskType    TaskType    // 任务类型
-	status      TaskStatus  // 任务状态
-	funcName    string      // 任务函数名称
-	taskFunc    TaskFunc    // 任务执行函数
-	createdAt   time.Time   // 创建时间
-	lastRunTime *time.Time  // 上次执行时间
-	nextRunTime *time.Time  // 下次执行时间
-	mu          sync.RWMutex // 读写锁
+	id          string      // Task ID
+	name        string      // Task name
+	taskType    TaskType    // Task type
+	status      TaskStatus  // Task status
+	funcName    string      // Task function name
+	taskFunc    TaskFunc    // Task execution function
+	createdAt   time.Time   // Creation time
+	lastRunTime *time.Time  // Last run time
+	nextRunTime *time.Time  // Next run time
+	mu          sync.RWMutex // Read-write lock
 }
 
-// GetID 获取任务ID
+// GetID gets task ID
 func (t *BaseTask) GetID() string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.id
 }
 
-// GetName 获取任务名称
+// GetName gets task name
 func (t *BaseTask) GetName() string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.name
 }
 
-// GetType 获取任务类型
+// GetType gets task type
 func (t *BaseTask) GetType() TaskType {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.taskType
 }
 
-// GetStatus 获取任务状态
+// GetStatus gets task status
 func (t *BaseTask) GetStatus() TaskStatus {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.status
 }
 
-// GetNextRunTime 获取下次执行时间
+// GetNextRunTime gets next run time
 func (t *BaseTask) GetNextRunTime() *time.Time {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.nextRunTime
 }
 
-// GetLastRunTime 获取上次执行时间
+// GetLastRunTime gets last run time
 func (t *BaseTask) GetLastRunTime() *time.Time {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.lastRunTime
 }
 
-// GetCreatedAt 获取创建时间
+// GetCreatedAt gets creation time
 func (t *BaseTask) GetCreatedAt() time.Time {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	return t.createdAt
 }
 
-// setStatus 设置任务状态（内部方法）
+// setStatus sets task status (internal method)
 func (t *BaseTask) setStatus(status TaskStatus) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.status = status
 }
 
-// setLastRunTime 设置上次执行时间（内部方法）
+// setLastRunTime sets last run time (internal method)
 func (t *BaseTask) setLastRunTime(runTime time.Time) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.lastRunTime = &runTime
 }
 
-// setNextRunTime 设置下次执行时间（内部方法）
+// setNextRunTime sets next run time (internal method)
 func (t *BaseTask) setNextRunTime(nextTime *time.Time) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.nextRunTime = nextTime
 }
 
-// Execute 执行任务
+// Execute executes task
 func (t *BaseTask) Execute(ctx context.Context) error {
 	if t.taskFunc == nil {
-		return fmt.Errorf("任务函数未设置")
+		return fmt.Errorf("task function not set")
 	}
 
 	t.setStatus(TaskStatusRunning)
@@ -105,33 +105,33 @@ func (t *BaseTask) Execute(ctx context.Context) error {
 	err := t.taskFunc(ctx)
 	if err != nil {
 		t.setStatus(TaskStatusFailed)
-		return fmt.Errorf("任务执行失败: %w", err)
+		return fmt.Errorf("task execution failed: %w", err)
 	}
 
 	t.setStatus(TaskStatusCompleted)
 	return nil
 }
 
-// Cancel 取消任务
+// Cancel cancels task
 func (t *BaseTask) Cancel() error {
 	t.setStatus(TaskStatusCancelled)
 	return nil
 }
 
-// CronTask Cron定时任务
+// CronTask Cron scheduled task
 type CronTask struct {
 	*BaseTask
-	cronExpr string           // Cron表达式
-	schedule cron.Schedule    // Cron调度器
-	entryID  cron.EntryID     // Cron条目ID
+	cronExpr string           // Cron expression
+	schedule cron.Schedule    // Cron scheduler
+	entryID  cron.EntryID     // Cron entry ID
 }
 
-// NewCronTask 创建新的Cron任务
+// NewCronTask creates new Cron task
 func NewCronTask(id, name, cronExpr, funcName string, taskFunc TaskFunc) (*CronTask, error) {
 	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
 	schedule, err := parser.Parse(cronExpr)
 	if err != nil {
-		return nil, fmt.Errorf("无效的Cron表达式: %w", err)
+		return nil, fmt.Errorf("invalid Cron expression: %w", err)
 	}
 
 	now := time.Now()
@@ -155,12 +155,12 @@ func NewCronTask(id, name, cronExpr, funcName string, taskFunc TaskFunc) (*CronT
 	return task, nil
 }
 
-// GetCronExpr 获取Cron表达式
+// GetCronExpr gets Cron expression
 func (ct *CronTask) GetCronExpr() string {
 	return ct.cronExpr
 }
 
-// UpdateNextRunTime 更新下次执行时间
+// UpdateNextRunTime updates next run time
 func (ct *CronTask) UpdateNextRunTime() {
 	now := time.Now()
 	nextTime := ct.schedule.Next(now)

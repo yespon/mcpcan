@@ -205,7 +205,7 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 
 	details := "Docker connection test successful"
 	if environment.Config != "" {
-		details += fmt.Sprintf("，使用配置: %s", environment.Config)
+		details += fmt.Sprintf(", using configuration: %s", environment.Config)
 	}
 
 	return &mcp_environment.TestConnectivityResponse{
@@ -214,25 +214,25 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 	}, nil
 }
 
-// ListNamespaces 获取命名空间列表（仅支持Kubernetes环境）
+// ListNamespaces gets namespace list (only supports Kubernetes environment)
 func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, environmentType model.McpEnvironmentType) ([]string, error) {
 	if environmentType != model.McpEnvironmentKubernetes {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeOnlyK8sSupportNamespace))
 	}
 
-	// 验证 config 数据是否为有效的 YAML 格式
+	// Validate if config data is valid YAML format
 	var yamlData interface{}
 	if err := yaml.Unmarshal([]byte(config), &yamlData); err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigFormatError)+": %w", err)
 	}
 
-	// 验证是否为有效的 kubeconfig 结构
+	// Validate if it's a valid kubeconfig structure
 	var kubeconfigStruct map[string]interface{}
 	if err := yaml.Unmarshal([]byte(config), &kubeconfigStruct); err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigParseFailure)+": %w", err)
 	}
 
-	// 检查必要的 kubeconfig 字段
+	// Check required kubeconfig fields
 	if _, exists := kubeconfigStruct["apiVersion"]; !exists {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "apiVersion"))
 	}
@@ -249,38 +249,38 @@ func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, en
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "users"))
 	}
 
-	// kubeconfigStruct 转换为 YAML 字符串
+	// Convert kubeconfigStruct to YAML string
 	configYAML, err := yaml.Marshal(kubeconfigStruct)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigYamlConversionFailure)+": %w", err)
 	}
 
-	// 使用修复后的 SetKubeConfig 函数
+	// Use the fixed SetKubeConfig function
 	kubeconfig := common.SetKubeConfig([]byte(configYAML))
 	if kubeconfig == nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigConversionFailure))
 	}
 
-	// 创建容器运行时配置
+	// Create container runtime configuration
 	containerConfig := container.Config{
 		Runtime:    container.RuntimeKubernetes,
-		Namespace:  "default", // 使用默认命名空间来连接集群
+		Namespace:  "default", // Use default namespace to connect to cluster
 		Kubeconfig: kubeconfig,
 		Network:    "bridge",
 	}
 
-	// 创建容器运行时入口
+	// Create container runtime entry
 	entry, err := container.NewEntry(containerConfig)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeK8sClientInitFailure)+": %w", err)
 	}
 
-	// 检查是否为Kubernetes运行时
+	// Check if it's Kubernetes runtime
 	if !entry.IsKubernetes() {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRuntimeTypeError))
 	}
 
-	// 获取K8s入口
+	// Get K8s entry
 	namespaces, err := entry.ListNamespaces()
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeListNamespacesFailure)+": %w", err)

@@ -203,27 +203,27 @@ func (cd *ContainerBiz) CreateHostingContainerForSSEAndSteamableHttp(req *instan
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
-	// 统一使用容器管理器创建（简化判断逻辑）
+	// Use container manager to create uniformly (simplified judgment logic)
 	containerName, err = entry.GetContainerManager().Create(ctx, containerOptions)
 	if err != nil {
-		// 删除容器（如果容器名称不为空）
+		// Delete container (if container name is not empty)
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateFailure)+": %v", err)
 	}
 
-	// 创建svc
+	// Create service
 	_, err = entry.GetServiceManager().Create(ctx, serviceName, port, labels)
 	if err != nil {
-		// 删除容器（如果容器名称不为空）
+		// Delete container (if container name is not empty)
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceCreateFailure)+": %w", err)
 	}
 
-	// 11. 返回创建结果，包含实例更新所需的数据
+	// 11. Return creation result, including data required for instance update
 	return &ContainerCreateResult{
 		ContainerName: containerName,
 		ServiceName:   serviceName,
@@ -232,30 +232,30 @@ func (cd *ContainerBiz) CreateHostingContainerForSSEAndSteamableHttp(req *instan
 	}, nil
 }
 
-// CreateContainer 创建容器业务逻辑
+// CreateContainer create container business logic
 func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateRequest, instanceID string) (*ContainerCreateResult, error) {
 	var err error
-	// 1. 生成容器名称
+	// 1. Generate container name
 	containerName := cd.generateContainerName(instanceID)
 	serviceName := cd.generateServiceName(instanceID)
 
-	// 2. 代码包下载链接生成
+	// 2. Code package download link generation
 	packageId := req.PackageId
 	codepkgInstallScript := ""
 	if packageId != "" {
-		// 生成代码包安装脚本
+		// Generate code package install script
 		codepkgInstallScript, err = cd.generateCodePkgInstallScript(packageId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code package install script: %w", err)
 		}
 	}
 
-	// 3. 验证MCP配置
+	// 3. Validate MCP configuration
 	validateInfo, err := utils.ValidateMcpConfig([]byte(req.McpServers))
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate mcp config: %w", err)
 	}
-	// 检查MCP配置是否有效：非有效或者非stdio协议类型
+	// Check if MCP configuration is valid: invalid or non-stdio protocol type
 	if validateInfo == nil {
 		return nil, fmt.Errorf("mcpServers config is invalid: %s", err)
 	}
@@ -263,7 +263,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		return nil, fmt.Errorf("mcp config is invalid protocol type: %s", validateInfo.ProtocolType)
 	}
 
-	// 4. 生成镜像配置
+	// 4. Generate image configuration
 	imgPms, err := cd.getMcpHostingImageCfg(req.ImgAddress, req.Port, req.InitScript, codepkgInstallScript, req.McpServers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
@@ -273,7 +273,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 	command := imgPms.command
 	commandArgs := imgPms.commandArgs
 
-	// 5. 设置环境变量
+	// 5. Set environment variables
 	envVars := make(map[string]string)
 	envVars["MCP_INSTANCE_ID"] = instanceID
 	envVars["MCP_PORT"] = fmt.Sprintf("%d", imgPms.port)
@@ -282,7 +282,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		envVars[k] = v
 	}
 
-	// 6. 设置卷挂载配置（亲和性判断逻辑转移到Create方法中）
+	// 6. Set volume mount configuration (affinity judgment logic moved to Create method)
 	mounts := []k8s.UnifiedMount{}
 	if len(req.VolumeMounts) > 0 {
 		for _, vm := range req.VolumeMounts {
@@ -290,7 +290,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		}
 	}
 
-	// 7. 设置标签
+	// 7. Set labels
 	labels := make(map[string]string)
 	labels["app"] = containerName
 	labels["instance"] = instanceID
@@ -302,7 +302,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", req.RunningTimeout)
 	}
 
-	// 8. 构建容器创建选项
+	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     image,
 		ContainerName: containerName,
@@ -316,7 +316,7 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		WorkingDir:    "/app",
 	}
 
-	// 9. 设置超时上下文
+	// 9. Set timeout context
 	ctx := cd.ctx
 	if req.StartupTimeout > 0 {
 		var cancel context.CancelFunc
@@ -332,25 +332,25 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
-	// 统一使用容器管理器创建（简化判断逻辑）
+	// Use container manager to create uniformly (simplified judgment logic)
 	containerName, err = entry.GetContainerManager().Create(ctx, containerOptions)
 	if err != nil {
-		// 删除容器（如果容器名称不为空）
+		// Delete container (if container name is not empty)
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateFailure)+": %v", err)
 	}
 
-	// 创建svc
+	// Create service
 	_, err = entry.GetServiceManager().Create(ctx, serviceName, port, labels)
 	if err != nil {
-		// 删除容器
+		// Delete container
 		_ = entry.GetContainerManager().Delete(ctx, containerName)
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceCreateFailure)+": %w", err)
 	}
 
-	// 11. 返回创建结果，包含实例更新所需的数据
+	// 11. Return creation result, including data required for instance update
 	return &ContainerCreateResult{
 		ContainerName: containerName,
 		ServiceName:   serviceName,
@@ -359,9 +359,9 @@ func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateReq
 	}, nil
 }
 
-// CreateContainer 创建容器业务逻辑
+// CreateContainer create container business logic
 func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.ContainerCreateOptions, environmentId int32, startupTimeout int32) error {
-	// 9. 设置超时上下文
+	// 9. Set timeout context
 	ctx := cd.ctx
 	if startupTimeout > 0 {
 		var cancel context.CancelFunc
@@ -380,7 +380,7 @@ func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.Contai
 	// create container
 	containerName, err := entry.GetContainerManager().Create(ctx, *containerCreateOptions)
 	if err != nil {
-		// 删除容器（如果容器名称不为空）
+		// Delete container (if container name is not empty)
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
@@ -390,7 +390,7 @@ func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.Contai
 	// create service
 	_, err = entry.GetServiceManager().Create(ctx, containerCreateOptions.ServiceName, containerCreateOptions.Port, containerCreateOptions.Labels)
 	if err != nil {
-		// 删除容器（如果容器名称不为空）
+		// Delete container (if container name is not empty)
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
@@ -400,7 +400,7 @@ func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.Contai
 	return nil
 }
 
-// DeleteContainer 删除容器业务逻辑
+// DeleteContainer delete container business logic
 func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*ContainerDeleteResult, error) {
 	if len(instance.ContainerName) <= 0 {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
@@ -417,14 +417,14 @@ func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*Container
 	}
 
 	message := ""
-	// 2. 删除容器
+	// 2. Delete container
 	if err = entry.GetContainerManager().Delete(cd.ctx, instance.ContainerName); err != nil {
 		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure)+": %v \n", err)
 	} else {
 		message += i18n.FormatWithContext(cd.ctx, i18n.CodeContainerDeleteSuccess) + " \n"
 	}
 
-	// 3. 删除服务
+	// 3. Delete service
 	if err = entry.GetServiceManager().Delete(cd.ctx, instance.ContainerServiceName); err != nil {
 		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceDeleteFailure)+": %v", err.Error())
 	} else {
@@ -439,13 +439,13 @@ func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*Container
 	return resp, nil
 }
 
-// GetContainerStatus 获取容器详细状态信息，包括容器异常检测和服务探测
+// GetContainerStatus get detailed container status information, including container exception detection and service probing
 func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*instancepb.GetStatusResp, error) {
-	// 1. 根据 instanceID 获取实例配置
+	// 1. Get instance configuration based on instanceID
 	instance, err := mysql.McpInstanceRepo.FindByInstanceIDAndAccessType(
 		context.Background(),
 		params.InstanceID,
-		model.AccessTypeHosting, // 托管模式才需要查询容器状态
+		model.AccessTypeHosting, // Only hosting mode needs to query container status
 	)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
@@ -468,7 +468,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 
 	message := ""
 	warningEvents := make([]container.ContainerEvent, 0)
-	// 3. 检查容器就绪状态
+	// 3. Check container ready status
 	containerReady, runInfo, err := entry.GetContainerManager().IsReady(cd.ctx, instance.ContainerName)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerReadyCheckFailure)+": %w", err)
@@ -476,25 +476,25 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 	if !containerReady {
 
 		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerNotReady)+": %s \n", runInfo)
-		// 4. 获取容器警告事件
+		// 4. Get container warning events
 		warningEvents, err = entry.GetContainerManager().GetWarningEvents(cd.ctx, instance.ContainerName)
 		if err != nil {
 			message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetContainerWarningEventsFailure)+": %v \n", err)
 		}
 	}
 
-	// 5. 主动探测服务是否正常运行
+	// 5. Actively probe whether the service is running normally
 	svc, svcErr := entry.GetServiceManager().Get(cd.ctx, instance.ContainerServiceName)
 	svcReady := false
 	if svcErr == nil {
-		// 检查服务配置是否正常
+		// Check if service configuration is normal
 		if svc.ClusterIP != "" {
-			// 对于 Headless Service，ClusterIP 为 "None" 也是正常的
+			// For Headless Service, ClusterIP being "None" is also normal
 			if svc.ClusterIP == "None" || svc.ClusterIP == "docker-network" {
-				// Headless Service 或 Docker 网络，检查是否有端口配置
+				// Headless Service or Docker network, check if there is port configuration
 				svcReady = len(svc.Ports) > 0
 			} else {
-				// 普通 Service，检查 ClusterIP 和端口配置
+				// Normal Service, check ClusterIP and port configuration
 				svcReady = len(svc.Ports) > 0
 			}
 		}
@@ -502,7 +502,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceStatusAbnormal)+": %v \n", svcErr)
 	}
 
-	// 6. 更新实例信息
+	// 6. Update instance information
 	if containerReady && svcReady {
 		instance.ContainerStatus = model.ContainerStatusRunning
 		instance.ContainerIsReady = true
@@ -528,7 +528,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 
 	_, _, mcpCfg, err := instance.GetTargetConfig()
 	if err != nil {
-		return nil, fmt.Errorf("获取目标配置失败: %s", err.Error())
+		return nil, fmt.Errorf("failed to get target configuration: %s", err.Error())
 	}
 	// Use HTTP probe to check service availability
 	probeResult := utils.ProbePortFromURL(cd.ctx, mcpCfg.URL, 5*time.Second)
@@ -537,7 +537,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 	if probeResult.Success {
 		probeHttp = true
 	} else {
-		message += fmt.Sprintf("HTTP 探测失败: %s", probeResult.Error)
+		message += fmt.Sprintf("HTTP probe failed: %s", probeResult.Error)
 	}
 
 	resp := &instancepb.GetStatusResp{
@@ -555,14 +555,14 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 	return resp, nil
 }
 
-// generateContainerName 生成容器名称
+// generateContainerName generates container name
 func (cd *ContainerBiz) generateContainerName(instanceID string) string {
-	// 生成基于实例 ID 的容器名称
+	// Generate container name based on instance ID
 	instanceID = instanceID[:8]
 	return fmt.Sprintf("mcp-instance-%s-container", instanceID)
 }
 
-// generateServiceName 生成服务名称
+// generateServiceName generates service name
 func (cd *ContainerBiz) generateServiceName(instanceID string) string {
 	instanceID = instanceID[:8]
 	return fmt.Sprintf("mcp-instance-%s-service", instanceID)
@@ -680,36 +680,36 @@ func (cd *ContainerBiz) getSupergatewayImage() string {
 	return "ccr.ccs.tencentyun.com/itqm-private/supergateway:3.2.0-uvx"
 }
 
-// ContainerScaleParams 容器缩放参数
+// ContainerScaleParams container scaling parameters
 type ContainerScaleParams struct {
 	InstanceID string
 	Replicas   int32
 }
 
-// ContainerScaleResult 容器缩放结果
+// ContainerScaleResult container scaling result
 type ContainerScaleResult struct {
 	Message string
 }
 
-// ContainerLogsParams 容器日志参数
+// ContainerLogsParams container logs parameters
 type ContainerLogsParams struct {
 	InstanceID string
 	Lines      int64
 }
 
-// ContainerRestartResult 容器重启结果
+// ContainerRestartResult container restart result
 type ContainerRestartResult struct {
 	ContainerName string
 	Message       string
 }
 
-// ScaleContainerToZero 将容器副本数缩放为0
+// ScaleContainerToZero scales container replicas to 0
 func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*ContainerScaleResult, error) {
-	// 1. 根据 instanceID 获取实例配置
+	// 1. Get instance configuration based on instanceID
 	instance, err := mysql.McpInstanceRepo.FindByInstanceIDAndAccessType(
 		context.Background(),
 		instance.InstanceID,
-		model.AccessTypeHosting, // 托管模式才需要缩放容器
+		model.AccessTypeHosting, // Only hosting mode needs container scaling
 	)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
@@ -729,22 +729,22 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
-	// 获取容器管理器和服务管理器
+	// Get container manager and service manager
 	containerManager := entry.GetContainerManager()
 
-	// 根据运行时类型选择缩放策略
+	// Choose scaling strategy based on runtime type
 	if instance.ContainerName != "" {
-		// 获取运行时类型
+		// Get runtime type
 		runtimeType := entry.GetRuntimeType()
 
 		if runtimeType == container.RuntimeKubernetes {
-			// Kubernetes: 设置副本数为0
+			// Kubernetes: Set replicas to 0
 			e1 := containerManager.Scale(cd.ctx, instance.ContainerName, 0)
 			if e1 != nil {
 				return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)+": %w", e1)
 			}
 		} else {
-			// Docker: 删除容器
+			// Docker: Delete container
 			e2 := containerManager.Delete(cd.ctx, instance.ContainerName)
 			if e2 != nil {
 				return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure)+": %w", e2)
@@ -752,7 +752,7 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 		}
 	}
 
-	// 更新实例状态
+	// Update instance status
 	instance.Status = model.InstanceStatusInactive
 	instance.ContainerIsReady = false
 	instance.ContainerStatus = model.ContainerStatusManualStop
@@ -765,13 +765,13 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 	return &ContainerScaleResult{Message: i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)}, nil
 }
 
-// GetContainerLogs 获取容器日志
+// GetContainerLogs gets container logs
 func (cd *ContainerBiz) GetContainerLogs(params ContainerLogsParams) (string, error) {
-	// 1. 根据 instanceID 获取实例配置
+	// 1. Get instance configuration based on instanceID
 	instance, err := mysql.McpInstanceRepo.FindByInstanceIDAndAccessType(
 		context.Background(),
 		params.InstanceID,
-		model.AccessTypeHosting, // 托管模式才需要获取容器日志
+		model.AccessTypeHosting, // Only hosting mode needs to get container logs
 	)
 	if err != nil {
 		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
@@ -791,13 +791,13 @@ func (cd *ContainerBiz) GetContainerLogs(params ContainerLogsParams) (string, er
 		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
-	// 设置默认行数
+	// Set default number of lines
 	lines := params.Lines
 	if lines <= 0 {
 		lines = 100
 	}
 
-	// 获取容器日志
+	// Get container logs
 	logs, err := entry.GetContainerManager().GetLogs(cd.ctx, instance.ContainerName, lines)
 	if err != nil {
 		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetContainerLogsFailure)+": %w", err)
@@ -806,7 +806,7 @@ func (cd *ContainerBiz) GetContainerLogs(params ContainerLogsParams) (string, er
 	return logs, nil
 }
 
-// RestartContainer 重启容器业务逻辑
+// RestartContainer container restart business logic
 func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*ContainerRestartResult, error) {
 	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
 	if err != nil {
@@ -820,7 +820,7 @@ func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*Containe
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
 	}
 
-	// 解析容器创建选项
+	// Parse container creation options
 	var containerOptions container.ContainerCreateOptions
 	if len(instance.ContainerCreateOptions) > 0 {
 		if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
@@ -830,13 +830,13 @@ func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*Containe
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeMissingContainerOptions))
 	}
 
-	// 调用容器管理器的重启方法
+	// Call container manager's restart method
 	err = entry.GetContainerManager().Restart(cd.ctx, containerOptions)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
 	}
 
-	// 获取 service
+	// Get service
 	err = entry.GetServiceManager().Restart(cd.ctx, containerOptions)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
@@ -848,7 +848,7 @@ func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*Containe
 	}, nil
 }
 
-// createDownloadLink 创建下载链接
+// createDownloadLink creates download link
 func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
 	mcpMarketSvc := config.GlobalConfig.Services.McpMarket
 	if mcpMarketSvc == nil {
@@ -868,17 +868,17 @@ func (cd *ContainerBiz) generateDownloadZip(ctx context.Context, codePackage *mo
 		logger.Error("Failed to convert to absolute path", zap.String("relativePath", codePackage.PackagePath), zap.Error(err))
 		return "", "", fmt.Errorf("invalid package path")
 	}
-	// 将相对路径转换为绝对路径
+	// Convert relative path to absolute path
 	absExtractedPath, err := packageManager.ToAbsolutePath(codePackage.ExtractedPath)
 	if err != nil {
 		logger.Error("Failed to convert to absolute path", zap.String("relativePath", codePackage.ExtractedPath), zap.Error(err))
 		return "", "", fmt.Errorf("invalid package path")
 	}
 
-	// codePackage.OriginalName 获取文件名，不包括后缀
+	// codePackage.OriginalName gets filename without extension
 	zipFilePath := fmt.Sprintf("%s/dl-%s.zip", absPackagePath, strings.TrimSuffix(codePackage.OriginalName, filepath.Ext(codePackage.OriginalName)))
 
-	// 创建压缩包
+	// Create compressed package
 	if err := utils.CreatePackageZip(absExtractedPath, zipFilePath); err != nil {
 		logger.Error("Failed to generate package zip", zap.String("packageId", codePackage.PackageID), zap.Error(err))
 		return "", "", fmt.Errorf("failed to generate download package: %v", err)
@@ -887,7 +887,7 @@ func (cd *ContainerBiz) generateDownloadZip(ctx context.Context, codePackage *mo
 	return absExtractedPath, zipFilePath, nil
 }
 
-// volumeMountFromPb 将 pb 卷挂载转换为本地结构
+// volumeMountFromPb converts pb volume mount to local structure
 func (cd *ContainerBiz) volumeMountFromPb(vm *instancepb.VolumeMount) k8s.UnifiedMount {
 	unifiedMount := k8s.UnifiedMount{
 		Type:      k8s.MountType(vm.Type),
@@ -901,10 +901,10 @@ func (cd *ContainerBiz) volumeMountFromPb(vm *instancepb.VolumeMount) k8s.Unifie
 	return unifiedMount
 }
 
-// generateCodePkgScript 生成代码包启动脚本
+// generateCodePkgScript generates code package startup script
 func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, error) {
 	codepkgInstallScript := ""
-	// 查找代码包
+	// Find code package
 	codePackage, err := mysql.McpCodePackageRepo.FindByPackageID(cd.ctx, packageId)
 	if err != nil {
 		return codepkgInstallScript, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeFailedToFindCodePackage)+": %w", err)
@@ -916,7 +916,7 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	if codePackage == nil {
 		return codepkgInstallScript, fmt.Errorf("code package is nil")
 	}
-	// 构建下载和解压ZIP包的命令
+	// Build download and extract ZIP package commands
 	if len(pkgLink) > 0 {
 		codepkgInstallScript = fmt.Sprintf(`
 		# Download and extract ZIP package
@@ -936,23 +936,23 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	return codepkgInstallScript, nil
 }
 
-// GetRuntimeEntry 获取环境的运行时入口
+// GetRuntimeEntry gets runtime entry for environment
 func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint) (*container.Entry, error) {
-	// 根据环境ID获取环境信息
+	// Get environment information by environment ID
 	environment, err := GEnvironmentBiz.GetEnvironment(ctx, environmentID)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure)+": %w", err)
 	}
 
-	// 根据环境类型创建不同的运行时配置
+	// Create different runtime configurations based on environment type
 	switch environment.Environment {
 	case model.McpEnvironmentKubernetes:
-		// 创建Kubernetes容器运行时入口
+		// Create Kubernetes container runtime entry
 		cfg, err := ed.getKubernetesRuntimeConfig(ctx, environment)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetK8sRuntimeEntryFailure)+": %w", err)
 		}
-		// 创建Kubernetes容器运行时入口
+		// Create Kubernetes container runtime entry
 		return container.NewEntry(cfg)
 	case model.McpEnvironmentDocker:
 		// return ed.getDockerRuntimeConfig(ctx, environment)
@@ -962,9 +962,9 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 	}
 }
 
-// getKubernetesRuntimeConfig 获取Kubernetes环境的运行时配置
+// getKubernetesRuntimeConfig gets runtime configuration for Kubernetes environment
 func (ed *ContainerBiz) getKubernetesRuntimeConfig(ctx context.Context, environment *model.McpEnvironment) (container.Config, error) {
-	// 创建Kubernetes容器运行时配置
+	// Create Kubernetes container runtime configuration
 	return container.Config{
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
@@ -972,16 +972,16 @@ func (ed *ContainerBiz) getKubernetesRuntimeConfig(ctx context.Context, environm
 	}, nil
 }
 
-// BuildContainerOptions 构建容器创建选项
+// BuildContainerOptions builds container creation options
 func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID string, mcpProtocol model.McpProtocol, mcpServices string, packageId string, port int32, initScript string, command string, imgAddress string,
 	evs map[string]string, vms []*instancepb.VolumeMount, startupTimeout int32, runningTimeout int32) (*container.ContainerCreateOptions, error) {
 	var err error
 	containerName := cd.generateContainerName(instanceID)
 	serviceName := cd.generateServiceName(instanceID)
-	// 代码包下载链接生成
+	// Generate code package download link
 	codepkgInstallScript := ""
 	if packageId != "" {
-		// 生成代码包安装脚本
+		// Generate code package install script
 		var e1 error
 		codepkgInstallScript, e1 = cd.generateCodePkgInstallScript(packageId)
 		if e1 != nil {
@@ -991,13 +991,13 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 
 	imgPms := &imageParams{}
 	if mcpProtocol == model.McpProtocolSSE || mcpProtocol == model.McpProtocolStreamableHttp {
-		// 生成镜像配置
+		// Generate image configuration
 		imgPms, err = cd.getMcpHostingImageCfgForSSEAndSteamableHttp(imgAddress, port, initScript, command, codepkgInstallScript)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
 		}
 	} else {
-		// 生成镜像配置
+		// Generate image configuration
 		imgPms, err = cd.getMcpHostingImageCfg(imgAddress, port, command, codepkgInstallScript, mcpServices)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
@@ -1007,7 +1007,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		return nil, fmt.Errorf("build container options failed: image or command or port is empty")
 	}
 
-	// 设置环境变量
+	// Set environment variables
 	envVars := make(map[string]string)
 	envVars["MCP_INSTANCE_ID"] = instanceID
 	envVars["MCP_PORT"] = fmt.Sprintf("%d", imgPms.port)
@@ -1016,7 +1016,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		envVars[k] = v
 	}
 
-	// 设置卷挂载配置（亲和性判断逻辑转移到Create方法中）
+	// Set volume mount configuration (affinity judgment logic moved to Create method)
 	mounts := []k8s.UnifiedMount{}
 	if len(vms) > 0 {
 		for _, vm := range vms {
@@ -1024,7 +1024,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		}
 	}
 
-	// 设置标签
+	// Set labels
 	labels := make(map[string]string)
 	labels["app"] = containerName
 	labels["instance"] = instanceID
@@ -1036,7 +1036,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
 
-	// 8. 构建容器创建选项
+	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     imgPms.image,
 		ContainerName: containerName,
@@ -1051,6 +1051,6 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		WorkingDir:    "/app",
 	}
 
-	// 创建Kubernetes容器运行时配置
+	// Create Kubernetes container runtime configuration
 	return &containerOptions, nil
 }

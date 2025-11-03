@@ -9,19 +9,19 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// TaskScheduler 任务调度器实现
+// TaskScheduler task scheduler implementation
 type TaskScheduler struct {
-	cronScheduler  *cron.Cron            // Cron调度器
-	timerTasks     map[string]*TimerTask // 定时任务映射
-	tasks          map[string]Task       // 所有任务映射
-	running        bool                  // 运行状态
-	mu             sync.RWMutex          // 读写锁
-	ctx            context.Context       // 上下文
-	cancel         context.CancelFunc    // 取消函数
-	taskRepository TaskRepository        // 任务存储
+	cronScheduler  *cron.Cron            // Cron scheduler
+	timerTasks     map[string]*TimerTask // Timer task mapping
+	tasks          map[string]Task       // All task mapping
+	running        bool                  // Running status
+	mu             sync.RWMutex          // Read-write lock
+	ctx            context.Context       // Context
+	cancel         context.CancelFunc    // Cancel function
+	taskRepository TaskRepository        // Task repository
 }
 
-// NewTaskScheduler 创建新的任务调度器
+// NewTaskScheduler creates a new task scheduler
 func NewTaskScheduler(taskRepository TaskRepository) *TaskScheduler {
 	return &TaskScheduler{
 		cronScheduler:  cron.New(cron.WithSeconds()),
@@ -32,45 +32,45 @@ func NewTaskScheduler(taskRepository TaskRepository) *TaskScheduler {
 	}
 }
 
-// Start 启动调度器
+// Start starts the scheduler
 func (s *TaskScheduler) Start(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.running {
-		return fmt.Errorf("调度器已经在运行中")
+		return fmt.Errorf("scheduler is already running")
 	}
 
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	s.running = true
 
-	// 启动Cron调度器
+	// Start Cron scheduler
 	s.cronScheduler.Start()
 
-	// 启动定时任务监控
+	// Start timer task monitoring
 	go s.monitorTimerTasks()
 
 	return nil
 }
 
-// Stop 停止调度器
+// Stop stops the scheduler
 func (s *TaskScheduler) Stop() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if !s.running {
-		return fmt.Errorf("调度器未运行")
+		return fmt.Errorf("scheduler is not running")
 	}
 
-	// 停止Cron调度器
+	// Stop Cron scheduler
 	s.cronScheduler.Stop()
 
-	// 取消所有定时任务
+	// Cancel all timer tasks
 	for _, task := range s.timerTasks {
 		task.Cancel()
 	}
 
-	// 取消上下文
+	// Cancel context
 	if s.cancel != nil {
 		s.cancel()
 	}
@@ -79,17 +79,17 @@ func (s *TaskScheduler) Stop() error {
 	return nil
 }
 
-// AddTask 添加任务
+// AddTask adds a task
 func (s *TaskScheduler) AddTask(task Task) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	taskID := task.GetID()
 	if _, exists := s.tasks[taskID]; exists {
-		return fmt.Errorf("任务ID %s 已存在", taskID)
+		return fmt.Errorf("task ID %s already exists", taskID)
 	}
 
-	// 根据任务类型添加到相应的调度器
+	// Add to corresponding scheduler based on task type
 	switch t := task.(type) {
 	case *CronTask:
 		err := s.addCronTask(t)
@@ -102,32 +102,32 @@ func (s *TaskScheduler) AddTask(task Task) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("不支持的任务类型")
+		return fmt.Errorf("unsupported task type")
 	}
 
 	s.tasks[taskID] = task
 
-	// 保存任务到存储
+	// Save task to repository
 	if s.taskRepository != nil {
 		if err := s.taskRepository.SaveTask(s.ctx, task); err != nil {
-			return fmt.Errorf("保存任务失败: %w", err)
+			return fmt.Errorf("failed to save task: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// RemoveTask 移除任务
+// RemoveTask removes a task
 func (s *TaskScheduler) RemoveTask(taskID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	task, exists := s.tasks[taskID]
 	if !exists {
-		return fmt.Errorf("任务ID %s 不存在", taskID)
+		return fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
-	// 根据任务类型从相应的调度器中移除
+	// Remove from corresponding scheduler based on task type
 	switch t := task.(type) {
 	case *CronTask:
 		s.cronScheduler.Remove(t.entryID)
@@ -138,30 +138,30 @@ func (s *TaskScheduler) RemoveTask(taskID string) error {
 
 	delete(s.tasks, taskID)
 
-	// 从存储中删除任务
+	// Delete task from repository
 	if s.taskRepository != nil {
 		if err := s.taskRepository.DeleteTask(taskID); err != nil {
-			return fmt.Errorf("删除任务失败: %w", err)
+			return fmt.Errorf("failed to delete task: %w", err)
 		}
 	}
 
 	return nil
 }
 
-// GetTask 获取任务
+// GetTask gets a task
 func (s *TaskScheduler) GetTask(taskID string) (Task, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	task, exists := s.tasks[taskID]
 	if !exists {
-		return nil, fmt.Errorf("任务ID %s 不存在", taskID)
+		return nil, fmt.Errorf("task ID %s does not exist", taskID)
 	}
 
 	return task, nil
 }
 
-// ListTasks 列出所有任务
+// ListTasks lists all tasks
 func (s *TaskScheduler) ListTasks() []Task {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -174,33 +174,33 @@ func (s *TaskScheduler) ListTasks() []Task {
 	return tasks
 }
 
-// IsRunning 检查调度器是否运行中
+// IsRunning checks if the scheduler is running
 func (s *TaskScheduler) IsRunning() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.running
 }
 
-// addCronTask 添加Cron任务
+// addCronTask adds a Cron task
 func (s *TaskScheduler) addCronTask(task *CronTask) error {
 	entryID, err := s.cronScheduler.AddFunc(task.GetCronExpr(), func() {
 		s.executeCronTask(task)
 	})
 	if err != nil {
-		return fmt.Errorf("添加Cron任务失败: %w", err)
+		return fmt.Errorf("failed to add Cron task: %w", err)
 	}
 
 	task.entryID = entryID
 	return nil
 }
 
-// addTimerTask 添加定时任务
+// addTimerTask adds a timer task
 func (s *TaskScheduler) addTimerTask(task *TimerTask) error {
 	now := time.Now()
 	executeAt := task.GetExecuteAt()
 
 	if executeAt.Before(now) {
-		return fmt.Errorf("执行时间不能早于当前时间")
+		return fmt.Errorf("execution time cannot be earlier than current time")
 	}
 
 	duration := executeAt.Sub(now)
@@ -212,29 +212,29 @@ func (s *TaskScheduler) addTimerTask(task *TimerTask) error {
 	return nil
 }
 
-// executeCronTask 执行Cron任务
+// executeCronTask executes a Cron task
 func (s *TaskScheduler) executeCronTask(task *CronTask) {
 	go func() {
-		ctx, cancel := context.WithTimeout(s.ctx, 60*time.Minute) // 60分钟超时
+		ctx, cancel := context.WithTimeout(s.ctx, 60*time.Minute) // 60 minute timeout
 		defer cancel()
 
 		err := task.Execute(ctx)
 		if err != nil {
-			// 记录错误日志
-			fmt.Printf("Cron任务执行失败 [%s]: %v\n", task.GetName(), err)
+			// Log error
+			fmt.Printf("Cron task execution failed [%s]: %v\n", task.GetName(), err)
 		}
 
-		// 更新下次执行时间
+		// Update next run time
 		task.UpdateNextRunTime()
 
-		// 更新任务状态到存储
+		// Update task status to repository
 		if s.taskRepository != nil {
 			s.taskRepository.UpdateTaskStatus(task.GetID(), task.GetStatus())
 		}
 	}()
 }
 
-// monitorTimerTasks 监控定时任务
+// monitorTimerTasks monitors timer tasks
 func (s *TaskScheduler) monitorTimerTasks() {
 	for {
 		select {
@@ -242,12 +242,12 @@ func (s *TaskScheduler) monitorTimerTasks() {
 			return
 		default:
 			s.checkTimerTasks()
-			time.Sleep(1 * time.Second) // 每秒检查一次
+			time.Sleep(1 * time.Second) // Check every second
 		}
 	}
 }
 
-// checkTimerTasks 检查定时任务
+// checkTimerTasks checks timer tasks
 func (s *TaskScheduler) checkTimerTasks() {
 	s.mu.RLock()
 	tasks := make([]*TimerTask, 0, len(s.timerTasks))
@@ -261,29 +261,29 @@ func (s *TaskScheduler) checkTimerTasks() {
 		case <-task.timer.C:
 			s.executeTimerTask(task)
 		default:
-			// 任务还未到执行时间
+			// Task has not reached execution time yet
 		}
 	}
 }
 
-// executeTimerTask 执行定时任务
+// executeTimerTask executes a timer task
 func (s *TaskScheduler) executeTimerTask(task *TimerTask) {
 	go func() {
-		ctx, cancel := context.WithTimeout(s.ctx, 60*time.Minute) // 60分钟超时
+		ctx, cancel := context.WithTimeout(s.ctx, 60*time.Minute) // 60 minute timeout
 		defer cancel()
 
 		err := task.Execute(ctx)
 		if err != nil {
-			// 记录错误日志
-			fmt.Printf("定时任务执行失败 [%s]: %v\n", task.GetName(), err)
+			// Log error
+			fmt.Printf("Timer task execution failed [%s]: %v\n", task.GetName(), err)
 		}
 
-		// 更新任务状态到存储
+		// Update task status to repository
 		if s.taskRepository != nil {
 			s.taskRepository.UpdateTaskStatus(task.GetID(), task.GetStatus())
 		}
 
-		// 移除已完成的定时任务
+		// Remove completed timer task
 		s.mu.Lock()
 		delete(s.timerTasks, task.GetID())
 		delete(s.tasks, task.GetID())
