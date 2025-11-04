@@ -23,14 +23,14 @@
       </div>
     </div>
     <div class="mt-4">
-      <el-row :gutter="32" :style="{ height: 'calc(100vh - 200px)' }">
+      <el-row :gutter="32" :style="{ height: 'calc(100vh - 150px)' }">
         <el-col :span="4">
           <el-card :style="{ height: '100%' }">
             <template #header>
               <span>{{ t('code.fileTree') }}</span>
             </template>
             <el-tree
-              :style="{ height: 'calc(100% - 40px)', overflow: 'auto' }"
+              :style="{ overflow: 'auto' }"
               :data="fileTree"
               :props="defaultProps"
               @node-click="handleNodeClick"
@@ -57,7 +57,7 @@
                 </span>
               </el-space>
             </template>
-            <el-scrollbar ref="scrollbarRef" height="calc(100vh - 300px)" always>
+            <el-scrollbar ref="scrollbarRef" height="calc(100vh - 260px)" always>
               <div v-if="!currentContent">{{ t('code.empty') }}</div>
               <div class="text-conetnt" v-else>
                 <!-- 图片显示 -->
@@ -119,6 +119,10 @@ const getNodeIcon = (nodeData: any) => {
     case 'txt':
     case 'xml':
     case 'yml':
+    case 'yaml':
+    case 'json':
+    case 'dxt':
+    case 'sh':
       return Document
     case 'png':
     case 'jpg':
@@ -221,7 +225,7 @@ onMounted(init)
 
 <style lang="scss" scoped>
 .text-conetnt {
-  height: calc(100vh - 300px);
+  height: calc(100vh - 260px);
   font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
   font-size: 12px;
   line-height: 1.5;
@@ -233,7 +237,7 @@ onMounted(init)
   border-radius: 8px;
 }
 :deep(.el-card__body) {
-  height: calc(100% - 100px);
+  height: calc(100%);
   overflow-y: auto;
 }
 /* 图标样式：区分文件夹和文件 */

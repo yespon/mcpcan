@@ -3,6 +3,7 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
+import fs from 'node:fs' // 使用ES模块风格导入fs
 import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
 
 // https://vite.dev/config/
@@ -10,17 +11,24 @@ export default defineConfig({
   server: {
     open: true,
     host: '0.0.0.0',
-    port: 3000,
+    // 配置证书
+    https: {
+      // 注意这里需要将证书配置放在https对象内
+      cert: fs.readFileSync(path.resolve(__dirname, './cert.pem')), // 使用path.resolve确保路径正确
+      key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
+    },
+    // 可选配置
+    port: 443, // HTTPS 默认端口
     proxy: {
       '/api/authz': {
-        target: 'http://192.168.6.91:8082',
+        target: 'https://mcp-test.itqm.com',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/api': {
-        target: 'http://192.168.6.91:8081',
+        target: 'https://mcp-test.itqm.com',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },
