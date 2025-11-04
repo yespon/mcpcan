@@ -12,6 +12,7 @@ import (
 func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_InstanceInfo {
 	accessType, _ := ConvertToProtoAccessType(model.AccessType(instance.AccessType))
 	mcpProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.McpProtocol))
+	proxyProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.ProxyProtocol))
 	tokens := ConvertToProtoMcpToken(instance.Tokens)
 	return &instancepb.ListResp_InstanceInfo{
 		InstanceId:                 instance.InstanceID,
@@ -28,14 +29,15 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		ContainerInitTimeoutStopAt: instance.StartupTimeout,
 		ContainerRunTimeoutStopAt:  instance.RunningTimeout,
 		SourceConfig:               string(instance.SourceConfig),
-		TargetConfig:               string(instance.TargetConfig),
-		PublicProxyConfig:          string(instance.PublicProxyConfig),
 		CreatedAt:                  instance.CreatedAt.String(),
 		UpdatedAt:                  instance.UpdatedAt.String(),
 		McpProtocol:                mcpProtocol,
+		EnabledToken:               instance.EnabledToken,
 		Tokens:                     tokens,
 		IconPath:                   instance.IconPath,
 		ServicePath:                instance.ServicePath,
+		PublicProxyPath:            instance.PublicProxyPath,
+		ProxyProtocol:              proxyProtocol,
 	}
 }
 
@@ -125,6 +127,9 @@ func ConvertToProtoAccessType(accessType model.AccessType) (instancepb.AccessTyp
 
 func ConvertToProtoMcpToken(tokens []model.McpToken) []*instancepb.McpToken {
 	protoTokens := make([]*instancepb.McpToken, 0, len(tokens))
+	if len(tokens) == 0 {
+		return protoTokens
+	}
 	for _, token := range tokens {
 		protoTokens = append(protoTokens, &instancepb.McpToken{
 			Token:     token.Token,

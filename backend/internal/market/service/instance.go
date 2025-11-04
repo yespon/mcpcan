@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -364,13 +363,19 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 
 	// Build response
 	resp := &instancepb.DetailResp{
-		InstanceId:  instance.InstanceID,
-		Name:        instance.InstanceName,
-		Status:      string(instance.Status),
-		AccessType:  pbAccessType,
-		McpProtocol: pbMcpProtocol,
-		Notes:       instance.Notes,
-		IconPath:    instance.IconPath,
+		InstanceId:   instance.InstanceID,
+		Name:         instance.InstanceName,
+		Status:       string(instance.Status),
+		AccessType:   pbAccessType,
+		McpProtocol:  pbMcpProtocol,
+		Notes:        instance.Notes,
+		IconPath:     instance.IconPath,
+		EnabledToken: instance.EnabledToken,
+	}
+
+	if instance.EnabledToken {
+		tokens := common.ConvertToProtoMcpToken(instance.Tokens)
+		resp.Tokens = tokens
 	}
 
 	// Add specific fields based on access type
@@ -407,13 +412,6 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 				resp.VolumeMounts = volumeMounts
 			}
 		}
-
-		// Convert tokens
-		resp.Tokens = common.ConvertToProtoMcpToken(instance.Tokens)
-
-		// Convert public proxy configuration
-		resp.PublicProxyConfig = string(instance.PublicProxyConfig)
-
 	case model.AccessTypeDirect, model.AccessTypeProxy:
 		// For direct and proxy mode, add MCP servers configuration
 		if len(instance.SourceConfig) > 0 {
@@ -557,13 +555,12 @@ func (s *InstanceService) getStatus(req *instancepb.GetStatusRequest) (*instance
 
 		response = result
 	case model.AccessTypeProxy:
-		_, _, tMcpConfig, err := instance.GetTargetConfig()
+		_, _, mcpConfig, err := instance.GetSourceConfig()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get target configuration: %s", err.Error())
+			return nil, fmt.Errorf("failed to get source config: %v", err)
 		}
-
 		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(s.ctx, tMcpConfig.URL, 5*time.Second)
+		probeResult := utils.ProbePortFromURL(s.ctx, mcpConfig.URL, 5*time.Second)
 
 		// Build response
 		response = &instancepb.GetStatusResp{
@@ -578,13 +575,12 @@ func (s *InstanceService) getStatus(req *instancepb.GetStatusRequest) (*instance
 			response.ProbeHttp = true
 		}
 	case model.AccessTypeDirect:
-		_, _, sMcpConfig, err := instance.GetTargetConfig()
+		_, _, mcpConfig, err := instance.GetSourceConfig()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get target configuration: %s", err.Error())
+			return nil, fmt.Errorf("failed to get source config: %v", err)
 		}
-
 		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(s.ctx, sMcpConfig.URL, 5*time.Second)
+		probeResult := utils.ProbePortFromURL(s.ctx, mcpConfig.URL, 5*time.Second)
 
 		// Build response
 		response = &instancepb.GetStatusResp{
@@ -667,13 +663,11 @@ func (s *InstanceService) restart(req *instancepb.RestartRequest) (*instancepb.R
 
 	// 4. Return restart result
 	return &instancepb.RestartResp{
-		InstanceId:        instance.InstanceID,
-		Name:              instance.InstanceName,
-		Status:            string(instance.Status),
-		AccessType:        pbAccessType,
-		AccessConfig:      s.convertMcpConfigToProto(instance.TargetConfig),
-		PublicProxyConfig: s.convertMcpConfigToProto(instance.PublicProxyConfig),
-		Message:           "Instance restarted successfully",
+		InstanceId: instance.InstanceID,
+		Name:       instance.InstanceName,
+		Status:     string(instance.Status),
+		AccessType: pbAccessType,
+		Message:    "Instance restarted successfully",
 	}, nil
 }
 
@@ -746,20 +740,17 @@ func (s *InstanceService) createInstanceDirectMode(req *instancepb.CreateRequest
 	sourceConfig := json.RawMessage([]byte(req.McpServers))
 	// Create new instance record
 	instance := &model.McpInstance{
-		InstanceID:        instanceID,
-		InstanceName:      req.Name,
-		AccessType:        accessType,
-		McpProtocol:       mcpProtocol,
-		SourceType:        sourceType,
-		SourceConfig:      sourceConfig,
-		TargetConfig:      sourceConfig,
-		PublicProxyConfig: sourceConfig,
-		Status:            model.InstanceStatusActive,
-		IconPath:          req.IconPath,         // Add iconPath field handling
-		Notes:             req.Notes,            // Add notes field handling
-		McpServerID:       req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:        uint(req.TemplateId), // Add templateId field handling
-		ServicePath:       req.ServicePath,      // Add servicePath field handling
+		InstanceID:   instanceID,
+		InstanceName: req.Name,
+		AccessType:   accessType,
+		McpProtocol:  mcpProtocol,
+		SourceType:   sourceType,
+		SourceConfig: sourceConfig,
+		Status:       model.InstanceStatusActive,
+		IconPath:     req.IconPath,         // Add iconPath field handling
+		Notes:        req.Notes,            // Add notes field handling
+		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
+		TemplateID:   uint(req.TemplateId), // Add templateId field handling
 	}
 
 	// Save instance to database
@@ -807,27 +798,25 @@ func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest,
 	if validationResult.ProtocolType != string(mcpProtocol) {
 		return nil, fmt.Errorf("mcp servers config is invalid: protocol type is %s, expected %s", validationResult.ProtocolType, mcpProtocol)
 	}
-
-	// Create proxy configuration
-	publicProxyConfig := biz.GInstanceBiz.CreatePublicProxyConfig(instanceID, mcpProtocol)
-	pb, _ := common.MarshalAndAssignConfig(publicProxyConfig)
+	proxyProtocol := mcpProtocol
+	publicProxyPath := biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
 
 	// Create new instance record
 	instance := &model.McpInstance{
-		InstanceID:        instanceID,
-		InstanceName:      req.Name,
-		AccessType:        accessType,
-		McpProtocol:       mcpProtocol,
-		SourceType:        sourceType,
-		SourceConfig:      json.RawMessage([]byte(req.McpServers)),
-		PublicProxyConfig: pb,
-		TargetConfig:      json.RawMessage([]byte(req.McpServers)),
-		Status:            model.InstanceStatusActive,
-		IconPath:          req.IconPath,         // Add iconPath field handling
-		Notes:             req.Notes,            // Add notes field handling
-		McpServerID:       req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:        uint(req.TemplateId), // Add templateId field handling
-		ServicePath:       req.ServicePath,      // Add servicePath field handling
+		InstanceID:      instanceID,
+		InstanceName:    req.Name,
+		AccessType:      accessType,
+		McpProtocol:     mcpProtocol,
+		SourceType:      sourceType,
+		SourceConfig:    json.RawMessage([]byte(req.McpServers)),
+		Status:          model.InstanceStatusActive,
+		IconPath:        req.IconPath,         // Add iconPath field handling
+		Notes:           req.Notes,            // Add notes field handling
+		McpServerID:     req.McpServerId,      // Add mcpServerId field handling
+		TemplateID:      uint(req.TemplateId), // Add templateId field handling
+		ServicePath:     req.ServicePath,      // Add servicePath field handling
+		PublicProxyPath: publicProxyPath,
+		ProxyProtocol:   proxyProtocol,
 	}
 
 	// Save instance to database
@@ -907,29 +896,6 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		return nil, fmt.Errorf("failed to create container: %w", err)
 	}
 
-	// Create target configuration
-	toMcpProtocol := mcpProtocol
-	if mcpProtocol == model.McpProtocolStdio {
-		toMcpProtocol = model.McpProtocolSSE
-	}
-	// Call data layer to create container
-	tb := []byte{}
-	switch mcpProtocol {
-	case model.McpProtocolStdio:
-		if strings.Contains(req.ImgAddress, common.DefatuleHostingImg) {
-			targetConfig := common.CreateTargetProxyConfigForDefatuleHostingImg(containerOptions.ServiceName, containerOptions.Port, containerOptions.ContainerName, toMcpProtocol)
-			tb, _ = common.MarshalAndAssignConfig(targetConfig)
-		}
-	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
-		targetConfig := common.CreateTargetProxyConfigForHttp(containerOptions.ServiceName, containerOptions.Port, containerOptions.ContainerName, mcpProtocol, req.ServicePath)
-		tb, _ = common.MarshalAndAssignConfig(targetConfig)
-	default:
-		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
-	}
-	// Create proxy configuration
-	publicProxyConfig := biz.GInstanceBiz.CreatePublicProxyConfig(instanceID, toMcpProtocol)
-	pb, _ := common.MarshalAndAssignConfig(publicProxyConfig)
-
 	// Create new instance record
 	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
 	if err != nil {
@@ -942,6 +908,22 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 	vms, err := common.MarshalAndAssignConfig(req.VolumeMounts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal volume mounts: %w", err)
+	}
+	// Create target configuration
+	proxyProtocol := mcpProtocol
+	publicProxyPath := ""
+	containerServiceURL := ""
+	switch mcpProtocol {
+	case model.McpProtocolStdio:
+		proxyProtocol = model.McpProtocolStreamableHttp
+		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp")
+	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
+		proxyProtocol = mcpProtocol
+		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
+	default:
+		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
 	instance := &model.McpInstance{
 		InstanceID:             instanceID,
@@ -967,14 +949,15 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		ContainerIsReady:       false,
 		ContainerCreateOptions: containerCreateOptions,
 		ContainerLastMessage:   "container is pending",
+		ContainerServiceURL:    containerServiceURL,
 		StartupTimeout:         int64(req.StartupTimeout),
 		RunningTimeout:         int64(req.RunningTimeout),
 		SourceConfig:           json.RawMessage(req.McpServers),
-		TargetConfig:           tb,
-		PublicProxyConfig:      pb,
 		ServicePath:            req.ServicePath,
 		Notes:                  req.Notes,
 		IconPath:               req.IconPath,
+		PublicProxyPath:        publicProxyPath,
+		ProxyProtocol:          proxyProtocol,
 	}
 
 	// Save instance to database
@@ -1016,65 +999,4 @@ func (s *InstanceService) validateTimeoutParams(startupTimeout, runningTimeout i
 	}
 
 	return nil
-}
-
-// convertMcpConfigToProto converts JSON configuration from database to proto structure
-func (s *InstanceService) convertMcpConfigToProto(configData json.RawMessage) *instancepb.McpServersConfig {
-	if len(configData) == 0 {
-		return nil
-	}
-
-	// Parse configuration from database
-	_, mcpConfig, err := model.ParseMcpServersConfig(configData)
-	if err != nil || mcpConfig == nil {
-		return nil
-	}
-
-	// Extract host and port information from URL
-	host := "localhost"
-	port := int32(8080)
-	protocol := "http"
-
-	if mcpConfig.URL != "" {
-		// Simple URL parsing to get host and port
-		if strings.HasPrefix(mcpConfig.URL, "http://") {
-			protocol = "http"
-			urlPart := strings.TrimPrefix(mcpConfig.URL, "http://")
-			if parts := strings.Split(urlPart, ":"); len(parts) >= 2 {
-				host = parts[0]
-				if portStr := strings.Split(parts[1], "/")[0]; portStr != "" {
-					if p, err := strconv.Atoi(portStr); err == nil {
-						port = int32(p)
-					}
-				}
-			} else if len(parts) == 1 {
-				host = strings.Split(parts[0], "/")[0]
-			}
-		} else if strings.HasPrefix(mcpConfig.URL, "https://") {
-			protocol = "https"
-			urlPart := strings.TrimPrefix(mcpConfig.URL, "https://")
-			if parts := strings.Split(urlPart, ":"); len(parts) >= 2 {
-				host = parts[0]
-				if portStr := strings.Split(parts[1], "/")[0]; portStr != "" {
-					if p, err := strconv.Atoi(portStr); err == nil {
-						port = int32(p)
-					}
-				}
-			} else if len(parts) == 1 {
-				host = strings.Split(parts[0], "/")[0]
-				port = 443
-			}
-		}
-	}
-
-	// If Transport field exists, use it first
-	if mcpConfig.Transport != "" {
-		protocol = mcpConfig.Transport
-	}
-
-	return &instancepb.McpServersConfig{
-		Host:     host,
-		Port:     port,
-		Protocol: protocol,
-	}
 }

@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"strings"
+
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -101,7 +102,7 @@ func SetKubeConfig(byteCfg []byte) *rest.Config {
 }
 
 // createTargetProxyConfigForDefatuleHostingImg creates target proxy configuration
-func CreateTargetProxyConfigForDefatuleHostingImg(serviceName string, servicePort int32, mcpName string, mcpProtocol model.McpProtocol) *model.McpServersConfig {
+func CreateTargetProxyConfigForDefatuleHostingImg(serviceName string, servicePort int32, mcpName string, mcpProtocol model.McpProtocol) (*model.McpServersConfig, string) {
 	addr := fmt.Sprintf("http://%s:%d", serviceName, servicePort)
 	if mcpProtocol == model.McpProtocolSSE {
 		addr += fmt.Sprintf("/%s", mcpProtocol.String())
@@ -112,11 +113,11 @@ func CreateTargetProxyConfigForDefatuleHostingImg(serviceName string, servicePor
 	return &model.McpServersConfig{
 		McpServers: map[string]*model.McpConfig{
 			mcpName: {
-				Type: mcpProtocol.String(),
-				URL:  addr,
+				Transport: mcpProtocol.String(),
+				URL:       addr,
 			},
 		},
-	}
+	}, addr
 }
 
 // createTargetProxyConfigForHttp creates target proxy configuration
@@ -125,8 +126,8 @@ func CreateTargetProxyConfigForHttp(serviceName string, servicePort int32, mcpNa
 	return &model.McpServersConfig{
 		McpServers: map[string]*model.McpConfig{
 			mcpName: {
-				Type: mcpProtocol.String(),
-				URL:  addr,
+				Transport: mcpProtocol.String(),
+				URL:       addr,
 			},
 		},
 	}

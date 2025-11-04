@@ -183,7 +183,7 @@ func bindRawQuery(c *gin.Context, rawQuery string, req interface{}) error {
 				// Build ordered array from indexed map
 				var indexedValues []string
 				for i := 0; i <= maxIndex; i++ {
-					if vals, exists := indexedMap[i]; exists {
+					if vals, ok := indexedMap[i]; ok {
 						indexedValues = append(indexedValues, vals...)
 					}
 				}

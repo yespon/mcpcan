@@ -85,6 +85,7 @@ type McpInstance struct {
 	InstanceName           string          `gorm:"size:200;not null;comment:实例名称" json:"instanceName"`
 	Notes                  string          `gorm:"type:text;comment:备注" json:"notes"`
 	AccessType             AccessType      `gorm:"size:20;not null;comment:访问类型 (直连-direct/代理-proxy/托管-hosting)" json:"accessType"`
+	SourceConfig           json.RawMessage `gorm:"type:json;comment:MCP 来源服务配置 (JSON格式)" json:"sourceConfig"`
 	McpProtocol            McpProtocol     `gorm:"size:20;not null;comment:MCP 协议 (sse/streamableHttp/stdio)" json:"mcpProtocol"`
 	Status                 InstanceStatus  `gorm:"size:20;not null;default:active;comment:实例状态 (活跃-active/不活跃-inactive)" json:"status"`
 	PackageID              string          `gorm:"size:100;not null;comment:实例所属套餐ID" json:"packageID"`
@@ -92,11 +93,13 @@ type McpInstance struct {
 	SourceType             SourceType      `gorm:"size:20;not null;comment:实例来源 (MCP 市场-market/实例模版-template/自定义-custom)" json:"sourceType"`
 	McpServerID            string          `gorm:"size:100;not null;comment:MCP 服务器ID" json:"mcpServerID"`
 	TemplateID             uint            `gorm:"size:100;not null;comment:实例模版ID" json:"templateID"`
+	EnabledToken           bool            `gorm:"not null;default:false;comment:是否启用令牌" json:"enabledToken"`
 	Tokens                 []McpToken      `gorm:"type:json;comment:MCP 实例令牌 (JSON格式)" json:"tokens"`
 	ImgAddr                string          `gorm:"size:100;not null;default:'';comment:镜像地址" json:"imgAddr"`
 	Port                   int32           `gorm:"default:0;comment:端口号" json:"port"`
 	InitScript             string          `gorm:"type:text;comment:初始化脚本" json:"initScript"`
 	Command                string          `gorm:"type:text;comment:启动命令" json:"command"`
+	ServicePath            string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`
 	EnvironmentVariables   json.RawMessage `gorm:"type:json;comment:环境变量 (JSON格式)" json:"environmentVariables"`
 	VolumeMounts           json.RawMessage `gorm:"type:json;comment:卷挂载配置列表 (JSON格式)" json:"volumeMounts"`
 	StartupTimeout         int64           `gorm:"type:bigint;default:0;comment:容器启动超时时间 (毫秒时间戳)" json:"startupTimeout"`
@@ -107,10 +110,10 @@ type McpInstance struct {
 	ContainerServiceName   string          `gorm:"size:100;not null;comment:容器服务名称" json:"containerServiceName"`
 	ContainerIsReady       bool            `gorm:"not null;comment:容器服务名称" json:"containerIsReady"`
 	ContainerLastMessage   string          `gorm:"type:text;comment:容器上次状态信息" json:"containerLastMessage"`
-	SourceConfig           json.RawMessage `gorm:"type:json;comment:MCP 来源服务配置 (JSON格式)" json:"sourceConfig"`
+	ContainerServiceURL    string          `gorm:"size:100;not null;default:'';comment:MCP 目标服务URL" json:"containerURL"`
+	PublicProxyPath        string          `gorm:"size:500;not null;default:'';comment:MCP 公网代理服务路径" json:"publicProxyPath"`
+	ProxyProtocol          McpProtocol     `gorm:"size:20;not null;comment:MCP 代理服务协议 (sse/streamableHttp/stdio)" json:"proxyProtocol"`
 	TargetConfig           json.RawMessage `gorm:"type:json;comment:MCP 目标服务配置 (JSON格式)" json:"targetConfig"`
-	PublicProxyConfig      json.RawMessage `gorm:"type:json;comment:MCP 公网代理服务配置 (JSON格式)" json:"publicProxyConfig"`
-	ServicePath            string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`
 	IconPath               string          `gorm:"size:100;not null;default:'';comment:MCP 图标路径" json:"iconPath"`
 	CreatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
@@ -227,14 +230,4 @@ func parseMcpServersConfig(data json.RawMessage) (string, *McpServersConfig, *Mc
 // GetSourceConfig 获取源配置
 func (m *McpInstance) GetSourceConfig() (string, *McpServersConfig, *McpConfig, error) {
 	return parseMcpServersConfig(m.SourceConfig)
-}
-
-// GetTargetConfig 获取目标配置
-func (m *McpInstance) GetTargetConfig() (string, *McpServersConfig, *McpConfig, error) {
-	return parseMcpServersConfig(m.TargetConfig)
-}
-
-// GetPublicProxyConfig 获取公共代理配置
-func (m *McpInstance) GetPublicProxyConfig() (string, *McpServersConfig, *McpConfig, error) {
-	return parseMcpServersConfig(m.PublicProxyConfig)
 }

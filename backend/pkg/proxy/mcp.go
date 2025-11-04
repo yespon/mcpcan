@@ -412,63 +412,35 @@ func GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
 	if instance.Status != model.InstanceStatusActive {
 		return nil, fmt.Errorf("instance is not active: %s", instanceID)
 	}
-
-	_, _, targetConfig, err := instance.GetTargetConfig()
-	if err != nil {
-		return nil, err
-	}
-	if targetConfig == nil {
-		return nil, fmt.Errorf("target config not found: %s", instanceID)
-	}
-
-	// Stdio forwarding is not supported
-	if len(targetConfig.Command) > 0 {
+	// Check if protocol is stdio
+	if instance.ProxyProtocol == model.McpProtocolStdio {
 		return nil, fmt.Errorf("stdio protocol is not supported")
 	}
-
-	// SSE protocol judgment
-	if strings.HasSuffix(targetConfig.URL, MCP_SERVER_SUBFIX_SSE) {
-		targetConfig.Transport = model.McpProtocolSSE.String()
-		targetConfig.Type = model.McpProtocolSSE.String()
-	}
-
-	if targetConfig.Transport == model.McpProtocolSSE.String() || targetConfig.Type == model.McpProtocolSSE.String() {
-		targetConfig.Transport = model.McpProtocolSSE.String()
-		targetConfig.Type = model.McpProtocolSSE.String()
-	}
-
-	// Streamable_http protocol judgment
-	if strings.HasSuffix(targetConfig.URL, MCP_SERVER_SUBFIX_MCP) {
-		targetConfig.Transport = model.McpProtocolStreamableHttp.String()
-		targetConfig.Type = model.McpProtocolStreamableHttp.String()
-	}
-	if targetConfig.Transport == model.McpProtocolStreamableHttp.String() || targetConfig.Type == model.McpProtocolStreamableHttp.String() {
-		targetConfig.Type = model.McpProtocolStreamableHttp.String()
-		targetConfig.Transport = model.McpProtocolStreamableHttp.String()
-	}
-
-	if targetConfig.Transport == model.McpProtocolStdio.String() || targetConfig.Type == model.McpProtocolStdio.String() {
-		targetConfig.Type = model.McpProtocolStdio.String()
-		targetConfig.Transport = model.McpProtocolStdio.String()
-	}
-
-	if len(targetConfig.Type) == 0 || len(targetConfig.Transport) == 0 {
-		// Hosting and stdio protocol, need to convert to SSE protocol access
-		if instance.AccessType == model.AccessTypeHosting && instance.McpProtocol == model.McpProtocolStdio {
-			targetConfig.Type = model.McpProtocolSSE.String()
-			targetConfig.Transport = model.McpProtocolSSE.String()
-		} else {
-			targetConfig.Type = instance.McpProtocol.String()
-			targetConfig.Transport = instance.McpProtocol.String()
+	mcpConfig := &model.McpConfig{}
+	switch instance.AccessType {
+	case model.AccessTypeProxy:
+		_, _, mcpConfig, err = instance.GetSourceConfig()
+		if err != nil {
+			return nil, err
 		}
+	case model.AccessTypeHosting:
+		mcpConfig = &model.McpConfig{
+			Type:      instance.ProxyProtocol.String(),
+			Transport: instance.ProxyProtocol.String(),
+			URL:       instance.ContainerServiceURL,
+		}
+	case model.AccessTypeDirect:
+		return nil, fmt.Errorf("stdio protocol is not supported")
+	default:
+		return nil, fmt.Errorf("unknown access type: %s", instance.AccessType)
 	}
 
 	instanceInfo := &InstanceInfo{
 		InstanceID:  instanceID,
 		AccessType:  instance.AccessType,
-		McpProtocol: model.McpProtocol(targetConfig.Transport),
+		McpProtocol: instance.ProxyProtocol,
 		Instance:    instance,
-		McpConfig:   targetConfig,
+		McpConfig:   mcpConfig,
 	}
 
 	return instanceInfo, nil

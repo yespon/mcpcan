@@ -3,9 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"strings"
 	"unicode"
+
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 )
 
 // McpServerConfig MCP service configuration structure

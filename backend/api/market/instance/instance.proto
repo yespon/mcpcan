@@ -184,22 +184,22 @@ message DetailResp {
   string imgAddress = 17;
   // @inject_tag: json:"servicePath" form:"servicePath" desc:"服务路径"
   string servicePath = 18;
-  // @inject_tag: json:"publicProxyConfig" desc:"公共代理配置"
-  string publicProxyConfig = 19;
-  // @inject_tag: json:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 20;
-  // @inject_tag: json:"mcpServerId" desc:"MCP服务器ID"
-  string mcpServerId = 21;
-  // @inject_tag: json:"templateId" desc:"模板ID"
-  int32 templateId = 22;
-  // @inject_tag: json:"containerName" desc:"容器名称"
-  string containerName = 23;
-  // @inject_tag: json:"containerServiceName" desc:"容器服务名称"
-  string containerServiceName = 24;
-  // @inject_tag: json:"containerIsReady" desc:"容器是否就绪"
-  bool containerIsReady = 25;
   // @inject_tag: json:"iconPath" desc:"图标路径"
-  string iconPath = 26;
+  string iconPath = 19;
+  // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
+  bool enabledToken = 20;
+  // @inject_tag: json:"tokens" desc:"令牌列表"
+  repeated McpToken tokens = 21;
+  // @inject_tag: json:"mcpServerId" desc:"MCP服务器ID"
+  string mcpServerId = 22;
+  // @inject_tag: json:"templateId" desc:"模板ID"
+  int32 templateId = 23;
+  // @inject_tag: json:"containerName" desc:"容器名称"
+  string containerName = 24;
+  // @inject_tag: json:"containerServiceName" desc:"容器服务名称"
+  string containerServiceName = 25;
+  // @inject_tag: json:"containerIsReady" desc:"容器是否就绪"
+  bool containerIsReady = 26;
   // @inject_tag: json:"containerStatus" desc:"容器状态"
   string containerStatus = 27;
   // @inject_tag: json:"containerLastMessage" desc:"容器最后一条消息"
@@ -322,12 +322,12 @@ message ListResp {
     int64 containerRunTimeoutStopAt = 14;
     // @inject_tag: json:"sourceConfig" desc:"MCP 来源服务配置 (JSON格式)"
     string sourceConfig = 15;
-    // @inject_tag: json:"targetConfig" desc:"MCP 目标服务配置 (JSON格式)"
-    string targetConfig = 16;
-    // @inject_tag: json:"publicProxyConfig" desc:"MCP 公网代理服务配置 (JSON格式)"
-    string publicProxyConfig = 17;
-    // @inject_tag: json:"innerProxyConfig" desc:"MCP 内网代理服务配置 (JSON格式)"
-    string innerProxyConfig = 18;
+    // @inject_tag: json:"iconPath" desc:"图标路径"
+    string iconPath = 16;
+    // @inject_tag: json:"servicePath" desc:"服务路径"
+    string servicePath = 17;
+    // @inject_tag: json:"publicProxyPath" desc:"MCP公网代理服务路径"
+    string publicProxyPath = 18;
     // @inject_tag: json:"isDeleted" desc:"是否删除"
     bool isDeleted = 19;
     // @inject_tag: json:"createdAt" desc:"创建时间 (毫秒时间戳)"
@@ -336,12 +336,12 @@ message ListResp {
     string updatedAt = 21;
     // @inject_tag: json:"mcpProtocol" desc:"MCP协议"
     McpProtocol mcpProtocol = 22;
+    // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
+    bool enabledToken = 23;
     // @inject_tag: json:"tokens" desc:"令牌列表"
-    repeated McpToken tokens = 23;
-    // @inject_tag: json:"iconPath" desc:"图标路径"
-    string iconPath = 24;
-    // @inject_tag: json:"servicePath" desc:"服务路径"
-    string servicePath = 25;
+    repeated McpToken tokens = 24;
+    // @inject_tag: json:"proxyProtocol" desc:"MCP内网代理协议"
+    McpProtocol proxyProtocol = 25;
   }
 }
 
@@ -357,22 +357,12 @@ message RestartResp {
   string instanceId = 1;
   // @inject_tag: json:"name" desc:"实例名称"
   string name = 2;
-  // 修正字段名大小写，将 AccessType 改为 accessType
   // @inject_tag: json:"accessType" desc:"部署模式"
   AccessType accessType = 3;
   // @inject_tag: json:"status" desc:"实例状态"
   string status = 4;
-  // 修正字段编号，补充缺失的编号 5
-  // @inject_tag: json:"accessConfig" desc:"访问配置"
-  McpServersConfig accessConfig = 5;
-  // @inject_tag: json:"publicProxyConfig" desc:"公网代理配置"
-  McpServersConfig publicProxyConfig = 6;
-  // @inject_tag: json:"innerProxyConfig" desc:"内网代理配置"
-  McpServersConfig innerProxyConfig = 7;
   // @inject_tag: json:"message" desc:"状态消息"
-  string message = 8;
-  // @inject_tag: json:"mcpProtocol" desc:"MCP协议"
-  McpProtocol mcpProtocol = 9;
+  string message = 5;
 }
 
 // VolumeMount 卷挂载配置

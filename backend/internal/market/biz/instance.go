@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"github.com/kymo-mcp/mcpcan/internal/market/config"
+	"strings"
+
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
-	"strings"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 )
@@ -148,8 +147,6 @@ func (biz *InstanceBiz) UpdateInstanceForDirect(ctx context.Context, req *instan
 	if !utils.CompareMcpValidationResult(reqMcpResult, oriMcpResult) {
 		sourceConfig := json.RawMessage([]byte(req.McpServers))
 		oriInstance.SourceConfig = sourceConfig
-		oriInstance.TargetConfig = sourceConfig
-		oriInstance.PublicProxyConfig = sourceConfig
 	}
 
 	// Save to database
@@ -187,6 +184,7 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if req.Notes != "" {
 		oriInstance.Notes = req.Notes
 	}
+
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
 	if err != nil {
@@ -206,14 +204,8 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if !utils.CompareMcpValidationResult(reqMcpResult, oriMcpResult) {
 		sourceConfig := json.RawMessage([]byte(req.McpServers))
 		oriInstance.SourceConfig = sourceConfig
-		oriInstance.TargetConfig = sourceConfig
-		// Create proxy configuration
-		publicProxyConfig := biz.CreatePublicProxyConfig(oriInstance.InstanceID, oriInstance.McpProtocol)
-		pb, e2 := common.MarshalAndAssignConfig(publicProxyConfig)
-		if e2 != nil {
-			return nil, fmt.Errorf("failed to marshal public proxy config: %w", e2)
-		}
-		oriInstance.PublicProxyConfig = pb
+		oriInstance.ProxyProtocol = model.McpProtocol(reqMcpResult.ProtocolType)
+		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
 	}
 
 	// Save to database
@@ -221,7 +213,6 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
-
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert access type: %w", err)
@@ -230,7 +221,6 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
 	}
-
 	resp := &instancepb.EditResp{
 		InstanceId:  oriInstance.InstanceID,
 		Name:        oriInstance.InstanceName,
@@ -291,27 +281,21 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	}
 
 	// Create target configuration
-	toMcpProtocol := oriInstance.McpProtocol
-	if oriInstance.McpProtocol == model.McpProtocolStdio {
-		toMcpProtocol = model.McpProtocolSSE
-	}
-	// Call data layer to create container
-	tb := []byte{}
+	var ProxyProtocol model.McpProtocol
+	publicProxyPath := ""
+	containerURL := ""
 	switch oriInstance.McpProtocol {
 	case model.McpProtocolStdio:
-		if strings.Contains(req.ImgAddress, common.DefatuleHostingImg) {
-			targetConfig := common.CreateTargetProxyConfigForDefatuleHostingImg(newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, newContainerCreateOptions.ContainerName, toMcpProtocol)
-			tb, _ = common.MarshalAndAssignConfig(targetConfig)
-		}
+		ProxyProtocol = model.McpProtocolStreamableHttp
+		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
+		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, "mcp")
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
-		targetConfig := common.CreateTargetProxyConfigForHttp(newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, newContainerCreateOptions.ContainerName, oriInstance.McpProtocol, req.ServicePath)
-		tb, _ = common.MarshalAndAssignConfig(targetConfig)
+		ProxyProtocol = oriInstance.McpProtocol
+		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
+		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, req.ServicePath)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", oriInstance.McpProtocol)
 	}
-	// Create proxy configuration
-	publicProxyConfig := GInstanceBiz.CreatePublicProxyConfig(instanceID, toMcpProtocol)
-	pb, _ := common.MarshalAndAssignConfig(publicProxyConfig)
 
 	// Update
 	oriInstance.InstanceName = req.Name
@@ -319,6 +303,8 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.Port = int32(port)
 	oriInstance.InitScript = initScript
 	oriInstance.Command = command
+	oriInstance.ServicePath = req.ServicePath
+	oriInstance.SourceConfig = json.RawMessage([]byte(mcpServers))
 	oriInstance.ImgAddr = imgAddress
 	oriInstance.EnvironmentVariables, _ = common.MarshalAndAssignConfig(envs)
 	oriInstance.VolumeMounts, _ = common.MarshalAndAssignConfig(vms)
@@ -326,11 +312,10 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.RunningTimeout = int64(runningTimeout)
 	oriInstance.ContainerCreateOptions = containerCreateOptions
 	oriInstance.ContainerStatus = model.ContainerStatusPending
+	oriInstance.ContainerServiceURL = containerURL
 	oriInstance.ContainerIsReady = false
-	oriInstance.SourceConfig = json.RawMessage([]byte(mcpServers))
-	oriInstance.TargetConfig = tb
-	oriInstance.PublicProxyConfig = pb
-	oriInstance.ServicePath = req.ServicePath
+	oriInstance.PublicProxyPath = publicProxyPath
+	oriInstance.ProxyProtocol = ProxyProtocol
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
@@ -355,24 +340,18 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	return resp, nil
 }
 
-// CreatePublicProxyConfig creates public proxy configuration
-func (biz *InstanceBiz) CreatePublicProxyConfig(instanceID string, mcpProtocol model.McpProtocol) *model.McpServersConfig {
-	mcpName := fmt.Sprintf("mcp-%s", instanceID[:8])
-	addr, _ := url.JoinPath(config.GlobalConfig.Domain, strings.TrimPrefix(common.GetGatewayRoutePrefix(), "/"), instanceID)
-	if mcpProtocol == model.McpProtocolSSE {
-		addr += fmt.Sprintf("/%s", mcpProtocol.String())
-	}
-	return &model.McpServersConfig{
-		McpServers: map[string]*model.McpConfig{
-			mcpName: {
-				Type: mcpProtocol.String(),
-				URL:  addr,
-			},
-		},
-	}
-}
-
 // GetInstancesByEnvironmentID gets instance list by environment ID
 func (biz *InstanceBiz) GetInstancesByEnvironmentID(ctx context.Context, environmentID uint) ([]*model.McpInstance, error) {
 	return mysql.McpInstanceRepo.FindByEnvironmentID(ctx, environmentID)
+}
+
+// CreatePublicProxyPath creates public proxy configuration
+func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol model.McpProtocol) string {
+	addr := ""
+	if mcpProtocol == model.McpProtocolSSE {
+		addr = fmt.Sprintf("/%s", mcpProtocol.String())
+	} else {
+		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
+	}
+	return addr
 }

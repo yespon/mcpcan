@@ -4,24 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
-	"github.com/kymo-mcp/mcpcan/pkg/codepackage"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/container"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
-	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
-
-	"go.uber.org/zap"
 )
 
 // TaskStatus task status information
@@ -526,12 +521,8 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 		})
 	}
 
-	_, _, mcpCfg, err := instance.GetTargetConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get target configuration: %s", err.Error())
-	}
 	// Use HTTP probe to check service availability
-	probeResult := utils.ProbePortFromURL(cd.ctx, mcpCfg.URL, 5*time.Second)
+	probeResult := utils.ProbePortFromURL(cd.ctx, instance.ContainerServiceURL, 5*time.Second)
 
 	probeHttp := false
 	if probeResult.Success {
@@ -859,32 +850,6 @@ func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
 		mcpMarketSvc.Port,
 		strings.TrimPrefix(common.GetMarketRoutePrefix(), "/"),
 		strings.TrimPrefix(downloadLinkPath, "/"))
-}
-
-func (cd *ContainerBiz) generateDownloadZip(ctx context.Context, codePackage *model.McpCodePackage) (string, string, error) {
-	packageManager := codepackage.NewCodePackageManager(&config.GlobalConfig.Code, config.GlobalConfig.Storage.CodePath)
-	absPackagePath, err := packageManager.ToAbsolutePath(codePackage.PackagePath)
-	if err != nil {
-		logger.Error("Failed to convert to absolute path", zap.String("relativePath", codePackage.PackagePath), zap.Error(err))
-		return "", "", fmt.Errorf("invalid package path")
-	}
-	// Convert relative path to absolute path
-	absExtractedPath, err := packageManager.ToAbsolutePath(codePackage.ExtractedPath)
-	if err != nil {
-		logger.Error("Failed to convert to absolute path", zap.String("relativePath", codePackage.ExtractedPath), zap.Error(err))
-		return "", "", fmt.Errorf("invalid package path")
-	}
-
-	// codePackage.OriginalName gets filename without extension
-	zipFilePath := fmt.Sprintf("%s/dl-%s.zip", absPackagePath, strings.TrimSuffix(codePackage.OriginalName, filepath.Ext(codePackage.OriginalName)))
-
-	// Create compressed package
-	if err := utils.CreatePackageZip(absExtractedPath, zipFilePath); err != nil {
-		logger.Error("Failed to generate package zip", zap.String("packageId", codePackage.PackageID), zap.Error(err))
-		return "", "", fmt.Errorf("failed to generate download package: %v", err)
-	}
-
-	return absExtractedPath, zipFilePath, nil
 }
 
 // volumeMountFromPb converts pb volume mount to local structure

@@ -39,7 +39,7 @@ const (
 	StaticPrefix = "/static"
 
 	// Default hosting image address
-	DefatuleHostingImg = "ccr.ccs.tencentyun.com/itqm-private/mcp-hosting"
+	DefatuleHostingImg = "mcp-hosting"
 
 	SourceServerName = "mcpcan"
 
