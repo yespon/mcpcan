@@ -43,6 +43,11 @@ func NewCodeService() *CodeService {
 
 // UploadPackage uploads a code package
 func (s *CodeService) UploadPackage(c *gin.Context) {
+	// Block upload in demo mode
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
+		return
+	}
 	// Record upload start time
 	startTime := time.Now()
 	logger.Info("Starting code package upload request",
@@ -465,6 +470,11 @@ func convertPackageType(modelType model.PackageType) code.PackageType {
 
 // DeleteCodePackage deletes a code package and its associated files
 func (s *CodeService) DeleteCodePackage(c *gin.Context) {
+	// Block deletion in demo mode
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
+		return
+	}
 	var req code.DeleteCodePackageRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		logger.Error("Failed to bind request", zap.Error(err))

@@ -7,6 +7,7 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/api/market/resource"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
@@ -151,6 +152,12 @@ func (s *ResourceService) CreatePVCHandler(c *gin.Context) {
 	var req resource.CreatePVCRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, "request parameter error: "+err.Error())
+		return
+	}
+
+	// Block PVC creation in demo mode
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
 		return
 	}
 

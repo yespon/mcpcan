@@ -13,6 +13,7 @@ import (
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 
@@ -58,6 +59,18 @@ func (s *InstanceService) CreateHandler(c *gin.Context) {
 	if req.Name == "" {
 		common.GinError(c, i18nresp.CodeInternalError, "missing required field: name")
 		return
+	}
+	// Demo mode guard: enforce instance limit
+	if config.IsDemoMode() {
+		instances, err := mysql.McpInstanceRepo.FindByStatus(s.ctx, model.InstanceStatusActive)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to count active instances: %s", err.Error()))
+			return
+		}
+		if len(instances) >= config.GetDemoMaxInstances() {
+			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
+			return
+		}
 	}
 	// Call write instance handler function
 	result, err := s.create(&req)

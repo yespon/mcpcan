@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -394,6 +396,11 @@ func (vm *VolumeManager) DeletePVC(name string, namespace ...string) error {
 	}
 
 	log.Printf("正在删除命名空间 '%s' 中的 PVC '%s'...", targetNamespace, name)
+
+	// Block deletion in demo mode
+	if config.IsDemoMode() {
+		return fmt.Errorf("operation forbidden in demo mode")
+	}
 
 	err := vm.client.clientset.CoreV1().PersistentVolumeClaims(targetNamespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil {
