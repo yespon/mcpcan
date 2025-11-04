@@ -3,7 +3,7 @@ FROM alpine:3.22 AS builder
 
 LABEL maintainer="77kymo <opensource@kymo.cn>"
 LABEL description="Builder image with Go, Node.js, and protobuf tools"
-LABEL version="1.0"
+LABEL version="2.0"
 
 USER root
 
