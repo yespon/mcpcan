@@ -334,10 +334,7 @@ func (s *CodeService) DownloadPackage(c *gin.Context) {
 
 	// Parameter validation
 	if packageID == "" {
-		c.JSON(400, gin.H{
-			"code":    400,
-			"message": "package ID and file name are required",
-		})
+		common.GinError(c, i18nresp.CodeBadRequest, "package ID is required")
 		return
 	}
 
@@ -345,10 +342,7 @@ func (s *CodeService) DownloadPackage(c *gin.Context) {
 	codePackage, err := s.codePackageRepo.FindByPackageID(c, packageID)
 	if err != nil {
 		logger.Error("Failed to find code package", zap.String("packageId", packageID), zap.Error(err))
-		c.JSON(404, gin.H{
-			"code":    404,
-			"message": "code package not found",
-		})
+		common.GinError(c, i18nresp.CodeNotFound, "code package not found")
 		return
 	}
 
@@ -358,10 +352,7 @@ func (s *CodeService) DownloadPackage(c *gin.Context) {
 	// Check if file exists
 	if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
 		logger.Error("File not found", zap.String("filePath", absFilePath), zap.Error(err))
-		c.JSON(404, gin.H{
-			"code":    404,
-			"message": "file not found",
-		})
+		common.GinError(c, i18nresp.CodeNotFound, "file not found")
 		return
 	}
 
