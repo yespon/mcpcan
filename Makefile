@@ -23,8 +23,8 @@ CGO_ENABLED ?= 0
 GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
-# Build flags
-VERSION_PKG := qm-mcp-server/pkg/version
+# Build flags module github.com/kymo-mcp/mcpcan
+VERSION_PKG := github.com/kymo-mcp/mcpcan/pkg/version
 LDFLAGS := -X '${VERSION_PKG}.Version=${VERSION}' \
 		-X '${VERSION_PKG}.BuildTime=${BUILD_TIME}' \
 		-X '${VERSION_PKG}.Commit=${COMMIT}' \

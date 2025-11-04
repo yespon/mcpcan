@@ -13,7 +13,7 @@ We take security seriously and provide security updates for the following versio
 
 We appreciate your efforts to responsibly disclose security vulnerabilities. If you discover a security issue in MCPCan, please follow these guidelines:
 
-### How to Report
+### How to Report a Vulnerability
 
 1. **DO NOT** create a public GitHub issue for security vulnerabilities
 2. Send an email to **opensource@kymo.cn** with the following information:

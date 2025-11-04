@@ -9,7 +9,7 @@
 </div>
 <img width="1836" height="912" alt="image" src="https://github.com/user-attachments/assets/cc706fe0-f53a-464c-b8d7-c336fec9802e" />
 
-## 什么是 MCPCan？
+## 什么是 MCPCan ？
 
 MCPCan 是一个专注于高效管理 MCP（模型上下文协议）服务的开源平台，通过现代化的 Web 界面为 DevOps 和开发团队提供全面的 MCP 服务生命周期管理能力。
 

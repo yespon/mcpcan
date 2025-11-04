@@ -14,7 +14,7 @@ Thank you for your interest in contributing to MCPCan! We welcome contributions 
 - [Documentation](#documentation)
 - [Community](#community)
 
-## Code of Conduct
+## Code of Conduct 
 
 This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [opensource@kymo.cn](mailto:opensource@kymo.cn).
 
