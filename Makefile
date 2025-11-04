@@ -113,17 +113,17 @@ endef
 .PHONY: docker-build-builder
 docker-build-builder:
 	@echo "---------- Start Docker build builder ----------"
-	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v1 -f $(DOCKERFILES_PATH)/Dockerfile.builder ."
-	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v1 -f $(DOCKERFILES_PATH)/Dockerfile.builder .
+	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v2 -f $(DOCKERFILES_PATH)/Dockerfile.builder ."
+	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v2 -f $(DOCKERFILES_PATH)/Dockerfile.builder .
 	@echo "---------- End Docker build builder ----------"
 
 .PHONY: docker-push-builder
 docker-push-builder:
 	@echo "---------- Start Docker push builder ----------"
-	@echo "docker push $(IMAGE_REGISTRY)/builder:v1"
-	@docker push $(IMAGE_REGISTRY)/builder:v1
-	@echo "docker tag $(IMAGE_REGISTRY)/builder:v1 $(IMAGE_REGISTRY)/builder:latest"
-	@docker tag $(IMAGE_REGISTRY)/builder:v1 $(IMAGE_REGISTRY)/builder:latest
+	@echo "docker push $(IMAGE_REGISTRY)/builder:v2"
+	@docker push $(IMAGE_REGISTRY)/builder:v2
+	@echo "docker tag $(IMAGE_REGISTRY)/builder:v2 $(IMAGE_REGISTRY)/builder:latest"
+	@docker tag $(IMAGE_REGISTRY)/builder:v2 $(IMAGE_REGISTRY)/builder:latest
 	@echo "docker push $(IMAGE_REGISTRY)/builder:latest"
 	@docker push $(IMAGE_REGISTRY)/builder:latest
 	@echo "---------- End Docker push builder ----------"
