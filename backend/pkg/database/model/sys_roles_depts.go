@@ -4,34 +4,34 @@ import (
 	"fmt"
 )
 
-// SysRolesDepts 角色部门关联表模型
+// SysRolesDepts model for role-department association
 type SysRolesDepts struct {
-	RoleID uint `gorm:"column:role_id;primaryKey;not null;comment:角色ID" json:"roleId"`
-	DeptID uint `gorm:"column:dept_id;primaryKey;not null;comment:部门ID" json:"deptId"`
+	RoleID uint `gorm:"column:role_id;primaryKey;not null;comment:Role ID" json:"roleId"`
+	DeptID uint `gorm:"column:dept_id;primaryKey;not null;comment:Department ID" json:"deptId"`
 }
 
-// TableName 返回表名
+// TableName returns the table name
 func (SysRolesDepts) TableName() string {
 	return "sys_roles_depts"
 }
 
-// ValidateForCreate 创建前验证
+// ValidateForCreate validates before creation
 func (rd *SysRolesDepts) ValidateForCreate() error {
 	if rd.RoleID == 0 {
-		return fmt.Errorf("角色ID不能为空")
+		return fmt.Errorf("role ID cannot be empty")
 	}
 	if rd.DeptID == 0 {
-		return fmt.Errorf("部门ID不能为空")
+		return fmt.Errorf("department ID cannot be empty")
 	}
 	return nil
 }
 
-// ValidateForUpdate 更新前验证
+// ValidateForUpdate validates before update
 func (rd *SysRolesDepts) ValidateForUpdate() error {
 	return rd.ValidateForCreate()
 }
 
-// Clone 克隆对象
+// Clone returns a copy of the object
 func (rd *SysRolesDepts) Clone() *SysRolesDepts {
 	if rd == nil {
 		return nil
@@ -42,32 +42,32 @@ func (rd *SysRolesDepts) Clone() *SysRolesDepts {
 	}
 }
 
-// GetRoleID 获取角色ID
+// GetRoleID returns the role ID
 func (rd *SysRolesDepts) GetRoleID() uint {
 	return rd.RoleID
 }
 
-// GetDeptID 获取部门ID
+// GetDeptID returns the department ID
 func (rd *SysRolesDepts) GetDeptID() uint {
 	return rd.DeptID
 }
 
-// SetRoleID 设置角色ID
+// SetRoleID sets the role ID
 func (rd *SysRolesDepts) SetRoleID(roleID uint) {
 	rd.RoleID = roleID
 }
 
-// SetDeptID 设置部门ID
+// SetDeptID sets the department ID
 func (rd *SysRolesDepts) SetDeptID(deptID uint) {
 	rd.DeptID = deptID
 }
 
-// IsValid 检查关联是否有效
+// IsValid returns true if the association is valid
 func (rd *SysRolesDepts) IsValid() bool {
 	return rd.RoleID > 0 && rd.DeptID > 0
 }
 
-// String 返回字符串表示
+// String returns a string representation
 func (rd *SysRolesDepts) String() string {
 	return fmt.Sprintf("SysRolesDepts{RoleID: %d, DeptID: %d}", rd.RoleID, rd.DeptID)
 }
