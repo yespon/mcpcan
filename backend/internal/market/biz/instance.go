@@ -207,6 +207,9 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.ProxyProtocol = model.McpProtocol(reqMcpResult.ProtocolType)
 		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
 	}
+	oriInstance.IconPath = req.IconPath
+	oriInstance.EnabledToken = req.EnabledToken
+	oriInstance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
@@ -280,6 +283,15 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to delete container: %v", err)
 	}
 
+	toEnvs, err := common.MarshalAndAssignConfig(envs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert environment variables: %w", err)
+	}
+	toVms, err := common.MarshalAndAssignConfig(vms)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert volume mounts: %w", err)
+	}
+
 	// Create target configuration
 	var ProxyProtocol model.McpProtocol
 	publicProxyPath := ""
@@ -306,8 +318,8 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.ServicePath = req.ServicePath
 	oriInstance.SourceConfig = json.RawMessage([]byte(mcpServers))
 	oriInstance.ImgAddr = imgAddress
-	oriInstance.EnvironmentVariables, _ = common.MarshalAndAssignConfig(envs)
-	oriInstance.VolumeMounts, _ = common.MarshalAndAssignConfig(vms)
+	oriInstance.EnvironmentVariables = toEnvs
+	oriInstance.VolumeMounts = toVms
 	oriInstance.StartupTimeout = int64(startupTimeout)
 	oriInstance.RunningTimeout = int64(runningTimeout)
 	oriInstance.ContainerCreateOptions = containerCreateOptions
@@ -316,6 +328,11 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.ContainerIsReady = false
 	oriInstance.PublicProxyPath = publicProxyPath
 	oriInstance.ProxyProtocol = ProxyProtocol
+	oriInstance.IconPath = req.IconPath
+	oriInstance.EnabledToken = req.EnabledToken
+	oriInstance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
+
+	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)

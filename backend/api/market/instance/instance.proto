@@ -112,6 +112,8 @@ message CreateRequest {
   string servicePath = 20;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
   string iconPath = 21;
+  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"是否启用令牌"
+  bool enabledToken = 22;
 }
 
 // McpToken MCP令牌
@@ -238,6 +240,10 @@ message EditRequest {
   string servicePath = 14;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
   string iconPath = 15;
+  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"是否启用令牌"
+  bool enabledToken = 16;
+  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
+  repeated McpToken tokens = 17;
 }
 
 // EditResp 编辑实例响应结构体

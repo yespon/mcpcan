@@ -814,7 +814,8 @@ func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest,
 		Notes:           req.Notes,            // Add notes field handling
 		McpServerID:     req.McpServerId,      // Add mcpServerId field handling
 		TemplateID:      uint(req.TemplateId), // Add templateId field handling
-		ServicePath:     req.ServicePath,      // Add servicePath field handling
+		EnabledToken:    req.EnabledToken,
+		Tokens:          common.ConvertProtoTokensToModel(req.Tokens),
 		PublicProxyPath: publicProxyPath,
 		ProxyProtocol:   proxyProtocol,
 	}
@@ -937,6 +938,7 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		SourceType:             sourceType,
 		McpServerID:            req.McpServerId,
 		TemplateID:             uint(req.TemplateId),
+		EnabledToken:           req.EnabledToken,
 		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
 		ImgAddr:                req.ImgAddress,
 		Port:                   req.Port,
