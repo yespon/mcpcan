@@ -1,0 +1,9 @@
+# Builder stage: use pre-configured builder image
+FROM 77kymo/builder:latest AS builder
+
+# Work in /app and copy project sources (parent of dockerfiles/)
+WORKDIR /app
+
+COPY ../ /app
+
+RUN cd /app && make build-all
