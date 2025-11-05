@@ -670,6 +670,42 @@ message TemplateDeleteRequest {
 // TemplateDeleteResp 模板删除响应
 message TemplateDeleteResp {}
 
+// TokenControlRequest 控制token启停请求
+message TokenControlRequest {
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"是否启用令牌"
+  bool enabledToken = 2;
+}
+
+// TokenControlResponse 控制token启停响应
+message TokenControlResponse {
+  // @inject_tag: json:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
+  bool enabledToken = 2;
+  // @inject_tag: json:"message" desc:"响应消息"
+  string message = 3;
+}
+
+// TokenEditRequest 编辑tokens请求
+message TokenEditRequest {
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
+  repeated McpToken tokens = 2;
+}
+
+// TokenEditResponse 编辑tokens响应
+message TokenEditResponse {
+  // @inject_tag: json:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"tokens" desc:"令牌列表"
+  repeated McpToken tokens = 2;
+  // @inject_tag: json:"message" desc:"响应消息"
+  string message = 3;
+}
+
 // InstanceService 实例管理服务
 service InstanceService {
   // 创建实例
@@ -764,6 +800,22 @@ service InstanceService {
   rpc TemplateDelete(TemplateDeleteRequest) returns (TemplateDeleteResp) {
     option (google.api.http) = {
       delete: "/template/{templateId}",
+    };
+  }
+
+  // 控制token启停
+  rpc TokenControl(TokenControlRequest) returns (TokenControlResponse) {
+    option (google.api.http) = {
+      put:  "/instance/token/control",
+      body: "*",
+    };
+  }
+
+  // 编辑tokens
+  rpc TokenEdit(TokenEditRequest) returns (TokenEditResponse) {
+    option (google.api.http) = {
+      put:  "/instance/token/edit",
+      body: "*",
     };
   }
 }

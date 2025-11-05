@@ -237,6 +237,8 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.DELETE(fmt.Sprintf("/%s/instance/:instanceId", routerPrefix), instanceService.DeleteHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/instance/status/:instanceId", routerPrefix), instanceService.StatusHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/logs", routerPrefix), instanceService.LogsHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/control", routerPrefix), instanceService.TokenControlHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/edit", routerPrefix), instanceService.TokenEditHandler)
 
 	// Create resource management service instance
 	resourceService := service.NewResourceService(context.Background())

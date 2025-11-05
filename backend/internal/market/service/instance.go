@@ -1002,3 +1002,104 @@ func (s *InstanceService) validateTimeoutParams(startupTimeout, runningTimeout i
 
 	return nil
 }
+
+// TokenControlHandler controls token enable/disable status
+func (s *InstanceService) TokenControlHandler(c *gin.Context) {
+	var req instancepb.TokenControlRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	// Validate required fields
+	if req.InstanceId == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		return
+	}
+
+	// Get original instance information
+	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		return
+	}
+	if instance == nil {
+		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		return
+	}
+
+	// Update enabledToken field
+	instance.EnabledToken = req.EnabledToken
+	if err := mysql.McpInstanceRepo.Update(s.ctx, instance); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance token status: %s", err.Error()))
+		return
+	}
+
+	// Return success response
+	common.GinSuccess(c, &instancepb.TokenControlResponse{
+		InstanceId:   instance.InstanceID,
+		EnabledToken: instance.EnabledToken,
+		Message:      "Token status updated successfully",
+	})
+}
+
+// TokenEditHandler edits tokens with validation and overwrite functionality
+func (s *InstanceService) TokenEditHandler(c *gin.Context) {
+	var req instancepb.TokenEditRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	// Validate required fields
+	if req.InstanceId == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		return
+	}
+
+	// Get original instance information
+	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		return
+	}
+	if instance == nil {
+		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		return
+	}
+
+	// Validate tokens
+	if len(req.Tokens) == 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "tokens cannot be empty")
+		return
+	}
+
+	// Validate each token
+	for _, token := range req.Tokens {
+		if token.Token == "" {
+			common.GinError(c, i18nresp.CodeInternalError, "token value cannot be empty")
+			return
+		}
+		if token.ExpireAt < 0 {
+			common.GinError(c, i18nresp.CodeInternalError, "expireAt cannot be negative")
+			return
+		}
+		if token.ExpireAt > 0 && token.ExpireAt <= time.Now().Unix() {
+			common.GinError(c, i18nresp.CodeInternalError, "expireAt must be in the future")
+			return
+		}
+	}
+
+	// Convert proto tokens to model tokens and overwrite existing tokens
+	instance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
+
+	if err := mysql.McpInstanceRepo.Update(s.ctx, instance); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance tokens: %s", err.Error()))
+		return
+	}
+
+	// Return success response with updated tokens
+	common.GinSuccess(c, &instancepb.TokenEditResponse{
+		InstanceId: instance.InstanceID,
+		Tokens:     common.ConvertToProtoMcpToken(instance.Tokens),
+		Message:    "Tokens updated successfully",
+	})
+}
