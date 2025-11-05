@@ -156,7 +156,7 @@ docker-build-backend:
 	$(call build_docker_image,backend,mcp-backend)
 
 .PHONY: docker-build-all
-docker-build-all: docker-build-init docker-build-market docker-build-authz docker-build-gateway docker-build-frontend
+docker-build-all: export-go-build docker-build-init docker-build-market docker-build-authz docker-build-gateway docker-build-frontend
 
 .PHONY: docker-push-init
 docker-push-init:
@@ -227,16 +227,20 @@ proto-buf:
 		touch $(BACKEND_PATH)/api/merged.swagger.json; \
 	fi
 
-# Development targets
-.PHONY: dev-backend
-dev-backend:
-	@echo "Starting backend development environment..."
-	@cd $(BACKEND_PATH) && go run cmd/gateway/main.go
-
-.PHONY: dev-frontend
-dev-frontend:
-	@echo "Starting frontend development environment..."
-	@cd $(FRONTEND_PATH) && pnpm dev
+.PHONY: export-go-build
+export-go-build:
+	@echo "---------- Extract go build artifacts ----------"
+	@# 1. Build intermediate stage image (no final image generated)
+	docker build --target builder -t temp-builder -f $(DOCKERFILES_PATH)/Dockerfile.export $(ROOT_PATH)
+	@# 2. Create temporary container (not started, only for file extraction)
+	docker create --name temp-container temp-builder
+	@# 3. Copy files from temporary container to local
+	mkdir -p $(ROOT_PATH)/local_dist/authz
+	docker cp temp-container:/app/backend/bin/authz $(ROOT_PATH)/local_dist/authz/
+	@# 4. Clean up temporary container
+	docker rm -f temp-container
+	docker rmi temp-builder
+	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/local_dist/authz ----------"
 
 # Clean targets
 .PHONY: clean
@@ -281,18 +285,20 @@ help:
 	@echo "Available targets:"
 	@echo ""
 	@echo "Build targets:"
-	@echo "  build-backend-init         - Build init service binary"
-	@echo "  build-backend-market       - Build market service binary"
-	@echo "  build-backend-authz        - Build authz service binary"
-	@echo "  build-backend-gateway      - Build gateway service binary"
-	@echo "  build-backend-all          - Build all backend services"
-	@echo "  build-frontend             - Build frontend application"
-	@echo "  build-all                  - Build all services and frontend"
+	@echo "  build-backend-init         - Build init service binary [Go]"
+	@echo "  build-backend-market       - Build market service binary [Go]"
+	@echo "  build-backend-authz        - Build authz service binary [Go]"
+	@echo "  build-backend-gateway      - Build gateway service binary [Go]"
+	@echo "  build-backend-all          - Build all backend services [Go]"
+	@echo "  build-frontend             - Build frontend application [Node]"
+	@echo "  build-all                  - Build all services and frontend [Go+Node]"
 	@echo ""
-	@echo "Docker targets:"
+	@echo "Docker targets: Builder"
 	@echo "  docker-build-builder       - Build builder Docker image"
 	@echo "  docker-push-builder        - Push builder Docker image"
 	@echo "  docker-build-push-builder  - Build and push builder Docker image with latest tag"
+	@echo ""
+	@echo "Docker targets: Services"
 	@echo "  docker-build-init          - Build init Docker image"
 	@echo "  docker-build-market        - Build market Docker image"
 	@echo "  docker-build-authz         - Build authz Docker image"
@@ -312,10 +318,6 @@ help:
 	@echo "  docker-build-push-frontend - Build and push frontend Docker image"
 	@echo "  docker-build-push-backend  - Build and push all backend services"
 	@echo "  docker-build-push-all      - Build and push all Docker images"
-	@echo ""
-	@echo "Development targets:"
-	@echo "  dev-backend                - Start backend development server"
-	@echo "  dev-frontend               - Start frontend development server"
 	@echo ""
 	@echo "Utility targets:"
 	@echo "  proto-buf                  - Generate protobuf and swagger files"

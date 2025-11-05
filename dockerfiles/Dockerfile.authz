@@ -1,9 +1,3 @@
-FROM 77kymo/builder:latest AS builder
-
-COPY ../ /app
-
-RUN cd /app && make build-backend-authz
-
 # Runtime stage
 FROM alpine:3.22
 
@@ -22,7 +16,7 @@ RUN mkdir -p /app /app/config
 WORKDIR /app
 
 # Copy binary from build stage
-COPY --from=builder /app/backend/bin/authz /app/authz
+COPY ../backend/bin/authz /app/authz
 
 # Run application
 CMD ["/app/authz"]
