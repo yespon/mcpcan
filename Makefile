@@ -235,12 +235,14 @@ export-go-build:
 	@# 2. Create temporary container (not started, only for file extraction)
 	docker create --name temp-container temp-builder
 	@# 3. Copy files from temporary container to local
-	mkdir -p $(ROOT_PATH)/local_dist/authz
-	docker cp temp-container:/app/backend/bin/authz $(ROOT_PATH)/local_dist/authz/
+	mkdir -p $(ROOT_PATH)/backend/bin
+	docker cp temp-container:/app/backend/bin/. $(ROOT_PATH)/backend/bin/
+	rm -rf $(ROOT_PATH)/frontend/dist
+	docker cp temp-container:/app/frontend/dist $(ROOT_PATH)/frontend/dist
 	@# 4. Clean up temporary container
 	docker rm -f temp-container
 	docker rmi temp-builder
-	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/local_dist/authz ----------"
+	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/backend/bin and $(ROOT_PATH)/frontend/dist ----------"
 
 # Clean targets
 .PHONY: clean
