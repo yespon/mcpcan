@@ -16,20 +16,20 @@ import (
 	"go.uber.org/zap"
 )
 
-// RequestResponseLoggingMiddleware 详细的请求响应日志中间件
+// RequestResponseLoggingMiddleware detailed request-response logging middleware
 func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 记录请求开始时间
+		// record request start time
 		start := time.Now()
 
-		// 读取请求体
+		// read request body
 		var requestBody []byte
 		if c.Request.Body != nil {
 			requestBody, _ = io.ReadAll(c.Request.Body)
-			// 重新设置请求体，以便后续处理器可以读取
+			// reset request body so subsequent handlers can read it
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
-		// 准备日志字段
+		// prepare log fields
 		logFields := []zap.Field{
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
@@ -37,7 +37,7 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			zap.String("user_agent", c.Request.UserAgent()),
 		}
 
-		// 记录请求头
+		// record request headers
 		headers := make(map[string]string)
 		for k, v := range c.Request.Header {
 			if len(v) > 0 {
@@ -46,19 +46,19 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 		}
 		logFields = append(logFields, zap.Any("headers", headers))
 
-		// 记录查询参数
+		// record query parameters
 		if c.Request.URL.RawQuery != "" {
 			logFields = append(logFields, zap.String("query", c.Request.URL.RawQuery))
 		}
 
-		// 记录表单参数
+		// record form parameters
 		if err := c.Request.ParseForm(); err == nil {
 			if len(c.Request.Form) > 0 {
 				logFields = append(logFields, zap.Any("form", c.Request.Form))
 			}
 		}
 
-		// 检查Content-Type是否为JSON，并尝试解析请求体
+		// check if Content-Type is JSON and attempt to parse request body
 		contentType := c.GetHeader("Content-Type")
 		if strings.Contains(contentType, "application/json") && len(requestBody) > 0 {
 			var jsonBody interface{}
@@ -67,30 +67,30 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		// 创建自定义的 ResponseWriter 来捕获响应
+		// create custom ResponseWriter to capture response
 		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = blw
 
-		// 继续处理请求
+		// continue processing request
 		c.Next()
 
-		// 记录响应信息
+		// record response info
 		latency := time.Since(start)
-		// 检查Content-Type是否为流式数据或下载数据
+		// check if Content-Type is streaming or download data
 		responseContentType := c.Writer.Header().Get("Content-Type")
 		if strings.Contains(responseContentType, "text/event-stream") ||
 			strings.Contains(responseContentType, "application/octet-stream") ||
 			strings.Contains(c.Writer.Header().Get("Content-Disposition"), "attachment") {
-			// 流式数据和下载数据只记录基本信息
-			logger.Info("请求完成",
+			// for streaming and download data, log only basic info
+			logger.Info("request completed",
 				zap.String("method", c.Request.Method),
 				zap.String("path", c.Request.URL.Path),
 				zap.Int("status", c.Writer.Status()),
 				zap.Duration("latency", latency),
 			)
 		} else {
-			// 其他数据记录完整响应
-			logger.Info("请求完成",
+			// for other data, log full response
+			logger.Info("request completed",
 				zap.String("method", c.Request.Method),
 				zap.String("path", c.Request.URL.Path),
 				zap.Int("status", c.Writer.Status()),
@@ -101,7 +101,7 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 	}
 }
 
-// bodyLogWriter 自定义的 ResponseWriter，用于捕获响应体
+// bodyLogWriter custom ResponseWriter to capture response body
 type bodyLogWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer
@@ -112,22 +112,22 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// NewServer 初始化 Gin 引擎并注册所有路由
+// NewServer initialize Gin engine and register all routes
 func NewServer() *gin.Engine {
 	r := gin.Default()
 
-	// 添加请求响应日志中间件
+	// add request-response logging middleware
 	r.Use(RequestResponseLoggingMiddleware())
 
-	// 获取路由前缀
+	// get route prefix
 	serversPrefix := common.GetGatewayRoutePrefix()
 	serversPrefix = strings.Trim(serversPrefix, "/")
 
-	// 注册MCP服务SSE协议反向代理
+	// register MCP service SSE protocol reverse proxy
 	mcpSSEServerProxy := proxy.NewMCPReverseProxy()
 	r.Any(fmt.Sprintf("/%s/*path", serversPrefix), gin.WrapH(mcpSSEServerProxy))
 
-	// 健康检查
+	// health check
 	r.GET("/health", func(c *gin.Context) { c.String(200, "ok") })
 
 	return r
