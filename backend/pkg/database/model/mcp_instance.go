@@ -94,7 +94,7 @@ type McpInstance struct {
 	McpServerID            string          `gorm:"size:100;not null;comment:MCP 服务器ID" json:"mcpServerID"`
 	TemplateID             uint            `gorm:"size:100;not null;comment:实例模版ID" json:"templateID"`
 	EnabledToken           bool            `gorm:"not null;default:false;comment:是否启用令牌" json:"enabledToken"`
-	Tokens                 []McpToken      `gorm:"type:json;comment:MCP 实例令牌 (JSON格式)" json:"tokens"`
+	Tokens                 json.RawMessage `gorm:"type:json;comment:MCP 实例令牌 (JSON格式)" json:"tokens"`
 	ImgAddr                string          `gorm:"size:100;not null;default:'';comment:镜像地址" json:"imgAddr"`
 	Port                   int32           `gorm:"default:0;comment:端口号" json:"port"`
 	InitScript             string          `gorm:"type:text;comment:初始化脚本" json:"initScript"`

@@ -374,8 +374,7 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 	}
 
 	if instance.EnabledToken {
-		tokens := common.ConvertToProtoMcpToken(instance.Tokens)
-		resp.Tokens = tokens
+		resp.Tokens = common.ConvertToProtoMcpToken(instance.Tokens)
 	}
 
 	// Add specific fields based on access type

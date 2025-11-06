@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 
 	codepb "github.com/kymo-mcp/mcpcan/api/market/code"
@@ -13,7 +14,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 	accessType, _ := ConvertToProtoAccessType(model.AccessType(instance.AccessType))
 	mcpProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.McpProtocol))
 	proxyProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.ProxyProtocol))
-	tokens := ConvertToProtoMcpToken(instance.Tokens)
+	protoTokens := ConvertToProtoMcpToken(instance.Tokens)
 	return &instancepb.ListResp_InstanceInfo{
 		InstanceId:                 instance.InstanceID,
 		InstanceName:               instance.InstanceName,
@@ -33,7 +34,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		UpdatedAt:                  instance.UpdatedAt.String(),
 		McpProtocol:                mcpProtocol,
 		EnabledToken:               instance.EnabledToken,
-		Tokens:                     tokens,
+		Tokens:                     protoTokens,
 		IconPath:                   instance.IconPath,
 		ServicePath:                instance.ServicePath,
 		PublicProxyPath:            instance.PublicProxyPath,
@@ -125,12 +126,17 @@ func ConvertToProtoAccessType(accessType model.AccessType) (instancepb.AccessTyp
 	}
 }
 
-func ConvertToProtoMcpToken(tokens []model.McpToken) []*instancepb.McpToken {
-	protoTokens := make([]*instancepb.McpToken, 0, len(tokens))
+func ConvertToProtoMcpToken(tokens json.RawMessage) []*instancepb.McpToken {
+	var modelTokens []model.McpToken
 	if len(tokens) == 0 {
-		return protoTokens
+		return []*instancepb.McpToken{}
 	}
-	for _, token := range tokens {
+	err := json.Unmarshal(tokens, &modelTokens)
+	if err != nil {
+		return []*instancepb.McpToken{}
+	}
+	protoTokens := make([]*instancepb.McpToken, 0, len(modelTokens))
+	for _, token := range modelTokens {
 		protoTokens = append(protoTokens, &instancepb.McpToken{
 			Token:     token.Token,
 			ExpireAt:  token.ExpireAt,
@@ -142,7 +148,7 @@ func ConvertToProtoMcpToken(tokens []model.McpToken) []*instancepb.McpToken {
 }
 
 // convertProtoTokensToModel converts tokens from proto structure to model structure
-func ConvertProtoTokensToModel(tokens []*instancepb.McpToken) []model.McpToken {
+func ConvertProtoTokensToModel(tokens []*instancepb.McpToken) json.RawMessage {
 	var modelTokens []model.McpToken
 	for _, token := range tokens {
 		modelTokens = append(modelTokens, model.McpToken{
@@ -152,7 +158,11 @@ func ConvertProtoTokensToModel(tokens []*instancepb.McpToken) []model.McpToken {
 			Usages:    token.Usages,
 		})
 	}
-	return modelTokens
+	jsonTokens, err := json.Marshal(modelTokens)
+	if err != nil {
+		return json.RawMessage{}
+	}
+	return json.RawMessage(jsonTokens)
 }
 
 // ConvertToModelPackageType converts proto PackageType to model PackageType
