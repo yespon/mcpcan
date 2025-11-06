@@ -515,6 +515,10 @@ func validReqAuthorizationForInstance(instanceInfo *InstanceInfo, authorization 
 		return nil
 	}
 
+	if len(authorization) == 0 {
+		return fmt.Errorf("instance %v enabled token but request Authorization header is empty", instanceInfo.Instance.ID)
+	}
+
 	if len(instanceInfo.Tokens) == 0 {
 		return fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.ID)
 	}

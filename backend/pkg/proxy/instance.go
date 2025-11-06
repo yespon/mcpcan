@@ -25,55 +25,55 @@ type InstanceInfo struct {
 	Tokens       []*model.McpToken
 }
 
-// McpInstanceService MCP实例业务服务
+// McpInstanceService MCP instance business service
 type McpInstanceService struct {
 	cache *redis.McpInstanceCache
 }
 
-// NewMcpInstanceService 创建MCP实例业务服务
+// NewMcpInstanceService create MCP instance business service
 func NewMcpInstanceService() *McpInstanceService {
 	return &McpInstanceService{
 		cache: redis.GetMcpInstanceCache(),
 	}
 }
 
-// GetInstanceInfo 获取实例信息（带缓存）
+// GetInstanceInfo get instance info (with cache)
 func (s *McpInstanceService) GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
 	if instanceID == "" {
 		return nil, errors.New("instanceID cannot be empty")
 	}
 
-	// 1. 首先尝试从缓存获取
+	// 1. First try to get from cache
 	cacheKey := s.cache.GenerateCacheKey(instanceID)
 
-	// 检查空值缓存，防止缓存穿透
+	// Check null cache to prevent cache penetration
 	if s.cache.IsNullCache(cacheKey) {
 		return nil, fmt.Errorf("instance not found: %s", instanceID)
 	}
 
-	// 检查本地热点缓存，防止Redis雪崩
+	// Check local hot cache to prevent Redis avalanche
 	if cachedInfo := s.cache.GetLocalHotCache(cacheKey); cachedInfo != nil {
 		return s.buildInstanceInfo(cachedInfo.Instance)
 	}
 
-	// 2. 获取缓存互斥锁，防止缓存击穿
+	// 2. Get cache mutex to prevent cache breakdown
 	mutex := s.cache.GetCacheMutex(cacheKey)
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// 3. 双重检查，避免重复查询
+	// 3. Double check to avoid duplicate queries
 	if cachedInfo := s.cache.GetLocalHotCache(cacheKey); cachedInfo != nil {
 		return s.buildInstanceInfo(cachedInfo.Instance)
 	}
 
-	// 4. 查询Redis缓存（只缓存*model.McpInstance）
+	// 4. Query Redis cache (only cache *model.McpInstance)
 	if cachedInstance := s.cache.GetRedisCache(cacheKey); cachedInstance != nil {
-		// 从缓存的model.McpInstance构建完整的InstanceInfo
+		// Build complete InstanceInfo from cached model.McpInstance
 		info, err := s.buildInstanceInfo(cachedInstance)
 		if err != nil {
 			return nil, err
 		}
-		// 设置本地热点缓存（proxy.InstanceInfo -> redis.CacheInstanceInfo）
+		// Set local hot cache (proxy.InstanceInfo -> redis.CacheInstanceInfo)
 		s.cache.SetLocalHotCache(cacheKey, &redis.CacheInstanceInfo{
 			Instance: info.Instance,
 		})
@@ -81,36 +81,36 @@ func (s *McpInstanceService) GetInstanceInfo(instanceID string) (*InstanceInfo, 
 		return info, nil
 	}
 
-	// 5. 缓存未命中，查询数据库
+	// 5. Cache miss, query database
 	instance, err := s.getInstanceFromDB(instanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 6. 构建InstanceInfo
+	// 6. Build InstanceInfo
 	info, err := s.buildInstanceInfo(instance)
 	if err != nil {
 		return nil, err
 	}
 
-	// 7. 设置本地热点缓存（proxy.InstanceInfo -> redis.CacheInstanceInfo）
+	// 7. Set local hot cache (proxy.InstanceInfo -> redis.CacheInstanceInfo)
 	s.cache.SetLocalHotCache(cacheKey, &redis.CacheInstanceInfo{
 		Instance: info.Instance,
 	})
 
-	// 8. 异步更新缓存（只缓存*model.McpInstance到Redis，防止缓存雪崩，使用随机过期时间）
+	// 8. Async update cache (only cache *model.McpInstance to Redis to prevent cache avalanche, use random expiration time)
 	go s.asyncUpdateCache(cacheKey, instance)
 
 	logger.Debug("Database query completed", zap.String("instanceID", instanceID))
 	return info, nil
 }
 
-// getInstanceFromDB 从数据库获取实例
+// getInstanceFromDB get instance from database
 func (s *McpInstanceService) getInstanceFromDB(instanceID string) (*model.McpInstance, error) {
 	return mysql.McpInstanceRepo.FindByInstanceID(context.Background(), instanceID)
 }
 
-// buildInstanceInfo 构建InstanceInfo对象
+// buildInstanceInfo build InstanceInfo object
 func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*InstanceInfo, error) {
 	// Ensure instance is active
 	if instance.Status != model.InstanceStatusActive {
@@ -142,7 +142,7 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 		return nil, fmt.Errorf("unknown access type: %s", instance.AccessType)
 	}
 
-	// 解析Tokens字段
+	// Parse Tokens field
 	var tokens []*model.McpToken
 	if instance.Tokens != nil {
 		if err := json.Unmarshal(instance.Tokens, &tokens); err != nil {
@@ -162,7 +162,7 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 	}, nil
 }
 
-// asyncUpdateCache 异步更新缓存（防止缓存雪崩，使用随机过期时间）
+// asyncUpdateCache async update cache (prevent cache avalanche, use random expiration time)
 func (s *McpInstanceService) asyncUpdateCache(cacheKey string, instance *model.McpInstance) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -170,7 +170,7 @@ func (s *McpInstanceService) asyncUpdateCache(cacheKey string, instance *model.M
 		}
 	}()
 
-	// 随机过期时间，防止缓存雪崩（5-15分钟）
+	// Random expiration time to prevent cache avalanche (5-15 minutes)
 	expireTime := time.Duration(300+rand.Intn(600)) * time.Second
 	s.cache.SetRedisCacheInstance(cacheKey, instance, expireTime)
 }
