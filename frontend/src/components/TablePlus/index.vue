@@ -86,7 +86,7 @@
     >
       <template #default="scope">
         <!-- 优先使用插槽 -->
-        <slot :name="column.dataIndex" :row="scope.row" :index="scope.$index">
+        <slot :name="column.dataIndex" :row="scope.row" :index="column.dataIndex">
           <!-- 其次使用 customRender -->
           <template v-if="typeof column.customRender === 'function'">
             <!-- 用 component 动态渲染 h 函数返回的 VNode -->

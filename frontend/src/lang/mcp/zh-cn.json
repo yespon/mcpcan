@@ -66,6 +66,7 @@
       "publicProxyConfig": "MCP访问配置",
       "viewConfig": "查看配置",
       "config": "MCP 服务配置",
+      "enabledToken": "令牌认证",
       "count": {
         "total": "总数",
         "running": "已启用",
@@ -78,7 +79,8 @@
         "placeholderStatus": "状态",
         "placeholderContainerStatus": "容器状态",
         "accessType": "访问模式",
-        "mcpProtocol": "MCP协议"
+        "mcpProtocol": "MCP协议",
+        "tokenPlaceholder": "选择有效时间将自动生成"
       },
       "action": {
         "add": "创建实例",
@@ -89,6 +91,7 @@
         "stop": "停止",
         "start": "启动",
         "reStart": "重启",
+        "token": "令牌管理",
         "probe": "状态探测",
         "delete": "删除",
         "deleteBox": "确定删除该实例?",
@@ -139,7 +142,8 @@
         "pvcName": "PVC",
         "addVolume": "添加卷挂载",
         "initScript": "初始化脚本",
-        "command": "启动命令"
+        "command": "启动命令",
+        "addToken": " 添加令牌"
       },
       "rules": {
         "name": "请填写实例名称"
@@ -148,6 +152,13 @@
         "title": "实例日志",
         "instanceId": "实例 ID",
         "updateTime": "最近跟新"
+      },
+      "token": {
+        "title": "令牌管理",
+        "expireAt": "有效时间",
+        "tokenKey": "令牌Token",
+        "placeholderDate": "选择一个有效期",
+        "placeholderAlways": "长期有效"
       },
       "loading": {
         "restart": "正在停用实例...",

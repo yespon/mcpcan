@@ -80,6 +80,29 @@ export const InstanceAPI = {
       method: 'GET',
     })
   },
+  // change token status
+  updateTokenStatus(data: { instanceId: string; enabledToken: boolean }) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/token/control`,
+      method: 'PUT',
+      data,
+    })
+  },
+  updateInstanceTokens(data: {
+    instanceId: string
+    tokens: Array<{
+      token: string
+      expireAt: number
+      publishAt: number
+      usages: string[]
+    }>
+  }) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/token/edit`,
+      method: 'PUT',
+      data,
+    })
+  },
 }
 
 // 列表请求

@@ -11,6 +11,7 @@ export const useInstanceTableHooks = () => {
   const tablePlus = ref()
   const instanceDetail = ref()
   const probe = ref()
+  const tokensManageRef = ref()
   const { query } = useRoute()
   const load = ref({
     status: false,
@@ -123,6 +124,7 @@ export const useInstanceTableHooks = () => {
         },
       },
     },
+
     {
       dataIndex: 'accessType',
       label: t('mcp.instance.form.accessType'),
@@ -156,6 +158,10 @@ export const useInstanceTableHooks = () => {
       customRender: ({ row }: { row: InstanceResult }) => {
         return mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
       },
+    },
+    {
+      dataIndex: 'enabledToken',
+      label: t('mcp.instance.enabledToken'),
     },
     { dataIndex: 'publicProxyConfig', label: t('mcp.instance.publicProxyConfig') },
     {
@@ -237,6 +243,7 @@ export const useInstanceTableHooks = () => {
     mcpProtocolOptions,
     dataCountList,
     probe,
+    tokensManageRef,
     selectVisible,
     templateList,
     timer,

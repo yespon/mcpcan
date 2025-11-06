@@ -66,6 +66,7 @@
       "publicProxyConfig": "Config",
       "viewConfig": "View",
       "config": "MCP Server Config",
+      "enabledToken": "Token",
       "count": {
         "total": "Total",
         "running": "Running",
@@ -78,7 +79,8 @@
         "placeholderStatus": "Status",
         "placeholderContainerStatus": "ContainerStatus",
         "accessType": "Access Type",
-        "mcpProtocol": "MCP Protocol"
+        "mcpProtocol": "MCP Protocol",
+        "tokenPlaceholder": "Automatically generate by effective time"
       },
       "action": {
         "add": "Add",
@@ -89,6 +91,7 @@
         "stop": "Stop",
         "start": "Start",
         "reStart": "Restart",
+        "token": "Token",
         "probe": "Probe Status",
         "delete": "Delete",
         "deleteBox": "Are you sure to delete this instance?",
@@ -139,7 +142,8 @@
         "pvcName": "PVCName",
         "addVolume": "Add",
         "initScript": "InitScript",
-        "command": "Command"
+        "command": "Command",
+        "addToken": " Add a token"
       },
       "rules": {
         "name": "Please enter the instance name"
@@ -148,6 +152,13 @@
         "title": "Instance of Logs",
         "instanceId": "Instance ID",
         "updateTime": "Update Time"
+      },
+      "token": {
+        "title": "Token Management",
+        "expireAt": "Effective Time",
+        "tokenKey": "Token Value",
+        "placeholderDate": "Choose an expiration date",
+        "placeholderAlways": "Long-term valid"
       },
       "loading": {
         "restart": "restarting...",

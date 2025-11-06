@@ -57,7 +57,7 @@ echo 'Initialization completed.'
     &nbsp &nbsp Python ${t('desc.anv')}：Python 3.12.11，${t('desc.tools')} uv 0.7.12、uvx 0.7.12<br />
     &nbsp &nbsp Node.js ${t('desc.anv')}：Node.js v18.20.1，${t('desc.tools')} npm 9.6.6、npx 9.6.6<br />
   `,
-    TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} }`,
+    TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} `,
     TIP_MCP_SERVER: `
     {
       "mcpServers": {
@@ -101,6 +101,7 @@ export interface InstanceForm {
   environmentId: string
   iconPath: string
   servicePath: string
+  enabledToken: boolean
 }
 
 // creat-instance-form
@@ -128,6 +129,13 @@ export interface InstanceResult extends InstanceForm {
   createdAt: string
   environmentName: string
   containerIsReady: boolean
+  tokens: Array<{
+    token: string
+    expireAt: number
+    publishAt: number
+    usages: string[]
+  }>
+  [key: string]: any
 }
 
 // template-form-by-instance

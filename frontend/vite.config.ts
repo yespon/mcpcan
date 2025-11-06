@@ -21,14 +21,14 @@ export default defineConfig({
     port: 443, // HTTPS 默认端口
     proxy: {
       '/api/authz': {
-        target: 'https://mcp-test.itqm.com',
+        target: 'http://192.168.6.91:8082',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
+        rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/api': {
-        target: 'https://mcp-test.itqm.com',
+        target: 'http://192.168.6.91:8081',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
+        rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },

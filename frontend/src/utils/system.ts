@@ -101,3 +101,9 @@ export const setClipboardData = (data: any) => {
     success(data)
   })
 }
+
+// 生成token
+
+export const getToken = (baseInfo: any) => {
+  return btoa(baseInfo)
+}

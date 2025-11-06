@@ -461,7 +461,7 @@
 import { Plus, Remove, CircleClose, RefreshRight, UploadFilled } from '@element-plus/icons-vue'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
-import { formatFileSize, timestampToDate } from '@/utils/system'
+import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
 import { useMcpStoreHook } from '@/stores'
 import { JsonFormatter } from '@/utils/json'
 import { useInstanceFormHooks } from './hooks/form-instance.ts'
@@ -479,6 +479,7 @@ const {
   query,
   router,
   jumpToPage,
+  userInfo,
   pageInfo,
   originForm,
   placeholderServer,
@@ -661,6 +662,7 @@ const handleConfirm = async () => {
     }
   })
   const [isBaseValid, isConfigValid] = await Promise.all([validateBase, validateConfig])
+  console.log(1212, pageInfo.value.formData)
 
   // pass and handle create
   if (isBaseValid && isConfigValid) {
@@ -725,6 +727,22 @@ const handleGetTemplateDetail = async () => {
     : []
   pageInfo.value.formData.volumeMounts = data.volumeMounts || []
   pageInfo.value.formData.sourceType = SourceType.TEMPLATE
+
+  // default open token
+  pageInfo.value.formData.enabledToken = true
+  pageInfo.value.formData.tokens = [
+    {
+      expireAt: '',
+      publishAt: new Date().getTime(),
+      token:
+        'Bearer ' +
+        getToken({
+          userId: userInfo.userId,
+          username: userInfo.username,
+        }),
+      usages: ['default'],
+    },
+  ]
 }
 
 /**

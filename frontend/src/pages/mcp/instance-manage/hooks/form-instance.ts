@@ -1,4 +1,4 @@
-import { useMcpStoreHook } from '@/stores'
+import { useMcpStoreHook, useUserStore } from '@/stores'
 import { useRouterHooks } from '@/utils/url'
 import {
   type PvcResult,
@@ -8,6 +8,7 @@ import {
   InstanceData,
   NodeVisible,
 } from '@/types/index'
+import { getToken } from '@/utils/system'
 
 export const useInstanceFormHooks = () => {
   const { t } = useI18n()
@@ -16,6 +17,7 @@ export const useInstanceFormHooks = () => {
   const { query } = useRoute()
   const selectVisible = ref(false)
   const originForm = ref<any>()
+  const { userInfo } = useUserStore()
 
   const pageInfo = ref<any>({
     visible: false,
@@ -37,6 +39,20 @@ export const useInstanceFormHooks = () => {
       volumeMounts: [],
       initScript: InstanceData.value.INITSCRIPT,
       command: '',
+      enabledToken: true,
+      tokens: [
+        {
+          expireAt: '',
+          publishAt: new Date().getTime(),
+          token:
+            'Bearer ' +
+            getToken({
+              userId: userInfo.userId,
+              username: userInfo.username,
+            }),
+          usages: ['default'],
+        },
+      ],
     },
     rules: {
       name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
@@ -190,6 +206,7 @@ export const useInstanceFormHooks = () => {
     router,
     jumpBack,
     jumpToPage,
+    userInfo,
     pageInfo,
     originForm,
     placeholderServer,

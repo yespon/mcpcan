@@ -76,7 +76,9 @@
     "close": "Close",
     "warn": "Warn",
     "ok": "OK",
-    "back": "Back"
+    "back": "Back",
+    "on": "ON",
+    "off": "OFF"
   },
   "status": {
     "active": "Active",
@@ -108,7 +110,7 @@
     "initScript": "Init Script",
     "imgAddressTip1": "Built on Python: 3.12-alpine image, lightweight and compatible with mainstream container environments",
     "imgAddressTip2": "Pre installed components and versions are clearly locked：",
-    "imgAddressTip3": "The default startup command is MCP hosting, which automatically completes the conversion from MCP STDIO protocol to Steam HTTP protocol during startup and supports SSE protocol mode operation",
+    "imgAddressTip3": "Command: mcp hosting. After startup, convert MCP STDIO protocol to STEAMABLE-HTTP protocol to run.",
     "env": "Environment",
     "tools": "Support tools",
     "baseCommand": "Basic commands"

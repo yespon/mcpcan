@@ -105,6 +105,17 @@
             </el-tooltip>
           </div>
         </template>
+        <template #enabledToken="{ row }">
+          <el-switch
+            v-model="row.enabledToken"
+            style="--el-switch-on-color: #13ce66"
+            inline-prompt
+            :active-text="t('common.on')"
+            :inactive-text="t('common.off')"
+            :loading="row.loading"
+            @change="handleEabledToken(row)"
+          ></el-switch>
+        </template>
         <template #status="{ row }">
           <el-text :type="activeOptions[row.status as keyof typeof activeOptions].type" link>
             {{ activeOptions[row.status as keyof typeof activeOptions].label }}
@@ -138,7 +149,7 @@
             type="success"
             class="base-btn-link"
             :underline="false"
-            @click="handleViewConfig(row.publicProxyConfig)"
+            @click="handleViewConfig(row)"
           >
             {{ t('mcp.instance.viewConfig') }}
           </el-link>
@@ -194,6 +205,9 @@
                   <el-dropdown-item command="handleViewStatus">
                     {{ t('mcp.instance.action.probe') }}
                   </el-dropdown-item>
+                  <el-dropdown-item command="handleTokenManage">
+                    {{ t('mcp.instance.action.token') }}
+                  </el-dropdown-item>
                   <el-dropdown-item command="handleDeleteInstance">
                     <el-button type="danger" link>
                       {{ t('mcp.instance.action.delete') }}
@@ -237,6 +251,8 @@
         </div>
       </template>
     </Select>
+    <!-- tokens manage dialog -->
+    <TokensManage ref="tokensManageRef" @on-refresh="init"></TokensManage>
   </div>
 </template>
 
@@ -257,6 +273,7 @@ import { TemplateAPI } from '@/api/mcp/template'
 import McpImage from '@/components/mcp-image/index.vue'
 import { AccessType, InstanceStatus } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
+import TokensManage from './modules/tokens-manage.vue'
 
 const { t } = useI18n()
 const {
@@ -276,6 +293,7 @@ const {
   viewConfig,
   dataCountList,
   probe,
+  tokensManageRef,
   selectVisible,
   templateList,
   timer,
@@ -292,6 +310,21 @@ const handleAddByTemplate = async () => {
     name: template.name,
     ...template,
   }))
+}
+
+// handle enabled token switch
+const handleEabledToken = async (row: InstanceResult) => {
+  try {
+    row.loading = true
+    await InstanceAPI.updateTokenStatus({
+      instanceId: row.instanceId,
+      enabledToken: row.enabledToken,
+    })
+  } catch (error) {
+    row.enabledToken = !row.enabledToken
+  } finally {
+    row.loading = false
+  }
 }
 
 /**
@@ -411,10 +444,10 @@ const handleRestartInstance = async (instanceId: string) => {
 
 /**
  * Handle view public proxy config
- * @param config - JSON of config info
+ * @param instanceInfo - instance form data
  */
-const handleViewConfig = async (config: string) => {
-  viewConfig.value.init(config)
+const handleViewConfig = async (instanceInfo: InstanceResult) => {
+  viewConfig.value.init(instanceInfo)
 }
 
 /**
@@ -485,9 +518,20 @@ const handleCommand = (callback: string, row: InstanceResult) => {
     case 'handleAddByTemplate':
       handleAddByTemplate()
       break
+    case 'handleTokenManage':
+      handleTokenManage(row)
+      break
     default:
       ElMessage.warning(`未找到 "${callback}" 对应的操作`)
   }
+}
+
+/**
+ * Handle token manage
+ * @param row - instance row data
+ */
+const handleTokenManage = (row: InstanceResult) => {
+  tokensManageRef.value.init(row)
 }
 
 /**

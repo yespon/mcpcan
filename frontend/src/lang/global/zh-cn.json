@@ -77,7 +77,9 @@
     "close": "关闭",
     "warn": "提示",
     "ok": "确定",
-    "back": "返回"
+    "back": "返回",
+    "on": "开启",
+    "off": "关闭"
   },
   "status": {
     "active": "启用",
@@ -109,7 +111,7 @@
     "initScript": "初始化脚本",
     "imgAddressTip1": "基于 python:3.12-alpine 镜像构建，轻量且兼容主流容器环境",
     "imgAddressTip2": "预装组件及版本明确锁定：",
-    "imgAddressTip3": "默认以 mcp-hosting 为启动命令，启动时自动完成 MCP STDIO 协议到 steamable-http 协议的转换，并支持 SSE 协议模式运行",
+    "imgAddressTip3": "默认启动命令： mcp-hosting ，启动后将 MCP STDIO 协议转为 STEAMABLE_HTTP 协议运行。",
     "env": "环境",
     "tools": "配套工具",
     "baseCommand": "系统基础命令"
