@@ -116,6 +116,14 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 		return fmt.Errorf("failed to get MCP configuration: %v", err.Error())
 	}
 
+	// validate request Authorization header for instance
+	err = validReqAuthorizationForInstance(instanceInfo, req.Header.Get("Authorization"))
+	if err != nil {
+		return fmt.Errorf("failed to valid token: %v", err.Error())
+	}
+
+	// delete Authorization header from req
+	req.Header.Del("Authorization")
 	if instanceInfo.McpConfig.Headers != nil {
 		for key, value := range instanceInfo.McpConfig.Headers {
 			req.Header.Set(key, value)
@@ -498,4 +506,28 @@ func GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
 	// Use business layer cache service to get instance info
 	service := NewMcpInstanceService()
 	return service.GetInstanceInfo(instanceID)
+}
+
+// validReqAuthorizationForInstance 校验请求 Authorization header 是否有效
+func validReqAuthorizationForInstance(instanceInfo *InstanceInfo, authorization string) error {
+	// 1. instance 是否启用了 token 认证，没有则直接返回成功
+	if !instanceInfo.EnabledToken {
+		return nil
+	}
+
+	if len(instanceInfo.Tokens) == 0 {
+		return fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.ID)
+	}
+
+	for _, t := range instanceInfo.Tokens {
+		if t.Token == authorization {
+			expireAt := time.Unix(0, t.ExpireAt*int64(time.Millisecond))
+			if time.Now().Before(expireAt) {
+				return nil
+			} else {
+				return fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.ID)
+			}
+		}
+	}
+	return fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.ID)
 }
