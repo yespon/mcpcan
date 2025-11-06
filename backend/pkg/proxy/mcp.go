@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,11 +17,9 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 const (
@@ -118,6 +115,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("failed to get MCP configuration: %v", err.Error())
 	}
+
 	if instanceInfo.McpConfig.Headers != nil {
 		for key, value := range instanceInfo.McpConfig.Headers {
 			req.Header.Set(key, value)
@@ -391,61 +389,6 @@ func isConnectionError(err error) bool {
 		strings.Contains(errorStr, "use of closed network connection")
 }
 
-type InstanceInfo struct {
-	InstanceID  string
-	AccessType  model.AccessType
-	McpProtocol model.McpProtocol
-	Instance    *model.McpInstance
-	McpConfig   *model.McpConfig
-}
-
-func GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
-	instance, err := mysql.McpInstanceRepo.FindByInstanceID(context.Background(), instanceID)
-	if err != nil {
-		return nil, err
-	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("instance not found: %s", instanceID)
-	}
-
-	// Ensure instance is active
-	if instance.Status != model.InstanceStatusActive {
-		return nil, fmt.Errorf("instance is not active: %s", instanceID)
-	}
-	// Check if protocol is stdio
-	if instance.ProxyProtocol == model.McpProtocolStdio {
-		return nil, fmt.Errorf("stdio protocol is not supported")
-	}
-	mcpConfig := &model.McpConfig{}
-	switch instance.AccessType {
-	case model.AccessTypeProxy:
-		_, _, mcpConfig, err = instance.GetSourceConfig()
-		if err != nil {
-			return nil, err
-		}
-	case model.AccessTypeHosting:
-		mcpConfig = &model.McpConfig{
-			Type:      instance.ProxyProtocol.String(),
-			Transport: instance.ProxyProtocol.String(),
-			URL:       instance.ContainerServiceURL,
-		}
-	case model.AccessTypeDirect:
-		return nil, fmt.Errorf("stdio protocol is not supported")
-	default:
-		return nil, fmt.Errorf("unknown access type: %s", instance.AccessType)
-	}
-
-	instanceInfo := &InstanceInfo{
-		InstanceID:  instanceID,
-		AccessType:  instance.AccessType,
-		McpProtocol: instance.ProxyProtocol,
-		Instance:    instance,
-		McpConfig:   mcpConfig,
-	}
-
-	return instanceInfo, nil
-}
-
 // Get proxy prefix
 func getProxyPrefix(instanceID string) string {
 	prefix := common.GetGatewayRoutePrefix()
@@ -549,4 +492,10 @@ func handleProxyStreamableHTTPPathReq(req *http.Request, instanceInfo *InstanceI
 		}
 	}
 	return req.URL.Path
+}
+
+func GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
+	// Use business layer cache service to get instance info
+	service := NewMcpInstanceService()
+	return service.GetInstanceInfo(instanceID)
 }
