@@ -37,11 +37,34 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 
 	// 其他错误使用 Error 级别记录
 	logger.Error("Proxy error", zap.Error(err))
+	// 计算HTTP状态码
+	status := http.StatusBadGateway
+	var msg string
 	if pe, ok := err.(*proxyError); ok {
-		http.Error(w, pe.message, pe.status)
+		status = pe.status
+		msg = pe.message
 	} else {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		msg = err.Error()
 	}
+
+	// 当协议为 SSE 且开关启用时，输出 SSE 错误事件
+	if v := r.Context().Value(IsSSEReqKey); v != nil {
+		if isSSE, ok := v.(bool); ok && isSSE {
+			code := MapErrorToCode(err)
+			WriteMCPSSEError(w, code, "Upstream error", msg)
+			return
+		}
+	}
+
+	// 是否将上游错误统一输出为MCP JSON-RPC错误
+	if EnableMCPErrorOnUpstreamFailure {
+		code := MapErrorToCode(err)
+		WriteMCPError(w, status, code, "Upstream error", msg)
+		return
+	}
+
+	// 默认保留HTTP状态码语义
+	http.Error(w, msg, status)
 }
 
 type wrapPool struct{}

@@ -73,15 +73,25 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 				zap.String("remote_addr", req.RemoteAddr),
 			)
 			// panic(r) // Re-throw panic that is not ErrAbortHandler
-			respWriter.WriteHeader(http.StatusInternalServerError)
-			respWriter.Write([]byte(fmt.Sprintf("Internal Server Error: %v", r)))
+			// respWriter.WriteHeader(http.StatusInternalServerError)
+			// respWriter.Write([]byte(fmt.Sprintf("Internal Server Error: %v", r)))
+			if strings.HasSuffix(req.URL.Path, MCP_SERVER_SUBFIX_SSE) {
+				WriteMCPSSEError(respWriter, -32603, "Internal error", fmt.Sprintf("Internal Server Error: %v", r))
+			} else {
+				WriteMCPError(respWriter, http.StatusInternalServerError, -32603, "Internal error", fmt.Sprintf("Internal Server Error: %v", r))
+			}
 		}
 	}()
 
 	err := mrp.reqHandler(req)
 	if err != nil {
-		respWriter.WriteHeader(http.StatusMethodNotAllowed)
-		respWriter.Write([]byte(err.Error()))
+		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
+		// respWriter.Write([]byte(err.Error()))
+		if strings.HasSuffix(req.URL.Path, MCP_SERVER_SUBFIX_SSE) {
+			WriteMCPSSEError(respWriter, -32603, "Internal error", err.Error())
+		} else {
+			WriteMCPError(respWriter, http.StatusMethodNotAllowed, -32603, "Internal error", err.Error())
+		}
 		return
 	}
 
