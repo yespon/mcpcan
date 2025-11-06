@@ -525,6 +525,9 @@ func validReqAuthorizationForInstance(instanceInfo *InstanceInfo, authorization 
 
 	for _, t := range instanceInfo.Tokens {
 		if t.Token == authorization {
+			if t.ExpireAt == 0 {
+				return nil
+			}
 			expireAt := time.Unix(0, t.ExpireAt*int64(time.Millisecond))
 			if time.Now().Before(expireAt) {
 				return nil

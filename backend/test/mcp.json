@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "weather-service": {
+      "type": "streamable-http",
+      "url": "http://localhost:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_your_api_key",
+        "X-Client-Version": "2.1.0",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
+      "timeout": 20000,
+      "initTimeout": 15000,
+      "allowedOrigins": ["https://dashboard.example.com"],
+      "rateLimit": {
+        "requestsPerMinute": 500,
+        "burstLimit": 50
+      },
+      "logLevel": "info",
+      "logFormat": "json"
+    }
+  }
+}
