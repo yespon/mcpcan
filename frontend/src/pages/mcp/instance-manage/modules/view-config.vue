@@ -120,7 +120,13 @@
       </div>
     </template>
   </el-dialog>
-  <el-dialog v-model="formData.visible" width="360px" top="30vh" :show-close="false">
+  <el-dialog
+    v-model="formData.visible"
+    width="360px"
+    top="30vh"
+    :show-close="false"
+    @close="formRef?.resetFields()"
+  >
     <template #header>
       <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
       <el-form
@@ -260,6 +266,7 @@ const handleAddToken = () => {
   formData.value.expireAt = null
   dialogInfo.value.currentEditIndex = null
   formData.value.visible = true
+  formRef.value?.resetFields()
 }
 
 // handle enabled token switch
@@ -308,9 +315,9 @@ const handleRandomToken = () => {
         'Bearer ' +
         getToken(
           JSON.stringify({
+            expireAt: formData.value.expireAt,
             userId: userInfo.userId,
             username: userInfo.username,
-            expireAt: formData.value.expireAt,
           }),
         )
     })
@@ -321,9 +328,9 @@ const handleRandomToken = () => {
     'Bearer ' +
     getToken(
       JSON.stringify({
+        expireAt: formData.value.expireAt,
         userId: userInfo.userId,
         username: userInfo.username,
-        expireAt: formData.value.expireAt,
       }),
     )
 }
@@ -336,6 +343,8 @@ const handleAddExpireAt = (days: number) => {
 }
 // handle edit token
 const handleEditToken = (index: number) => {
+  formRef.value?.resetFields()
+
   formData.value.visible = true
   dialogInfo.value.currentEditIndex = index
   const token = dialogInfo.value.instanceInfo.tokens[index]

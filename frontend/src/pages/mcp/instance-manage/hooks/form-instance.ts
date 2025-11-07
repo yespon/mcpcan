@@ -48,9 +48,9 @@ export const useInstanceFormHooks = () => {
             'Bearer ' +
             getToken(
               JSON.stringify({
+                expireAt: Date.now(),
                 userId: userInfo.userId,
                 username: userInfo.username,
-                expireAt: Date.now(),
               }),
             ),
           usages: ['default'],
