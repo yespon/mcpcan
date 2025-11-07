@@ -22,12 +22,10 @@ const (
 	CachePenetrateProtect = 5 * time.Second
 	// MaxRetryAttempts 最大重试次数
 	MaxRetryAttempts = 3
-	// LocalHotCacheTTL 本地热点缓存TTL
-	LocalHotCacheTTL = 10 * time.Second
-	// MaxLocalCacheSize 本地缓存最大数量
-	MaxLocalCacheSize = 1000
 	// CleanInterval 缓存清理间隔
 	CleanInterval = 30 * time.Second
+	// EnabledLocalHotCache controls whether local hot cache is enabled
+	EnabledLocalHotCache = false
 )
 
 // CacheInstanceInfo MCP实例信息
@@ -37,10 +35,6 @@ type CacheInstanceInfo struct {
 
 // McpInstanceCache MCP实例缓存管理器（纯缓存逻辑）
 type McpInstanceCache struct {
-	// 本地热点缓存，防止Redis雪崩
-	localHotCache   map[string]*localCacheItem
-	localHotCacheMu sync.RWMutex
-
 	// 防止缓存击穿/雪崩的互斥锁
 	cacheMutexes   map[string]*sync.Mutex
 	cacheMutexesMu sync.Mutex
@@ -55,20 +49,12 @@ type McpInstanceCache struct {
 	wg sync.WaitGroup
 }
 
-// localCacheItem 本地缓存项
-type localCacheItem struct {
-	info      *CacheInstanceInfo
-	expireAt  time.Time
-	accessCnt int64
-}
-
 // NewMcpInstanceCache 创建MCP实例缓存管理器
 func NewMcpInstanceCache() *McpInstanceCache {
 	cache := &McpInstanceCache{
-		localHotCache: make(map[string]*localCacheItem),
-		cacheMutexes:  make(map[string]*sync.Mutex),
-		nullCache:     make(map[string]time.Time),
-		stopCh:        make(chan struct{}),
+		cacheMutexes: make(map[string]*sync.Mutex),
+		nullCache:    make(map[string]time.Time),
+		stopCh:       make(chan struct{}),
 	}
 
 	// 启动缓存清理协程
@@ -176,43 +162,12 @@ func (c *McpInstanceCache) SetNullCache(key string) {
 
 // GetLocalHotCache 获取本地热点缓存（暴露给业务层使用）
 func (c *McpInstanceCache) GetLocalHotCache(key string) *CacheInstanceInfo {
-	c.localHotCacheMu.RLock()
-	defer c.localHotCacheMu.RUnlock()
-
-	if item, exists := c.localHotCache[key]; exists {
-		if time.Now().Before(item.expireAt) {
-			// 更新访问计数
-			item.accessCnt++
-			return item.info
-		}
-		// 过期了，返回nil，后续清理
-	}
-	return nil
+	return GetHotCache(key)
 }
 
 // SetLocalHotCache 设置本地热点缓存（暴露给业务层使用）
 func (c *McpInstanceCache) SetLocalHotCache(key string, info *CacheInstanceInfo) {
-	c.localHotCacheMu.Lock()
-	defer c.localHotCacheMu.Unlock()
-
-	// 简单的LRU策略：如果缓存满了，随机删除一些条目
-	if len(c.localHotCache) >= MaxLocalCacheSize {
-		// 随机删除25%的条目
-		keysToDelete := len(c.localHotCache) / 4
-		for k := range c.localHotCache {
-			if keysToDelete <= 0 {
-				break
-			}
-			delete(c.localHotCache, k)
-			keysToDelete--
-		}
-	}
-
-	c.localHotCache[key] = &localCacheItem{
-		info:      info,
-		expireAt:  time.Now().Add(LocalHotCacheTTL),
-		accessCnt: 1,
-	}
+	SetHotCache(key, info)
 }
 
 // GetRedisCache 获取Redis缓存（返回*model.McpInstance）
@@ -319,28 +274,12 @@ func (c *McpInstanceCache) cleanCache() {
 
 // performCacheCleanup 执行缓存清理
 func (c *McpInstanceCache) performCacheCleanup() {
-	// 清理本地热点缓存
-	c.localHotCacheMu.Lock()
-	now := time.Now()
-	for key, item := range c.localHotCache {
-		if now.After(item.expireAt) {
-			delete(c.localHotCache, key)
-		}
-	}
-	// 如果缓存数量过多，清理访问次数最少的
-	if len(c.localHotCache) > MaxLocalCacheSize {
-		c.evictLeastUsedItems()
-	}
-	c.localHotCacheMu.Unlock()
-
 	// 清理互斥锁（避免内存泄漏）
 	c.cacheMutexesMu.Lock()
 	if len(c.cacheMutexes) > MaxLocalCacheSize*2 {
 		newMutexes := make(map[string]*sync.Mutex, MaxLocalCacheSize)
 		for key, mutex := range c.cacheMutexes {
-			if _, exists := c.localHotCache[key]; exists {
-				newMutexes[key] = mutex
-			}
+			newMutexes[key] = mutex
 		}
 		c.cacheMutexes = newMutexes
 	}
@@ -348,7 +287,7 @@ func (c *McpInstanceCache) performCacheCleanup() {
 
 	// 清理空值缓存
 	c.nullCacheMu.Lock()
-	now = time.Now()
+	now := time.Now()
 	for key, expireTime := range c.nullCache {
 		if now.After(expireTime) {
 			delete(c.nullCache, key)
@@ -359,39 +298,7 @@ func (c *McpInstanceCache) performCacheCleanup() {
 
 // evictLeastUsedItems 清理最少使用的缓存项
 func (c *McpInstanceCache) evictLeastUsedItems() {
-	// 简单的LRU策略：清理访问次数最少的50%缓存项
-	type cacheItem struct {
-		key  string
-		item *localCacheItem
-	}
-
-	items := make([]cacheItem, 0, len(c.localHotCache))
-	for key, item := range c.localHotCache {
-		items = append(items, cacheItem{key: key, item: item})
-	}
-
-	// 按访问次数排序
-	for i := 0; i < len(items)/2; i++ {
-		minIdx := i
-		for j := i + 1; j < len(items); j++ {
-			if items[j].item.accessCnt < items[minIdx].item.accessCnt {
-				minIdx = j
-			}
-		}
-		if minIdx != i {
-			items[i], items[minIdx] = items[minIdx], items[i]
-		}
-	}
-
-	// 清理访问次数最少的50%
-	cleanCount := len(items) / 2
-	if cleanCount > MaxLocalCacheSize/2 {
-		cleanCount = MaxLocalCacheSize / 2
-	}
-
-	for i := 0; i < cleanCount; i++ {
-		delete(c.localHotCache, items[i].key)
-	}
+	// Hot cache eviction is encapsulated in hot_cache.go and controlled by parameter.
 }
 
 // ClearCache 清理指定实例的缓存
@@ -402,10 +309,8 @@ func (c *McpInstanceCache) ClearCache(instanceID string) {
 
 	cacheKey := c.GenerateCacheKey(instanceID)
 
-	// 清理本地缓存
-	c.localHotCacheMu.Lock()
-	delete(c.localHotCache, cacheKey)
-	c.localHotCacheMu.Unlock()
+	// Clear local hot cache (encapsulated in separate file)
+	ClearHotCache(cacheKey)
 
 	// 清理互斥锁
 	c.cacheMutexesMu.Lock()
@@ -427,10 +332,8 @@ func (c *McpInstanceCache) ClearCache(instanceID string) {
 
 // ClearAllCache 清理所有缓存
 func (c *McpInstanceCache) ClearAllCache() {
-	// 清理本地缓存
-	c.localHotCacheMu.Lock()
-	c.localHotCache = make(map[string]*localCacheItem)
-	c.localHotCacheMu.Unlock()
+	// Clear all local hot cache (encapsulated in separate file)
+	ClearAllHotCache()
 
 	// 清理互斥锁
 	c.cacheMutexesMu.Lock()
@@ -453,9 +356,7 @@ func (c *McpInstanceCache) Stop() {
 func (c *McpInstanceCache) GetCacheStats() map[string]interface{} {
 	stats := make(map[string]interface{})
 
-	c.localHotCacheMu.RLock()
-	stats["local_cache_size"] = len(c.localHotCache)
-	c.localHotCacheMu.RUnlock()
+	stats["local_cache_size"] = HotCacheSize()
 
 	c.cacheMutexesMu.Lock()
 	stats["mutex_count"] = len(c.cacheMutexes)
@@ -490,6 +391,13 @@ func InitMcpInstanceCache() {
 	// 这里只是确保全局缓存实例被创建
 	// 实际的清理协程会在NewMcpInstanceCache中启动
 	_ = GetMcpInstanceCache()
+
+	// Toggle local hot cache according to the feature flag
+	if EnabledLocalHotCache {
+		EnableHotCache()
+	} else {
+		DisableHotCache()
+	}
 }
 
 // ClearInstanceCache 清理指定实例的缓存
