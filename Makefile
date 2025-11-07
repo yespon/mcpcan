@@ -12,7 +12,7 @@ COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date +%Y%m%d%H%M%S)
 
 # Container registry
-IMAGE_REGISTRY ?= 77kymo
+IMAGE_REGISTRY ?= ccr.ccs.tencentyun.com/itqm-private
 
 
 # Go build environment
