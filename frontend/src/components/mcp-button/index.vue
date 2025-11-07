@@ -18,6 +18,7 @@
       :class="class"
       :loading="loading"
       @click="handleClick"
+      :size="size"
       ><slot></slot
     ></el-button>
   </GlareHover>
@@ -39,6 +40,11 @@ defineProps({
   loading: {
     type: Boolean,
     required: false,
+  },
+  size: {
+    type: String,
+    required: false,
+    default: '',
   },
 })
 const emit = defineEmits<{

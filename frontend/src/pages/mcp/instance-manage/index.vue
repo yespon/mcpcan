@@ -205,9 +205,7 @@
                   <el-dropdown-item command="handleViewStatus">
                     {{ t('mcp.instance.action.probe') }}
                   </el-dropdown-item>
-                  <el-dropdown-item command="handleTokenManage">
-                    {{ t('mcp.instance.action.token') }}
-                  </el-dropdown-item>
+
                   <el-dropdown-item command="handleDeleteInstance">
                     <el-button type="danger" link>
                       {{ t('mcp.instance.action.delete') }}
@@ -224,7 +222,7 @@
     <!-- view detail model -->
     <InstanceDetail ref="instanceDetail"></InstanceDetail>
     <!-- view config model -->
-    <ViewConfig ref="viewConfig"></ViewConfig>
+    <ViewConfig ref="viewConfig" @on-refresh="init"></ViewConfig>
     <!-- probe instance dialog model -->
     <ProbeStatus ref="probe"></ProbeStatus>
     <!-- select template -->
@@ -251,8 +249,6 @@
         </div>
       </template>
     </Select>
-    <!-- tokens manage dialog -->
-    <TokensManage ref="tokensManageRef" @on-refresh="init"></TokensManage>
   </div>
 </template>
 
@@ -273,7 +269,6 @@ import { TemplateAPI } from '@/api/mcp/template'
 import McpImage from '@/components/mcp-image/index.vue'
 import { AccessType, InstanceStatus } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
-import TokensManage from './modules/tokens-manage.vue'
 
 const { t } = useI18n()
 const {
@@ -293,7 +288,6 @@ const {
   viewConfig,
   dataCountList,
   probe,
-  tokensManageRef,
   selectVisible,
   templateList,
   timer,
@@ -518,20 +512,9 @@ const handleCommand = (callback: string, row: InstanceResult) => {
     case 'handleAddByTemplate':
       handleAddByTemplate()
       break
-    case 'handleTokenManage':
-      handleTokenManage(row)
-      break
     default:
       ElMessage.warning(`未找到 "${callback}" 对应的操作`)
   }
-}
-
-/**
- * Handle token manage
- * @param row - instance row data
- */
-const handleTokenManage = (row: InstanceResult) => {
-  tokensManageRef.value.init(row)
 }
 
 /**
