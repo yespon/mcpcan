@@ -60,6 +60,17 @@ func (biz *InstanceBiz) DisableInstance(instanceID string) (string, error) {
 	return msg, mysql.McpInstanceRepo.Update(biz.ctx, instance)
 }
 
+func (biz *InstanceBiz) UpdateInstance(instance *model.McpInstance) error {
+	if instance == nil {
+		return fmt.Errorf("instance is nil")
+	}
+	err := mysql.McpInstanceRepo.Update(biz.ctx, instance)
+	if err != nil {
+		return err
+	}
+	return biz.UpdateInstanceCache(instance.InstanceID, instance)
+}
+
 // DeleteInstance delete instance
 func (biz *InstanceBiz) DeleteInstance(instanceID string) error {
 	// Get instance by access type
@@ -68,6 +79,20 @@ func (biz *InstanceBiz) DeleteInstance(instanceID string) error {
 		return err
 	}
 	return mysql.McpInstanceRepo.Delete(biz.ctx, instanceID)
+}
+
+// updateInstance updates instance cache in Redis using CacheInstanceInfo.
+// It generates a cache key and stores the instance with a default expiration.
+func (biz *InstanceBiz) UpdateInstanceCache(instanceID string, instance *model.McpInstance) error {
+	if instance == nil {
+		return fmt.Errorf("cache instance info is nil")
+	}
+	info := &redis.CacheInstanceInfo{
+		Instance: instance,
+	}
+	cache := redis.GetMcpInstanceCache()
+	key := cache.GenerateCacheKey(instanceID)
+	return cache.SetRedisCacheInstanceFromInfo(key, info, redis.InstanceCacheExpire)
 }
 
 // ListInstance get instance list
@@ -377,18 +402,4 @@ func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol mod
 		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
 	}
 	return addr
-}
-
-// updateInstance updates instance cache in Redis using CacheInstanceInfo.
-// It generates a cache key and stores the instance with a default expiration.
-func (biz *InstanceBiz) UpdateInstanceCache(instanceID string, instance *model.McpInstance) error {
-	if instance == nil {
-		return fmt.Errorf("cache instance info is nil")
-	}
-	info := &redis.CacheInstanceInfo{
-		Instance: instance,
-	}
-	cache := redis.GetMcpInstanceCache()
-	key := cache.GenerateCacheKey(instanceID)
-	return cache.SetRedisCacheInstanceFromInfo(key, info, redis.InstanceCacheExpire)
 }

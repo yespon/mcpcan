@@ -1089,8 +1089,7 @@ func (s *InstanceService) TokenEditHandler(c *gin.Context) {
 
 	// Convert proto tokens to model tokens and overwrite existing tokens
 	instance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
-
-	if err := mysql.McpInstanceRepo.Update(s.ctx, instance); err != nil {
+	if err := biz.GInstanceBiz.UpdateInstance(instance); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance tokens: %s", err.Error()))
 		return
 	}
