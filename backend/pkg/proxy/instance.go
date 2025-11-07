@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -171,6 +169,5 @@ func (s *McpInstanceService) asyncUpdateCache(cacheKey string, instance *model.M
 	}()
 
 	// Random expiration time to prevent cache avalanche (5-15 minutes)
-	expireTime := time.Duration(300+rand.Intn(600)) * time.Second
-	s.cache.SetRedisCacheInstance(cacheKey, instance, expireTime)
+	s.cache.SetRedisCacheInstance(cacheKey, instance, redis.InstanceCacheExpire)
 }

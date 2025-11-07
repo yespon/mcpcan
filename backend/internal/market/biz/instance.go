@@ -87,12 +87,9 @@ func (biz *InstanceBiz) UpdateInstanceCache(instanceID string, instance *model.M
 	if instance == nil {
 		return fmt.Errorf("cache instance info is nil")
 	}
-	info := &redis.CacheInstanceInfo{
-		Instance: instance,
-	}
 	cache := redis.GetMcpInstanceCache()
 	key := cache.GenerateCacheKey(instanceID)
-	return cache.SetRedisCacheInstanceFromInfo(key, info, redis.InstanceCacheExpire)
+	return cache.SetRedisCacheInstance(key, instance, redis.InstanceCacheExpire)
 }
 
 // ListInstance get instance list
