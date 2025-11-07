@@ -62,9 +62,6 @@ importers:
       vue-router:
         specifier: ^4.5.1
         version: 4.5.1(vue@3.5.21(typescript@5.8.3))
-      vxe-table:
-        specifier: ^4.16.13
-        version: 4.16.13(vue@3.5.21(typescript@5.8.3))
     devDependencies:
       '@element-plus/theme-chalk':
         specifier: ^2.2.16
@@ -1121,11 +1118,6 @@ packages:
   '@vueuse/shared@9.13.0':
     resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
 
-  '@vxe-ui/core@4.2.12':
-    resolution: {integrity: sha512-g6gNDykKrKLzxsDDFDYTD/6tWrV9AfSaU7WIlKCO67BSXgKDMaEVTsH7ZZ7fI5qkOO9DH1vo07kbacyBNx7gSQ==}
-    peerDependencies:
-      vue: ^3.2.0
-
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -1337,9 +1329,6 @@ packages:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
     engines: {node: '>=0.10'}
     hasBin: true
-
-  dom-zindex@1.0.6:
-    resolution: {integrity: sha512-FKWIhiU96bi3xpP9ewRMgANsoVmMUBnMnmpCT6dPMZOunVYJQmJhSRruoI0XSPoHeIif3kyEuiHbFrOJwEJaEA==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -2360,12 +2349,6 @@ packages:
       typescript:
         optional: true
 
-  vxe-pc-ui@4.9.30:
-    resolution: {integrity: sha512-7PETgUnAVgQdBpDmYxEPllngKBnmWPwprnFBjTI61RVnTk/Zny54Bv9NmCmtou2xKddhzWuNFaPKzRkdIi35Bw==}
-
-  vxe-table@4.16.13:
-    resolution: {integrity: sha512-pdTmc1Uwg6AAI2dcdsXOisr/gFbAxrSeHdos0qDK2emtyu0e9AY5Lj+RBAbmvhTMfMhYgyzG+JZg/T1ZIvXX1Q==}
-
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
 
@@ -2386,9 +2369,6 @@ packages:
   wsl-utils@0.1.0:
     resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
     engines: {node: '>=18'}
-
-  xe-utils@3.7.9:
-    resolution: {integrity: sha512-LWH6M7g+TKX8P2fqGxDPgJQygiULhbMtpmfxTMxJTUjuUv9y2+I45UCcVLh5AnmJSxDV1xTxsq7G5P9Eid06JQ==}
 
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
@@ -3467,12 +3447,6 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@vxe-ui/core@4.2.12(vue@3.5.21(typescript@5.8.3))':
-    dependencies:
-      dom-zindex: 1.0.6
-      vue: 3.5.21(typescript@5.8.3)
-      xe-utils: 3.7.9
-
   acorn-jsx@5.3.2(acorn@8.15.0):
     dependencies:
       acorn: 8.15.0
@@ -3661,8 +3635,6 @@ snapshots:
 
   detect-libc@1.0.3:
     optional: true
-
-  dom-zindex@1.0.6: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -4691,18 +4663,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.3
 
-  vxe-pc-ui@4.9.30(vue@3.5.21(typescript@5.8.3)):
-    dependencies:
-      '@vxe-ui/core': 4.2.12(vue@3.5.21(typescript@5.8.3))
-    transitivePeerDependencies:
-      - vue
-
-  vxe-table@4.16.13(vue@3.5.21(typescript@5.8.3)):
-    dependencies:
-      vxe-pc-ui: 4.9.30(vue@3.5.21(typescript@5.8.3))
-    transitivePeerDependencies:
-      - vue
-
   webpack-virtual-modules@0.6.2: {}
 
   which@2.0.2:
@@ -4718,8 +4678,6 @@ snapshots:
   wsl-utils@0.1.0:
     dependencies:
       is-wsl: 3.1.0
-
-  xe-utils@3.7.9: {}
 
   xml-name-validator@4.0.0: {}
 
