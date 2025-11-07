@@ -208,8 +208,6 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
 	}
 	oriInstance.IconPath = req.IconPath
-	oriInstance.EnabledToken = req.EnabledToken
-	oriInstance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
@@ -329,8 +327,6 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.PublicProxyPath = publicProxyPath
 	oriInstance.ProxyProtocol = ProxyProtocol
 	oriInstance.IconPath = req.IconPath
-	oriInstance.EnabledToken = req.EnabledToken
-	oriInstance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
@@ -366,7 +362,7 @@ func (biz *InstanceBiz) GetInstancesByEnvironmentID(ctx context.Context, environ
 func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol model.McpProtocol) string {
 	addr := ""
 	if mcpProtocol == model.McpProtocolSSE {
-		addr = fmt.Sprintf("/%s", mcpProtocol.String())
+		addr = fmt.Sprintf("/%s/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID, mcpProtocol.String())
 	} else {
 		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
 	}
