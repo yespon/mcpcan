@@ -102,8 +102,18 @@ export const setClipboardData = (data: any) => {
   })
 }
 
-// 生成token
+// 生成 uuid
+function genUUID() {
+  // 简单 uuid v4 生成
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
 
+// 生成token
 export const getToken = (baseInfo: any) => {
-  return btoa(baseInfo)
+  const uuid = genUUID()
+  return btoa(uuid + baseInfo)
 }

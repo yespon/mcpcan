@@ -175,6 +175,20 @@
             :placeholder="t('mcp.instance.token.placeholderToken')"
           />
         </el-form-item>
+        <!-- <el-form-item label="Token" prop="token">
+          <template #label>
+            Token
+            <el-tag class="ml-2 base-btn cursor-pointer" effect="dark" @click="handleRandomToken">{{
+              t('mcp.instance.token.random')
+            }}</el-tag>
+          </template>
+          <el-input
+            v-model="formData.token"
+            :rows="4"
+            type="textarea"
+            :placeholder="t('mcp.instance.token.placeholderToken')"
+          />
+        </el-form-item> -->
       </el-form>
     </template>
     <template #footer>
@@ -344,7 +358,6 @@ const handleAddExpireAt = (days: number) => {
 // handle edit token
 const handleEditToken = (index: number) => {
   formRef.value?.resetFields()
-
   formData.value.visible = true
   dialogInfo.value.currentEditIndex = index
   const token = dialogInfo.value.instanceInfo.tokens[index]
