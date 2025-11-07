@@ -102,13 +102,16 @@ func InitDB(config *Config) error {
 
 // buildDSN builds a DSN string using provided Config.
 func buildDSN(config *Config) string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=%s",
+	t := config.ConnectTimeout.String()
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=%s&readTimeout=%s&writeTimeout=%s",
 		config.Username,
 		config.Password,
 		config.Host,
 		config.Port,
 		config.Database,
-		config.ConnectTimeout.String(),
+		t,
+		t,
+		t,
 	)
 }
 
@@ -240,6 +243,9 @@ func reconnect(maxRetries int, retryInterval time.Duration) error {
 				_ = oldSQL.Close()
 			}
 		}
+
+		// Re-run initialization hooks to ensure schema and indexes exist after reconnect.
+		hookManager.CallHooks()
 
 		return nil
 	}

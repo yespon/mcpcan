@@ -16,11 +16,11 @@ func Init(config *common.MySQLConfig) error {
 		Username:            config.Username,
 		Password:            config.Password,
 		Database:            config.Database,
-		ConnectTimeout:      60 * time.Second,
-		MaxIdleConns:        10,
+		ConnectTimeout:      10 * time.Second,
+		MaxIdleConns:        20,
 		MaxOpenConns:        100,
-		HealthCheckInterval: 30 * time.Second,
-		MaxRetries:          3,
+		HealthCheckInterval: 15 * time.Second,
+		MaxRetries:          12,
 		RetryInterval:       5 * time.Second,
 	}
 	err := mysql.InitDB(mysqlConfig)
