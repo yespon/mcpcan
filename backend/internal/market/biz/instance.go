@@ -9,6 +9,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
+	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
@@ -115,6 +116,8 @@ func (biz *InstanceBiz) CreateInstance(instance *model.McpInstance) error {
 	if err == nil && existingInstance != nil {
 		return fmt.Errorf("instance name %s already exists", instance.InstanceName)
 	}
+	// Update instance cache
+	biz.UpdateInstanceCache(instance.InstanceID, instance)
 	return mysql.McpInstanceRepo.Create(biz.ctx, instance)
 }
 
@@ -154,6 +157,8 @@ func (biz *InstanceBiz) UpdateInstanceForDirect(ctx context.Context, req *instan
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
+	// Update instance cache
+	biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
 
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
 	if err != nil {
@@ -214,6 +219,9 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
+	// Update instance cache
+	biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
+
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert access type: %w", err)
@@ -333,6 +341,8 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	if err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
+	// Update instance cache
+	biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
 
 	accessType, err := common.ConvertToProtoAccessType(oriInstance.AccessType)
 	if err != nil {
@@ -367,4 +377,18 @@ func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol mod
 		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
 	}
 	return addr
+}
+
+// updateInstance updates instance cache in Redis using CacheInstanceInfo.
+// It generates a cache key and stores the instance with a default expiration.
+func (biz *InstanceBiz) UpdateInstanceCache(instanceID string, instance *model.McpInstance) error {
+	if instance == nil {
+		return fmt.Errorf("cache instance info is nil")
+	}
+	info := &redis.CacheInstanceInfo{
+		Instance: instance,
+	}
+	cache := redis.GetMcpInstanceCache()
+	key := cache.GenerateCacheKey(instanceID)
+	return cache.SetRedisCacheInstanceFromInfo(key, info, redis.InstanceCacheExpire)
 }
