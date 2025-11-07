@@ -15,7 +15,7 @@ import (
 var (
 	// If true, upstream (reverse proxy) errors will be returned as MCP JSON-RPC errors.
 	// If false, keep original http.Error behavior for upstream failures.
-	EnableMCPErrorOnUpstreamFailure = true
+	EnableMCPErrorOnUpstreamFailure = false
 
 	// If true, MCP error responses will use the given HTTP status code
 	// instead of always responding with 200.
@@ -25,7 +25,7 @@ var (
 	EnableSSEErrorEvent = true
 
 	// If true, include more error details in MCP error data. Otherwise sanitize.
-	IncludeErrorDetails = true
+	IncludeErrorDetails = false
 )
 
 func init() {
