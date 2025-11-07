@@ -8,14 +8,14 @@ import (
 )
 
 // Init 初始化数据库连接
-func Init(databaseConfig *common.DatabaseConfig) error {
+func Init(config *common.MySQLConfig) error {
 	// 初始化 MySQL 配置
 	mysqlConfig := &mysql.Config{
-		Host:                databaseConfig.MySQL.Host,
-		Port:                databaseConfig.MySQL.Port,
-		Username:            databaseConfig.MySQL.Username,
-		Password:            databaseConfig.MySQL.Password,
-		Database:            databaseConfig.MySQL.Database,
+		Host:                config.Host,
+		Port:                config.Port,
+		Username:            config.Username,
+		Password:            config.Password,
+		Database:            config.Database,
 		ConnectTimeout:      60 * time.Second,
 		MaxIdleConns:        10,
 		MaxOpenConns:        100,
@@ -27,8 +27,5 @@ func Init(databaseConfig *common.DatabaseConfig) error {
 	if err != nil {
 		return err
 	}
-
-	// 初始化数据库连接、
-
 	return nil
 }

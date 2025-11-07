@@ -62,7 +62,7 @@ func New() (*App, error) {
 // Initialize initializes all application components
 func (a *App) Initialize() error {
 	// Initialize database
-	if err := database.Init(&a.config.Database); err != nil {
+	if err := database.Init(&a.config.Database.MySQL); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 

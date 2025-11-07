@@ -48,7 +48,7 @@ func New() *App {
 // Initialize initializes the application
 func (a *App) Initialize() error {
 	// 初始化数据库
-	if err := dbpkg.Init(&a.config.Database); err != nil {
+	if err := dbpkg.Init(&a.config.Database.MySQL); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 

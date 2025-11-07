@@ -59,7 +59,7 @@ func (a *App) Initialize() error {
 	}
 
 	// Initialize database
-	if err := dbpkg.Init(&a.config.Database); err != nil {
+	if err := dbpkg.Init(&a.config.Database.MySQL); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
