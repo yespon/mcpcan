@@ -526,11 +526,11 @@ func validReqAuthorizationForInstance(instanceInfo *InstanceInfo, authorization 
 	}
 
 	if len(authorization) == 0 {
-		return fmt.Errorf("instance %v enabled token but request Authorization header is empty", instanceInfo.Instance.ID)
+		return fmt.Errorf("instance %v enabled token but request Authorization header is empty", instanceInfo.Instance.InstanceID)
 	}
 
 	if len(instanceInfo.Tokens) == 0 {
-		return fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.ID)
+		return fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
 	}
 
 	for _, t := range instanceInfo.Tokens {
@@ -542,9 +542,9 @@ func validReqAuthorizationForInstance(instanceInfo *InstanceInfo, authorization 
 			if time.Now().Before(expireAt) {
 				return nil
 			} else {
-				return fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.ID)
+				return fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
 			}
 		}
 	}
-	return fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.ID)
+	return fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.InstanceID)
 }
