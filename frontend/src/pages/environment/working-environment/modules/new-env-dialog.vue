@@ -92,6 +92,9 @@ import { EnvType, EnvFormData } from '@/types/env'
 
 const { t } = useI18n()
 const formRef = ref()
+const emit = defineEmits<{
+  (e: 'on-refresh'): void
+}>()
 const placeholderConfig = computed(() => {
   return t('env.run.formData.placeholderConfig') + EnvFormData.TIP_CONFIG
 })
@@ -159,6 +162,7 @@ const handleConfirm = () => {
         })
         ElMessage.success(dialogInfo.value.formData.id ? t('action.edit') : t('action.create'))
         dialogInfo.value.visible = false
+        emit('on-refresh')
       } finally {
         dialogInfo.value.loading = false
       }

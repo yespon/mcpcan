@@ -3,25 +3,34 @@
     <template #header>
       <div class="center">{{ dialogInfo.title }}</div>
     </template>
+    <div class="mb-2 flex items-center">
+      <el-switch
+        v-model="dialogInfo.instanceInfo.enabledToken"
+        style="--el-switch-on-color: #13ce66"
+        inline-prompt
+        :loading="dialogInfo.instanceInfo.loading"
+        :active-text="t('common.on')"
+        :inactive-text="t('common.off')"
+        @change="handleEabledToken()"
+      ></el-switch>
+      <span class="ml-2">开启令牌认证；访问该MCP服务时将进行令牌认证校验</span>
+    </div>
     <el-row :gutter="12">
-      <el-col :span="12">
+      <el-col :span="dialogInfo.instanceInfo.enabledToken ? 12 : 0">
         <el-scrollbar ref="scrollbarRef" max-height="590px" always>
           <div class="token-list">
-            <div class="mb-2 flex items-center">
-              <el-switch
-                v-model="dialogInfo.instanceInfo.enabledToken"
-                style="--el-switch-on-color: #13ce66"
-                inline-prompt
-                :loading="dialogInfo.instanceInfo.loading"
-                :active-text="t('common.on')"
-                :inactive-text="t('common.off')"
-                @change="handleEabledToken()"
-              ></el-switch>
-              <span class="ml-2">开启令牌认证；访问该MCP服务时将进行令牌认证校验</span>
+            <div class="font-bold flex justify-between items-center">
+              MCP 服务令牌
+              <div>
+                <span class="mr-4 color-green">有效:15个</span>
+                <span class="color-red">过期:10个</span>
+              </div>
             </div>
-            <div class="font-bold">MCP 服务令牌</div>
+            <div class="token-card border-rounded-2 mt-4 p-4 cursor-pointer center">
+              <el-icon size="26"><Plus /></el-icon>
+            </div>
             <div
-              class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-8"
+              class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-6"
               :class="dialogInfo.currentTokenIndex === index ? 'active' : ''"
               v-for="(token, index) in dialogInfo.instanceInfo.tokens"
               :key="index"
@@ -40,7 +49,7 @@
           </div>
         </el-scrollbar>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="dialogInfo.instanceInfo.enabledToken ? 12 : 24">
         <el-scrollbar ref="scrollbarRef" max-height="590px" always>
           <div class="config-info">{{ config }}</div>
           <el-icon class="base-btn-link copy-icon" @click="handleCopy"><CopyDocument /></el-icon>
@@ -49,20 +58,21 @@
     </el-row>
     <template #footer>
       <div class="center">
-        <mcp-button @click="handleCopy" class="w100">{{
+        <!-- <mcp-button @click="handleCopy" class="w100">{{
           t('mcp.instance.action.copy')
-        }}</mcp-button>
+        }}</mcp-button> -->
       </div>
     </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
+import { Plus } from '@element-plus/icons-vue'
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { JsonFormatter } from '@/utils/json.ts'
 import { ElMessage } from 'element-plus'
 import { CopyDocument } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
-import type { InstanceResult } from '@/types'
+import { McpProtocol, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
 
 const { t } = useI18n()
@@ -74,7 +84,24 @@ const dialogInfo = ref({
 })
 
 const config = computed(() => {
-  return JsonFormatter.format(dialogInfo.value.instanceInfo.publicProxyConfig)
+  return JsonFormatter.format(`
+  {
+      "mcpServers": {
+          "mcp-4bb4ffb0": {
+              "url": "${window.location}${dialogInfo.value.instanceInfo.publicProxyPath}",
+              "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
+              "headers": {
+                  "Authorization": "${
+                    dialogInfo.value.currentTokenIndex !== null
+                      ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex]
+                          .token
+                      : ''
+                  }"
+              }
+          }
+      }
+  }
+  `)
 })
 
 // handle enabled token switch
@@ -95,7 +122,7 @@ const handleEabledToken = async () => {
  * Handle copy config info
  */
 const handleCopy = async () => {
-  await setClipboardData(config)
+  await setClipboardData(config.value)
   ElMessage.success(t('action.copy'))
 }
 

@@ -83,7 +83,7 @@
     </div>
 
     <!-- create env model -->
-    <NewEnvDialog ref="newEnvDialog"></NewEnvDialog>
+    <NewEnvDialog ref="newEnvDialog" @on-refresh="init"></NewEnvDialog>
     <!-- env detail model -->
     <EnvDetail ref="envDetail"></EnvDetail>
   </div>
