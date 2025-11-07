@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogInfo.visible" width="1000px" top="10vh" :show-close="false">
+  <el-dialog v-model="dialogInfo.visible" width="1000px" top="10vh">
     <template #header>
       <div class="center">{{ dialogInfo.title }}</div>
     </template>
@@ -13,9 +13,9 @@
         :inactive-text="t('common.off')"
         @change="handleEabledToken()"
       ></el-switch>
-      <span class="ml-2">开启令牌认证；访问该MCP服务时将进行令牌认证校验</span>
+      <span class="ml-2">{{ t('mcp.instance.tableHeadDesc.token') }}</span>
     </div>
-    <el-row :gutter="12" class="vc-row">
+    <el-row :gutter="12" class="vc-row" v-loading="dialogInfo.instanceInfo.loading">
       <el-col
         :span="12"
         :class="['config-col left', { collapsed: !dialogInfo.instanceInfo.enabledToken }]"
@@ -23,14 +23,18 @@
         <el-scrollbar ref="scrollbarRef" max-height="590px" always>
           <div class="token-list">
             <div class="font-bold flex justify-between items-center">
-              <mcp-button :icon="Plus" size="small" @click="handleAddToken">添加令牌</mcp-button>
+              <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
+                t('mcp.instance.formData.addToken')
+              }}</mcp-button>
               <div>
                 <span class="mr-4 color-green">
-                  有效:
-                  {{ tokenList.filter((token) => !token.expire).length }}个
+                  {{ t('mcp.instance.token.active') }}:
+                  {{ tokenList.filter((token) => !token.expire).length }}
                 </span>
                 <span class="color-red">
-                  过期:{{ tokenList.filter((token) => token.expire).length }}个
+                  {{ t('mcp.instance.token.expired') }}:{{
+                    tokenList.filter((token) => token.expire).length
+                  }}
                 </span>
               </div>
             </div>
@@ -63,11 +67,11 @@
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item command="handleViewLog" @click="handleEditToken(index)">
-                        {{ '编辑' }}
+                        {{ t('env.run.action.edit') }}
                       </el-dropdown-item>
                       <el-dropdown-item command="handleViewLog" @click="handleDeleteToken(index)">
                         <el-button type="danger" link>
-                          {{ '删除' }}
+                          {{ t('mcp.instance.action.delete') }}
                         </el-button>
                       </el-dropdown-item>
                     </el-dropdown-menu>
@@ -76,20 +80,22 @@
               </div>
 
               <div class="ellipsis-one">
-                有效时间：<span
+                {{ t('mcp.instance.token.expireAt') }}：<span
                   :class="
                     !token.expireAt ? 'color-green' : token.expireAt < Date.now() ? 'color-red' : ''
                   "
                 >
                   {{
                     !token.expireAt
-                      ? '永久有效'
+                      ? t('mcp.instance.token.placeholderAlways')
                       : timestampToDate(token.expireAt) +
-                        (token.expireAt < Date.now() ? '（已过期）' : '')
+                        (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
                   }}
                 </span>
               </div>
-              <div class="ellipsis-one">创建时间：{{ timestampToDate(token.publishAt) }}</div>
+              <div class="ellipsis-one">
+                {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+              </div>
             </div>
           </div>
         </el-scrollbar>
@@ -98,9 +104,11 @@
         :span="12"
         :class="['config-col right', { expanded: !dialogInfo.instanceInfo.enabledToken }]"
       >
-        <el-scrollbar ref="scrollbarRef" max-height="590px" always>
-          <div class="config-info">{{ config }}</div>
-          <el-icon class="base-btn-link copy-icon" @click="handleCopy"><CopyDocument /></el-icon>
+        <el-scrollbar ref="scrollbarRef" max-height="590px" always class="config-info">
+          <div class="py-5 px-5">{{ config }}</div>
+          <el-icon class="base-btn-link copy-icon" size="24" @click="handleCopy"
+            ><CopyDocument
+          /></el-icon>
         </el-scrollbar>
       </el-col>
     </el-row>
@@ -114,7 +122,7 @@
   </el-dialog>
   <el-dialog v-model="formData.visible" width="360px" top="30vh" :show-close="false">
     <template #header>
-      <div class="center mb-4">安全认证令牌</div>
+      <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
       <el-form
         ref="formRef"
         :model="formData"
@@ -122,28 +130,19 @@
         label-width="auto"
         label-position="top"
       >
-        <el-form-item label="有效期" prop="token">
+        <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
           <template #label>
             <div class="center">
-              <span class="mr-2">有效期</span>
-              <mcp-button
-                class="mr-2 base-btn cursor-pointer"
-                size="small"
-                @click.stop="handleAddExpireAt(7)"
-                >7天
-              </mcp-button>
-              <mcp-button
-                class="mr-2 base-btn cursor-pointer"
-                size="small"
-                @click.stop="handleAddExpireAt(15)"
-                >15天
-              </mcp-button>
-              <mcp-button
-                class="mr-2 base-btn cursor-pointer"
-                size="small"
-                @click.stop="handleAddExpireAt(30)"
-                >30天
-              </mcp-button>
+              <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
+              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(7)"
+                >7{{ t('mcp.instance.token.day') }}
+              </el-button>
+              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(15)"
+                >15{{ t('mcp.instance.token.day') }}
+              </el-button>
+              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(30)"
+                >30{{ t('mcp.instance.token.day') }}
+              </el-button>
             </div>
           </template>
           <el-date-picker
@@ -151,29 +150,32 @@
             v-model="formData.expireAt"
             type="datetime"
             value-format="x"
-            placeholder="请选择过期时间，不选择则永久有效"
+            :placeholder="t('mcp.instance.token.placeholderDate')"
             style="width: 100%"
             :disabled-date="(date: Date) => date.getTime() < Date.now()"
           ></el-date-picker>
         </el-form-item>
         <el-form-item label="Token" prop="token">
           <template #label>
-            Token值
-            <el-tag class="ml-2 base-btn cursor-pointer" effect="dark" @click="handleRandomToken"
-              >随机生成</el-tag
-            >
+            Token
+            <el-tag class="ml-2 base-btn cursor-pointer" effect="dark" @click="handleRandomToken">{{
+              t('mcp.instance.token.random')
+            }}</el-tag>
           </template>
           <el-input
             v-model="formData.token"
             :rows="4"
             type="textarea"
-            placeholder="Authorization:请输入Token值或自动生成"
+            :placeholder="t('mcp.instance.token.placeholderToken')"
           />
         </el-form-item>
       </el-form>
     </template>
     <template #footer>
       <div class="center">
+        <el-button @click="formData.visible = false" class="mr-4 w-25">{{
+          t('common.cancel')
+        }}</el-button>
         <mcp-button @click="handleConfirmToken" class="w-25">{{ t('common.ok') }}</mcp-button>
       </div>
     </template>
@@ -182,8 +184,7 @@
 <script setup lang="ts">
 import { Plus, Operation } from '@element-plus/icons-vue'
 import { setClipboardData, timestampToDate } from '@/utils/system'
-import { JsonFormatter } from '@/utils/json.ts'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { CopyDocument } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { type InstanceResult } from '@/types'
@@ -191,20 +192,20 @@ import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
-import { de } from 'element-plus/es/locales.mjs'
 
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
   (e: 'on-refresh'): void
 }>()
+const formRef = ref()
 const formData = ref({
   visible: false,
   token: '',
   expireAt: null as number | null,
 })
 const rules = reactive({
-  name: [{ required: true, message: '请输入令牌名称', trigger: 'blur' }],
+  token: [{ required: true, message: t('mcp.instance.token.placeholderToken'), trigger: 'blur' }],
 })
 const dialogInfo = ref({
   visible: false,
@@ -218,35 +219,30 @@ const dialogInfo = ref({
 const config = computed(() => {
   // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
   if (dialogInfo.value.instanceInfo.enabledToken) {
-    return JsonFormatter.format(
-      `{
+    return `{
+      "mcpServers": {
+            "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
+                  "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}",
+                  "headers": {
+                        "Authorization": "${
+                          dialogInfo.value.currentTokenIndex !== null
+                            ? dialogInfo.value.instanceInfo.tokens[
+                                dialogInfo.value.currentTokenIndex
+                              ].token
+                            : ''
+                        }"
+                  }
+            }
+      }
+  }`
+  }
+  return `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-              "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}",
-              "headers": {
-                "Authorization": "${
-                  dialogInfo.value.currentTokenIndex !== null
-                    ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
-                    : ''
-                }"
-              }
+              "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}"
           }
       }
-  }`,
-      4,
-    )
-  } else {
-    return JsonFormatter.format(
-      `{
-        "mcpServers": {
-            "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-                "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}"
-            }
-        }
-    }`,
-      4,
-    )
-  }
+  }`
 })
 
 // token list
@@ -260,6 +256,9 @@ const tokenList = computed(
 
 // handle add token
 const handleAddToken = () => {
+  formData.value.token = ''
+  formData.value.expireAt = null
+  dialogInfo.value.currentEditIndex = null
   formData.value.visible = true
 }
 
@@ -291,6 +290,33 @@ const handleSelectedToken = (index: number) => {
 
 // handle random token
 const handleRandomToken = () => {
+  if (dialogInfo.value.currentEditIndex !== null) {
+    ElMessageBox.confirm(t('mcp.instance.action.random'), t('common.warn'), {
+      confirmButtonText: t('common.ok'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+      customClass: 'tips-box',
+      center: true,
+      showClose: false,
+      confirmButtonClass: 'is-plain el-button--danger danger-btn',
+      customStyle: {
+        width: '517px',
+        height: '247px',
+      },
+    }).then(() => {
+      formData.value.token =
+        'Bearer ' +
+        getToken(
+          JSON.stringify({
+            userId: userInfo.userId,
+            username: userInfo.username,
+            expireAt: formData.value.expireAt,
+          }),
+        )
+    })
+    return
+  }
+
   formData.value.token =
     'Bearer ' +
     getToken(
@@ -303,15 +329,10 @@ const handleRandomToken = () => {
 }
 
 // handle add expire at
-const datePicker = ref()
 const handleAddExpireAt = (days: number) => {
   const expireDate = new Date()
   expireDate.setDate(expireDate.getDate() + days)
   formData.value.expireAt = expireDate.getTime()
-  console.log(datePicker.value)
-  nextTick(() => {
-    datePicker.value.blur()
-  })
 }
 // handle edit token
 const handleEditToken = (index: number) => {
@@ -324,17 +345,34 @@ const handleEditToken = (index: number) => {
 
 // handle delete token
 const handleDeleteToken = (index: number) => {
-  dialogInfo.value.instanceInfo.tokens.splice(index, 1)
-  if (dialogInfo.value.currentTokenIndex === index) {
-    dialogInfo.value.currentTokenIndex = null
-  } else if (dialogInfo.value.currentTokenIndex && dialogInfo.value.currentTokenIndex > index) {
-    dialogInfo.value.currentTokenIndex!--
-  }
-  handleSaveTokens()
+  ElMessageBox.confirm(t('mcp.instance.action.deleteToken'), t('common.warn'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning',
+    customClass: 'tips-box',
+    center: true,
+    showClose: false,
+    confirmButtonClass: 'is-plain el-button--danger danger-btn',
+    customStyle: {
+      width: '517px',
+      height: '247px',
+    },
+  }).then(() => {
+    dialogInfo.value.instanceInfo.tokens.splice(index, 1)
+    if (dialogInfo.value.currentTokenIndex === index) {
+      dialogInfo.value.currentTokenIndex = null
+    } else if (dialogInfo.value.currentTokenIndex && dialogInfo.value.currentTokenIndex > index) {
+      dialogInfo.value.currentTokenIndex!--
+    }
+    handleSaveTokens()
+  })
 }
 
 // handle confirm token
-const handleConfirmToken = () => {
+const handleConfirmToken = async () => {
+  const result = await formRef.value.validate()
+  if (!result) return
+
   if (dialogInfo.value.currentEditIndex) {
     dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
       token: formData.value.token,
@@ -349,16 +387,20 @@ const handleConfirmToken = () => {
     handleSaveTokens()
     return
   }
-  dialogInfo.value.instanceInfo.tokens.push({
-    token: formData.value.token,
-    expireAt: formData.value.expireAt || 0,
-    publishAt: Date.now(),
-    usages: [],
-  })
-  formData.value.visible = false
-  formData.value.token = ''
-  formData.value.expireAt = null
-  handleSaveTokens()
+  try {
+    dialogInfo.value.instanceInfo.tokens.push({
+      token: formData.value.token,
+      expireAt: formData.value.expireAt || 0,
+      publishAt: Date.now(),
+      usages: [],
+    })
+    formData.value.visible = false
+    formData.value.token = ''
+    formData.value.expireAt = null
+    await handleSaveTokens()
+  } catch (error) {
+    dialogInfo.value.instanceInfo.tokens.pop()
+  }
 }
 
 /**
@@ -372,8 +414,6 @@ const handleSaveTokens = async () => {
       tokens: dialogInfo.value.instanceInfo.tokens,
     })
     emit('on-refresh')
-  } catch (error) {
-    throw error
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
@@ -433,17 +473,15 @@ defineExpose({
   }
 }
 .config-info {
-  min-height: 590px;
   font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
   font-size: 12px;
   line-height: 1.8;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
+  white-space: pre;
+  word-break: normal;
   border-radius: 8px;
   background: #000000;
   border-radius: 8px;
-  padding: 24px;
+  box-sizing: border-box;
 }
 .copy-icon {
   position: absolute;

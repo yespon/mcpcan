@@ -101,7 +101,9 @@
         "copy": "Copy Config",
         "selectTempalte": "Select a Tempalte",
         "customize": "Customize",
-        "byTemplate": "By Template"
+        "byTemplate": "By Template",
+        "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
+        "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification."
       },
       "pageDesc": {
         "createTitle": "Create a instance",
@@ -111,6 +113,9 @@
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
         "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing."
+      },
+      "tableHeadDesc": {
+        "token": "After enabling token authentication, token verification will be activated, and accessing MCP services requires carrying the token Token"
       },
       "formData": {
         "title": "Add a new MCP",
@@ -143,7 +148,7 @@
         "addVolume": "Add",
         "initScript": "InitScript",
         "command": "Command",
-        "addToken": " Add a token"
+        "addToken": " Add"
       },
       "rules": {
         "name": "Please enter the instance name"
@@ -154,11 +159,18 @@
         "updateTime": "Update Time"
       },
       "token": {
-        "title": "Token Management",
+        "title": "Security authentication token",
         "expireAt": "Effective Time",
         "tokenKey": "Token Value",
-        "placeholderDate": "Choose an expiration date",
-        "placeholderAlways": "Long-term valid"
+        "placeholderDate": "Please select an expiration date, otherwise it will be permanently valid",
+        "placeholderAlways": "Permanent",
+        "active": "Effective",
+        "expire": "Expire",
+        "expired": "Expired",
+        "lifespan": "Lifespan",
+        "day": "Days",
+        "random": "Random",
+        "placeholderToken": "Authorization:Please enter the Token value or generate it automatically"
       },
       "loading": {
         "restart": "restarting...",

@@ -736,10 +736,13 @@ const handleGetTemplateDetail = async () => {
       publishAt: new Date().getTime(),
       token:
         'Bearer ' +
-        getToken({
-          userId: userInfo.userId,
-          username: userInfo.username,
-        }),
+        getToken(
+          JSON.stringify({
+            userId: userInfo.userId,
+            username: userInfo.username,
+            expireAt: Date.now(),
+          }),
+        ),
       usages: ['default'],
     },
   ]

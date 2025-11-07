@@ -84,6 +84,9 @@
       min-width="100"
       v-bind="{ ...column.props }"
     >
+      <template #header="scope">
+        <slot :name="column.headSlot" :row="scope.row"></slot>
+      </template>
       <template #default="scope">
         <!-- 优先使用插槽 -->
         <slot :name="column.dataIndex" :row="scope.row" :index="column.dataIndex">

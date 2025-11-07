@@ -88,6 +88,17 @@
             <div id="instanceSearch"></div>
           </div>
         </template>
+        <template #enabledTokenHeader>
+          <div class="flex align-center">
+            <span class="mr-2">{{ t('mcp.instance.enabledToken') }}</span>
+            <el-popover placement="top" width="250">
+              <div>{{ t('mcp.instance.tableHeadDesc.token') }}</div>
+              <template #reference>
+                <el-icon class="cursor-pointer"><Warning /></el-icon>
+              </template>
+            </el-popover>
+          </div>
+        </template>
         <template #instanceName="{ row }">
           <div class="flex align-center">
             <mcp-image :src="row.iconPath" width="32" height="32" :key="row.instanceId"></mcp-image>

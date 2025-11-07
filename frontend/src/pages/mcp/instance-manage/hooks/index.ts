@@ -161,6 +161,7 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'enabledToken',
       label: t('mcp.instance.enabledToken'),
+      headSlot: 'enabledTokenHeader',
     },
     { dataIndex: 'publicProxyConfig', label: t('mcp.instance.publicProxyConfig') },
     {
