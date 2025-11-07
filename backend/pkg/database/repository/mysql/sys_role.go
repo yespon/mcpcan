@@ -18,7 +18,7 @@ var SysRoleRepo *SysRoleRepository
 type SysRoleRepository struct{}
 
 func init() {
-	RegisterInit(func(db *gorm.DB) {
+	RegisterInit(func() {
 		repo := NewSysRoleRepository()
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize sys_role table: %v", err))

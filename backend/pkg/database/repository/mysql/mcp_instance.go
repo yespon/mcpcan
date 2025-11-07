@@ -13,7 +13,7 @@ import (
 var McpInstanceRepo *McpInstanceRepository
 
 func init() {
-	RegisterInit(func(db *gorm.DB) {
+	RegisterInit(func() {
 		repo := NewMcpInstanceRepository()
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize mcp_instance table: %v", err))

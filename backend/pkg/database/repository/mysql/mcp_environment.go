@@ -15,7 +15,7 @@ import (
 var McpEnvironmentRepo *McpEnvironmentRepository
 
 func init() {
-	RegisterInit(func(db *gorm.DB) {
+	RegisterInit(func() {
 		repo := NewMcpEnvironmentRepository()
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize mcp_environment table: %v", err))

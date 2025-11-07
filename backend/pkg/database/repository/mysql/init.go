@@ -19,9 +19,10 @@ var (
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+	conf   *Config
 )
 
-// Config MySQL配置
+// Config defines MySQL connection configuration.
 type Config struct {
 	Host                string        `validate:"required"`
 	Port                int           `validate:"required,min=1,max=65535"`
@@ -36,10 +37,10 @@ type Config struct {
 	RetryInterval       time.Duration `validate:"required"`
 }
 
-// InitHook 初始化钩子函数类型
-type InitHook func(db *gorm.DB)
+// InitHook represents a function to be called after initial DB setup.
+type InitHook func()
 
-// HookManager 钩子管理器
+// HookManager manages registered initialization hooks.
 type HookManager struct {
 	hooks []InitHook
 	mu    sync.RWMutex
@@ -47,35 +48,35 @@ type HookManager struct {
 
 var hookManager = NewHookManager()
 
-// NewHookManager 创建钩子管理器
+// NewHookManager creates a new HookManager.
 func NewHookManager() *HookManager {
 	return &HookManager{
 		hooks: make([]InitHook, 0),
 	}
 }
 
-// Register 注册钩子
+// Register adds an initialization hook to the manager.
 func (m *HookManager) Register(hook InitHook) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.hooks = append(m.hooks, hook)
 }
 
-// CallHooks 调用所有钩子
-func (m *HookManager) CallHooks(db *gorm.DB) {
+// CallHooks executes all registered initialization hooks.
+func (m *HookManager) CallHooks() {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	for _, hook := range m.hooks {
-		hook(db)
+		hook()
 	}
 }
 
-// RegisterInit 注册初始化钩子
+// RegisterInit registers an initialization hook for DB setup.
 func RegisterInit(initHook InitHook) {
 	hookManager.Register(initHook)
 }
 
-// InitDB 初始化数据库连接
+// InitDB initializes the database connection once and starts health checking.
 func InitDB(config *Config) error {
 	if config == nil {
 		return errors.New("no mysql config")
@@ -83,31 +84,37 @@ func InitDB(config *Config) error {
 
 	var initErr error
 	once.Do(func() {
-		// 创建带有取消功能的上下文
+		// Create context with cancel for health checker.
 		ctx, cancel = context.WithCancel(context.Background())
 
-		// 初始化数据库连接
+		// Initialize DB connection.
 		if err := initConnection(config); err != nil {
 			initErr = err
 			return
 		}
 
-		// 启动健康检查和自动重连的goroutine
+		// Start health checker and automatic reconnect goroutine.
 		startHealthChecker(config.HealthCheckInterval, config.MaxRetries, config.RetryInterval)
 	})
 
 	return initErr
 }
 
-// initConnection 初始化数据库连接
-func initConnection(config *Config) error {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+// buildDSN builds a DSN string using provided Config.
+func buildDSN(config *Config) string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=%s",
 		config.Username,
 		config.Password,
 		config.Host,
 		config.Port,
 		config.Database,
+		config.ConnectTimeout.String(),
 	)
+}
+
+// initConnection initializes the database connection using the given config.
+func initConnection(config *Config) error {
+	dsn := buildDSN(config)
 
 	var err error
 	db, err = gorm.Open(
@@ -121,26 +128,31 @@ func initConnection(config *Config) error {
 	}
 
 	if healthErr := HealthCheck(); healthErr != nil {
-		return fmt.Errorf("failed to health check: %v", err)
+		return fmt.Errorf("failed to health check: %v", healthErr)
 	}
 
-	// 设置连接池
+	// Set connection pool.
 	sqlDB, err := db.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get database instance: %v", err)
 	}
 
-	// 设置连接池参数
+	// Set pool parameters.
 	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
 
-	// 调用所有初始化钩子
-	hookManager.CallHooks(db)
+	// Persist config for future reconnect attempts.
+	mu.Lock()
+	conf = config
+	mu.Unlock()
+
+	// Call all initialization hooks (only on initial setup).
+	hookManager.CallHooks()
 
 	return nil
 }
 
-// startHealthChecker 启动健康检查和自动重连
+// startHealthChecker starts periodic health checks and triggers reconnect when unhealthy.
 func startHealthChecker(interval time.Duration, maxRetries int, retryInterval time.Duration) {
 	wg.Add(1)
 	go func() {
@@ -167,12 +179,18 @@ func startHealthChecker(interval time.Duration, maxRetries int, retryInterval ti
 	}()
 }
 
-// reconnect 尝试重新连接数据库
+// reconnect attempts to rebuild the DB connection and swap it atomically.
 func reconnect(maxRetries int, retryInterval time.Duration) error {
-	mu.Lock()
-	defer mu.Unlock()
-
 	var lastErr error
+	var cfg *Config
+
+	mu.RLock()
+	cfg = conf
+	mu.RUnlock()
+
+	if cfg == nil {
+		return errors.New("missing mysql config for reconnect")
+	}
 
 	for i := 0; i < maxRetries; i++ {
 		if i > 0 {
@@ -180,32 +198,73 @@ func reconnect(maxRetries int, retryInterval time.Duration) error {
 			time.Sleep(retryInterval)
 		}
 
-		// 获取当前配置
-		sqlDB, err := db.DB()
-		if err == nil {
-			// 尝试关闭现有连接
-			_ = sqlDB.Close()
+		// Create a new DB connection using the stored config.
+		newDB, err := gorm.Open(
+			mysql.Open(buildDSN(cfg)),
+			&gorm.Config{
+				Logger:                                   logger.Default.LogMode(logger.Info),
+				DisableForeignKeyConstraintWhenMigrating: true,
+			},
+		)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to connect: %v", err)
+			continue
 		}
 
-		// 重新建立连接
-		if err := HealthCheck(); err == nil {
-			return nil
-		} else {
-			lastErr = err
+		newSQLDB, err := newDB.DB()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to get database instance: %v", err)
+			continue
 		}
+
+		// Apply pool configuration.
+		newSQLDB.SetMaxIdleConns(cfg.MaxIdleConns)
+		newSQLDB.SetMaxOpenConns(cfg.MaxOpenConns)
+
+		// Validate the new connection.
+		if err := newSQLDB.Ping(); err != nil {
+			lastErr = fmt.Errorf("failed to ping: %v", err)
+			_ = newSQLDB.Close()
+			continue
+		}
+
+		// Swap global DB atomically.
+		mu.Lock()
+		old := db
+		db = newDB
+		mu.Unlock()
+
+		// Close the old connection pool after swap.
+		if old != nil {
+			if oldSQL, err := old.DB(); err == nil {
+				_ = oldSQL.Close()
+			}
+		}
+
+		return nil
 	}
 
 	return fmt.Errorf("failed to reconnect after %d attempts: %v", maxRetries, lastErr)
 }
 
-// GetDB 获取数据库连接
+// GetDB returns the global DB instance, ensuring it is healthy.
 func GetDB() *gorm.DB {
+	// Attempt auto-heal if unhealthy.
+	if err := HealthCheck(); err != nil {
+		mu.RLock()
+		cfg := conf
+		mu.RUnlock()
+		if cfg != nil {
+			_ = reconnect(cfg.MaxRetries, cfg.RetryInterval)
+		}
+	}
+
 	mu.RLock()
 	defer mu.RUnlock()
 	return db
 }
 
-// HealthCheck 健康检查
+// HealthCheck performs a ping on the underlying sql.DB.
 func HealthCheck() error {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -221,17 +280,17 @@ func HealthCheck() error {
 	return sqlDB.Ping()
 }
 
-// Close 关闭数据库连接
+// Close stops health checking and closes the DB connection pool.
 func Close() error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// 取消健康检查的goroutine
+	// Cancel health checker goroutine.
 	if cancel != nil {
 		cancel()
 	}
 
-	// 等待所有goroutine结束
+	// Wait for all goroutines to finish.
 	wg.Wait()
 
 	if db == nil {

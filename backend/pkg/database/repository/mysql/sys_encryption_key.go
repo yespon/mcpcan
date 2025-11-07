@@ -14,7 +14,7 @@ import (
 var SysEncryptionKeyRepo *SysEncryptionKeyRepository
 
 func init() {
-	RegisterInit(func(db *gorm.DB) {
+	RegisterInit(func() {
 		repo := NewSysEncryptionKeyRepository(db)
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize sys_encryption_key table: %v", err))

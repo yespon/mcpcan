@@ -16,7 +16,7 @@ import (
 var SysUserRepo *SysUserRepository
 
 func init() {
-	RegisterInit(func(db *gorm.DB) {
+	RegisterInit(func() {
 		repo := NewSysUserRepository(db)
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize sys_user table: %v", err))
