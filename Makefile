@@ -124,23 +124,23 @@ export-go-build:
 	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/backend/bin and $(ROOT_PATH)/frontend/dist ----------"
 
 .PHONY: go-build-init
-go-build-init: proto-buf go-mod-tidy
+go-build-init:
 	$(call go_build_service,init)
 
 .PHONY: go-build-market
-go-build-market: proto-buf go-mod-tidy
+go-build-market:
 	$(call go_build_service,market)
 
 .PHONY: go-build-authz
-go-build-authz: proto-buf go-mod-tidy
+go-build-authz:
 	$(call go_build_service,authz)
 
 .PHONY: go-build-gateway
-go-build-gateway: proto-buf go-mod-tidy
+go-build-gateway:
 	$(call go_build_service,gateway)
 
-.PHONY: go-build-all
-go-build-all: go-build-init go-build-market go-build-authz go-build-gateway
+.PHONY: go-build-all 
+go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz go-build-gateway
 
 # Frontend build targets
 
@@ -246,7 +246,6 @@ docker-build-push-backend: docker-build-push-init docker-build-push-market docke
 .PHONY: docker-build-push-all
 docker-build-push-all: docker-build-all docker-push-all
 
-
 # Clean targets
 .PHONY: clean
 clean:
@@ -254,7 +253,6 @@ clean:
 	@rm -rf $(BACKEND_PATH)/bin/*
 	@rm -rf $(FRONTEND_PATH)/dist
 	@rm -rf $(FRONTEND_PATH)/node_modules/.cache
-
 
 # Test targets
 .PHONY: test-backend
