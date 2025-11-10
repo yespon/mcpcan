@@ -14,7 +14,6 @@ BUILD_TIME := $(shell date +%Y%m%d%H%M%S)
 # Container registry
 IMAGE_REGISTRY ?= ccr.ccs.tencentyun.com/itqm-private
 
-
 # Go build environment
 GO_PROXY ?= https://goproxy.cn/
 GOARCH := $(shell go env GOARCH)
@@ -29,6 +28,30 @@ LDFLAGS := -X '${VERSION_PKG}.Version=${VERSION}' \
 		-X '${VERSION_PKG}.BuildTime=${BUILD_TIME}' \
 		-X '${VERSION_PKG}.Commit=${COMMIT}' \
 		-X '${VERSION_PKG}.GoVersion=${GO_VERSION}'
+
+# Backend build targets
+define go_build_service
+	@echo "---------- Start Go build $(1) ----------"
+	@echo "cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags \"$(LDFLAGS)\" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go"
+	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
+	@echo "---------- End Go build $(1) ----------"
+endef
+
+# Docker build targets
+define build_docker_image
+	@echo "---------- Start Docker build $(1) ----------"
+	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
+	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
+	@echo "---------- End Docker build $(1) ----------"
+endef
+
+# Docker push targets
+define push_docker_image
+	@echo "---------- Start Docker push $(1) ----------"
+	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)"
+	@docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)
+	@echo "---------- End Docker push $(1) ----------"
+endef
 
 # Default target
 .PHONY: all
@@ -49,65 +72,81 @@ print:
 	@echo "GO_BUILD_ENV: $(GO_BUILD_ENV)"
 	@echo "-------------------------------------------"
 
-# Backend build targets
-define build_backend_service
-	@echo "---------- Start Go build $(1) ----------"
-	@echo "---- Step 1: Generating protobuf files ----"
-	@$(MAKE) proto-buf
-	@echo "---- Step 2: Running go mod tidy ----"
-	@echo "cd $(BACKEND_PATH) && go mod tidy"
-	@cd $(BACKEND_PATH) && go mod tidy
-	@echo "---- Step 3: Building Go binary ----"
-	@echo "cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags \"$(LDFLAGS)\" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go"
-	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
-	@echo "---------- End Go build $(1) ----------"
-endef
+# Protocol buffer generation
+.PHONY: proto-buf
+proto-buf:
+	@echo "---- Cleaning existing generated files ----"
+	@rm -rf $(shell find $(BACKEND_PATH)/api -type f -name '*.go')
+	@rm -rf $(shell find $(BACKEND_PATH)/api -type f -name '*.json')
+	@echo "---- Generating protobuf files ----"
+	@cd $(BACKEND_PATH)/api && buf --debug generate 
+	@find $(BACKEND_PATH)/api -name "*.pb.go" -exec protoc-go-inject-tag -input={} \; || echo "No .pb.go files found for tag injection"
+	@echo "---- Merging swagger files ----"
+	@rm -f $(BACKEND_PATH)/api/merged.swagger.json
+	@if [ -n "$$(find $(BACKEND_PATH)/api -name '*.json' -type f)" ]; then \
+		swagger mixin $$(find $(BACKEND_PATH)/api -name '*.json' -type f) -o $(BACKEND_PATH)/api/merged.swagger.json; \
+		echo "Swagger files merged successfully"; \
+		ls -la $(BACKEND_PATH)/api/merged.swagger.json; \
+	else \
+		echo "No swagger JSON files found to merge"; \
+		touch $(BACKEND_PATH)/api/merged.swagger.json; \
+	fi
 
-.PHONY: build-backend-init
-build-backend-init:
-	$(call build_backend_service,init)
-
-.PHONY: build-backend-market
-build-backend-market:
-	$(call build_backend_service,market)
-
-.PHONY: build-backend-authz
-build-backend-authz:
-	$(call build_backend_service,authz)
-
-.PHONY: build-backend-gateway
-build-backend-gateway:
-	$(call build_backend_service,gateway)
-
-.PHONY: build-backend-all
-build-backend-all: build-backend-init build-backend-market build-backend-authz build-backend-gateway
-
-# Frontend build targets
-.PHONY: build-frontend
-build-frontend:
+.PHONY: pnpm-build
+pnpm-build:
 	@echo "---------- Start build frontend ----------"
 	@echo "cd $(FRONTEND_PATH) && pnpm i && pnpm build"
 	@cd $(FRONTEND_PATH) && rm -rf node_modules && CI=true pnpm i && pnpm build
 	@echo "---------- End build frontend ----------"
+
+.PHONY: go-mod-tidy
+go-mod-tidy:
+	@echo "---------- Start go mod tidy ----------"
+	@echo "cd $(BACKEND_PATH) && go mod tidy"
+	@cd $(BACKEND_PATH) && go mod tidy
+	@echo "---------- End go mod tidy ----------"
+
+.PHONY: export-go-build
+export-go-build:
+	@echo "---------- Extract go build artifacts ----------"
+	@# 1. Build intermediate stage image (no final image generated)
+	docker build --target builder -t temp-builder -f $(DOCKERFILES_PATH)/Dockerfile.export $(ROOT_PATH)
+	@# 2. Create temporary container (not started, only for file extraction)
+	docker create --name temp-container temp-builder
+	@# 3. Copy files from temporary container to local
+	mkdir -p $(ROOT_PATH)/backend/bin
+	docker cp temp-container:/app/backend/bin/. $(ROOT_PATH)/backend/bin/
+	rm -rf $(ROOT_PATH)/frontend/dist
+	docker cp temp-container:/app/frontend/dist $(ROOT_PATH)/frontend/dist
+	@# 4. Clean up temporary container
+	docker rm -f temp-container
+	docker rmi temp-builder
+	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/backend/bin and $(ROOT_PATH)/frontend/dist ----------"
+
+.PHONY: go-build-init
+go-build-init: proto-buf go-mod-tidy
+	$(call go_build_service,init)
+
+.PHONY: go-build-market
+go-build-market: proto-buf go-mod-tidy
+	$(call go_build_service,market)
+
+.PHONY: go-build-authz
+go-build-authz: proto-buf go-mod-tidy
+	$(call go_build_service,authz)
+
+.PHONY: go-build-gateway
+go-build-gateway: proto-buf go-mod-tidy
+	$(call go_build_service,gateway)
+
+.PHONY: go-build-all
+go-build-all: go-build-init go-build-market go-build-authz go-build-gateway
+
+# Frontend build targets
+
 # All build targets
 .PHONY: build-all
 build-all: build-backend-all build-frontend
-
-# Docker build targets
-define build_docker_image
-	@echo "---------- Start Docker build $(1) ----------"
-	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
-	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
-	@echo "---------- End Docker build $(1) ----------"
-endef
-
-# Docker push targets
-define push_docker_image
-	@echo "---------- Start Docker push $(1) ----------"
-	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)"
-	@docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)
-	@echo "---------- End Docker push $(1) ----------"
-endef
 
 # Builder image specific build and push with latest tag
 .PHONY: docker-build-builder
@@ -207,42 +246,6 @@ docker-build-push-backend: docker-build-push-init docker-build-push-market docke
 .PHONY: docker-build-push-all
 docker-build-push-all: docker-build-all docker-push-all
 
-# Protocol buffer generation
-.PHONY: proto-buf
-proto-buf:
-	@echo "---- Cleaning existing generated files ----"
-	@rm -rf $(shell find $(BACKEND_PATH)/api -type f -name '*.go')
-	@rm -rf $(shell find $(BACKEND_PATH)/api -type f -name '*.json')
-	@echo "---- Generating protobuf files ----"
-	@cd $(BACKEND_PATH)/api && buf --debug generate 
-	@find $(BACKEND_PATH)/api -name "*.pb.go" -exec protoc-go-inject-tag -input={} \; || echo "No .pb.go files found for tag injection"
-	@echo "---- Merging swagger files ----"
-	@rm -f $(BACKEND_PATH)/api/merged.swagger.json
-	@if [ -n "$$(find $(BACKEND_PATH)/api -name '*.json' -type f)" ]; then \
-		swagger mixin $$(find $(BACKEND_PATH)/api -name '*.json' -type f) -o $(BACKEND_PATH)/api/merged.swagger.json; \
-		echo "Swagger files merged successfully"; \
-		ls -la $(BACKEND_PATH)/api/merged.swagger.json; \
-	else \
-		echo "No swagger JSON files found to merge"; \
-		touch $(BACKEND_PATH)/api/merged.swagger.json; \
-	fi
-
-.PHONY: export-go-build
-export-go-build:
-	@echo "---------- Extract go build artifacts ----------"
-	@# 1. Build intermediate stage image (no final image generated)
-	docker build --target builder -t temp-builder -f $(DOCKERFILES_PATH)/Dockerfile.export $(ROOT_PATH)
-	@# 2. Create temporary container (not started, only for file extraction)
-	docker create --name temp-container temp-builder
-	@# 3. Copy files from temporary container to local
-	mkdir -p $(ROOT_PATH)/backend/bin
-	docker cp temp-container:/app/backend/bin/. $(ROOT_PATH)/backend/bin/
-	rm -rf $(ROOT_PATH)/frontend/dist
-	docker cp temp-container:/app/frontend/dist $(ROOT_PATH)/frontend/dist
-	@# 4. Clean up temporary container
-	docker rm -f temp-container
-	docker rmi temp-builder
-	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/backend/bin and $(ROOT_PATH)/frontend/dist ----------"
 
 # Clean targets
 .PHONY: clean
@@ -287,12 +290,12 @@ help:
 	@echo "Available targets:"
 	@echo ""
 	@echo "Build targets:"
-	@echo "  build-backend-init         - Build init service binary [Go]"
-	@echo "  build-backend-market       - Build market service binary [Go]"
-	@echo "  build-backend-authz        - Build authz service binary [Go]"
-	@echo "  build-backend-gateway      - Build gateway service binary [Go]"
-	@echo "  build-backend-all          - Build all backend services [Go]"
-	@echo "  build-frontend             - Build frontend application [Node]"
+	@echo "  go-build-init         - Build init service binary [Go]"
+	@echo "  go-build-market       - Build market service binary [Go]"
+	@echo "  go-build-authz        - Build authz service binary [Go]"
+	@echo "  go-build-gateway      - Build gateway service binary [Go]"
+	@echo "  go-build-all          - Build all backend services [Go]"
+	@echo "  pnpm-build             - Build frontend application [Node]"
 	@echo "  build-all                  - Build all services and frontend [Go+Node]"
 	@echo ""
 	@echo "Docker targets: Builder"
@@ -323,6 +326,7 @@ help:
 	@echo ""
 	@echo "Utility targets:"
 	@echo "  proto-buf                  - Generate protobuf and swagger files"
+	@echo "  go mod tidy                - Tidy Go modules"
 	@echo "  clean                      - Clean build artifacts"
 	@echo "  test-all                   - Run all tests"
 	@echo "  lint-all                   - Run all linters"
