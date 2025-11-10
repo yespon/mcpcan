@@ -63,13 +63,15 @@ helm install mcpcan mcpcan/mcpcan-deploy
 helm install mcpcan mcpcan/mcpcan-deploy \
   --set global.publicIP=192.168.1.100 \
   --set infrastructure.mysql.auth.rootPassword=secure-password \
-  --set infrastructure.redis.auth.password=secure-password
+  --set infrastructure.redis.auth.password=secure-password \
+  --namespace mcpcan --create-namespace --timeout 600s --wait
 
 # Deploy with domain name
 helm install mcpcan mcpcan/mcpcan-deploy \
   --set global.domain=mcp.example.com \
   --set infrastructure.mysql.auth.rootPassword=secure-password \
-  --set infrastructure.redis.auth.password=secure-password
+  --set infrastructure.redis.auth.password=secure-password \
+  --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
 ## Components
