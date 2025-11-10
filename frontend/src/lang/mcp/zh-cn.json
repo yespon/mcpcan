@@ -173,7 +173,10 @@
         "placeholderToken": "Authorization:请输入Token值或自动生成",
         "mustToken": "Token值不能为空",
         "tag": "标签",
-        "placeholderTag": "请输入标签名称；回车即可生成标签"
+        "placeholderTag": "请输入标签名称；回车即可生成标签",
+        "copyUrl": "复制URL",
+        "copyToken": "复制Token",
+        "copyAll": "复制全部"
       },
       "loading": {
         "restart": "正在停用实例...",

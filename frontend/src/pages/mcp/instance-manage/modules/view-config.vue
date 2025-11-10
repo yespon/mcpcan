@@ -116,7 +116,12 @@
       >
         <el-scrollbar ref="scrollbarRef" max-height="590px" always class="config-info">
           <div class="py-5 px-5">{{ config }}</div>
-          <el-tooltip class="box-item" effect="dark" content="复制URL" placement="top">
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            :content="t('mcp.instance.token.copyUrl')"
+            placement="top"
+          >
             <el-icon class="base-btn-link copy-icon-url" size="18" @click="handleCopy('url')">
               <Link />
             </el-icon>
@@ -125,14 +130,19 @@
             v-if="dialogInfo.currentTokenIndex !== null"
             class="box-item"
             effect="dark"
-            content="复制Token"
+            :content="t('mcp.instance.token.copyToken')"
             placement="top"
           >
             <el-icon class="base-btn-link copy-icon-token" size="18" @click="handleCopy('token')">
               <Key />
             </el-icon>
           </el-tooltip>
-          <el-tooltip class="box-item" effect="dark" content="复制全部" placement="top">
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            :content="t('mcp.instance.token.copyAll')"
+            placement="top"
+          >
             <el-icon class="base-btn-link copy-icon" size="18" @click="handleCopy('config')">
               <CopyDocument />
             </el-icon>

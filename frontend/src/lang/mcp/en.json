@@ -173,7 +173,10 @@
         "placeholderToken": "Authorization:Please enter the Token value or generate it automatically",
         "mustToken": "Token value cannot be empty",
         "tag": "Tag",
-        "placeholderTag": "Enter the tag name; Enter to generate tags"
+        "placeholderTag": "Enter the tag name; Enter to generate tags",
+        "copyUrl": "Copy Url",
+        "copyToken": "Copy Token",
+        "copyAll": "Copy Config"
       },
       "loading": {
         "restart": "restarting...",
