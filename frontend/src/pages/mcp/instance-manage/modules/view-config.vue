@@ -116,9 +116,27 @@
       >
         <el-scrollbar ref="scrollbarRef" max-height="590px" always class="config-info">
           <div class="py-5 px-5">{{ config }}</div>
-          <el-icon class="base-btn-link copy-icon" size="24" @click="handleCopy"
-            ><CopyDocument
-          /></el-icon>
+          <el-tooltip class="box-item" effect="dark" content="复制URL" placement="top">
+            <el-icon class="base-btn-link copy-icon-url" size="18" @click="handleCopy('url')">
+              <Link />
+            </el-icon>
+          </el-tooltip>
+          <el-tooltip
+            v-if="dialogInfo.currentTokenIndex !== null"
+            class="box-item"
+            effect="dark"
+            content="复制Token"
+            placement="top"
+          >
+            <el-icon class="base-btn-link copy-icon-token" size="18" @click="handleCopy('token')">
+              <Key />
+            </el-icon>
+          </el-tooltip>
+          <el-tooltip class="box-item" effect="dark" content="复制全部" placement="top">
+            <el-icon class="base-btn-link copy-icon" size="18" @click="handleCopy('config')">
+              <CopyDocument />
+            </el-icon>
+          </el-tooltip>
         </el-scrollbar>
       </el-col>
     </el-row>
@@ -218,10 +236,9 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { Plus, Operation } from '@element-plus/icons-vue'
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { CopyDocument } from '@element-plus/icons-vue'
+import { Plus, Operation, CopyDocument, Link, Key } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -252,6 +269,17 @@ const dialogInfo = ref({
   currentEditIndex: null as number | null,
 })
 
+const configUrl = computed(
+  () => `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`,
+)
+const configToken = computed(
+  () =>
+    `${
+      dialogInfo.value.currentTokenIndex !== null
+        ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
+        : ''
+    }`,
+)
 // config Info
 const config = computed(() => {
   // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
@@ -259,7 +287,7 @@ const config = computed(() => {
     return `{
       "mcpServers": {
             "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-                  "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}",
+                  "url": "${configUrl.value}",
                   "headers": {
                         "Authorization": "${
                           dialogInfo.value.currentTokenIndex !== null
@@ -276,7 +304,7 @@ const config = computed(() => {
   return `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-              "url": "${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}"
+              "url": "${configUrl.value}"
           }
       }
   }`
@@ -309,6 +337,7 @@ const handleEabledToken = async () => {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
       enabledToken: dialogInfo.value.instanceInfo.enabledToken,
     })
+    dialogInfo.value.currentTokenIndex = null
   } catch {
     dialogInfo.value.instanceInfo.enabledToken = !dialogInfo.value.instanceInfo.enabledToken
   } finally {
@@ -464,8 +493,14 @@ const handleSaveTokens = async () => {
 /**
  * Handle copy config info
  */
-const handleCopy = async () => {
-  await setClipboardData(config.value)
+const handleCopy = async (type: string) => {
+  if (type === 'url') {
+    await setClipboardData(configUrl.value)
+  } else if (type === 'token') {
+    await setClipboardData(configToken.value)
+  } else {
+    await setClipboardData(config.value)
+  }
   ElMessage.success(t('action.copy'))
 }
 
@@ -528,6 +563,18 @@ defineExpose({
   background: #000000;
   border-radius: 8px;
   box-sizing: border-box;
+}
+.copy-icon-url {
+  position: absolute;
+  top: 12px;
+  right: 72px;
+  cursor: pointer;
+}
+.copy-icon-token {
+  position: absolute;
+  top: 12px;
+  right: 42px;
+  cursor: pointer;
 }
 .copy-icon {
   position: absolute;
