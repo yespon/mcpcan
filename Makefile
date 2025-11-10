@@ -146,7 +146,7 @@ go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz
 
 # All build targets
 .PHONY: build-all
-build-all: build-backend-all build-frontend
+build-all: build-backend-all pnpm-build
 
 # Builder image specific build and push with latest tag
 .PHONY: docker-build-builder
