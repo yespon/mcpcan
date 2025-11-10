@@ -170,7 +170,10 @@
         "lifespan": "Lifespan",
         "day": "Days",
         "random": "Random",
-        "placeholderToken": "Authorization:Please enter the Token value or generate it automatically"
+        "placeholderToken": "Authorization:Please enter the Token value or generate it automatically",
+        "mustToken": "Token value cannot be empty",
+        "tag": "Tag",
+        "placeholderTag": "Enter the tag name; Enter to generate tags"
       },
       "loading": {
         "restart": "restarting...",

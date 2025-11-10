@@ -57,7 +57,7 @@
                 </div>
                 <el-dropdown
                   v-if="index !== 0"
-                  trigger="hover"
+                  trigger="click"
                   class="ml-2"
                   style="cursor: pointer !important"
                   @click.stop
@@ -96,6 +96,16 @@
               <div class="ellipsis-one">
                 {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
               </div>
+              <div class="ellipsis-one">
+                {{ t('mcp.instance.token.tag') }}：<el-tag
+                  v-for="(tag, num) in token.usages"
+                  :key="num"
+                  effect="plain"
+                  class="mr-2"
+                >
+                  {{ tag }}
+                </el-tag>
+              </div>
             </div>
           </div>
         </el-scrollbar>
@@ -123,7 +133,7 @@
   <el-dialog
     v-model="formData.visible"
     width="360px"
-    top="30vh"
+    top="20vh"
     :show-close="false"
     @close="formRef?.resetFields()"
   >
@@ -175,20 +185,26 @@
             :placeholder="t('mcp.instance.token.placeholderToken')"
           />
         </el-form-item>
-        <!-- <el-form-item label="Token" prop="token">
-          <template #label>
-            Token
-            <el-tag class="ml-2 base-btn cursor-pointer" effect="dark" @click="handleRandomToken">{{
-              t('mcp.instance.token.random')
-            }}</el-tag>
-          </template>
-          <el-input
-            v-model="formData.token"
-            :rows="4"
-            type="textarea"
-            :placeholder="t('mcp.instance.token.placeholderToken')"
-          />
-        </el-form-item> -->
+        <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
+          <el-input-tag
+            v-model="formData.usages"
+            collapse-tags
+            collapse-tags-tooltip
+            :max-collapse-tags="3"
+            clearable
+            draggable
+            tag-type="primary"
+            tag-effect="plain"
+            :placeholder="t('mcp.instance.token.placeholderTag')"
+            class="tag-input"
+          >
+            <template #tag="{ value }">
+              <div class="flex items-center">
+                <span>{{ value }}</span>
+              </div>
+            </template>
+          </el-input-tag>
+        </el-form-item>
       </el-form>
     </template>
     <template #footer>
@@ -223,9 +239,10 @@ const formData = ref({
   visible: false,
   token: '',
   expireAt: null as number | null,
+  usages: [] as string[],
 })
 const rules = reactive({
-  token: [{ required: true, message: t('mcp.instance.token.placeholderToken'), trigger: 'blur' }],
+  token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
 })
 const dialogInfo = ref({
   visible: false,
@@ -278,6 +295,7 @@ const tokenList = computed(
 const handleAddToken = () => {
   formData.value.token = ''
   formData.value.expireAt = null
+  formData.value.usages = []
   dialogInfo.value.currentEditIndex = null
   formData.value.visible = true
   formRef.value?.resetFields()
@@ -363,6 +381,7 @@ const handleEditToken = (index: number) => {
   const token = dialogInfo.value.instanceInfo.tokens[index]
   formData.value.token = token.token
   formData.value.expireAt = token.expireAt
+  formData.value.usages = token.usages || []
 }
 
 // handle delete token
@@ -400,12 +419,13 @@ const handleConfirmToken = async () => {
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
       publishAt: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].publishAt,
-      usages: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].usages,
+      usages: formData.value.usages,
     }
     dialogInfo.value.currentEditIndex = null
     formData.value.visible = false
     formData.value.token = ''
     formData.value.expireAt = null
+    formData.value.usages = []
     handleSaveTokens()
     return
   }
@@ -414,7 +434,7 @@ const handleConfirmToken = async () => {
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
       publishAt: Date.now(),
-      usages: [],
+      usages: formData.value.usages,
     })
     formData.value.visible = false
     formData.value.token = ''
@@ -492,6 +512,10 @@ defineExpose({
         border-color: var(--ep-border-color);
       }
     }
+    :deep(.el-tag) {
+      color: var(--ep-color);
+      border-color: var(--ep-pager-border);
+    }
   }
 }
 .config-info {
@@ -547,5 +571,17 @@ defineExpose({
   /* when left collapsed, right expands to full width */
   flex-basis: 100% !important;
   max-width: 100% !important;
+}
+.tag-input {
+  :deep(.el-tag) {
+    color: var(--ep-purple-color);
+    border-color: var(--ep-border-color);
+    .el-tag__close {
+      color: var(--ep-purple-color);
+      &:hover {
+        background-color: var(--ep-bg-purple-color-deep);
+      }
+    }
+  }
 }
 </style>

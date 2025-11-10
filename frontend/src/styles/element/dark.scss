@@ -29,6 +29,10 @@ $--colors: (
   border-color: var(--ep-purple-color) !important;
   box-shadow: 0 0 0 1px var(--ep-purple-color) !important;
 }
+.el-input-tag.is-focused {
+  border-color: var(--ep-purple-color) !important;
+  box-shadow: 0 0 0 1px var(--ep-purple-color) !important;
+}
 
 .el-button:hover {
   color: var(--ep-purple-color);

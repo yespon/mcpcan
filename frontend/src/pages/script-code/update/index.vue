@@ -36,6 +36,7 @@
               <div class="ml-8 mt-2">{{ t('code.desc.text2') }}</div>
               <div class="ml-8 mt-2">{{ t('code.desc.text3') }}</div>
               <div class="ml-8 mt-2">{{ t('code.desc.text4') }}</div>
+              <div class="ml-8 mt-2">{{ t('code.desc.text5') }}</div>
             </div>
           </div>
         </div>

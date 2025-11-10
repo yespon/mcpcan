@@ -38,7 +38,8 @@
       "text1": "File size limit: A single file should not exceed 100MB",
       "text2": "Suport：ZIP、TAR、TAR.GZ",
       "text3": "After uploading, you can view and edit the code file online",
-      "text4": "Support downloading uploaded code packages"
+      "text4": "Support downloading uploaded code packages",
+      "text5": "Code package only support English name"
     }
   }
 }
