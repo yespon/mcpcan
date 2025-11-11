@@ -57,7 +57,7 @@ const createGlobeInstance = () => {
     baseColor,
     markerColor: [0.1, 0.8, 1],
     glowColor,
-    offset: [width / 9, -100],
+    offset: [width / 9, -200],
     markers: [
       // longitude latitude
       // { location: [37.7595, -122.4367], size: 0.03 },

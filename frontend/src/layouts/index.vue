@@ -1,6 +1,5 @@
 <template>
   <div class="common-layout">
-    <!-- <div v-if="showNav">广告栏</div> -->
     <el-container :key="locale">
       <BaseSide v-model="isCollapse" />
       <el-container>

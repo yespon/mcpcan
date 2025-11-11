@@ -27,7 +27,7 @@
           </div>
         </div>
       </AnimatedContent>
-      <div class="text-40">MCP CAN</div>
+      <div class="center title-logo">MCP CAN</div>
       <AnimatedContent
         :distance="100"
         direction="horizontal"
@@ -112,7 +112,7 @@
                     {{ itemCase.description }}
                   </div>
                   <template #content>
-                    <div class="w-full  desc" style="width: 400px">
+                    <div class="w-full desc" style="width: 400px">
                       {{ itemCase.description }}
                     </div>
                   </template>
@@ -329,6 +329,16 @@ onMounted(init)
       PingFangSC,
       PingFang SC;
     font-weight: 500;
+  }
+  .title-logo {
+    // position: absolute;
+    // top: 35vh;
+    // left: 35%;
+    margin-top: 100px;
+    font-size: 60px;
+    letter-spacing: 35px;
+    font-weight: bold;
+    opacity: 0.6;
   }
   .text-16 {
     font-family:
