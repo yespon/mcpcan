@@ -152,6 +152,7 @@ func (biz *InstanceBiz) UpdateInstanceForDirect(ctx context.Context, req *instan
 	if req.Notes != "" {
 		oriInstance.Notes = req.Notes
 	}
+	oriInstance.IconPath = req.IconPath
 
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
@@ -211,6 +212,7 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	if req.Notes != "" {
 		oriInstance.Notes = req.Notes
 	}
+	oriInstance.IconPath = req.IconPath
 
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
@@ -234,7 +236,6 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.ProxyProtocol = model.McpProtocol(reqMcpResult.ProtocolType)
 		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
 	}
-	oriInstance.IconPath = req.IconPath
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
