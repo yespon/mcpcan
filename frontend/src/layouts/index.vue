@@ -1,6 +1,5 @@
 <template>
   <div class="common-layout">
-    <!-- <div v-if="showNav">广告栏</div> -->
     <el-container :key="locale">
       <BaseSide v-model="isCollapse" />
       <el-container>
@@ -49,7 +48,6 @@ const { locale } = useI18n()
 const route = useRoute()
 const { isCollapse, language } = toRefs(useSystemStoreHook())
 const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
-const showNav = import.meta.env.VITE_DEMO === 'true'
 
 onMounted(() => {})
 </script>
