@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kymo-mcp/mcpcan/internal/gateway/proxy"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
-	"github.com/kymo-mcp/mcpcan/pkg/proxy"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
