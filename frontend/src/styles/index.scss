@@ -11,6 +11,7 @@ html.dark {
   --menu-background: #1d1e1f;
   --ep-color: #fff;
   --ep-bg-color: #121212;
+  --ep-bg-color-deep: #000000;
   --ep-bg-color-hover: #171819;
   --ep-border-color: #ffffff80;
   --el-dialog-bg: #333333;
@@ -25,6 +26,7 @@ html.dark {
   --menu-background: #304156;
   --ep-color: #000;
   --ep-bg-color: #f6f3f4;
+  --ep-bg-color-deep: #f6f3f4;
   --ep-purple-color: #cdbdff;
   --ep-bg-purple-color: rgba(204, 187, 255, 0.16);
   --ep-bg-purple-color-deep: rgba(204, 187, 255, 0.5);
@@ -36,6 +38,7 @@ html.dark {
   --ep-bg-stripe-dark: #fafafa;
   --ep-bg-stripe-light: rgba(0, 0, 0, 0.06);
   --el-dialog-bg: #ffffff;
+  --ep-border-color: #ddd;
 }
 
 body {

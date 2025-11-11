@@ -308,10 +308,10 @@ defineExpose({
   padding: 24px 24px 12px !important;
 }
 .el-table__body tr.current-row > td.el-table__cell {
-  background-color: var(--ep-bg-purple-color);
+  // background-color: var(--ep-bg-purple-color);
 }
 .el-table--striped .el-table__body tr.el-table__row--striped.current-row td.el-table__cell {
-  background-color: var(--ep-bg-purple-color);
+  // background-color: var(--ep-bg-purple-color);
 }
 .el-input__suffix {
   cursor: pointer;

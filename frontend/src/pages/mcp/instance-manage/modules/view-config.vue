@@ -178,13 +178,25 @@
           <template #label>
             <div class="center">
               <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
-              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(7)"
+              <el-button
+                class="base-btn"
+                type="primary"
+                size="small"
+                @click.stop="handleAddExpireAt(7)"
                 >7{{ t('mcp.instance.token.day') }}
               </el-button>
-              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(15)"
+              <el-button
+                class="base-btn"
+                type="primary"
+                size="small"
+                @click.stop="handleAddExpireAt(15)"
                 >15{{ t('mcp.instance.token.day') }}
               </el-button>
-              <el-button class="base-btn" size="small" @click.stop="handleAddExpireAt(30)"
+              <el-button
+                class="base-btn"
+                type="primary"
+                size="small"
+                @click.stop="handleAddExpireAt(30)"
                 >30{{ t('mcp.instance.token.day') }}
               </el-button>
             </div>
@@ -539,7 +551,7 @@ defineExpose({
 .token-list {
   min-height: 590px;
   border-radius: 8px;
-  background: #000000;
+  background: var(--ep-bg-color-deep);
   padding: 24px;
   .token-card {
     border: 1px solid var(--ep-border-color);
@@ -560,6 +572,7 @@ defineExpose({
     :deep(.el-tag) {
       color: var(--ep-color);
       border-color: var(--ep-pager-border);
+      background-color: var(--ep-bg-purple-color);
     }
   }
 }
@@ -570,7 +583,7 @@ defineExpose({
   white-space: pre;
   word-break: normal;
   border-radius: 8px;
-  background: #000000;
+  background: var(--ep-bg-color-deep);
   border-radius: 8px;
   box-sizing: border-box;
 }

@@ -19,7 +19,7 @@
       </el-container>
     </el-container>
   </div>
-  <SplashCursor
+  <!-- <SplashCursor
     :SIM_RESOLUTION="128"
     :DYE_RESOLUTION="1440"
     :CAPTURE_RESOLUTION="512"
@@ -34,14 +34,14 @@
     :COLOR_UPDATE_SPEED="10"
     :BACK_COLOR="{ r: 0.5, g: 0, b: 0 }"
     :TRANSPARENT="true"
-  />
+  /> -->
 </template>
 <script setup lang="ts">
 import BaseHeader from './BaseHeader/index.vue'
 import BaseSide from './BaseSide/index.vue'
 // import TagsView from './TagsView/index.vue'
 import { useSystemStoreHook } from '@/stores'
-import SplashCursor from '@/components/Animation/SplashCursor.vue'
+// import SplashCursor from '@/components/Animation/SplashCursor.vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 
@@ -49,7 +49,6 @@ const { locale } = useI18n()
 const route = useRoute()
 const { isCollapse, language } = toRefs(useSystemStoreHook())
 const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
-const showNav = import.meta.env.VITE_DEMO === 'true'
 
 onMounted(() => {})
 </script>
