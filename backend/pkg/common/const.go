@@ -59,4 +59,12 @@ const (
 	EnvironmentDefaultName = "Default-Kubernetes-Env"
 )
 
+// Global query range constraints
+const (
+	// DefaultQueryRange defines the default time window applied when no range is provided
+	DefaultQueryRange = 24 * time.Hour
+	// MaxQueryRange defines the maximum allowed query time window
+	MaxQueryRange = 180 * 24 * time.Hour
+)
+
 var SupportImageTypes = []string{"jpg", "jpeg", "png", "gif", "webp"}
