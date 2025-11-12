@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strings"
@@ -57,12 +58,6 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 	if len(parts0) > 2 {
 		iid0 = parts0[2]
 	}
-	writeMCPLog(iid0, "", req.Header.Get("Authorization"), 1, "request.received", "incoming request", map[string]any{
-		"method":      req.Method,
-		"path":        req.URL.Path,
-		"url":         req.URL.String(),
-		"remote_addr": req.RemoteAddr,
-	}, nil)
 	// Add panic recovery mechanism, especially for http.ErrAbortHandler
 	defer func() {
 		if r := recover(); r != nil {
@@ -83,12 +78,22 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 				zap.String("path", req.URL.Path),
 				zap.String("remote_addr", req.RemoteAddr),
 			)
-			writeMCPLog(iid0, "", req.Header.Get("Authorization"), 3, "panic.recovered", fmt.Sprintf("%v", r), map[string]any{
+			var tokenHeaderKey string
+			var token string
+			var usages []string
+			if v := req.Context().Value(RequestAuthKey); v != nil {
+				if ra, ok := v.(RequestAuth); ok {
+					tokenHeaderKey = ra.TokenHeaderKey
+					token = ra.Token
+					usages = ra.Usages
+				}
+			}
+			writeMCPLogWithUsage(iid0, tokenHeaderKey, token, usages, 3, "panic.recovered", fmt.Sprintf("%v", r), map[string]any{
 				"method":      req.Method,
 				"path":        req.URL.Path,
 				"url":         req.URL.String(),
 				"remote_addr": req.RemoteAddr,
-			}, nil)
+			})
 			// panic(r) // Re-throw panic that is not ErrAbortHandler
 			// respWriter.WriteHeader(http.StatusInternalServerError)
 			// respWriter.Write([]byte(fmt.Sprintf("Internal Server Error: %v", r)))
@@ -102,12 +107,22 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 
 	err := mrp.reqHandler(req)
 	if err != nil {
-		writeMCPLog(iid0, "", req.Header.Get("Authorization"), 3, "request.validation.failed", err.Error(), map[string]any{
+		var tokenHeaderKey string
+		var token string
+		var usages []string
+		if v := req.Context().Value(RequestAuthKey); v != nil {
+			if ra, ok := v.(RequestAuth); ok {
+				tokenHeaderKey = ra.TokenHeaderKey
+				token = ra.Token
+				usages = ra.Usages
+			}
+		}
+		writeMCPLogWithUsage(iid0, tokenHeaderKey, token, usages, 3, "request.validation.failed", err.Error(), map[string]any{
 			"method":      req.Method,
 			"path":        req.URL.Path,
 			"url":         req.URL.String(),
 			"remote_addr": req.RemoteAddr,
-		}, nil)
+		})
 		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
 		// respWriter.Write([]byte(err.Error()))
 		if strings.HasSuffix(req.URL.Path, MCP_SERVER_SUBFIX_SSE) {
@@ -116,6 +131,25 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 			WriteMCPError(respWriter, http.StatusMethodNotAllowed, -32603, "Internal error", err.Error())
 		}
 		return
+	}
+
+	if info := req.Context().Value(InstanceInfoKey); info != nil {
+		var tokenHeaderKey string
+		var token string
+		var usages []string
+		if v := req.Context().Value(RequestAuthKey); v != nil {
+			if ra, ok := v.(RequestAuth); ok {
+				tokenHeaderKey = ra.TokenHeaderKey
+				token = ra.Token
+				usages = ra.Usages
+			}
+		}
+		writeMCPLogWithUsage(iid0, tokenHeaderKey, token, usages, 1, "request.received", "incoming request", map[string]any{
+			"method":      req.Method,
+			"path":        req.URL.Path,
+			"url":         req.URL.String(),
+			"remote_addr": req.RemoteAddr,
+		})
 	}
 
 	mrp.proxy.ServeHTTP(respWriter, req)
@@ -150,13 +184,11 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	}
 
 	// validate request Authorization header for instance
-	err = validReqAuthorizationForInstance(req, instanceInfo)
+	reqAuth, err := validReqAuthorizationForInstance(req, instanceInfo)
 	if err != nil {
 		return fmt.Errorf("failed to valid token: %v", err.Error())
 	}
 
-	// delete Authorization header from req
-	req.Header.Del("Authorization")
 	if instanceInfo.McpConfig.Headers != nil {
 		for key, value := range instanceInfo.McpConfig.Headers {
 			req.Header.Set(key, value)
@@ -166,6 +198,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	// Store instanceId in context
 	ctx := context.WithValue(req.Context(), InstanceInfoKey, instanceInfo)
 	ctx = context.WithValue(ctx, IsSSEReqKey, isSSEReq)
+	ctx = context.WithValue(ctx, RequestAuthKey, reqAuth)
 	*req = *req.WithContext(ctx)
 
 	if isSSEReq {
@@ -188,6 +221,12 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	return nil
 }
 
+type RequestAuth struct {
+	TokenHeaderKey string
+	Token          string
+	Usages         []string
+}
+
 // director handles request modification before sending to target server
 func director(req *http.Request) {
 	logger.Info("Before director",
@@ -195,31 +234,37 @@ func director(req *http.Request) {
 		zap.String("host", req.Host),
 		zap.String("url", req.URL.String()),
 	)
-	writeMCPLog("", "", "", 1, "director.before", "before modifying request", map[string]any{
+	instanceInfo, ok := req.Context().Value(InstanceInfoKey).(*InstanceInfo)
+	if !ok {
+		logger.Error("No InstanceInfo found in context")
+		writeMCPLogWithUsage(instanceInfo.InstanceID, "", "", []string{}, 2, "instance.missing", "no InstanceInfo in context", map[string]any{
+			"method": req.Method,
+			"url":    req.URL.String(),
+			"path":   req.URL.Path,
+		})
+		return
+	}
+	reqAuth := &RequestAuth{}
+	if v := req.Context().Value(RequestAuthKey); v != nil {
+		if ra, ok := v.(RequestAuth); ok {
+			reqAuth = &ra
+		}
+	}
+	writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 1, "director.before", "before modifying request", map[string]any{
 		"method": req.Method,
 		"host":   req.Host,
 		"url":    req.URL.String(),
 		"path":   req.URL.Path,
-	}, nil)
+	})
 
-	instanceInfo, ok := req.Context().Value(InstanceInfoKey).(*InstanceInfo)
-	if !ok {
-		logger.Error("No InstanceInfo found in context")
-		writeMCPLog("", "", "", 2, "instance.missing", "no InstanceInfo in context", map[string]any{
-			"method": req.Method,
-			"url":    req.URL.String(),
-			"path":   req.URL.Path,
-		}, nil)
-		return
-	}
 	isSSEReq, ok2 := req.Context().Value(IsSSEReqKey).(bool)
 	if !ok2 {
 		logger.Error("No IsSSEReqKey found in context")
-		writeMCPLog(instanceInfo.InstanceID, "", "", 2, "sse.flag.missing", "no IsSSEReqKey in context", map[string]any{
+		writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 2, "sse.flag.missing", "no IsSSEReqKey in context", map[string]any{
 			"method": req.Method,
 			"url":    req.URL.String(),
 			"path":   req.URL.Path,
-		}, nil)
+		})
 		return
 	}
 
@@ -227,9 +272,9 @@ func director(req *http.Request) {
 	pathNum := len(parts)
 	if pathNum <= 2 {
 		logger.Error("Path is too short")
-		writeMCPLog(instanceInfo.InstanceID, "", "", 2, "path.too.short", "path components insufficient", map[string]any{
+		writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 2, "path.too.short", "path components insufficient", map[string]any{
 			"path": req.URL.Path,
-		}, nil)
+		})
 		return
 	}
 
@@ -238,9 +283,9 @@ func director(req *http.Request) {
 	targetUrl, err := url.Parse(instanceInfo.McpConfig.URL)
 	if err != nil {
 		logger.Error("Failed to parse URL", zap.Error(err))
-		writeMCPLog(instanceInfo.InstanceID, "", "", 3, "upstream.url.parse.failed", err.Error(), map[string]any{
+		writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 3, "upstream.url.parse.failed", err.Error(), map[string]any{
 			"raw": instanceInfo.McpConfig.URL,
-		}, nil)
+		})
 		return
 	}
 
@@ -257,9 +302,9 @@ func director(req *http.Request) {
 			handleHostingStreamableHTTPReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported")
-			writeMCPLog(instanceInfo.InstanceID, "", "", 2, "protocol.unsupported", "McpProtocol not supported", map[string]any{
+			writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 2, "protocol.unsupported", "McpProtocol not supported", map[string]any{
 				"protocol": instanceInfo.McpProtocol,
-			}, nil)
+			})
 			return
 		}
 	case model.AccessTypeProxy:
@@ -274,16 +319,16 @@ func director(req *http.Request) {
 			handleProxyStreamableHTTPPathReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported")
-			writeMCPLog(instanceInfo.InstanceID, "", "", 2, "protocol.unsupported", "McpProtocol not supported", map[string]any{
+			writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 2, "protocol.unsupported", "McpProtocol not supported", map[string]any{
 				"protocol": instanceInfo.McpProtocol,
-			}, nil)
+			})
 			return
 		}
 	default:
 		logger.Error("AccessType is not supported")
-		writeMCPLog(instanceInfo.InstanceID, "", "", 2, "access.unsupported", "AccessType not supported", map[string]any{
+		writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 2, "access.unsupported", "AccessType not supported", map[string]any{
 			"access": instanceInfo.AccessType,
-		}, nil)
+		})
 		return
 	}
 	// Log request info
@@ -292,12 +337,12 @@ func director(req *http.Request) {
 		zap.Bool("is_ssereq", isSSEReq),
 		zap.String("url", req.URL.String()),
 	)
-	writeMCPLog(instanceInfo.InstanceID, "", "", 1, "director.after", "after modifying request", map[string]any{
+
+	writeMCPLogWithUsage(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, reqAuth.Usages, 1, "director.after", "after modifying request", map[string]any{
 		"is_sse": isSSEReq,
 		"url":    req.URL.String(),
 		"path":   req.URL.Path,
-	}, nil)
-
+	})
 }
 
 // Handle response modification before sending to client
@@ -312,11 +357,21 @@ func modifyResponse(resp *http.Response) error {
 				status:  http.StatusInternalServerError,
 			}
 		}
-		writeMCPLog(instanceInfo.InstanceID, "", "", 1, "sse.start", "sse response detected", map[string]any{
+		var tokenHeaderKey string
+		var token string
+		var usages []string
+		if v := resp.Request.Context().Value(RequestAuthKey); v != nil {
+			if ra, ok := v.(RequestAuth); ok {
+				tokenHeaderKey = ra.TokenHeaderKey
+				token = ra.Token
+				usages = ra.Usages
+			}
+		}
+		writeMCPLogWithUsage(instanceInfo.InstanceID, tokenHeaderKey, token, usages, 1, "sse.start", "sse response detected", map[string]any{
 			"method": resp.Request.Method,
 			"path":   resp.Request.URL.Path,
 			"url":    resp.Request.URL.String(),
-		}, nil)
+		})
 
 		// Check if request context has been canceled
 		select {
@@ -346,9 +401,9 @@ func modifyResponse(resp *http.Response) error {
 			// Use gzip.Reader to wrap original response body, it will auto-decompress
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
-				writeMCPLog(instanceInfo.InstanceID, "", "", 3, "gzip.reader.failed", err.Error(), map[string]any{
+				writeMCPLogWithUsage(instanceInfo.InstanceID, tokenHeaderKey, token, usages, 3, "gzip.reader.failed", err.Error(), map[string]any{
 					"url": resp.Request.URL.String(),
-				}, nil)
+				})
 				return &proxyError{
 					message: fmt.Sprintf("failed to create gzip reader: %v", err),
 					status:  http.StatusInternalServerError,
@@ -442,10 +497,10 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:/"), []byte(fmt.Sprintf("data:/%s/", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("old", msgStr), zap.String("new", string(msgBytes)))
-				writeMCPLog(r.info.InstanceID, "", "", 0, "sse.endpoint.rewrite", "endpoint rewritten", map[string]any{
+				writeMCPLogWithUsage(r.info.InstanceID, "", "", nil, 0, "sse.endpoint.rewrite", "endpoint rewritten", map[string]any{
 					"before": msgStr,
 					"after":  string(msgBytes),
-				}, nil)
+				})
 			}
 
 			// Write modified data into internal buffer
@@ -454,13 +509,13 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If source is exhausted (EOF) and our buffer is also empty, return EOF
 		if readErr == io.EOF && r.buffer.Len() == 0 {
-			writeMCPLog(r.info.InstanceID, "", "", 0, "sse.eof", "sse stream ended", map[string]any{}, nil)
+			writeMCPLogWithUsage(r.info.InstanceID, "", "", nil, 0, "sse.eof", "sse stream ended", map[string]any{})
 			return 0, io.EOF
 		}
 
 		// If other error occurs, return directly
 		if readErr != nil && readErr != io.EOF {
-			writeMCPLog(r.info.InstanceID, "", "", 2, "sse.read.error", readErr.Error(), map[string]any{}, nil)
+			writeMCPLogWithUsage(r.info.InstanceID, "", "", nil, 2, "sse.read.error", readErr.Error(), map[string]any{})
 			return 0, readErr
 		}
 	}
@@ -592,33 +647,52 @@ func GetInstanceInfo(instanceID string) (*InstanceInfo, error) {
 }
 
 // validReqAuthorizationForInstance 校验请求 Authorization header 是否有效
-func validReqAuthorizationForInstance(req *http.Request, instanceInfo *InstanceInfo) error {
+func validReqAuthorizationForInstance(req *http.Request, instanceInfo *InstanceInfo) (*RequestAuth, error) {
+	// delete Authorization header from req
+	ra := &RequestAuth{}
+
 	// 1. instance 是否启用了 token 认证，没有则直接返回成功
 	if !instanceInfo.EnabledToken {
-		return nil
+		return ra, nil
 	}
 
-	authorization := req.Header.Get("Authorization")
-	if len(authorization) == 0 {
-		return fmt.Errorf("instance %v enabled token but request Authorization header is empty", instanceInfo.Instance.InstanceID)
-	}
-
+	// 2. instance 启用了 token 认证，校验 token 是否有效
 	if len(instanceInfo.Tokens) == 0 {
-		return fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
+		return ra, fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
 	}
 
-	for _, t := range instanceInfo.Tokens {
-		if t.Token == authorization {
-			if t.ExpireAt == 0 {
-				return nil
+	tokenHeaderKey := ""
+	token := ""
+	for _, tokenInfo := range instanceInfo.Tokens {
+		tokenHeaderKey = tokenInfo.ToTokenHeaderKey()
+		canonKey := textproto.CanonicalMIMEHeaderKey(tokenHeaderKey)
+		token = strings.TrimSpace(req.Header.Get(canonKey))
+		if tokenInfo.Token == token {
+			// 3. token 校验通过，校验 token 是否过期
+			expireAt := time.Unix(0, tokenInfo.ExpireAt*int64(time.Millisecond))
+			if tokenInfo.ExpireAt > 0 && time.Now().After(expireAt) {
+				return ra, fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
 			}
-			expireAt := time.Unix(0, t.ExpireAt*int64(time.Millisecond))
-			if time.Now().Before(expireAt) {
-				return nil
+			if tokenInfo.EnabledTransport {
+				for k, v := range tokenInfo.Headers {
+					if k != tokenHeaderKey {
+						req.Header.Set(k, v)
+					}
+				}
 			} else {
-				return fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
+				req.Header.Del(canonKey)
 			}
+			ra = &RequestAuth{
+				TokenHeaderKey: tokenHeaderKey,
+				Token:          token,
+				Usages:         tokenInfo.Usages,
+			}
+			return ra, nil
 		}
 	}
-	return fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.InstanceID)
+	if len(token) == 0 {
+		return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceInfo.Instance.InstanceID, tokenHeaderKey)
+	}
+
+	return ra, fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.InstanceID)
 }

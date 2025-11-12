@@ -41,7 +41,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 			"path":        r.URL.Path,
 			"url":         r.URL.String(),
 			"remote_addr": r.RemoteAddr,
-		}, nil)
+		})
 		// 对于连接中断，不需要向客户端发送错误响应
 		return
 	}
@@ -66,7 +66,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 		"method": r.Method,
 		"path":   r.URL.Path,
 		"status": status,
-	}, nil)
+	})
 
 	// 当协议为 SSE 且开关启用时，输出 SSE 错误事件
 	if v := r.Context().Value(IsSSEReqKey); v != nil {
@@ -133,13 +133,13 @@ func (w *proxyLogger) Write(p []byte) (n int, err error) {
 		logger.Debug("Client canceled connection",
 			zap.String("message", msg),
 		)
-		writeMCPLog("", "", "", 0, "client.canceled", msg, map[string]any{}, nil)
+		writeMCPLog("", "", "", 0, "client.canceled", msg, map[string]any{})
 	} else {
 		// 其他错误使用 Error 级别记录
 		logger.Error("Proxy error",
 			zap.String("message", msg),
 		)
-		writeMCPLog("", "", "", 3, "proxy.error.log", msg, map[string]any{}, nil)
+		writeMCPLog("", "", "", 3, "proxy.error.log", msg, map[string]any{})
 	}
 
 	return len(p), nil
@@ -151,6 +151,7 @@ type contextKey string
 const (
 	IsSSEReqKey     contextKey = "isSSEReq"
 	InstanceInfoKey contextKey = "instanceInfo"
+	RequestAuthKey  contextKey = "requestAuth"
 
 	MCP_SERVER_SUBFIX_SSE = "sse"
 	MCP_SERVER_SUBFIX_MCP = "mcp"

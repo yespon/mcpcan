@@ -131,6 +131,20 @@ type McpToken struct {
 	Usages           []string          `json:"usages"`
 }
 
+func (m *McpToken) ToTokenHeaderKey() string {
+	switch m.TokenType {
+	case TokenTypeBearer:
+		return "Authorization"
+	case TokenTypeBasic:
+		return "Authorization"
+	case TokenTypeKey:
+		return "API-Key"
+	case TokenTypeXAPIKey:
+		return "X-API-Key"
+	}
+	return ""
+}
+
 // McpConfig 表示单个 MCP 服务器配置
 type McpConfig struct {
 	URL            string            `json:"url"`

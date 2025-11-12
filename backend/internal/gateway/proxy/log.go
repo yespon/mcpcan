@@ -1,12 +1,13 @@
 package proxy
 
 import (
-	"container/list"
-	"context"
-	"encoding/json"
-	"errors"
-	"sync"
-	"time"
+  "container/list"
+  "context"
+  "encoding/json"
+  "errors"
+  "strings"
+  "sync"
+  "time"
 
 	"github.com/fatedier/golib/log"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -161,16 +162,32 @@ func InitGatewayLogQueue() {
 
 // RecordGatewayLog builds a log record and enqueues it to be persisted.
 func RecordGatewayLog(instanceID string, tokenType model.TokenType, token string, level log.Level, logText json.RawMessage, extra json.RawMessage) error {
-	if GatewayLogQ == nil {
-		InitGatewayLogQueue()
-	}
-	rec := &model.GatewayLog{
-		InstanceID: instanceID,
-		TokenType:  tokenType,
-		Token:      token,
-		Log:        logText,
-		Level:      level,
-		Extra:      extra,
-	}
-	return GatewayLogQ.Enqueue(rec)
+  if GatewayLogQ == nil {
+    InitGatewayLogQueue()
+  }
+  rec := &model.GatewayLog{
+    InstanceID: instanceID,
+    TokenType:  tokenType,
+    Token:      token,
+    Log:        logText,
+    Level:      level,
+    Extra:      extra,
+  }
+  return GatewayLogQ.Enqueue(rec)
+}
+
+func RecordGatewayLogWithUsage(instanceID string, tokenType model.TokenType, token string, usages []string, level log.Level, logText json.RawMessage, extra json.RawMessage) error {
+  if GatewayLogQ == nil {
+    InitGatewayLogQueue()
+  }
+  rec := &model.GatewayLog{
+    InstanceID: instanceID,
+    TokenType:  tokenType,
+    Token:      token,
+    Usages:     strings.Join(usages, ","),
+    Log:        logText,
+    Level:      level,
+    Extra:      extra,
+  }
+  return GatewayLogQ.Enqueue(rec)
 }
