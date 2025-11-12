@@ -35,7 +35,5 @@ RUN chmod +x /app/authz
 # Expose port
 EXPOSE 8080
 
-# Start the application
-CMD ["/app/authz"]
 # Run application
 CMD ["/app/authz"]
