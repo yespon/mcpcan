@@ -8,22 +8,22 @@ import (
 )
 
 func main() {
-	// 创建应用程序实例
+	// Create application instance
 	appInstance, err := app.New()
 	if err != nil {
-		fmt.Printf("创建应用程序实例失败: %v\n", err)
+		fmt.Printf("Failed to create application instance: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 初始化应用程序
+	// Initialize application
 	if err := appInstance.Initialize(); err != nil {
-		fmt.Printf("初始化应用程序失败: %v\n", err)
+		fmt.Printf("Failed to initialize application: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 运行应用程序
+	// Run application
 	if err := appInstance.Run(); err != nil {
-		fmt.Printf("运行应用程序失败: %v\n", err)
+		fmt.Printf("Failed to run application: %v\n", err)
 		os.Exit(1)
 	}
 }
