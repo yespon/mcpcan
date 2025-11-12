@@ -1,3 +1,13 @@
+# Builder stage
+FROM 77kymo/builder:latest AS builder
+
+# Work in /app and copy project sources (parent of dockerfiles/)
+WORKDIR /app
+
+COPY ../ /app
+
+RUN cd /app && make build-init
+
 # Runtime stage
 FROM alpine:3.22
 
@@ -10,16 +20,17 @@ RUN apk add --no-cache ca-certificates tzdata
 # Set timezone
 ENV TZ=Asia/Shanghai
 
-
 RUN mkdir -p /app /app/init-data /app/data /app/config
 
 # Set working directory
 WORKDIR /app
 
-COPY ../backend/init-data /app/init-data
+# Copy init data and binary from builder stage
+COPY --from=builder /app/backend/init-data /app/init-data
+COPY --from=builder /app/backend/bin/init /app/init
 
-# Copy binary from build stage
-COPY ../backend/bin/init /app/init
+# Make binary executable
+RUN chmod +x /app/init
 
 # Run application
 CMD ["/app/init"]

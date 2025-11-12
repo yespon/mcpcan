@@ -1,4 +1,15 @@
 # Runtime stage
+# Builder stage
+FROM 77kymo/builder:latest AS builder
+
+# Work in /app and copy project sources (parent of dockerfiles/)
+WORKDIR /app
+
+COPY ../ /app
+
+RUN cd /app && make build-authz
+
+# Runtime stage
 FROM alpine:3.22
 
 # Set apk aliyun mirror
@@ -15,8 +26,16 @@ RUN mkdir -p /app /app/config
 # Set working directory
 WORKDIR /app
 
-# Copy binary from build stage
-COPY ../backend/bin/authz /app/authz
+# Copy binary from builder stage
+COPY --from=builder /app/backend/bin/authz /app/authz
 
+# Make binary executable
+RUN chmod +x /app/authz
+
+# Expose port
+EXPOSE 8080
+
+# Start the application
+CMD ["/app/authz"]
 # Run application
 CMD ["/app/authz"]

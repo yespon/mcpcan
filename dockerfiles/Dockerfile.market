@@ -1,4 +1,15 @@
 # Runtime stage
+# Builder stage
+FROM 77kymo/builder:latest AS builder
+
+# Work in /app and copy project sources (parent of dockerfiles/)
+WORKDIR /app
+
+COPY ../ /app
+
+RUN cd /app && make build-market
+
+# Runtime stage
 FROM alpine:3.22
 
 # Set apk aliyun mirror
@@ -15,8 +26,16 @@ RUN mkdir -p /app /app/config
 # Set working directory
 WORKDIR /app
 
-# Copy binary from build stage
-COPY ../backend/bin/market /app/market
+# Copy binary from builder stage
+COPY --from=builder /app/backend/bin/market /app/market
 
+# Make binary executable
+RUN chmod +x /app/market
+
+# Expose port
+EXPOSE 8080
+
+# Start the application
+CMD ["/app/market"]
 # Run the application
 CMD ["/app/market"]

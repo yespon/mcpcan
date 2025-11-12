@@ -1,4 +1,15 @@
 # Runtime stage
+# Builder stage
+FROM 77kymo/builder:latest AS builder
+
+# Work in /app and copy project sources (parent of dockerfiles/)
+WORKDIR /app
+
+COPY ../ /app
+
+RUN cd /app && make build-gateway
+
+# Runtime stage
 FROM alpine:3.22
 
 # Set apk aliyun mirror
@@ -15,8 +26,16 @@ RUN mkdir -p /app /app/config
 # Set working directory
 WORKDIR /app
 
-# Copy binary from build stage
-COPY ../backend/bin/gateway /app/gateway
+# Copy binary from builder stage
+COPY --from=builder /app/backend/bin/gateway /app/gateway
 
+# Make binary executable
+RUN chmod +x /app/gateway
+
+# Expose port
+EXPOSE 8080
+
+# Start the application
+CMD ["/app/gateway"]
 # Run the application
 CMD ["/app/gateway"]
