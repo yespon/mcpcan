@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -78,5 +79,43 @@ func TestGatewayLogQueueWriteToDB(t *testing.T) {
 	}
 }
 
-// fmtInt returns the decimal string of an int without allocations.
-//
+// benchWriter is a LogWriter used for performance benchmarking that only counts writes.
+type benchWriter struct{ count atomic.Int64 }
+
+// Create increments an internal counter and returns immediately.
+func (bw *benchWriter) Create(ctx context.Context, g *model.GatewayLog) error {
+	bw.count.Add(1)
+	return nil
+}
+
+// BenchmarkGatewayLogQueueThroughput measures enqueue throughput and end-to-end flush rate.
+func BenchmarkGatewayLogQueueThroughput(b *testing.B) {
+	bw := &benchWriter{}
+	q := NewGatewayLogQueue(200*1024*1024, bw)
+	defer q.Close()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		rec := &model.GatewayLog{
+			InstanceID: "inst-bench",
+			TokenType:  model.TokenTypeBearer,
+			Token:      fmt.Sprintf("tok-bench-%d", i),
+			Log:        "bench",
+			Level:      0,
+		}
+		if err := q.Enqueue(rec); err != nil {
+			b.Fatalf("enqueue error: %v", err)
+		}
+	}
+
+	// Wait for worker to flush all items.
+	deadline := time.Now().Add(5 * time.Second)
+	for bw.count.Load() < int64(b.N) {
+		if time.Now().After(deadline) {
+			b.Fatalf("timeout: flushed=%d, expected=%d", bw.count.Load(), b.N)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
