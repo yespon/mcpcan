@@ -67,7 +67,7 @@ func (s *InstanceService) CreateHandler(c *gin.Context) {
 			return
 		}
 		if len(instances) >= config.GetDemoMaxInstances() {
-			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
+			common.GinError(c, i18nresp.CodeForbidden, fmt.Sprintf("operation forbidden in demo mode: instance limit reached, max: %d", config.GetDemoMaxInstances()))
 			return
 		}
 	}
