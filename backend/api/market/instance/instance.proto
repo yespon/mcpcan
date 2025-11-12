@@ -116,16 +116,31 @@ message CreateRequest {
   bool enabledToken = 22;
 }
 
-// McpToken MCP令牌
+// McpToken MCP token
 message McpToken {
-  // @inject_tag: json:"token" form:"token" desc:"令牌"
-  string token = 1;
-  // @inject_tag: json:"expireAt" form:"expireAt" desc:"令牌过期时间"
-  int64 expireAt = 2;
-  // @inject_tag: json:"publishAt" desc:"令牌创建时间"
-  int64 publishAt = 3;
-  // @inject_tag: json:"usages" desc:"令牌使用场景"
-  repeated string usages = 4;
+  // Token type enum
+  enum TokenType {
+    TOKEN_TYPE_UNKNOWN = 0;
+    BEARER             = 1;
+    API_KEY            = 2;
+    X_API_KEY          = 3;
+    BASIC              = 4;
+  }
+
+  // Token type
+  TokenType tokenType = 1;
+  // Token content
+  string token = 2;
+  // Optional custom headers
+  map<string, string> headers = 3;
+  // Whether transport layer security is enabled
+  bool enabledTransport = 4;
+  // Expiration time (Unix timestamp, milliseconds)
+  int64 expireAt = 5;
+  // Publish time (Unix timestamp, milliseconds)
+  int64 publishAt = 6;
+  // List of usage scenarios
+  repeated string usages = 7;
 }
 
 // CreateResp 创建实例响应结构体
