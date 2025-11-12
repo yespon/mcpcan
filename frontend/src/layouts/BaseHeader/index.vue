@@ -8,12 +8,12 @@
         {{ t('common.back') }}
       </el-link>
     </div>
-    <!-- <el-alert
+    <el-alert
       v-else-if="showNav"
       title="Demo栈的数据为展示数据 将于24小时后重置 请注意你的数据保存"
       type="warning"
       :closable="false"
-    /> -->
+    />
     <div class="flex align-center flex-1 justify-end">
       <el-icon
         class="cursor-pointer mr-6 link-hover"
@@ -144,7 +144,8 @@ const github = 'https://github.com/kymo-mcp/mcpcan'
 const issues = 'https://github.com/kymo-mcp/mcpcan/issues'
 const route = useRoute()
 const router = useRouter()
-// const showNav = import.meta.env.VITE_DEMO === 'true'
+// Get the env value from config
+const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'
 // condition of show back button
 const isShowBack = computed(() => {
   return !route.meta.isMenu
