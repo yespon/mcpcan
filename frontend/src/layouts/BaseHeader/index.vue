@@ -144,7 +144,7 @@ const github = 'https://github.com/kymo-mcp/mcpcan'
 const issues = 'https://github.com/kymo-mcp/mcpcan/issues'
 const route = useRoute()
 const router = useRouter()
-const showNav = import.meta.env.VITE_DEMO === 'true'
+const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'
 // condition of show back button
 const isShowBack = computed(() => {
   return !route.meta.isMenu
