@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY ../ /app
 
-RUN cd /app && make go-build-init
+RUN cd /app && make proto-buf go-mod-tidy go-build-init
 
 # Runtime stage
 FROM alpine:3.22
