@@ -43,7 +43,7 @@
     </el-scrollbar>
     <template #footer>
       <div class="center">
-        <el-button @click="currentVisible = false" class="mr-4">{{ t('common.cancel') }}</el-button>
+        <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
         <McpButton @click="handleComfirm">{{ t('common.ok') }}</McpButton>
       </div>
     </template>
@@ -63,21 +63,40 @@ const { t } = useI18n()
 //   name: string
 //   [key: string]: any
 // }
-const props = withDefaults(
-  defineProps<{
-    modelValue?: boolean
-    modelSelected?: string | number | null
-    title: string
-    options: Array<any>
-  }>(),
-  {
-    modelValue: false,
-    modelSelected: '',
+// const props = withDefaults(
+//   defineProps<{
+//     modelValue?: boolean
+//     modelSelected?: string | number | null
+//     title: string
+//     options: Array<any>
+//   }>(),
+//   {
+//     modelValue: false,
+//     modelSelected: '',
+//   },
+// )
+
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    default: false,
   },
-)
+  selected: {
+    type: String,
+    default: '',
+  },
+  title: {
+    type: String,
+    default: '',
+  },
+  options: {
+    type: Array<any>,
+    default: [],
+  },
+})
 
 const currentVisible = ref(props.modelValue)
-const currentSelected = ref(props.modelSelected)
+const currentSelected = ref(props.selected)
 const searchKeyword = ref('')
 const _options = computed(() => {
   const escapedKeyword = searchKeyword.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -105,18 +124,16 @@ watch(
   },
 )
 watch(
-  () => props.modelSelected,
+  () => props.selected,
   (newVal) => {
     currentSelected.value = newVal
   },
 )
 
-watch(
-  () => currentSelected.value,
-  (newVal) => {
-    emit('update:selected', newVal as string)
-  },
-)
+const handleCancel = () => {
+  currentVisible.value = false
+  currentSelected.value = props.selected
+}
 
 const handleComfirm = () => {
   emit('update:selected', currentSelected.value as string)

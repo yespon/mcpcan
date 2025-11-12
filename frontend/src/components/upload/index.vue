@@ -13,12 +13,12 @@
       <el-icon class="avatar-uploader-icon"><Plus /></el-icon>
     </el-upload>
   </div>
-  <div class="mt-2 user-avatar cursor-pointer" v-else>
-    <McpImage :src="imageUrl" width="90" height="90"></McpImage>
+  <div class="mt-2 user-avatar p-2 center" v-else>
+    <McpImage :src="imageUrl" width="60" height="60"></McpImage>
     <div class="avatar-overlay center" @click="handleDelAvatar">
-      <el-icon class="delete-icon" color="#F56C6C">
-        <Delete />
-      </el-icon>
+      <el-icon class="delete-icon light:color-red dark:color-red color-op-20" size="18"
+        ><CircleCloseFilled
+      /></el-icon>
     </div>
   </div>
 </template>
@@ -27,7 +27,7 @@
 import { Plus } from '@element-plus/icons-vue'
 import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
-import { Delete } from '@element-plus/icons-vue'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 import McpImage from '../mcp-image/index.vue'
 
 const action = ref(baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/storage/image')
@@ -86,7 +86,7 @@ watch(
 .avatar-uploader {
   width: 90px;
   height: 90px;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px dashed var(--ep-purple-color);
   .el-icon.avatar-uploader-icon {
     font-size: 28px;
@@ -100,23 +100,20 @@ watch(
   position: relative;
   width: 90px;
   height: 90px;
-  border-radius: 12px;
-  .avatar-overlay {
-    display: none;
-  }
+  border-radius: 8px;
+  border: 1px dashed var(--ep-purple-color);
 }
-.user-avatar:hover {
-  background: var(--ep-bg-stripe-light);
-  .avatar-overlay {
-    display: block;
-    position: absolute;
-    top: calc(50% - 7px);
-    left: calc(50% - 7px);
-    width: 100%;
-    height: 100%;
-    transition: opacity 0.3s ease; // 平滑过渡效果
-    .delete-icon {
-      cursor: pointer;
+
+.avatar-overlay {
+  display: block;
+  position: absolute;
+  top: 0px;
+  right: 2px;
+  transition: opacity 0.3s ease; // 平滑过渡效果
+  .delete-icon {
+    cursor: pointer;
+    &:hover {
+      scale: 1.1;
     }
   }
 }
