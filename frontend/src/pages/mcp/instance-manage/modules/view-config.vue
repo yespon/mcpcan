@@ -359,7 +359,7 @@ const handleEabledToken = async () => {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
       enabledToken: dialogInfo.value.instanceInfo.enabledToken,
     })
-    dialogInfo.value.currentTokenIndex = null
+    // dialogInfo.value.currentTokenIndex = 0
   } catch {
     dialogInfo.value.instanceInfo.enabledToken = !dialogInfo.value.instanceInfo.enabledToken
   } finally {

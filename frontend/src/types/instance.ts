@@ -54,8 +54,8 @@ echo 'Initialization completed.'
   1.${t('desc.imgAddressTip1')}<br />
   2. ${t('desc.imgAddressTip2')}<br />
     &nbsp &nbsp ${t('desc.baseCommand')}：tar、wget、zip、unzip<br />
-    &nbsp &nbsp Python ${t('desc.anv')}：Python 3.12.11，${t('desc.tools')} uv 0.7.12、uvx 0.7.12<br />
-    &nbsp &nbsp Node.js ${t('desc.anv')}：Node.js v18.20.1，${t('desc.tools')} npm 9.6.6、npx 9.6.6<br />
+    &nbsp &nbsp Python ${t('desc.env')}：Python 3.12.11，${t('desc.tools')} uv 0.7.12、uvx 0.7.12<br />
+    &nbsp &nbsp Node.js ${t('desc.env')}：Node.js v18.20.1，${t('desc.tools')} npm 9.6.6、npx 9.6.6<br />
   `,
     TIP_IMGADDRESS_DEFAULT: `3.${t('desc.imgAddressTip3')} `,
     TIP_MCP_SERVER: `
