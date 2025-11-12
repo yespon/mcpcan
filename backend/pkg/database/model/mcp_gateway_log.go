@@ -20,6 +20,8 @@ const (
 	TokenTypeBasic TokenType = "basic"
 	// token type
 	TokenTypeKey TokenType = "api-key"
+	// x-api-key
+	TokenTypeXAPIKey TokenType = "x-api-key"
 )
 
 type GatewayLog struct {

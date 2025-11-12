@@ -120,10 +120,13 @@ type McpInstance struct {
 }
 
 type McpToken struct {
-	Token     string   `json:"token"`
-	ExpireAt  int64    `json:"expireAt"`
-	PublishAt int64    `json:"publishAt"`
-	Usages    []string `json:"usages"`
+	TokenType        TokenType         `json:"tokenType"`
+	Token            string            `json:"token"`
+	Headers          map[string]string `json:"headers,omitempty"`
+	EnabledTransport bool              `json:"enabledTransport"`
+	ExpireAt         int64             `json:"expireAt"`
+	PublishAt        int64             `json:"publishAt"`
+	Usages           []string          `json:"usages"`
 }
 
 // McpConfig 表示单个 MCP 服务器配置
