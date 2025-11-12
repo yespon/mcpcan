@@ -105,6 +105,11 @@ func Load() (*Config, error) {
 	}
 	utils.MkdirP(config.Storage.StaticPath)
 
+	if config.Storage.OpenapiFilePath == "" {
+		config.Storage.OpenapiFilePath = "/app/data/openapi-file"
+	}
+	utils.MkdirP(config.Storage.OpenapiFilePath)
+
 	// Set sensible defaults
 	if config.DemoMaxInstances <= 0 {
 		config.DemoMaxInstances = 5

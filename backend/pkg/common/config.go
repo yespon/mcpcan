@@ -15,9 +15,10 @@ type ServerConfig struct {
 }
 
 type StorageConfig struct {
-	RootPath   string `mapstructure:"rootPath"`
-	CodePath   string `mapstructure:"codePath"`
-	StaticPath string `mapstructure:"staticPath"`
+	RootPath        string `mapstructure:"rootPath"`
+	CodePath        string `mapstructure:"codePath"`
+	OpenapiFilePath string `mapstructure:"openapiFilePath"`
+	StaticPath      string `mapstructure:"staticPath"`
 }
 
 type CodeConfig struct {
