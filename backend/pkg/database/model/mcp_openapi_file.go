@@ -19,15 +19,16 @@ const (
 )
 
 type McpOpenapiPackage struct {
-	ID              uint            `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
-	OpenapiFileID   string          `gorm:"size:100;not null;unique;comment:openapi文档ID" json:"openapiFileID"`
-	OpenapiFileType OpenapiFileType `gorm:"size:10;not null;comment:openai文档类型 (json/yaml)" json:"openapiFileType"`
-	OpenapiFilePath string          `gorm:"size:500;not null;comment:存储路径" json:"openapiFilePath"`
-	OriginalName    string          `gorm:"size:255;comment:原始文件名" json:"originalName"`
-	FileSize        int64           `gorm:"comment:文件大小(字节)" json:"fileSize"`
-	IsDeleted       bool            `gorm:"default:false;comment:是否删除" json:"isDeleted"`
-	CreatedAt       time.Time       `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
-	UpdatedAt       time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
+	ID                uint            `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
+	OpenapiFileID     string          `gorm:"size:100;not null;unique;comment:openapi文档ID" json:"openapiFileID"`
+	OpenapiFileType   OpenapiFileType `gorm:"size:10;not null;comment:openai文档类型 (json/yaml)" json:"openapiFileType"`
+	OpenapiFilePath   string          `gorm:"size:500;not null;comment:存储路径" json:"openapiFilePath"`
+	OriginalName      string          `gorm:"size:255;comment:原始文件名" json:"originalName"`
+	FileSize          int64           `gorm:"comment:文件大小(字节)" json:"fileSize"`
+	BaseOpenapiFileID string          `gorm:"comment:基于哪个 openapi 文档" json:"baseOpenapiFileID"`
+	IsDeleted         bool            `gorm:"default:false;comment:是否删除" json:"isDeleted"`
+	CreatedAt         time.Time       `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt         time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
 
 // TableName 指定表名

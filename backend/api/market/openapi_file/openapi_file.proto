@@ -20,6 +20,8 @@ enum OpenapiFileType {
 message UploadOpenapiFileRequest {
   // @inject_tag: form:"file" binding:"required" desc:"上传文件"
   bytes file = 1;
+  // @inject_tag: form:"baseOpenapiFileID" binding:"required" desc:"基于哪个 openapi file"
+  string baseOpenapiFileID = 2;
 }
 
 // UploadOpenapiFileResponse OpenAPI文档上传响应
@@ -102,6 +104,8 @@ message OpenapiFileInfo {
   string createdAt = 6;
   // @inject_tag: json:"updatedAt" desc:"更新时间"
   string updatedAt = 7;
+  // @inject_tag: json:"updatedAt" desc:"基于哪个 openapi 文档的id"
+  string baseOpenapiFileID = 8;
 }
 
 // OpenapiFileListResponse OpenAPI文档列表响应

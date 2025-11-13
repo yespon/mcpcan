@@ -2,7 +2,7 @@
 
 @routerPrefix = market
 @contentType = application/json
-@openapiFileId = 0b2090a3-f9ed-4641-b0cd-c362e8597559
+@openapiFileId = 4b1cb749-353c-42bc-9706-5fd974d5576d
 
 ### 1. 上传 OpenAPI 文档 - JSON 格式
 POST {{baseUrl}}/{{routerPrefix}}/openapi/upload
@@ -15,7 +15,7 @@ Content-Type: application/json
 
 < ../data/openapi_json_file.json
 
-### 2. 上传 OpenAPI 文档 - YAML 格式
+### 2. 上传子 OpenAPI 文档 - YAML 格式
 POST {{baseUrl}}/{{routerPrefix}}/openapi/upload
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Authorization: {{token}}
@@ -26,8 +26,14 @@ Content-Type: application/yaml
 
 < ../data/openapi_yaml_file.yaml
 
+--WebAppBoundary
+Content-Disposition: form-data; name="baseOpenapiFileID"
+
+{{openapiFileId}}
+--WebAppBoundary--
+
 ### 3. 获取 OpenAPI 文档列表 - 带分页和过滤
-GET {{baseUrl}}/{{routerPrefix}}/openapi/files?page=1&pageSize=10&name=petstore
+GET {{baseUrl}}/{{routerPrefix}}/openapi/files?page=1&pageSize=10
 Content-Type: {{contentType}}
 Authorization: {{token}}
 

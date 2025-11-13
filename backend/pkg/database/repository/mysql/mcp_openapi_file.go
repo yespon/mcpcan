@@ -92,6 +92,7 @@ func (r *McpOpenapiPackageRepository) FindWithPagination(ctx context.Context, pa
 	query := r.getDB().WithContext(ctx).Where("is_deleted = false")
 
 	// 如果有关键词，添加搜索条件
+	baseOpenapiFileID := ""
 	for key, value := range filters {
 		switch key {
 		case "name":
@@ -102,8 +103,13 @@ func (r *McpOpenapiPackageRepository) FindWithPagination(ctx context.Context, pa
 			if types, ok := value.([]model.OpenapiFileType); ok && len(types) > 0 {
 				query = query.Where("openapi_file_type IN ?", types)
 			}
+		case "baseOpenapiFileID":
+			if openapiFileID, ok := value.(string); ok && openapiFileID != "" {
+				baseOpenapiFileID = openapiFileID
+			}
 		}
 	}
+	query = query.Where("base_openapi_file_id = ?", baseOpenapiFileID)
 
 	// 获取总数
 	if err := query.Count(&total).Error; err != nil {

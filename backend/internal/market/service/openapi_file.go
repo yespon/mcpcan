@@ -98,11 +98,12 @@ func (s *OpenapiService) UploadOpenapiFile(c *gin.Context) {
 
 	// Save to database
 	openapiPackage := &model.McpOpenapiPackage{
-		OpenapiFileID:   fileInfo.OpenapiFileID,
-		OpenapiFileType: fileInfo.OpenapiFileType,
-		OpenapiFilePath: fileInfo.OpenapiFilePath,
-		OriginalName:    fileInfo.OriginalName,
-		FileSize:        fileInfo.FileSize,
+		OpenapiFileID:     fileInfo.OpenapiFileID,
+		OpenapiFileType:   fileInfo.OpenapiFileType,
+		OpenapiFilePath:   fileInfo.OpenapiFilePath,
+		OriginalName:      fileInfo.OriginalName,
+		FileSize:          fileInfo.FileSize,
+		BaseOpenapiFileID: c.Request.FormValue("baseOpenapiFileID"),
 	}
 
 	if err := s.openapiPackageRepo.Create(ctx, openapiPackage); err != nil {
@@ -344,13 +345,14 @@ func (s *OpenapiService) GetOpenapiFileList(c *gin.Context) {
 	var fileList []*openapi_file.OpenapiFileInfo
 	for _, pkg := range packages {
 		fileInfo := &openapi_file.OpenapiFileInfo{
-			Id:        pkg.OpenapiFileID,
-			Name:      pkg.OriginalName,
-			Path:      pkg.OpenapiFilePath,
-			Size:      pkg.FileSize,
-			Type:      convertOpenapiFileType(pkg.OpenapiFileType),
-			CreatedAt: pkg.CreatedAt.String(),
-			UpdatedAt: pkg.UpdatedAt.String(),
+			Id:                pkg.OpenapiFileID,
+			Name:              pkg.OriginalName,
+			Path:              pkg.OpenapiFilePath,
+			Size:              pkg.FileSize,
+			Type:              convertOpenapiFileType(pkg.OpenapiFileType),
+			CreatedAt:         pkg.CreatedAt.String(),
+			UpdatedAt:         pkg.UpdatedAt.String(),
+			BaseOpenapiFileID: pkg.BaseOpenapiFileID,
 		}
 		fileList = append(fileList, fileInfo)
 	}
@@ -423,6 +425,31 @@ func (s *OpenapiService) DeleteOpenapiFile(c *gin.Context) {
 	}
 
 	logger.Info("OpenAPI document deleted successfully", zap.String("openapiFileId", req.OpenapiFileId))
+
+	go func() {
+		openapiFileList, _, err := s.openapiPackageRepo.FindWithPagination(context.Background(), 1, 99999, map[string]interface{}{
+			"baseOpenapiFileID": req.OpenapiFileId,
+		})
+		if err != nil {
+			logger.Error("Failed to list openapiFile by baseOpenapiFileID ", zap.Error(err),
+				zap.String("baseOpenapiFileID", req.OpenapiFileId),
+				zap.Error(err))
+			return
+		}
+		for _, openapiFile := range openapiFileList {
+			if err := s.fileManager.DeleteOpenapiFile(openapiFile.OpenapiFilePath); err != nil {
+				logger.Error("Failed to delete OpenAPI document files",
+					zap.String("openapiFileId", openapiFile.OpenapiFileID),
+					zap.String("filePath", openapiFile.OpenapiFilePath),
+					zap.Error(err))
+			}
+			if err := s.openapiPackageRepo.DeleteByOpenapiFileID(context.Background(), openapiFile.OpenapiFileID); err != nil {
+				logger.Error("Failed to delete OpenAPI document from database",
+					zap.String("openapiFileId", openapiFile.OpenapiFileID),
+					zap.Error(err))
+			}
+		}
+	}()
 
 	// Return success response
 	response := &openapi_file.DeleteOpenapiFileResponse{
