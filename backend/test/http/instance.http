@@ -17,7 +17,7 @@ Authorization: {{token}}
 }
 
 ### 删除节点
-DELETE {{baseUrl}}/{{routerPrefix}}/instance/3116d110-50e7-4164-aaba-bc034beff24c
+DELETE {{baseUrl}}/{{routerPrefix}}/instance/34bd978a-1fd7-4875-a52a-452287377087
 Content-Type: application/json
 Authorization: {{token}}
 
