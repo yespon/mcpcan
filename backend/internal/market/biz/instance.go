@@ -264,6 +264,50 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	return resp, nil
 }
 
+func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *instancepb.UpdateOpenapiRequest, oriInstance *model.McpInstance) (*instancepb.EditResp, error) {
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build container configuration: %v", err)
+	}
+	// Create new instance record
+	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal container create containerCreateOptions: %w", err)
+	}
+
+	// Delete old container and svc service
+	_, err = GContainerBiz.DeleteContainer(oriInstance)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete container: %v", err)
+	}
+
+	// Update
+	oriInstance.InstanceName = req.Name
+	oriInstance.Notes = req.Notes
+	oriInstance.ContainerCreateOptions = containerCreateOptions
+	oriInstance.ContainerStatus = model.ContainerStatusPending
+	oriInstance.ContainerIsReady = false
+	oriInstance.IconPath = req.IconPath
+
+	// Save to database
+	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update instance: %v", err)
+	}
+
+	// Update instance cache
+	biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
+
+	resp := &instancepb.EditResp{
+		InstanceId:  oriInstance.InstanceID,
+		Name:        oriInstance.InstanceName,
+		AccessType:  instancepb.AccessType_HOSTING,
+		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+		Status:      string(model.InstanceStatusActive),
+	}
+	return resp, nil
+}
+
 // UpdateInstanceForHosting updates instance
 func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *instancepb.EditRequest, oriInstance *model.McpInstance) (*instancepb.EditResp, error) {
 	var err error

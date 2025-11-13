@@ -9,5 +9,20 @@
   "1007": "Internal server error",
   "1008": "Not implemented",
   "1009": "Service unavailable",
-  "1010": "Gateway timeout"
+  "1010": "Gateway timeout",
+
+  "1500": "OpenAPI document not found",
+  "1501": "OpenAPI document upload failed",
+  "1502": "Invalid OpenAPI document format",
+  "1503": "OpenAPI document size exceeded limit",
+  "1504": "Unsupported OpenAPI document type",
+  "1505": "OpenAPI document validation failed",
+  "1506": "OpenAPI document update failed",
+  "1507": "OpenAPI document delete failed",
+  "1508": "OpenAPI document is in use and cannot be deleted",
+  "1509": "OpenAPI document already exists",
+  "1510": "OpenAPI document parse error",
+  "1511": "OpenAPI version mismatch",
+  "1512": "OpenAPI document content is empty",
+  "1513": "OpenAPI document operation forbidden"
 }

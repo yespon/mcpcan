@@ -23,11 +23,10 @@ GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
 # Build flags module github.com/kymo-mcp/mcpcan
-VERSION_PKG := github.com/kymo-mcp/mcpcan/pkg/version
-LDFLAGS := -X '${VERSION_PKG}.Version=${VERSION}' \
-		-X '${VERSION_PKG}.BuildTime=${BUILD_TIME}' \
-		-X '${VERSION_PKG}.Commit=${COMMIT}' \
-		-X '${VERSION_PKG}.GoVersion=${GO_VERSION}'
+LDFLAGS := -X '${BACKEND_PATH}/pkg/version.Version=${VERSION}' \
+		-X '${BACKEND_PATH}/pkg/version.BuildTime=${BUILD_TIME}' \
+		-X '${BACKEND_PATH}/pkg/version.Commit=${COMMIT}' \
+		-X '${BACKEND_PATH}/pkg/version.GoVersion=${GO_VERSION}'
 
 # Backend build targets
 define go_build_service
@@ -178,6 +177,10 @@ docker-build-init:
 docker-build-market:
 	$(call build_docker_image,market,mcp-market)
 
+.PHONY: docker-build-openapi-to-mcp
+docker-build-openapi-to-mcp:
+	$(call build_docker_image,openapi-to-mcp,openapi-to-mcp)
+
 .PHONY: docker-build-authz
 docker-build-authz:
 	$(call build_docker_image,authz,mcp-authz)
@@ -205,6 +208,10 @@ docker-push-init:
 docker-push-market:
 	$(call push_docker_image,mcp-market)
 
+.PHONY: docker-push-openapi-to-mcp
+docker-push-openapi-to-mcp:
+	$(call push_docker_image,openapi-to-mcp)
+
 .PHONY: docker-push-authz
 docker-push-authz:
 	$(call push_docker_image,mcp-authz)
@@ -230,6 +237,9 @@ docker-build-push-init: docker-build-init docker-push-init
 
 .PHONY: docker-build-push-market
 docker-build-push-market: docker-build-market docker-push-market
+
+.PHONY: docker-build-push-openapi-to-mcp
+docker-build-push-openapi-to-mcp: docker-build-openapi-to-mcp docker-push-openapi-to-mcp
 
 .PHONY: docker-build-push-authz
 docker-build-push-authz: docker-build-authz docker-push-authz
@@ -304,18 +314,21 @@ help:
 	@echo "Docker targets: Services"
 	@echo "  docker-build-init          - Build init Docker image"
 	@echo "  docker-build-market        - Build market Docker image"
+	@echo "  docker-build-openapi-to-mcp        - Build openapi-to-mcp Docker image"
 	@echo "  docker-build-authz         - Build authz Docker image"
 	@echo "  docker-build-gateway       - Build gateway Docker image"
 	@echo "  docker-build-frontend      - Build frontend Docker image"
 	@echo "  docker-build-all           - Build all Docker images"
 	@echo "  docker-push-init           - Push init Docker image"
 	@echo "  docker-push-market         - Push market Docker image"
+	@echo "  docker-push-openapi-to-mcp         - Push openapi-to-mcp Docker image"
 	@echo "  docker-push-authz          - Push authz Docker image"
 	@echo "  docker-push-gateway        - Push gateway Docker image"
 	@echo "  docker-push-frontend       - Push frontend Docker image"
 	@echo "  docker-push-all            - Push all Docker images"
 	@echo "  docker-build-push-init     - Build and push init Docker image"
 	@echo "  docker-build-push-market   - Build and push market Docker image"
+	@echo "  docker-build-push-openapi-to-mcp   - Build and push openapi-to-mcp Docker image"
 	@echo "  docker-build-push-authz    - Build and push authz Docker image"
 	@echo "  docker-build-push-gateway  - Build and push gateway Docker image"
 	@echo "  docker-build-push-frontend - Build and push frontend Docker image"

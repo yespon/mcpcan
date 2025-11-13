@@ -15,6 +15,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
+	"github.com/kymo-mcp/mcpcan/pkg/version"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 )
@@ -1013,6 +1014,52 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		Labels:        labels,
 		EnvVars:       envVars,
 		Mounts:        mounts,
+		WorkingDir:    "/app",
+	}
+
+	// Create Kubernetes container runtime configuration
+	return &containerOptions, nil
+}
+
+// BuildOpenapiContainerOptions builds openapi container creation options
+func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, startupTimeout int32, runningTimeout int32) (*container.ContainerCreateOptions, error) {
+	containerName := cd.generateContainerName(instanceID)
+	serviceName := cd.generateServiceName(instanceID)
+
+	// Set environment variables
+	envVars := make(map[string]string)
+	envVars["MCP_INSTANCE_ID"] = instanceID
+	envVars["MCP_PORT"] = fmt.Sprintf("%d", 8080)
+	envVars["NODE_ENV"] = "production"
+
+	// Set labels
+	labels := make(map[string]string)
+	labels["app"] = containerName
+	labels["instance"] = instanceID
+	labels["managed-by"] = common.SourceServerName
+	if startupTimeout > 0 {
+		labels["mcp.startup.timeout"] = fmt.Sprintf("%d", startupTimeout)
+	}
+	if runningTimeout > 0 {
+		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
+	}
+
+	// 构建下载链接
+	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
+	downloadLink := cd.createDownloadLink(downloadLinkPath)
+	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --http=:8080 run.yaml", downloadLink)
+
+	// 8. Build container creation options
+	containerOptions := container.ContainerCreateOptions{
+		ImageName:     "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:" + version.Version,
+		ContainerName: containerName,
+		ServiceName:   serviceName,
+		Port:          8080,
+		Command:       []string{"sh", "-c"},
+		CommandArgs:   []string{script},
+		RestartPolicy: "Always",
+		Labels:        labels,
+		EnvVars:       envVars,
 		WorkingDir:    "/app",
 	}
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/api/market/mcp_environment"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
@@ -67,6 +68,12 @@ func modelToEnvironmentResponse(env *model.McpEnvironment) *mcp_environment.Envi
 func (s *EnvironmentService) CreateEnvironmentHandler(c *gin.Context) {
 	var req mcp_environment.CreateEnvironmentRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	// Block creation in demo mode
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
 		return
 	}
 
@@ -196,6 +203,10 @@ func CreateEnvironmentHandler(c *gin.Context) {
 func (s *EnvironmentService) UpdateEnvironmentHandler(c *gin.Context) {
 	var req mcp_environment.UpdateEnvironmentRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
 		return
 	}
 
@@ -381,6 +392,10 @@ func (s *EnvironmentService) DeleteEnvironmentHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	if idStr == "" {
 		common.GinError(c, i18nresp.CodeInternalError, "environment ID cannot be empty")
+		return
+	}
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
 		return
 	}
 

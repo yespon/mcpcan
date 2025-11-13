@@ -9,12 +9,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
+	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -24,6 +24,9 @@ import (
 // InstanceService struct for instance service
 type InstanceService struct {
 	ctx context.Context
+
+	openapiPackageRepo *mysql.McpOpenapiPackageRepository
+	openapiFileManager *openapifile.OpenapiFileManager
 }
 
 // ContainerInstanceUpdateParams parameters for container instance update
@@ -43,7 +46,9 @@ type ContainerInstanceUpdateParams struct {
 // NewInstanceService creates a new instance service
 func NewInstanceService(ctx context.Context) *InstanceService {
 	return &InstanceService{
-		ctx: ctx,
+		ctx:                ctx,
+		openapiPackageRepo: mysql.McpOpenapiPackageRepo,
+		openapiFileManager: openapifile.NewOpenapiFileManager(&config.GlobalConfig.Code, config.GlobalConfig.Storage.OpenapiFilePath),
 	}
 }
 
@@ -67,7 +72,7 @@ func (s *InstanceService) CreateHandler(c *gin.Context) {
 			return
 		}
 		if len(instances) >= config.GetDemoMaxInstances() {
-			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
+			common.GinError(c, i18nresp.CodeForbidden, fmt.Sprintf("operation forbidden in demo mode: instance limit reached, max: %d", config.GetDemoMaxInstances()))
 			return
 		}
 	}
@@ -1100,4 +1105,195 @@ func (s *InstanceService) TokenEditHandler(c *gin.Context) {
 		Tokens:     common.ConvertToProtoMcpToken(instance.Tokens),
 		Message:    "Tokens updated successfully",
 	})
+}
+
+// CreateOpenapiHandler creates openapi instance HTTP handler function
+func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
+	var req instancepb.CreateOpenapiRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	err := s.checkSaveOpenapiInstanceRequest(req.Name, req.OpenapiFileID, req.ChooseOpenapiFileID, req.Tokens)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
+		return
+	}
+
+	// Demo mode guard: enforce instance limit
+	if config.IsDemoMode() {
+		instances, err := mysql.McpInstanceRepo.FindByStatus(s.ctx, model.InstanceStatusActive)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to count active instances: %s", err.Error()))
+			return
+		}
+		if len(instances) >= config.GetDemoMaxInstances() {
+			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
+			return
+		}
+	}
+
+	// Query Kubernetes configuration and namespace based on environment ID
+	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, uint(req.EnvironmentId))
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get environment information: %w", err))
+		return
+	}
+	// Validate environment type
+	if environment.Environment != model.McpEnvironmentKubernetes {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("environment type is not Kubernetes, cannot create container"))
+		return
+	}
+
+	_, err = s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.OpenapiFileID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information: %s", err))
+		return
+	}
+	chooseOpenapiFileInfo, err := s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.ChooseOpenapiFileID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get choose openapi file information: %s", err))
+		return
+	}
+	if chooseOpenapiFileInfo.BaseOpenapiFileID != req.OpenapiFileID {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information"))
+		return
+	}
+
+	instanceID := uuid.New().String()
+	containerOptions, err := biz.GContainerBiz.BuildOpenapiContainerOptions(s.ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to build container options: %w", err))
+		return
+	}
+	err = biz.GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, 0)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create container: %w", err))
+		return
+	}
+	// Create new instance record
+	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to marshal container create options: %w", err))
+		return
+	}
+
+	instance := &model.McpInstance{
+		InstanceID:             instanceID,
+		InstanceName:           req.Name,
+		AccessType:             model.AccessTypeHosting,
+		McpProtocol:            model.McpProtocolStreamableHttp,
+		Status:                 model.InstanceStatusActive,
+		PackageID:              chooseOpenapiFileInfo.OpenapiFileID,
+		ContainerStatus:        model.ContainerStatusPending,
+		EnvironmentID:          uint(req.EnvironmentId),
+		SourceType:             model.OpenapiTypeCustom,
+		McpServerID:            "",
+		TemplateID:             0,
+		EnabledToken:           true,
+		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
+		ImgAddr:                containerOptions.ImageName,
+		Port:                   8080,
+		InitScript:             "",
+		Command:                containerOptions.CommandArgs[0],
+		EnvironmentVariables:   nil,
+		VolumeMounts:           nil,
+		ContainerName:          containerOptions.ContainerName,
+		ContainerServiceName:   containerOptions.ServiceName,
+		ContainerIsReady:       false,
+		ContainerCreateOptions: containerCreateOptions,
+		ContainerLastMessage:   "container is pending",
+		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp"),
+		StartupTimeout:         int64(0),
+		RunningTimeout:         int64(0),
+		SourceConfig:           nil,
+		ServicePath:            "/mcp",
+		Notes:                  req.Notes,
+		IconPath:               req.IconPath,
+		PublicProxyPath:        biz.GInstanceBiz.CreatePublicProxyPath(instanceID, model.McpProtocolStreamableHttp),
+		ProxyProtocol:          model.McpProtocolStreamableHttp,
+	}
+
+	// Save instance to database
+	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create instance: %w", err))
+		return
+	}
+
+	// Return success response
+	common.GinSuccess(c, &instancepb.CreateResp{
+		InstanceId:  instanceID,
+		Name:        req.Name,
+		Status:      string(model.InstanceStatusActive),
+		AccessType:  instancepb.AccessType_HOSTING,
+		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+	})
+}
+
+// UpdateOpenapiHandler update openapi instance HTTP handler function
+func (s *InstanceService) UpdateOpenapiHandler(c *gin.Context) {
+	var req instancepb.UpdateOpenapiRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	// Validate required fields
+	if req.InstanceId == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		return
+	}
+
+	// Get original instance information
+	oriInstance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		return
+	}
+	if oriInstance == nil {
+		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		return
+	}
+
+	err = s.checkSaveOpenapiInstanceRequest(req.Name, req.OpenapiFileID, req.ChooseOpenapiFileID, nil)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
+		return
+	}
+
+	_, err = s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.OpenapiFileID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information: %s", err))
+		return
+	}
+	chooseOpenapiFileInfo, err := s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.ChooseOpenapiFileID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get choose openapi file information: %s", err))
+		return
+	}
+	if chooseOpenapiFileInfo.BaseOpenapiFileID != req.OpenapiFileID {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information"))
+		return
+	}
+
+	resp, err := biz.GInstanceBiz.UpdateInstanceForOpenapi(c.Request.Context(), &req, oriInstance)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to edit instance: %s", err.Error()))
+		return
+	}
+
+	common.GinSuccess(c, resp)
+}
+
+func (s *InstanceService) checkSaveOpenapiInstanceRequest(name string, openapiFileID string, chooseOpenapiFileID string, tokens []*instancepb.McpToken) error {
+	if name == "" {
+		return fmt.Errorf("missing required field: name")
+	}
+	// Validate environment ID
+	if openapiFileID == "" {
+		return fmt.Errorf("missing required field: openapiFileID")
+	}
+	if chooseOpenapiFileID == "" {
+		return fmt.Errorf("openapi type instance requires choose openapi file ID")
+	}
+	return nil
 }

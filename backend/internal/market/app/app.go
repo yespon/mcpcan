@@ -239,6 +239,8 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/logs", routerPrefix), instanceService.LogsHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/control", routerPrefix), instanceService.TokenControlHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/edit", routerPrefix), instanceService.TokenEditHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/openapi/create", routerPrefix), instanceService.CreateOpenapiHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)
 
 	// Create resource management service instance
 	resourceService := service.NewResourceService(context.Background())
@@ -265,6 +267,15 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/code/download/:packageId", routerPrefix), codeService.DownloadPackage)
 	a.ginEngine.GET(fmt.Sprintf("/%s/code/packages", routerPrefix), codeService.GetCodePackageList)
 	a.ginEngine.DELETE(fmt.Sprintf("/%s/code/packages/:packageId", routerPrefix), codeService.DeleteCodePackage)
+
+	// Register OpenAPI document management interface
+	openapiService := service.NewOpenapiService()
+	a.ginEngine.POST(fmt.Sprintf("/%s/openapi/upload", routerPrefix), openapiService.UploadOpenapiFile)
+	a.ginEngine.GET(fmt.Sprintf("/%s/openapi/content", routerPrefix), openapiService.GetOpenapiFileContent)
+	a.ginEngine.POST(fmt.Sprintf("/%s/openapi/edit", routerPrefix), openapiService.EditOpenapiFile)
+	a.ginEngine.GET(fmt.Sprintf("/%s/openapi/download/:openapiFileId", routerPrefix), openapiService.DownloadOpenapiFile)
+	a.ginEngine.GET(fmt.Sprintf("/%s/openapi/files", routerPrefix), openapiService.GetOpenapiFileList)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/openapi/files/:openapiFileId", routerPrefix), openapiService.DeleteOpenapiFile)
 
 	// Register template management interface
 	templateService := service.NewTemplateService(context.Background())

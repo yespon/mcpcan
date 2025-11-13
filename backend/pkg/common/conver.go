@@ -6,6 +6,7 @@ import (
 
 	codepb "github.com/kymo-mcp/mcpcan/api/market/code"
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
+	openapifilepb "github.com/kymo-mcp/mcpcan/api/market/openapi_file"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 )
 
@@ -180,6 +181,18 @@ func ConvertToModelPackageType(packageType codepb.PackageType) (model.PackageTyp
 		return model.PackageTypeMcpb, nil
 	default:
 		return model.PackageTypeUnknown, fmt.Errorf("unknown package type: %v", packageType)
+	}
+}
+
+// ConvertToModelOpenapiFileType converts proto OpenapiFileType to model OpenapiFileType
+func ConvertToModelOpenapiFileType(packageType openapifilepb.OpenapiFileType) (model.OpenapiFileType, error) {
+	switch packageType {
+	case openapifilepb.OpenapiFileType_OpenapiFileTypeJson:
+		return model.OpenapiFileTypeJson, nil
+	case openapifilepb.OpenapiFileType_OpenapiFileTypeYaml:
+		return model.OpenapiFileTypeYaml, nil
+	default:
+		return model.OpenapiFileTypeUnknown, fmt.Errorf("unknown openapi file type: %v", packageType)
 	}
 }
 

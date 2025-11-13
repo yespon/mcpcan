@@ -43,11 +43,6 @@ func NewCodeService() *CodeService {
 
 // UploadPackage uploads a code package
 func (s *CodeService) UploadPackage(c *gin.Context) {
-	// Block upload in demo mode
-	if config.IsDemoMode() {
-		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
-		return
-	}
 	// Record upload start time
 	startTime := time.Now()
 	logger.Info("Starting code package upload request",

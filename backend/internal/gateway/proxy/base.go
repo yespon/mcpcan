@@ -31,12 +31,28 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 			zap.String("path", r.URL.Path),
 			zap.String("remote_addr", r.RemoteAddr),
 		)
+		parts := strings.Split(r.URL.Path, "/")
+		var iid string
+		if len(parts) > 2 {
+			iid = parts[2]
+		}
+		writeMCPLog(iid, "", r.Header.Get("Authorization"), 0, "upstream.connection.interrupted", err.Error(), map[string]any{
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"url":         r.URL.String(),
+			"remote_addr": r.RemoteAddr,
+		}, nil)
 		// 对于连接中断，不需要向客户端发送错误响应
 		return
 	}
 
 	// 其他错误使用 Error 级别记录
 	logger.Error("Proxy error", zap.Error(err))
+	parts := strings.Split(r.URL.Path, "/")
+	var iid string
+	if len(parts) > 2 {
+		iid = parts[2]
+	}
 	// 计算HTTP状态码
 	status := http.StatusBadGateway
 	var msg string
@@ -46,6 +62,11 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		msg = err.Error()
 	}
+	writeMCPLog(iid, "", r.Header.Get("Authorization"), 3, "upstream.error", msg, map[string]any{
+		"method": r.Method,
+		"path":   r.URL.Path,
+		"status": status,
+	}, nil)
 
 	// 当协议为 SSE 且开关启用时，输出 SSE 错误事件
 	if v := r.Context().Value(IsSSEReqKey); v != nil {
@@ -112,11 +133,13 @@ func (w *proxyLogger) Write(p []byte) (n int, err error) {
 		logger.Debug("Client canceled connection",
 			zap.String("message", msg),
 		)
+		writeMCPLog("", "", "", 0, "client.canceled", msg, map[string]any{}, nil)
 	} else {
 		// 其他错误使用 Error 级别记录
 		logger.Error("Proxy error",
 			zap.String("message", msg),
 		)
+		writeMCPLog("", "", "", 3, "proxy.error.log", msg, map[string]any{}, nil)
 	}
 
 	return len(p), nil

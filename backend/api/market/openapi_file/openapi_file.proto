@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package market.openapi_file;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/openapi_file";
+
+// OpenapiFileType OpenAPI文档类型枚举
+enum OpenapiFileType {
+  // @inject_tag: json:"openapiFileTypeUnspecified" desc:"Unspecified"
+  OpenapiFileTypeUnspecified = 0;
+  // @inject_tag: json:"openapiFileTypeJson" desc:"JSON format"
+  OpenapiFileTypeJson = 1;
+  // @inject_tag: json:"openapiFileTypeYaml" desc:"YAML format"
+  OpenapiFileTypeYaml = 2;
+}
+
+// UploadOpenapiFileRequest OpenAPI文档上传请求
+message UploadOpenapiFileRequest {
+  // @inject_tag: form:"file" binding:"required" desc:"上传文件"
+  bytes file = 1;
+  // @inject_tag: form:"baseOpenapiFileID" binding:"required" desc:"基于哪个 openapi file"
+  string baseOpenapiFileID = 2;
+}
+
+// UploadOpenapiFileResponse OpenAPI文档上传响应
+message UploadOpenapiFileResponse {
+  // @inject_tag: json:"openapiFileId" desc:"OpenAPI文档ID"
+  string openapiFileId = 1;
+  // @inject_tag: json:"filePath" desc:"文件路径"
+  string filePath = 2;
+  // @inject_tag: json:"fileType" desc:"文件类型"
+  OpenapiFileType fileType = 3;
+}
+
+// GetOpenapiFileContentRequest 获取OpenAPI文档内容请求
+message GetOpenapiFileContentRequest {
+  // @inject_tag: form:"openapiFileId" binding:"required" desc:"OpenAPI文档ID"
+  string openapiFileId = 1;
+}
+
+// GetOpenapiFileContentResponse 获取OpenAPI文档内容响应
+message GetOpenapiFileContentResponse {
+  // @inject_tag: json:"content" desc:"文件内容"
+  string content = 1;
+  // @inject_tag: json:"fileType" desc:"文件类型"
+  OpenapiFileType fileType = 2;
+  // @inject_tag: json:"updatedAt" desc:"基于哪个 openapi 文档的id"
+  string baseOpenapiFileID = 3;
+}
+
+// EditOpenapiFileRequest 编辑OpenAPI文档请求
+message EditOpenapiFileRequest {
+  // @inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" desc:"OpenAPI文档ID"
+  string openapiFileId = 1;
+  // @inject_tag: form:"content" binding:"required" json:"content" desc:"文件内容"
+  string content = 2;
+}
+
+// EditOpenapiFileResponse 编辑OpenAPI文档响应
+message EditOpenapiFileResponse {
+  // @inject_tag: json:"success" desc:"是否成功"
+  bool success = 1;
+  // @inject_tag: json:"message" desc:"响应消息"
+  string message = 2;
+}
+
+// DownloadOpenapiFileRequest 下载OpenAPI文档请求
+message DownloadOpenapiFileRequest {
+  // @inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" uri:"openapiFileId" query:"openapiFileId" desc:"OpenAPI文档ID"
+  string openapiFileId = 1;
+}
+
+// DownloadOpenapiFileResponse 下载OpenAPI文档响应
+message DownloadOpenapiFileResponse {
+  // @inject_tag: json:"fileContent" desc:"文件内容"
+  bytes fileContent = 1;
+}
+
+// OpenapiFileListRequest OpenAPI文档列表请求
+message OpenapiFileListRequest {
+  // @inject_tag: json:"page" form:"page" desc:"页码"
+  int32 page = 1;
+  // @inject_tag: json:"pageSize" form:"pageSize" desc:"每页数量"
+  int32 pageSize = 2;
+  // @inject_tag: json:"name" form:"name" desc:"搜索关键词"
+  string name = 3;
+  // @inject_tag: json:"types" form:"types" desc:"文件类型"
+  repeated OpenapiFileType types = 4;
+}
+
+// OpenapiFileInfo OpenAPI文档信息
+message OpenapiFileInfo {
+  // @inject_tag: json:"id" desc:"文档ID"
+  string id = 1;
+  // @inject_tag: json:"name" desc:"文档名称"
+  string name = 2;
+  // @inject_tag: json:"path" desc:"文档路径"
+  string path = 3;
+  // @inject_tag: json:"size" desc:"文档大小"
+  int64 size = 4;
+  // @inject_tag: json:"type" desc:"文档类型"
+  OpenapiFileType type = 5;
+  // @inject_tag: json:"createdAt" desc:"创建时间"
+  string createdAt = 6;
+  // @inject_tag: json:"updatedAt" desc:"更新时间"
+  string updatedAt = 7;
+  // @inject_tag: json:"updatedAt" desc:"基于哪个 openapi 文档的id"
+  string baseOpenapiFileID = 8;
+}
+
+// OpenapiFileListResponse OpenAPI文档列表响应
+message OpenapiFileListResponse {
+  // @inject_tag: json:"list" desc:"OpenAPI文档列表"
+  repeated OpenapiFileInfo list = 1;
+  // @inject_tag: json:"total" desc:"总数量"
+  int64 total = 2;
+  // @inject_tag: json:"page" desc:"当前页码"
+  int32 page = 3;
+  // @inject_tag: json:"pageSize" desc:"每页数量"
+  int32 pageSize = 4;
+}
+
+// DeleteOpenapiFileRequest 删除OpenAPI文档请求
+message DeleteOpenapiFileRequest {
+  // @inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" uri:"openapiFileId" desc:"OpenAPI文档ID"
+  string openapiFileId = 1;
+}
+
+// DeleteOpenapiFileResponse 删除OpenAPI文档响应
+message DeleteOpenapiFileResponse {
+  // @inject_tag: json:"success" desc:"是否成功"
+  bool success = 1;
+  // @inject_tag: json:"message" desc:"响应消息"
+  string message = 2;
+}
+
+// OpenapiService OpenAPI文档管理服务
+service OpenapiService {
+  // 上传OpenAPI文档
+  rpc UploadOpenapiFile(UploadOpenapiFileRequest) returns (UploadOpenapiFileResponse) {
+    option (google.api.http) = {
+      post: "/openapi/upload",
+      body: "*",
+    };
+  }
+
+  // 获取OpenAPI文档内容
+  rpc GetOpenapiFileContent(GetOpenapiFileContentRequest) returns (GetOpenapiFileContentResponse) {
+    option (google.api.http) = {
+      get: "/openapi/content",
+    };
+  }
+
+  // 编辑OpenAPI文档
+  rpc EditOpenapiFile(EditOpenapiFileRequest) returns (EditOpenapiFileResponse) {
+    option (google.api.http) = {
+      post: "/openapi/edit",
+      body: "*",
+    };
+  }
+
+  // 下载OpenAPI文档
+  rpc DownloadOpenapiFile(DownloadOpenapiFileRequest) returns (DownloadOpenapiFileResponse) {
+    option (google.api.http) = {
+      get: "/openapi/download/{openapiFileId}",
+    };
+  }
+
+  // 获取OpenAPI文档列表
+  rpc GetOpenapiFileList(OpenapiFileListRequest) returns (OpenapiFileListResponse) {
+    option (google.api.http) = {
+      get: "/openapi/files",
+    };
+  }
+
+  // 删除OpenAPI文档
+  rpc DeleteOpenapiFile(DeleteOpenapiFileRequest) returns (DeleteOpenapiFileResponse) {
+    option (google.api.http) = {
+      delete: "/openapi/files/{openapiFileId}",
+    };
+  }
+}

@@ -5,7 +5,7 @@ const (
 	// Success
 	CodeSuccess = 0
 
-	// General errors (1000-1999)
+	// General errors (1000-1499)
 	CodeBadRequest            = 1000
 	CodeUnauthorized          = 1001
 	CodeForbidden             = 1002
@@ -18,6 +18,22 @@ const (
 	CodeServiceUnavailable    = 1009
 	CodeGatewayTimeout        = 1010
 	CodeInvalidPathParameters = 1011
+
+	// OpenAPI file management errors (1499-1999)
+	OpenapiFileNotFound           = 1500 // OpenAPI 文档未找到
+	OpenapiFileUploadFailed       = 1501 // OpenAPI 文档上传失败
+	OpenapiFileInvalidFormat      = 1502 // OpenAPI 文档格式无效
+	OpenapiFileSizeExceeded       = 1503 // OpenAPI 文档大小超限
+	OpenapiFileTypeNotSupported   = 1504 // OpenAPI 文档类型不支持
+	OpenapiFileValidationFailed   = 1505 // OpenAPI 文档验证失败
+	OpenapiFileUpdateFailed       = 1506 // OpenAPI 文档更新失败
+	OpenapiFileDeleteFailed       = 1507 // OpenAPI 文档删除失败
+	OpenapiFileInUse              = 1508 // OpenAPI 文档正在被使用
+	OpenapiFileDuplicate          = 1509 // OpenAPI 文档重复
+	OpenapiFileParseError         = 1510 // OpenAPI 文档解析错误
+	OpenapiFileVersionMismatch    = 1511 // OpenAPI 版本不匹配
+	OpenapiFileContentEmpty       = 1512 // OpenAPI 文档内容为空
+	OpenapiFileOperationForbidden = 1513 // OpenAPI 文档操作被禁止
 
 	// Authentication related errors (2000-2999)
 	CodeInvalidToken       = 2000
