@@ -17,6 +17,11 @@ Authorization: {{token}}
 }
 
 ### 删除节点
-DELETE {{baseUrl}}/{{routerPrefix}}/instance/412ed35a-ddc4-4a2d-a968-3de2de6eead4
+DELETE {{baseUrl}}/{{routerPrefix}}/instance/3116d110-50e7-4164-aaba-bc034beff24c
+Content-Type: application/json
+Authorization: {{token}}
+
+### 创建 openapi 格式的实例
+POST {{baseUrl}}/{{routerPrefix}}/instance/list
 Content-Type: application/json
 Authorization: {{token}}

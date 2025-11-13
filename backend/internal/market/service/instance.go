@@ -9,14 +9,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
-	"github.com/kymo-mcp/mcpcan/pkg/version"
-
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
+	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -1194,10 +1192,10 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		TemplateID:             0,
 		EnabledToken:           true,
 		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
-		ImgAddr:                "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:" + version.Version,
+		ImgAddr:                containerOptions.ImageName,
 		Port:                   8080,
 		InitScript:             "",
-		Command:                "",
+		Command:                containerOptions.CommandArgs[0],
 		EnvironmentVariables:   nil,
 		VolumeMounts:           nil,
 		ContainerName:          containerOptions.ContainerName,

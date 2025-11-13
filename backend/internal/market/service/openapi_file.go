@@ -175,8 +175,9 @@ func (s *OpenapiService) GetOpenapiFileContent(c *gin.Context) {
 	}
 
 	common.GinSuccess(c, &openapi_file.GetOpenapiFileContentResponse{
-		Content:  content,
-		FileType: convertOpenapiFileType(openapiPackage.OpenapiFileType),
+		Content:           content,
+		BaseOpenapiFileID: openapiPackage.BaseOpenapiFileID,
+		FileType:          convertOpenapiFileType(openapiPackage.OpenapiFileType),
 	})
 }
 

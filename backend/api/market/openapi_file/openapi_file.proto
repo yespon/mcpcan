@@ -46,6 +46,8 @@ message GetOpenapiFileContentResponse {
   string content = 1;
   // @inject_tag: json:"fileType" desc:"文件类型"
   OpenapiFileType fileType = 2;
+  // @inject_tag: json:"updatedAt" desc:"基于哪个 openapi 文档的id"
+  string baseOpenapiFileID = 3;
 }
 
 // EditOpenapiFileRequest 编辑OpenAPI文档请求

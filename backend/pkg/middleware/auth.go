@@ -22,6 +22,7 @@ var SkipPaths = []string{
 	"/authz/refresh",
 	"/authz/validate",
 	"/market/code/download",
+	"/market/openapi/download",
 }
 
 // AuthTokenMiddleware 用户token验证中间件
