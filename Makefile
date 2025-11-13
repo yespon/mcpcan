@@ -45,11 +45,26 @@ define build_docker_image
 	@echo "---------- End Docker build $(1) ----------"
 endef
 
+define build_base_docker_image
+	@echo "---------- Start Docker build $(1) ----------"
+	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(3) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
+	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(3) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
+	@echo "---------- End Docker build $(1) ----------"
+endef
+
 # Docker push targets
 define push_docker_image
 	@echo "---------- Start Docker push $(1) ----------"
 	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)"
 	@docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)
+	@echo "---------- End Docker push $(1) ----------"
+endef
+
+# Docker push targets
+define push_base_docker_image
+	@echo "---------- Start Docker push $(1) ----------"
+	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(2)"
+	@docker push $(IMAGE_REGISTRY)/$(1):$(2)
 	@echo "---------- End Docker push $(1) ----------"
 endef
 
@@ -180,7 +195,7 @@ docker-build-market:
 
 .PHONY: docker-build-openapi-to-mcp
 docker-build-openapi-to-mcp:
-	$(call build_docker_image,openapi-to-mcp,openapi-to-mcp)
+	$(call build_base_docker_image,openapi-to-mcp,openapi-to-mcp,1.0.0)
 
 .PHONY: docker-build-authz
 docker-build-authz:
@@ -211,7 +226,7 @@ docker-push-market:
 
 .PHONY: docker-push-openapi-to-mcp
 docker-push-openapi-to-mcp:
-	$(call push_docker_image,openapi-to-mcp)
+	$(call push_base_docker_image,openapi-to-mcp,1.0.0)
 
 .PHONY: docker-push-authz
 docker-push-authz:
