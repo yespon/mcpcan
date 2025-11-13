@@ -28,6 +28,8 @@ enum SourceType {
   TEMPLATE = 2;
   // Custom
   CUSTOM = 3;
+  // Openapi
+  OPENAPI = 4;
 }
 
 // AccessConfig access configuration
@@ -717,6 +719,42 @@ message TokenEditResponse {
   string message = 3;
 }
 
+
+// CreateRequest 创建实例请求结构体
+message CreateOpenapiRequest {
+  // @inject_tag: json:"name" form:"name" desc:"实例名称"
+  string name = 1;
+  // @inject_tag: json:"openapiFileID,omitempty" form:"openapiFileID" desc:"openapi 文档ID，必填"
+  string openapiFileID = 2;
+  // @inject_tag: json:"notes" form:"notes" desc:"描述"
+  string notes = 3;
+  // @inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"选择的 openapi 文档 ID"
+  string chooseOpenapiFileID = 4;
+  // @inject_tag: json:"tokens" form:"tokens" desc:"token 列表"
+  repeated McpToken tokens = 5;
+  // @inject_tag: json:"environmentId" form:"environmentId" desc:"环境ID"
+  int32 environmentId = 6;
+  // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
+  string iconPath = 7;
+}
+
+
+// UpdateOpenapiRequest 编辑实例请求结构体
+message UpdateOpenapiRequest {
+  // @inject_tag: json:"instanceId" form:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"name" form:"name" desc:"实例名称"
+  string name = 2;
+  // @inject_tag: json:"openapiFileID,omitempty" form:"openapiFileID" desc:"openapi 文档ID，必填"
+  string openapiFileID = 3;
+  // @inject_tag: json:"notes" form:"notes" desc:"描述"
+  string notes = 4;
+  // @inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"选择的 openapi 文档 ID"
+  string chooseOpenapiFileID = 5;
+  // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
+  string iconPath = 6;
+}
+
 // InstanceService 实例管理服务
 service InstanceService {
   // 创建实例
@@ -826,6 +864,22 @@ service InstanceService {
   rpc TokenEdit(TokenEditRequest) returns (TokenEditResponse) {
     option (google.api.http) = {
       put:  "/instance/token/edit",
+      body: "*",
+    };
+  }
+
+  // 创建 Openapi 实例
+  rpc OpenapiCreate(CreateOpenapiRequest) returns (CreateResp) {
+    option (google.api.http) = {
+      put:  "/instance/openapi/create",
+      body: "*",
+    };
+  }
+
+  // 编辑 Openapi 实例
+  rpc OpenapiUpdate(UpdateOpenapiRequest) returns (EditResp) {
+    option (google.api.http) = {
+      put:  "/instance/openapi/update",
       body: "*",
     };
   }

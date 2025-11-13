@@ -1019,3 +1019,48 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	// Create Kubernetes container runtime configuration
 	return &containerOptions, nil
 }
+
+// BuildOpenapiContainerOptions builds openapi container creation options
+func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, startupTimeout int32, runningTimeout int32) (*container.ContainerCreateOptions, error) {
+	containerName := cd.generateContainerName(instanceID)
+	serviceName := cd.generateServiceName(instanceID)
+
+	// Set environment variables
+	envVars := make(map[string]string)
+	envVars["MCP_INSTANCE_ID"] = instanceID
+	envVars["MCP_PORT"] = fmt.Sprintf("%d", 8080)
+	envVars["NODE_ENV"] = "production"
+
+	// Set labels
+	labels := make(map[string]string)
+	labels["app"] = containerName
+	labels["instance"] = instanceID
+	labels["managed-by"] = common.SourceServerName
+	if startupTimeout > 0 {
+		labels["mcp.startup.timeout"] = fmt.Sprintf("%d", startupTimeout)
+	}
+	if runningTimeout > 0 {
+		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
+	}
+
+	// 构建下载链接
+	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
+	downloadLink := cd.createDownloadLink(downloadLinkPath)
+
+	// 8. Build container creation options
+	containerOptions := container.ContainerCreateOptions{
+		ImageName:     "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:v1.0.0",
+		ContainerName: containerName,
+		ServiceName:   serviceName,
+		Port:          8080,
+		Command:       []string{"/app/openapi-mcp"},
+		CommandArgs:   []string{"--http=:8080", fmt.Sprintf(`--base-url=%s`, downloadLink)},
+		RestartPolicy: "Always",
+		Labels:        labels,
+		EnvVars:       envVars,
+		WorkingDir:    "/app",
+	}
+
+	// Create Kubernetes container runtime configuration
+	return &containerOptions, nil
+}
