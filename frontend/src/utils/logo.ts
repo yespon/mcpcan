@@ -8,6 +8,7 @@ import modelscope from '@/assets/logo/modelscope-color.png'
 import higress from '@/assets/logo/higress-color.svg'
 import mcpso from '@/assets/logo/mcpso-color.svg'
 import smithery from '@/assets/logo/smithery-color.svg'
+import openapi from '@/assets/logo/openapi.png'
 
 export {
   instanceTotal,
@@ -19,4 +20,5 @@ export {
   higress,
   mcpso,
   smithery,
+  openapi,
 }

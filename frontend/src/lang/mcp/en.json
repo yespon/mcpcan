@@ -102,6 +102,7 @@
         "selectTempalte": "Select a Tempalte",
         "customize": "Customize",
         "byTemplate": "By Template",
+        "byDocs": "By OpenAPI",
         "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
         "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification."
       },

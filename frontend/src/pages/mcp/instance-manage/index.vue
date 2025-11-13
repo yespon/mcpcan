@@ -24,6 +24,10 @@
               <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
               {{ t('mcp.instance.action.byTemplate') }}
             </el-dropdown-item>
+            <el-dropdown-item command="handleAddByDocs">
+              <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
+              {{ t('mcp.instance.action.byDocs') }}
+            </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -260,6 +264,8 @@
         </div>
       </template>
     </Select>
+    <!-- Create a intance by openAPI docs -->
+    <OpenAPIDialog ref="openAPIDialog"></OpenAPIDialog>
   </div>
 </template>
 
@@ -270,6 +276,7 @@ import TablePlus from '@/components/TablePlus/index.vue'
 import { useInstanceTableHooks } from './hooks/index.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import InstanceDetail from './modules/instance-detail.vue'
+import OpenAPIDialog from './modules/open-api-dialog.vue'
 import instanceLogo from '@/assets/logo/instance.png'
 import GlareHover from '@/components/Animation/GlareHover.vue'
 import McpButton from '@/components/mcp-button/index.vue'
@@ -299,6 +306,7 @@ const {
   viewConfig,
   dataCountList,
   probe,
+  openAPIDialog,
   selectVisible,
   templateList,
   timer,
@@ -315,6 +323,13 @@ const handleAddByTemplate = async () => {
     name: template.name,
     ...template,
   }))
+}
+
+/**
+ * Handle add a instance by openAPI server
+ */
+const handleAddByDocs = () => {
+  openAPIDialog.value.init()
 }
 
 // handle enabled token switch
@@ -522,6 +537,9 @@ const handleCommand = (callback: string, row: InstanceResult) => {
       break
     case 'handleAddByTemplate':
       handleAddByTemplate()
+      break
+    case 'handleAddByDocs':
+      handleAddByDocs()
       break
     default:
       ElMessage.warning(`未找到 "${callback}" 对应的操作`)

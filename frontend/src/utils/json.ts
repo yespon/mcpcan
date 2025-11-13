@@ -63,3 +63,37 @@ export const JsonFormatter = {
     }
   },
 }
+
+// 简化版核心逻辑（模拟 APIfox 解析过程）
+export function buildApiTree(openapiJson: { paths: any }) {
+  const tagMap = new Map() // 存储 { tagName: { label: tagName, children: 接口列表 } }
+
+  // 遍历所有接口路径
+  Object.entries(openapiJson.paths || {}).forEach(([path, methods]) => {
+    // 遍历每个路径下的请求方法（get/post 等）
+    Object.entries(methods || {}).forEach(([method, opDetail]) => {
+      const tags = opDetail.tags || ['未分组'] // 无 tag 时归为“未分组”
+      tags.forEach((tag: any) => {
+        // 初始化 tag 节点
+        if (!tagMap.has(tag)) {
+          tagMap.set(tag, {
+            label: tag,
+            children: [],
+            id: '',
+          })
+        }
+        // 将接口加入 tag 分组
+        tagMap.get(tag).children.push({
+          label: `${method.toUpperCase()} · ${path}`,
+          summary: opDetail.summary || '无描述',
+          path,
+          method,
+          id: opDetail.operationId,
+        })
+      })
+    })
+  })
+
+  // 转换为数组，便于渲染树形组件
+  return Array.from(tagMap.values())
+}

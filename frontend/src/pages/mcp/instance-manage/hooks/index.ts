@@ -11,6 +11,7 @@ export const useInstanceTableHooks = () => {
   const tablePlus = ref()
   const instanceDetail = ref()
   const probe = ref()
+  const openAPIDialog = ref()
   const { query } = useRoute()
   const load = ref({
     status: false,
@@ -243,6 +244,7 @@ export const useInstanceTableHooks = () => {
     mcpProtocolOptions,
     dataCountList,
     probe,
+    openAPIDialog,
     selectVisible,
     templateList,
     timer,
