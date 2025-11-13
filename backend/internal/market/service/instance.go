@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
+	"github.com/kymo-mcp/mcpcan/pkg/version"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
@@ -1193,7 +1194,7 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		TemplateID:             0,
 		EnabledToken:           true,
 		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
-		ImgAddr:                "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:v1.0.0",
+		ImgAddr:                "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:" + version.Version,
 		Port:                   8080,
 		InitScript:             "",
 		Command:                "",

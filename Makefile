@@ -23,11 +23,10 @@ GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
 # Build flags module github.com/kymo-mcp/mcpcan
-VERSION_PKG := github.com/kymo-mcp/mcpcan/pkg/version
-LDFLAGS := -X '${VERSION_PKG}.Version=${VERSION}' \
-		-X '${VERSION_PKG}.BuildTime=${BUILD_TIME}' \
-		-X '${VERSION_PKG}.Commit=${COMMIT}' \
-		-X '${VERSION_PKG}.GoVersion=${GO_VERSION}'
+LDFLAGS := -X '${BACKEND_PATH}/pkg/version.Version=${VERSION}' \
+		-X '${BACKEND_PATH}/pkg/version.BuildTime=${BUILD_TIME}' \
+		-X '${BACKEND_PATH}/pkg/version.Commit=${COMMIT}' \
+		-X '${BACKEND_PATH}/pkg/version.GoVersion=${GO_VERSION}'
 
 # Backend build targets
 define go_build_service
@@ -45,26 +44,11 @@ define build_docker_image
 	@echo "---------- End Docker build $(1) ----------"
 endef
 
-define build_base_docker_image
-	@echo "---------- Start Docker build $(1) ----------"
-	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(3) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
-	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(3) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
-	@echo "---------- End Docker build $(1) ----------"
-endef
-
 # Docker push targets
 define push_docker_image
 	@echo "---------- Start Docker push $(1) ----------"
 	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)"
 	@docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)
-	@echo "---------- End Docker push $(1) ----------"
-endef
-
-# Docker push targets
-define push_base_docker_image
-	@echo "---------- Start Docker push $(1) ----------"
-	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(2)"
-	@docker push $(IMAGE_REGISTRY)/$(1):$(2)
 	@echo "---------- End Docker push $(1) ----------"
 endef
 
@@ -195,7 +179,7 @@ docker-build-market:
 
 .PHONY: docker-build-openapi-to-mcp
 docker-build-openapi-to-mcp:
-	$(call build_base_docker_image,openapi-to-mcp,openapi-to-mcp,1.0.0)
+	$(call build_docker_image,openapi-to-mcp,openapi-to-mcp)
 
 .PHONY: docker-build-authz
 docker-build-authz:
@@ -226,7 +210,7 @@ docker-push-market:
 
 .PHONY: docker-push-openapi-to-mcp
 docker-push-openapi-to-mcp:
-	$(call push_base_docker_image,openapi-to-mcp,1.0.0)
+	$(call push_docker_image,openapi-to-mcp)
 
 .PHONY: docker-push-authz
 docker-push-authz:

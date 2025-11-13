@@ -2,7 +2,7 @@
 
 @routerPrefix = market
 @contentType = application/json
-@openapiFileId = 4b1cb749-353c-42bc-9706-5fd974d5576d
+@openapiFileId = cf8307eb-2793-40be-b37c-9aa5db2d9b64
 
 ### 1. 上传 OpenAPI 文档 - JSON 格式
 POST {{baseUrl}}/{{routerPrefix}}/openapi/upload
@@ -10,10 +10,10 @@ Content-Type: multipart/form-data; boundary=WebAppBoundary
 Authorization: {{token}}
 
 --WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="openapi_json_file.json"
+Content-Disposition: form-data; name="file"; filename="openapi_yaml_file.yaml"
 Content-Type: application/json
 
-< ../data/openapi_json_file.json
+< ../data/openapi_yaml_file.yaml
 
 ### 2. 上传子 OpenAPI 文档 - YAML 格式
 POST {{baseUrl}}/{{routerPrefix}}/openapi/upload

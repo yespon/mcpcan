@@ -1,0 +1,22 @@
+@routerPrefix = market
+@contentType = application/json
+@openapiFileId = 4b1cb749-353c-42bc-9706-5fd974d5576d
+
+### 创建 openapi 格式的实例
+POST {{baseUrl}}/{{routerPrefix}}/instance/openapi/create
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "name": "第一个openapi的实例",
+  "notes": "描述",
+  "openapiFileID": "cf8307eb-2793-40be-b37c-9aa5db2d9b64",
+  "chooseOpenapiFileID": "9a3283fa-e316-4ba5-b812-039e7b6abb26",
+  "environmentId": 1,
+  "iconPath": "/static/images/1760667315741377912.webp"
+}
+
+### 删除节点
+DELETE {{baseUrl}}/{{routerPrefix}}/instance/412ed35a-ddc4-4a2d-a968-3de2de6eead4
+Content-Type: application/json
+Authorization: {{token}}

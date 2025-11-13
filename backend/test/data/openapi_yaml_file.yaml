@@ -25,3 +25,6 @@ components:
           type: integer
         name:
           type: string
+servers:
+  - description: Fastly API server
+    url: https://api.fastly.com

@@ -15,6 +15,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
+	"github.com/kymo-mcp/mcpcan/pkg/version"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 )
@@ -1049,7 +1050,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
-		ImageName:     "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:v1.0.0",
+		ImageName:     "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:" + version.Version,
 		ContainerName: containerName,
 		ServiceName:   serviceName,
 		Port:          8080,
