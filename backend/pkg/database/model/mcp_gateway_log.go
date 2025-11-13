@@ -31,7 +31,7 @@ type GatewayLog struct {
 	Token      string          `gorm:"size:1000;not null;default:'';comment:token" json:"token"`
 	Usages     string          `gorm:"size:1000;not null;default:'';comment:usage scenarios" json:"usages"`
 	Extra      json.RawMessage `gorm:"type:json;not null;comment:extra information" json:"extra"`
-	Log        string          `gorm:"type:text;not null;comment:log details" json:"log"`
+	Log        json.RawMessage `gorm:"type:text;not null;comment:log details" json:"log"`
 	Level      log.Level       `gorm:"type:int;not null;default:0;comment:log level" json:"level"`
 	CreatedAt  time.Time       `gorm:"type:timestamp(3);not null;comment:creation time" json:"createdAt"`
 	UpdatedAt  time.Time       `gorm:"type:timestamp(3);not null;comment:update time" json:"updatedAt"`
