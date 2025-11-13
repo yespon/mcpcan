@@ -160,7 +160,7 @@ func InitGatewayLogQueue() {
 }
 
 // RecordGatewayLog builds a log record and enqueues it to be persisted.
-func RecordGatewayLog(instanceID string, tokenType model.TokenType, token string, level log.Level, logText string, extra json.RawMessage) error {
+func RecordGatewayLog(instanceID string, tokenType model.TokenType, token string, level log.Level, logText json.RawMessage, extra json.RawMessage) error {
 	if GatewayLogQ == nil {
 		InitGatewayLogQueue()
 	}
