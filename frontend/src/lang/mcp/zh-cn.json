@@ -148,7 +148,9 @@
         "addVolume": "添加卷挂载",
         "initScript": "初始化脚本",
         "command": "启动命令",
-        "addToken": " 添加令牌"
+        "addToken": " 添加令牌",
+        "initScriptTips": "初始化脚本需要保证执行完后最终能够退出，不能设置阻塞，否则无法启动",
+        "servicePathTips": "MCP 服务访问路径"
       },
       "rules": {
         "name": "请填写实例名称"

@@ -176,7 +176,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item :label="t('mcp.instance.formData.initScript')" prop="initScript">
+            <el-form-item prop="initScript">
+              <template #label>
+                <span class="mr-2">{{ t('mcp.instance.formData.initScript') }}</span>
+                <el-tooltip effect="light" placement="top" class="ml-6" :raw-content="true">
+                  <el-icon><i class="icon iconfont MCP-tishi1"></i></el-icon>
+                  <template #content>
+                    <div class="w-36" v-html="t('mcp.instance.formData.initScriptTips')"></div>
+                  </template>
+                </el-tooltip>
+              </template>
               <el-input
                 v-model="pageInfo.formData.initScript"
                 :rows="8"
@@ -268,11 +277,16 @@
                 :disabled="showCommand"
               />
             </el-form-item>
-            <el-form-item
-              v-if="showServicePath"
-              :label="t('mcp.template.formData.servicePath')"
-              prop="servicePath"
-            >
+            <el-form-item v-if="showServicePath" prop="servicePath">
+              <template #label>
+                <span class="mr-2">{{ t('mcp.template.formData.servicePath') }}</span>
+                <el-tooltip effect="light" placement="top" class="ml-6" :raw-content="true">
+                  <el-icon><i class="icon iconfont MCP-tishi1"></i></el-icon>
+                  <template #content>
+                    <div class="w-36" v-html="t('mcp.instance.formData.servicePathTips')"></div>
+                  </template>
+                </el-tooltip>
+              </template>
               <el-input
                 v-model="pageInfo.formData.servicePath"
                 :placeholder="t('mcp.template.formData.servicePath')"

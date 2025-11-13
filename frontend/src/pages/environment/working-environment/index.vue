@@ -5,7 +5,7 @@
       <div class="header-container">
         {{ t('env.run.pageDesc.list') }} <span class="desc">{{ t('env.run.pageDesc.desc') }}</span>
       </div>
-      <mcp-button :icon="Plus" @click="handleNewEnvDialog({})">{{
+      <mcp-button v-if="false" :icon="Plus" @click="handleNewEnvDialog({})">{{
         t('env.run.action.add')
       }}</mcp-button>
     </div>
@@ -57,7 +57,7 @@
               <el-icon class="link-hover cursor-pointer"><More /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="handleNewEnvDialog">
+                  <el-dropdown-item command="handleNewEnvDialog" v-if="false">
                     {{ t('env.run.action.edit') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleConnection">
@@ -69,7 +69,7 @@
                   <el-dropdown-item command="handleJumpToNode">
                     {{ t('env.run.action.node') }}
                   </el-dropdown-item>
-                  <el-dropdown-item command="handleDelete">
+                  <el-dropdown-item command="handleDelete" v-if="false">
                     <el-button type="danger" link>
                       {{ t('env.run.action.delete') }}
                     </el-button>

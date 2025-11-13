@@ -148,7 +148,9 @@
         "addVolume": "Add",
         "initScript": "InitScript",
         "command": "Command",
-        "addToken": " Add"
+        "addToken": " Add",
+        "initScriptTips": "The initialization script needs to ensure that it can eventually exit after execution and cannot be blocked, otherwise it cannot be started",
+        "servicePathTips": "MCP Service access path"
       },
       "rules": {
         "name": "Please enter the instance name"
