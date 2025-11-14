@@ -245,13 +245,13 @@ func (r *GatewayLogRepository) InitTable() error {
 		}
 	}
 
-	// Index on token_type for filtering by authentication type
-	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_token_type'", mod.TableName())
+	// Index on token_header for filtering by authentication header source
+	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_token_header'", mod.TableName())
 	r.getDB().Raw(sql).Count(&count)
 	if count == 0 {
-		sql2 := fmt.Sprintf("CREATE INDEX idx_token_type ON %v(token_type)", mod.TableName())
+		sql2 := fmt.Sprintf("CREATE INDEX idx_token_header ON %v(token_header)", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
-			return fmt.Errorf("failed to create token_type index: %v", err)
+			return fmt.Errorf("failed to create token_header index: %v", err)
 		}
 	}
 
@@ -273,6 +273,16 @@ func (r *GatewayLogRepository) InitTable() error {
 		sql2 := fmt.Sprintf("CREATE INDEX idx_created_at ON %v(created_at)", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
 			return fmt.Errorf("failed to create created_at index: %v", err)
+		}
+	}
+
+	// Index on event for filtering by event type
+	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_event'", mod.TableName())
+	r.getDB().Raw(sql).Count(&count)
+	if count == 0 {
+		sql2 := fmt.Sprintf("CREATE INDEX idx_event ON %v(event)", mod.TableName())
+		if err := r.getDB().Exec(sql2).Error; err != nil {
+			return fmt.Errorf("failed to create event index: %v", err)
 		}
 	}
 
