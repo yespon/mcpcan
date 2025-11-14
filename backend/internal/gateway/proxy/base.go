@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 
+	"github.com/fatedier/golib/log"
 	"github.com/fatedier/golib/pool"
 	"go.uber.org/zap"
 )
@@ -36,12 +38,13 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 		if len(parts) > 2 {
 			iid = parts[2]
 		}
-		writeMCPLog(iid, "", r.Header.Get("Authorization"), 0, "upstream.connection.interrupted", err.Error(), map[string]any{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"url":         r.URL.String(),
-			"remote_addr": r.RemoteAddr,
-		})
+		reqAuth, _ := r.Context().Value(RequestAuthKey).(*RequestAuth)
+		if reqAuth == nil {
+			logger.Error("RequestAuth not found in context")
+			return
+		}
+		writeMCPLog(iid, reqAuth.TokenHeaderKey, reqAuth.Token, log.ErrorLevel, model.EventUpstreamConnInterrupted, reqAuth.Usages,
+			buildLogFromReq(r, err.Error()))
 		// 对于连接中断，不需要向客户端发送错误响应
 		return
 	}
@@ -62,11 +65,13 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		msg = err.Error()
 	}
-	writeMCPLog(iid, "", r.Header.Get("Authorization"), 3, "upstream.error", msg, map[string]any{
-		"method": r.Method,
-		"path":   r.URL.Path,
-		"status": status,
-	})
+	reqAuth, _ := r.Context().Value(RequestAuthKey).(*RequestAuth)
+	if reqAuth == nil {
+		logger.Error("RequestAuth not found in context")
+		return
+	}
+	writeMCPLog(iid, reqAuth.TokenHeaderKey, reqAuth.Token, log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
+		buildLogFromReq(r, msg))
 
 	// 当协议为 SSE 且开关启用时，输出 SSE 错误事件
 	if v := r.Context().Value(IsSSEReqKey); v != nil {
@@ -130,18 +135,11 @@ func (w *proxyLogger) Write(p []byte) (n int, err error) {
 	msg := string(p)
 	if strings.Contains(msg, "context canceled") {
 		// 对于 context canceled 错误，使用 Debug 级别记录
-		logger.Debug("Client canceled connection",
-			zap.String("message", msg),
-		)
-		writeMCPLog("", "", "", 0, "client.canceled", msg, map[string]any{})
+		log.Debug(msg)
 	} else {
 		// 其他错误使用 Error 级别记录
-		logger.Error("Proxy error",
-			zap.String("message", msg),
-		)
-		writeMCPLog("", "", "", 3, "proxy.error.log", msg, map[string]any{})
+		log.Error(msg)
 	}
-
 	return len(p), nil
 }
 

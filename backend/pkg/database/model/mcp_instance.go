@@ -121,6 +121,23 @@ type McpInstance struct {
 	UpdatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
 
+type TokenType string
+
+const (
+	// API token type
+	TokenTypeBearer TokenType = "bearer"
+	// token type
+	TokenTypeBasic TokenType = "basic"
+	// token type
+	TokenTypeKey TokenType = "api-key"
+	// x-api-key
+	TokenTypeXAPIKey TokenType = "x-api-key"
+)
+
+func (tokenType TokenType) String() string {
+	return string(tokenType)
+}
+
 type McpToken struct {
 	TokenType        TokenType         `json:"tokenType"`
 	Token            string            `json:"token"`
