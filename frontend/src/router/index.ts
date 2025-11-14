@@ -88,7 +88,7 @@ const router = createRouter({
             title: 'codeList',
             isMenu: true,
           },
-          component: () => import('../pages/script-code/code-lis/index.vue'),
+          component: () => import('../pages/script-code/code-list/index.vue'),
         },
         {
           path: '/update-code-package',
@@ -105,6 +105,23 @@ const router = createRouter({
             title: 'viewCodePackage',
           },
           component: () => import('../pages/script-code/view/index.vue'),
+        },
+        {
+          path: '/api-docs-list',
+          name: 'apiDocsList',
+          meta: {
+            title: 'apiDocsList',
+            isMenu: true,
+          },
+          component: () => import('../pages/api-docs/docs-list/index.vue'),
+        },
+        {
+          path: '/update-api-docs',
+          name: 'updateApiDocs',
+          meta: {
+            title: 'updateApiDocs',
+          },
+          component: () => import('../pages/api-docs/update/index.vue'),
         },
         {
           path: '/debug-tools',

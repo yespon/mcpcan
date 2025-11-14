@@ -1,0 +1,33 @@
+{
+  "api": {
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "type": "Type",
+      "createdAt": "CreatTime",
+      "updatedAt": "UploadTime",
+      "unspecified": "PackageTypeUnspecified",
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "pageDesc": {
+      "title": "API Docs Manage",
+      "desc": "Manage your OpenAI API Docs and provide upload functionality",
+      "total": "Total",
+      "openAI": "OpenAPI",
+      "text1": "File size limit: XXX.JSON、XXX.YAML",
+      "text2": "Suport: OpenAPI(JSON、YAML)",
+      "text3": "After uploading, you can view and edit the code file online",
+      "text4": "Support downloading uploaded API Docs",
+      "text5": "Code package only support English name",
+      "detail": "Docs Detail",
+      "empty": "No Data"
+    },
+    "action": {
+      "upload": "Upload",
+      "deleteBox": "Confirm delete the docs？",
+      "loadingText": "downloading...",
+      "download": "Download"
+    }
+  }
+}

@@ -17,10 +17,27 @@ import zhEnvManage from './env/zh-cn.json'
 // code page
 import enCodePackage from './code-package/en.json'
 import zhCodePackage from './code-package/zh-cn.json'
+// api docs
+import enApiDocs from './api-docs/en.json'
+import zhApiDocs from './api-docs/zh-cn.json'
 
 const messages = {
-  'zh-cn': { ...zhCnGlobal, ...zhCnHome, ...zhMcpManage, ...zhEnvManage, ...zhCodePackage },
-  en: { ...enGlobal, ...enHome, ...enMcpManage, ...enEnvManage, ...enCodePackage },
+  'zh-cn': {
+    ...zhCnGlobal,
+    ...zhCnHome,
+    ...zhMcpManage,
+    ...zhEnvManage,
+    ...zhCodePackage,
+    ...zhApiDocs,
+  },
+  en: {
+    ...enGlobal,
+    ...enHome,
+    ...enMcpManage,
+    ...enEnvManage,
+    ...enCodePackage,
+    ...enApiDocs,
+  },
 }
 
 const i18n = createI18n({

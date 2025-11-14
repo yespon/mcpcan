@@ -60,7 +60,8 @@
     "codePackage": "代码包管理",
     "codeList": "代码包列表",
     "updateCodePackage": "上传代码包",
-    "viewCodePackage": "代码包详情"
+    "viewCodePackage": "代码包详情",
+    "apiDocsList": "API 文档"
   },
   "common": {
     "search": "搜索",

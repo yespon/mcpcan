@@ -3,7 +3,7 @@ import baseConfig from '@/config/base_config.ts'
 import { type Code } from '@/types/index'
 
 export const CodeAPI = {
-  // 代码包列表
+  // code package list
   list(params: TableData | null) {
     return request<any, List<Code>>({
       url: `${baseConfig.baseUrlVersion}/market/code/packages`,
@@ -11,7 +11,7 @@ export const CodeAPI = {
       params,
     })
   },
-  // 下载代码包
+  // download code package
   download(code: any) {
     return request<any, any>({
       url: `${baseConfig.baseUrlVersion}/market/code/download/${code.id}`,
@@ -19,14 +19,14 @@ export const CodeAPI = {
       responseType: 'blob',
     })
   },
-  // 删除代码包
+  // delete package
   delete(id: string) {
     return request<string>({
       url: `${baseConfig.baseUrlVersion}/market/code/packages/${id}`,
       method: 'DELETE',
     })
   },
-  // 获取代码包文件树结构
+  // get files tree list
   fileTree(params: any) {
     return request<any, FileTree>({
       url: `${baseConfig.baseUrlVersion}/market/code/tree`,
@@ -34,7 +34,7 @@ export const CodeAPI = {
       params,
     })
   },
-  // 获取文件内容
+  // get file content
   fileContent(params: any) {
     return request<any, any>({
       url: `${baseConfig.baseUrlVersion}/market/code/get`,
@@ -44,16 +44,13 @@ export const CodeAPI = {
   },
 }
 
-// 列表请求
+// list params
 export interface TableData {
-  /** 页码 */
   page: number
-  /** 每页显示数量 */
   pageSize: number
-  /** 允许传入其他任意类型的参数 */
   [key: string]: any
 }
-// 列表返回
+// reponse list
 export interface List<T = any> {
   list: T[]
   page: number
@@ -61,7 +58,6 @@ export interface List<T = any> {
   total: number
 }
 
-// 列表返回
 export interface FileTree {
   fileStructure: FileTree[]
   isDir: boolean

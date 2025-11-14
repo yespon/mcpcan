@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dialogInfo.visible" width="1000px" top="10vh">
+  <el-dialog v-model="dialogInfo.visible" width="80%" top="5vh">
     <template #header>
       <div class="center">{{ dialogInfo.title }}</div>
     </template>
@@ -78,24 +78,30 @@
                   </template>
                 </el-dropdown>
               </div>
+              <div class="flex justify-between">
+                <div class="ellipsis-one">
+                  {{ t('mcp.instance.token.expireAt') }}：<span
+                    :class="
+                      !token.expireAt
+                        ? 'color-green'
+                        : token.expireAt < Date.now()
+                          ? 'color-red'
+                          : ''
+                    "
+                  >
+                    {{
+                      !token.expireAt
+                        ? t('mcp.instance.token.placeholderAlways')
+                        : timestampToDate(token.expireAt) +
+                          (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
+                    }}
+                  </span>
+                </div>
+                <div class="ellipsis-one">
+                  {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+                </div>
+              </div>
 
-              <div class="ellipsis-one">
-                {{ t('mcp.instance.token.expireAt') }}：<span
-                  :class="
-                    !token.expireAt ? 'color-green' : token.expireAt < Date.now() ? 'color-red' : ''
-                  "
-                >
-                  {{
-                    !token.expireAt
-                      ? t('mcp.instance.token.placeholderAlways')
-                      : timestampToDate(token.expireAt) +
-                        (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
-                  }}
-                </span>
-              </div>
-              <div class="ellipsis-one">
-                {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
-              </div>
               <div class="ellipsis-one">
                 {{ t('mcp.instance.token.tag') }}：<el-tag
                   v-for="(tag, num) in token.usages"
@@ -114,7 +120,7 @@
         :span="12"
         :class="['config-col right', { expanded: !dialogInfo.instanceInfo.enabledToken }]"
       >
-        <el-scrollbar ref="scrollbarRef" max-height="590px" always class="config-info">
+        <el-scrollbar ref="scrollbarRef" max-height="420px" always class="config-info">
           <div class="py-5 px-5">{{ config }}</div>
           <el-tooltip
             class="box-item"
@@ -147,6 +153,15 @@
               <CopyDocument />
             </el-icon>
           </el-tooltip>
+        </el-scrollbar>
+      </el-col>
+      <el-col :span="24">
+        <el-scrollbar ref="logEl" max-height="420px" always class="logs-info mt-3 p-3">
+          <div>令牌日志</div>
+          <div class="py-5 px-5">{{ '日志信息' }}</div>
+          <el-icon class="base-btn-link copy-icon" size="18" @click="toggle">
+            <FullScreen />
+          </el-icon>
         </el-scrollbar>
       </el-col>
     </el-row>
@@ -260,7 +275,7 @@
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Operation, CopyDocument, Link, Key } from '@element-plus/icons-vue'
+import { Plus, Operation, CopyDocument, Link, Key, FullScreen } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -268,6 +283,8 @@ import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 
+const logEl = ref(null)
+const { toggle } = useFullscreen()
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
@@ -549,7 +566,7 @@ defineExpose({
   width: 100px;
 }
 .token-list {
-  min-height: 590px;
+  min-height: 35vh;
   border-radius: 8px;
   background: var(--ep-bg-color-deep);
   padding: 24px;
@@ -577,6 +594,18 @@ defineExpose({
   }
 }
 .config-info {
+  font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre;
+  word-break: normal;
+  border-radius: 8px;
+  background: var(--ep-bg-color-deep);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+.logs-info {
+  min-height: 36vh;
   font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
   font-size: 12px;
   line-height: 1.8;

@@ -9,7 +9,7 @@
     "columns": {
       "size": "Size",
       "type": "Type",
-      "createdAt": "UploadTime",
+      "createdAt": "CreatTime",
       "updatedAt": "UpdatedTime",
       "unspecified": "PackageTypeUnspecified",
       "tar": "TAR",

@@ -59,7 +59,8 @@
     "codePackage": "Code-Package",
     "codeList": "Code-List",
     "updateCodePackage": "UpdateCodePackage",
-    "viewCodePackage": "PackageDetails"
+    "viewCodePackage": "PackageDetails",
+    "apiDocsList": "API Docs"
   },
   "common": {
     "search": "Search",

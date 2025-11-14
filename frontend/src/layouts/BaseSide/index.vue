@@ -98,6 +98,7 @@ const menuList = shallowRef([
   { title: t('sideMenu.instanceManage'), icon: 'MCP-MCPshili', index: '/instance-manage' },
   { title: t('sideMenu.runEnviroment'), icon: 'MCP-huanjingguanli', index: '/working-environment' },
   { title: t('sideMenu.codeList'), icon: 'MCP-daimaguanli', index: '/code-list' },
+  { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian', index: '/api-docs-list' },
 ])
 
 const handleToHome = () => {

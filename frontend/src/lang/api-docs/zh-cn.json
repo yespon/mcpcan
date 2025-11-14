@@ -1,0 +1,34 @@
+{
+  "api": {
+    "columns": {
+      "name": "文档名称",
+      "size": "大小",
+      "type": "文档类型",
+      "createdAt": "上传时间",
+      "updatedAt": "更新时间",
+      "unspecified": "未知类型",
+      "yaml": "YAML",
+      "json": "JSON"
+    },
+    "pageDesc": {
+      "title": "API文档管理",
+      "desc": "管理你的OpenAI API文档以及提供上传功能",
+      "total": "文档总数",
+      "openAI": "OpenAPI",
+      "text1": "文件限制：文本文件上传",
+      "text2": "格式支持: OpenAPI(JSON、YAML)",
+      "text3": "上传后可以在线查看和编辑文档",
+      "text4": "支持下载已上传的API文档",
+      "text5": "文档仅支持英文命名",
+      "detail": "文档详情",
+      "empty": "暂无数据",
+      "apiSelectTitle": "选择OpenAPI文档"
+    },
+    "action": {
+      "upload": "上传文档",
+      "deleteBox": "确定要删除该API文档？",
+      "loadingText": "文档下载中...",
+      "download": "下载文档"
+    }
+  }
+}

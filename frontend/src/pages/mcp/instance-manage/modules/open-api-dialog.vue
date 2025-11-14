@@ -52,26 +52,38 @@
         <div class="mt-8 color-gray text-3">注：通过OpenAPI文档导入的MCP服务将以STDIO协议访问</div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
-        <div class="flex-sub center link-hover" v-if="!formData.openapiRaw">
-          <el-upload
-            class="upload-demo"
-            drag
-            :action="action"
-            :on-success="handleSuccess"
-            :before-upload="handleBeforeUpload"
-            :headers="headers"
-            accept=".yaml, .JSON, application/yaml, application/JSON"
-            :auto-upload="true"
-            :show-file-list="false"
-          >
-            <div>
-              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-              <div class="el-upload__text">
-                {{ t('code.desc.suport') }}
+        <div class="flex-sub link-hover" v-if="!formData.openapiRaw">
+          <div class="flex flex-col" style="height: 75vh">
+            <el-upload
+              class="upload-demo flex-sub"
+              drag
+              :action="action"
+              :on-success="handleSuccess"
+              :before-upload="handleBeforeUpload"
+              :headers="headers"
+              accept=".yaml, .JSON, application/yaml, application/JSON"
+              :auto-upload="true"
+              :show-file-list="false"
+            >
+              <div>
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">
+                  {{ '本地上传' }}
+                </div>
+              </div>
+            </el-upload>
+            <div
+              class="flex-sub select-api border-rd-1 mt-2 center cursor-pointer"
+              @click="handleSelectDocs"
+            >
+              <div>
+                <el-icon class="el-icon--upload" size="67"><Files /></el-icon>
+                <div>从文档库选择</div>
               </div>
             </div>
-          </el-upload>
+          </div>
         </div>
+
         <div v-else class="p-3">
           <el-tree
             style="height: 75vh"
@@ -94,35 +106,43 @@
       </div>
     </template>
   </el-dialog>
+  <Select
+    v-model="selectVisible"
+    v-model:selected="formData.openapiFileId"
+    red="opneAPISelect"
+    :title="t('api.pageDesc.apiSelectTitle')"
+    :options="docsList"
+  ></Select>
 </template>
 
 <script lang="ts" setup>
 import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
 import { ElMessage } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { UploadFilled, Files } from '@element-plus/icons-vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import { openapi } from '@/utils/logo.ts'
 import McpButton from '@/components/mcp-button/index.vue'
+import Select from '@/components/mcp-select/index.vue'
 import Upload from '@/components/upload/index.vue'
 import yaml from 'js-yaml'
 import { buildApiTree } from '@/utils/json.ts'
+import { DocsAPI } from '@/api/api-docs'
 
 const { t } = useI18n()
 const dialogInfo = ref<any>({
   visible: false,
   loading: false,
   title: '导入数据',
-  instanceInfo: {
-    instanceId: '',
-  },
-  probeInfo: {},
 })
+const selectVisible = ref(false)
+const docsList = ref<any>([])
 const formData = ref({
   name: '',
   notes: '',
   iconPath: '',
   openapiRaw: '',
+  openapiFileId: '',
 })
 const rules = ref({
   name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
@@ -135,6 +155,26 @@ const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
 })
 
+/**
+ * handle Setect a openApi docs
+ */
+const handleSelectDocs = () => {
+  selectVisible.value = true
+}
+
+/**
+ * Get api list
+ */
+const handleGetAPIlist = async () => {
+  const data = await DocsAPI.list({ page: 1, pageSize: 999 })
+  docsList.value = data.list
+}
+
+/**
+ * api list render
+ * @param h
+ * @param param1
+ */
 const renderContent = (h, { node, data }) => {
   return h(
     'div',
@@ -225,6 +265,7 @@ const handleConfirm = () => {
  */
 const init = () => {
   dialogInfo.value.visible = true
+  handleGetAPIlist()
 }
 
 defineExpose({
@@ -238,7 +279,6 @@ defineExpose({
 }
 .upload-demo {
   width: 100%;
-  height: 75vh;
   color: var(--ep-purple-color);
   :deep(.el-upload.is-drag) {
     height: 100%;
@@ -264,6 +304,14 @@ defineExpose({
   }
   .el-upload__text {
     color: var(--ep-purple-color);
+  }
+}
+.select-api {
+  border: 1px dashed var(--ep-purple-color);
+  color: var(--ep-purple-color);
+  &:hover {
+    border-color: var(--ep-purple-color-hover);
+    color: var(--ep-purple-color-hover);
   }
 }
 :deep(.el-tree-node__content) {
