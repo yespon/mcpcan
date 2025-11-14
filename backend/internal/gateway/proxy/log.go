@@ -1,13 +1,13 @@
 package proxy
 
 import (
-  "container/list"
-  "context"
-  "encoding/json"
-  "errors"
-  "strings"
-  "sync"
-  "time"
+	"container/list"
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/fatedier/golib/log"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -76,12 +76,12 @@ func NewGatewayLogQueue(maxBytes int64, writer LogWriter) *GatewayLogQueue {
 
 // estimateSize approximates the memory footprint of a record.
 func estimateSize(g *model.GatewayLog) int64 {
-	var extraLen int64
-	if g.Extra != nil {
-		extraLen = int64(len(g.Extra))
+	var logLen int64
+	if g.Log != nil {
+		logLen = int64(len(g.Log))
 	}
 	// Rough estimate: sum of string lengths + JSON + small overhead.
-	return int64(len(g.InstanceID)+len(g.Token)+len(g.Log)) + extraLen + 128
+	return int64(len(g.InstanceID)+len(g.TokenHeader)+len(g.Token)+len(g.Usages)) + logLen + 128
 }
 
 // Enqueue adds a record to the queue; drops oldest records to respect budget.
@@ -161,33 +161,63 @@ func InitGatewayLogQueue() {
 }
 
 // RecordGatewayLog builds a log record and enqueues it to be persisted.
-func RecordGatewayLog(instanceID string, tokenType model.TokenType, token string, level log.Level, logText json.RawMessage, extra json.RawMessage) error {
-  if GatewayLogQ == nil {
-    InitGatewayLogQueue()
-  }
-  rec := &model.GatewayLog{
-    InstanceID: instanceID,
-    TokenType:  tokenType,
-    Token:      token,
-    Log:        logText,
-    Level:      level,
-    Extra:      extra,
-  }
-  return GatewayLogQ.Enqueue(rec)
+func RecordGatewayLog(instanceID string, tokenHeader string, token string, usages []string, level log.Level, event model.Event, log *model.Log) error {
+	if GatewayLogQ == nil {
+		InitGatewayLogQueue()
+	}
+	if strings.TrimSpace(instanceID) == "" {
+		return nil
+	}
+	logRaw, _ := json.Marshal(log)
+
+	rec := &model.GatewayLog{
+		InstanceID:  instanceID,
+		TokenHeader: tokenHeader,
+		Token:       token,
+		Level:       level,
+		Event:       event,
+		Usages:      strings.TrimSpace(strings.Join(usages, ",")),
+		Log:         json.RawMessage(logRaw),
+	}
+	return GatewayLogQ.Enqueue(rec)
 }
 
-func RecordGatewayLogWithUsage(instanceID string, tokenType model.TokenType, token string, usages []string, level log.Level, logText json.RawMessage, extra json.RawMessage) error {
-  if GatewayLogQ == nil {
-    InitGatewayLogQueue()
-  }
-  rec := &model.GatewayLog{
-    InstanceID: instanceID,
-    TokenType:  tokenType,
-    Token:      token,
-    Usages:     strings.Join(usages, ","),
-    Log:        logText,
-    Level:      level,
-    Extra:      extra,
-  }
-  return GatewayLogQ.Enqueue(rec)
+var allowedEvents = map[model.Event]struct{}{
+	model.EventRequestReceived:         {},
+	model.EventPanicRecovered:          {},
+	model.EventRequestValidationFail:   {},
+	model.EventDirectorBefore:          {},
+	model.EventDirectorAfter:           {},
+	model.EventInstanceMissing:         {},
+	model.EventSSEFlagMissing:          {},
+	model.EventPathTooShort:            {},
+	model.EventUpstreamURLParseFail:    {},
+	model.EventProtocolUnsupported:     {},
+	model.EventAccessUnsupported:       {},
+	model.EventSSEStart:                {},
+	model.EventGzipReaderFailed:        {},
+	model.EventSSEEndpointRewrite:      {},
+	model.EventSSEEof:                  {},
+	model.EventSSEReadError:            {},
+	model.EventClientCanceled:          {},
+	model.EventProxyErrorLog:           {},
+	model.EventUpstreamConnInterrupted: {},
+	model.EventUpstreamError:           {},
+}
+
+func isAllowedEvent(e model.Event) bool {
+	_, ok := allowedEvents[e]
+	return ok
+}
+
+func writeMCPLog(instanceID string, tokenHeader string, token string, level log.Level, event model.Event, usages []string, log *model.Log) {
+	if strings.TrimSpace(instanceID) == "" {
+		return
+	}
+	if !isAllowedEvent(event) {
+		return
+	}
+	log.Event = event
+	log.Level = level
+	_ = RecordGatewayLog(instanceID, tokenHeader, strings.TrimSpace(token), usages, level, event, log)
 }
