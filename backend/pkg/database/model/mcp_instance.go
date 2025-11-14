@@ -142,7 +142,7 @@ func (m *McpToken) ToTokenHeaderKey() string {
 	case TokenTypeXAPIKey:
 		return "X-API-Key"
 	}
-	return ""
+	return "Authorization"
 }
 
 // McpConfig 表示单个 MCP 服务器配置
