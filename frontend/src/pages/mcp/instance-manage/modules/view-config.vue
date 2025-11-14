@@ -156,12 +156,14 @@
         </el-scrollbar>
       </el-col>
       <el-col :span="24">
-        <el-scrollbar ref="logEl" max-height="420px" always class="logs-info mt-3 p-3">
+        <el-scrollbar  max-height="420px" always class="logs-info mt-3 p-3">
           <div>令牌日志</div>
-          <div class="py-5 px-5">{{ '日志信息' }}</div>
-          <el-icon class="base-btn-link copy-icon" size="18" @click="toggle">
-            <FullScreen />
-          </el-icon>
+          <div ref="logEl">
+            <div class="py-5 px-5" >{{ '日志信息' }}</div>
+            <el-icon class="base-btn-link copy-icon" size="18" @click="toggle">
+              <FullScreen />
+            </el-icon>
+          </div>
         </el-scrollbar>
       </el-col>
     </el-row>
@@ -284,7 +286,12 @@ import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 
 const logEl = ref(null)
-const { toggle } = useFullscreen()
+// 将日志容器作为全屏目标。el-scrollbar 的 ref 返回组件实例，需取其 $el
+const targetEl = computed(() => {
+  const el = (logEl as any).value
+  return (el && (el.$el || el)) as any
+})
+const { toggle } = useFullscreen(targetEl)
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
@@ -508,7 +515,7 @@ const handleConfirmToken = async () => {
     formData.value.token = ''
     formData.value.expireAt = null
     await handleSaveTokens()
-  } catch (error) {
+  } catch {
     dialogInfo.value.instanceInfo.tokens.pop()
   }
 }
