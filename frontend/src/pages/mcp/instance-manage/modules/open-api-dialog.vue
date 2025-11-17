@@ -175,7 +175,7 @@ const handleGetAPIlist = async () => {
  * @param h
  * @param param1
  */
-const renderContent = (h, { node, data }) => {
+const renderContent = (h: any, { node, data }: any) => {
   return h(
     'div',
     {

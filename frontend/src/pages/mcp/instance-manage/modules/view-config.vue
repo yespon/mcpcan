@@ -12,6 +12,7 @@
         :active-text="t('common.on')"
         :inactive-text="t('common.off')"
         @change="handleEabledToken()"
+        :disabled="disabledTokenStatus"
       ></el-switch>
       <span class="ml-2">{{ t('mcp.instance.tableHeadDesc.token') }}</span>
     </div>
@@ -78,8 +79,8 @@
                   </template>
                 </el-dropdown>
               </div>
-              <div class="flex justify-between">
-                <div class="ellipsis-one">
+              <div class="grid grid-cols-2 mt-2">
+                <div class="ellipsis-one grid-cols-span-1">
                   {{ t('mcp.instance.token.expireAt') }}：<span
                     :class="
                       !token.expireAt
@@ -97,20 +98,32 @@
                     }}
                   </span>
                 </div>
-                <div class="ellipsis-one">
+                <div class="ellipsis-one grid-cols-span-1">
                   {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
                 </div>
               </div>
 
-              <div class="ellipsis-one">
-                {{ t('mcp.instance.token.tag') }}：<el-tag
-                  v-for="(tag, num) in token.usages"
-                  :key="num"
-                  effect="plain"
-                  class="mr-2"
-                >
-                  {{ tag }}
-                </el-tag>
+              <div class="grid grid-cols-2 mt-2">
+                <div class="ellipsis-one grid-cols-span-1">
+                  {{ t('mcp.instance.token.tag') }}：<el-tag
+                    v-for="(tag, num) in token.usages"
+                    :key="num"
+                    effect="plain"
+                    class="mr-2"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+                <div class="grid-cols-span-1" v-if="true || 'API服务'">
+                  是否开启透传:
+                  <el-switch
+                    style="--el-switch-on-color: #13ce66"
+                    inline-prompt
+                    :loading="dialogInfo.instanceInfo.loading"
+                    :active-text="t('common.on')"
+                    :inactive-text="t('common.off')"
+                  ></el-switch>
+                </div>
               </div>
             </div>
           </div>
@@ -156,11 +169,11 @@
         </el-scrollbar>
       </el-col>
       <el-col :span="24">
-        <el-scrollbar  max-height="420px" always class="logs-info mt-3 p-3">
-          <div>令牌日志</div>
+        <el-scrollbar max-height="420px" always class="logs-info mt-3 p-3">
           <div ref="logEl">
-            <div class="py-5 px-5" >{{ '日志信息' }}</div>
-            <el-icon class="base-btn-link copy-icon" size="18" @click="toggle">
+            <div>令牌日志</div>
+            <div class="py-5 px-5">{{ '日志信息' }}</div>
+            <el-icon v-if="!isFullscreen" class="base-btn-link copy-icon" size="18" @click="toggle">
               <FullScreen />
             </el-icon>
           </div>
@@ -177,92 +190,106 @@
   </el-dialog>
   <el-dialog
     v-model="formData.visible"
-    width="360px"
+    width="720px"
     top="20vh"
     :show-close="false"
     @close="formRef?.resetFields()"
   >
     <template #header>
       <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        label-width="auto"
-        label-position="top"
-      >
-        <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
-          <template #label>
-            <div class="center">
-              <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
-              <el-button
-                class="base-btn"
-                type="primary"
-                size="small"
-                @click.stop="handleAddExpireAt(7)"
-                >7{{ t('mcp.instance.token.day') }}
-              </el-button>
-              <el-button
-                class="base-btn"
-                type="primary"
-                size="small"
-                @click.stop="handleAddExpireAt(15)"
-                >15{{ t('mcp.instance.token.day') }}
-              </el-button>
-              <el-button
-                class="base-btn"
-                type="primary"
-                size="small"
-                @click.stop="handleAddExpireAt(30)"
-                >30{{ t('mcp.instance.token.day') }}
-              </el-button>
-            </div>
-          </template>
-          <el-date-picker
-            ref="datePicker"
-            v-model="formData.expireAt"
-            type="datetime"
-            value-format="x"
-            :placeholder="t('mcp.instance.token.placeholderDate')"
-            style="width: 100%"
-            :disabled-date="(date: Date) => date.getTime() < Date.now()"
-          ></el-date-picker>
-        </el-form-item>
-        <el-form-item label="Token" prop="token">
-          <template #label>
-            Token
-            <el-tag class="ml-2 base-btn cursor-pointer" effect="dark" @click="handleRandomToken">{{
-              t('mcp.instance.token.random')
-            }}</el-tag>
-          </template>
-          <el-input
-            v-model="formData.token"
-            :rows="4"
-            type="textarea"
-            :placeholder="t('mcp.instance.token.placeholderToken')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-          <el-input-tag
-            v-model="formData.usages"
-            collapse-tags
-            collapse-tags-tooltip
-            :max-collapse-tags="3"
-            clearable
-            draggable
-            tag-type="primary"
-            tag-effect="plain"
-            :placeholder="t('mcp.instance.token.placeholderTag')"
-            class="tag-input"
-          >
-            <template #tag="{ value }">
-              <div class="flex items-center">
-                <span>{{ value }}</span>
-              </div>
-            </template>
-          </el-input-tag>
-        </el-form-item>
-      </el-form>
+      <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading">
+        <el-col :span="12" class="collapsed">
+          <el-scrollbar ref="scrollbarRef" max-height="50vh" always class="pr-4">
+            <el-form
+              ref="formRef"
+              :model="formData"
+              :rules="rules"
+              label-width="auto"
+              label-position="top"
+            >
+              <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
+                <template #label>
+                  <div class="center">
+                    <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
+                    <el-button
+                      class="base-btn"
+                      type="primary"
+                      size="small"
+                      @click.stop="handleAddExpireAt(7)"
+                      >7{{ t('mcp.instance.token.day') }}
+                    </el-button>
+                    <el-button
+                      class="base-btn"
+                      type="primary"
+                      size="small"
+                      @click.stop="handleAddExpireAt(15)"
+                      >15{{ t('mcp.instance.token.day') }}
+                    </el-button>
+                    <el-button
+                      class="base-btn"
+                      type="primary"
+                      size="small"
+                      @click.stop="handleAddExpireAt(30)"
+                      >30{{ t('mcp.instance.token.day') }}
+                    </el-button>
+                  </div>
+                </template>
+                <el-date-picker
+                  ref="datePicker"
+                  v-model="formData.expireAt"
+                  type="datetime"
+                  value-format="x"
+                  :placeholder="t('mcp.instance.token.placeholderDate')"
+                  style="width: 100%"
+                  :disabled-date="(date: Date) => date.getTime() < Date.now()"
+                ></el-date-picker>
+              </el-form-item>
+              <el-form-item label="Token" prop="token">
+                <template #label>
+                  Token
+                  <el-tag
+                    class="ml-2 base-btn cursor-pointer"
+                    effect="dark"
+                    @click="handleRandomToken"
+                    >{{ t('mcp.instance.token.random') }}</el-tag
+                  >
+                </template>
+                <el-input
+                  v-model="formData.token"
+                  :rows="4"
+                  type="textarea"
+                  :placeholder="t('mcp.instance.token.placeholderToken')"
+                />
+              </el-form-item>
+              <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
+                <el-input-tag
+                  v-model="formData.usages"
+                  collapse-tags
+                  collapse-tags-tooltip
+                  :max-collapse-tags="3"
+                  clearable
+                  draggable
+                  tag-type="primary"
+                  tag-effect="plain"
+                  :placeholder="t('mcp.instance.token.placeholderTag')"
+                  class="tag-input"
+                >
+                  <template #tag="{ value }">
+                    <div class="flex items-center">
+                      <span>{{ value }}</span>
+                    </div>
+                  </template>
+                </el-input-tag>
+              </el-form-item>
+            </el-form>
+          </el-scrollbar>
+        </el-col>
+        <el-col :span="12" class="expanded">
+          <el-scrollbar ref="scrollbarRef" max-height="50vh" always class="config-info">
+            <div class="py-5 px-5">{{ config }}</div>
+          </el-scrollbar>
+        </el-col>
+      </el-row>
     </template>
     <template #footer>
       <div class="center">
@@ -291,7 +318,10 @@ const targetEl = computed(() => {
   const el = (logEl as any).value
   return (el && (el.$el || el)) as any
 })
-const { toggle } = useFullscreen(targetEl)
+const disabledTokenStatus = computed(() => {
+  return false // !'存在一个透传的时候必须开启'
+})
+const { isFullscreen, toggle } = useFullscreen(targetEl)
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
