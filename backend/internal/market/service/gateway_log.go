@@ -57,7 +57,7 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 		filters["createdAtEnd"] = time.Unix(req.EndTime, 0)
 	}
 
-	logs, total, err := mysql.GatewayLogRepo.FindWithPagination(context.Background(), page, pageSize, filters, "created_at", "desc")
+	logs, total, err := mysql.GatewayLogRepo.FindWithPagination(context.Background(), page, pageSize, filters, "createdAt", "desc")
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
