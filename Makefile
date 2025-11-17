@@ -127,7 +127,7 @@ go-build-init:
 	$(call go_build_service,init)
 
 .PHONY: go-build-market
-go-build-market:
+go-build-market: print
 	$(call go_build_service,market)
 
 .PHONY: go-build-authz
