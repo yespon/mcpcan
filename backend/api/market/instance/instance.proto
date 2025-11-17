@@ -871,7 +871,7 @@ service InstanceService {
   // 创建 Openapi 实例
   rpc OpenapiCreate(CreateOpenapiRequest) returns (CreateResp) {
     option (google.api.http) = {
-      put:  "/instance/openapi/create",
+      post:  "/instance/openapi/create",
       body: "*",
     };
   }
