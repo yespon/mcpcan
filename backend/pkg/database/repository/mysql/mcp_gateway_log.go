@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/common"
@@ -114,10 +115,6 @@ func (r *GatewayLogRepository) FindWithPagination(
 
 	for key, v := range filters {
 		switch key {
-		case "instance_id":
-			if s, ok := v.(string); ok && s != "" {
-				q = q.Where("instance_id = ?", s)
-			}
 		case "instanceId":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("instance_id = ?", s)
@@ -126,9 +123,43 @@ func (r *GatewayLogRepository) FindWithPagination(
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("token = ?", s)
 			}
+		case "tokenHeader":
+			if s, ok := v.(string); ok && s != "" {
+				q = q.Where("token_header = ?", s)
+			}
 		case "tokenType":
 			if tt, ok := v.(model.TokenType); ok {
 				q = q.Where("token_type = ?", tt)
+			}
+		case "event":
+			if s, ok := v.(string); ok && s != "" {
+				q = q.Where("event = ?", s)
+			}
+		case "level":
+			if lv, ok := v.(int); ok {
+				q = q.Where("level = ?", lv)
+			}
+		case "usages":
+			if arr, ok := v.([]string); ok {
+				vals := make([]string, 0, len(arr))
+				for _, it := range arr {
+					s := strings.TrimSpace(it)
+					if s != "" {
+						vals = append(vals, s)
+					}
+				}
+				if len(vals) > 0 {
+					placeholders := make([]string, 0, len(vals))
+					for range vals {
+						placeholders = append(placeholders, "FIND_IN_SET(?, usages)")
+					}
+					cond := strings.Join(placeholders, " OR ")
+					args := make([]interface{}, 0, len(vals))
+					for _, v := range vals {
+						args = append(args, v)
+					}
+					q = q.Where(cond, args...)
+				}
 			}
 		case "createdAtStart":
 			if t, ok := v.(time.Time); ok && !t.IsZero() {

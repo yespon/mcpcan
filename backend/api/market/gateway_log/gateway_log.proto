@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package storage;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/gateway_log";
+
+
+// GatewayLogService 网关日志服务
+service GatewayLogService {
+  // FindGatewayLog 查询网关日志
+  rpc FindGatewayLog(FindGatewayLogRequest) returns (FindGatewayLogResponse) {
+    option (google.api.http) = {
+        post: "/gateway-log/find",
+        body: "*",
+    };
+  }
+}
+
+enum Level {
+  // UnspecifiedLevel 未指定日志级别
+  UnspecifiedLevel = 0;
+  // @inject_tag: json:"level" form:"level" desc:"log level"
+  TraceLevel = 1;
+  // @inject_tag: json:"debugLevel" form:"debugLevel" desc:"debug level"
+  DebugLevel = 2;
+  // @inject_tag: json:"infoLevel" form:"infoLevel" desc:"info level"
+  InfoLevel = 3;
+  // @inject_tag: json:"warnLevel" form:"warnLevel" desc:"warn level"
+  WarnLevel = 4;
+  // @inject_tag: json:"errorLevel" form:"errorLevel" desc:"error level"
+  ErrorLevel = 5;
+}
+
+message FindGatewayLogRequest {
+  // @inject_tag: json:"instanceId" form:"instanceId" desc:"实例ID"
+  string instanceId = 1;
+  // @inject_tag: json:"tokenHeader" form:"tokenHeader" desc:"token header"
+  string tokenHeader = 2;
+  // @inject_tag: json:"token" form:"token" desc:"token"
+  string token = 3;
+  // @inject_tag: json:"usages" form:"usages" desc:"usage scenarios"
+  repeated string usages = 4;
+  // @inject_tag: json:"level" form:"level" desc:"log level"
+  Level level = 5;
+  // @inject_tag: json:"startTime" form:"startTime" desc:"start time：seconds since epoch"
+  int64 startTime = 6;
+  // @inject_tag: json:"endTime" form:"endTime" desc:"end time：seconds since epoch"
+  int64 endTime = 7;
+  // @inject_tag: json:"pageSize" form:"pageSize" desc:"page size"
+  int32 pageSize = 8;
+  // @inject_tag: json:"page" form:"page" desc:"page number"
+  int32 page = 9;
+}
+
+message FindGatewayLogResponse {
+  // @inject_tag: json:"logs" form:"logs" desc:"gateway logs"
+  repeated GatewayLog logs = 1;
+  // @inject_tag: json:"total" form:"total" desc:"total count"
+  int32 total = 2;
+  // @inject_tag: json:"pageSize" form:"pageSize" desc:"page size"
+  int32 pageSize = 3;
+  // @inject_tag: json:"page" form:"page" desc:"page number"
+  int32 page = 4;
+}
+
+message GatewayLog {
+  // @inject_tag: json:"id" form:"id" desc:"log ID"
+  uint32 id = 1;
+  // @inject_tag: json:"instanceId" form:"instanceId" desc:"instance ID"
+  string instanceId = 2;
+  // @inject_tag: json:"tokenHeader" form:"tokenHeader" desc:"token header"
+  string tokenHeader = 3;
+  // @inject_tag: json:"token" form:"token" desc:"token"
+  string token = 4;
+  // @inject_tag: json:"usages" form:"usages" desc:"usage scenarios"
+  repeated string usages = 5;
+  // @inject_tag: json:"level" form:"level" desc:"log level"
+  Level level = 6;
+  // @inject_tag: json:"event" form:"event" desc:"event type"
+  string event = 7;
+  // @inject_tag: json:"createdAt" form:"createdAt" desc:"creation time"
+  string createdAt = 8;
+  // @inject_tag: json:"log" form:"log" desc:"log details"
+  Log log = 9;
+
+  message Log {
+    // @inject_tag: json:"event" form:"event" desc:"event type"
+    string event = 1;
+    // @inject_tag: json:"level" form:"level" desc:"log level"
+    Level level = 2;
+    // @inject_tag: json:"message" form:"message" desc:"log message"
+    string message = 3;
+    // @inject_tag: json:"url" form:"url" desc:"URL"
+    string url = 4;
+    // @inject_tag: json:"method" form:"method" desc:"HTTP method"
+    string method = 5;
+    // @inject_tag: json:"path" form:"path" desc:"URL path"
+    string path = 6;
+    // @inject_tag: json:"params" form:"params" desc:"URL parameters"
+    string params = 7;
+    // @inject_tag: json:"isSSE" form:"isSSE" desc:"whether it is SSE"
+    bool isSSE = 8;
+    // @inject_tag: json:"ts" form:"ts" desc:"timestamp"
+    string ts = 9;
+  }
+}
