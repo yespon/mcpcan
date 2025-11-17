@@ -119,17 +119,6 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 		return
 	}
 
-	if info := req.Context().Value(InstanceInfoKey); info != nil {
-		reqAuth := &RequestAuth{}
-		if v := req.Context().Value(RequestAuthKey); v != nil {
-			if ra, ok := v.(RequestAuth); ok {
-				reqAuth = &ra
-			}
-		}
-		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventRequestReceived, reqAuth.Usages,
-			buildLogFromReq(req, "received"))
-	}
-
 	mrp.proxy.ServeHTTP(respWriter, req)
 }
 
@@ -226,10 +215,8 @@ func director(req *http.Request) {
 		return
 	}
 	reqAuth := &RequestAuth{}
-	if v := req.Context().Value(RequestAuthKey); v != nil {
-		if ra, ok := v.(RequestAuth); ok {
-			reqAuth = &ra
-		}
+	if v, ok := req.Context().Value(RequestAuthKey).(*RequestAuth); ok {
+		reqAuth = v
 	}
 	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventDirectorBefore, reqAuth.Usages,
 		buildLogFromReq(req, "director.before"))
@@ -304,11 +291,7 @@ func director(req *http.Request) {
 	logger.Info("After director",
 		zap.String("instance_id", instanceInfo.InstanceID),
 		zap.Bool("is_ssereq", isSSEReq),
-		zap.String("url", req.URL.String()),
-	)
-
-	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventDirectorAfter, reqAuth.Usages,
-		buildLogFromReq(req, "director.after"))
+		zap.String("url", req.URL.String()))
 }
 
 // Handle response modification before sending to client
@@ -324,12 +307,10 @@ func modifyResponse(resp *http.Response) error {
 			}
 		}
 		reqAuth := &RequestAuth{}
-		if v := resp.Request.Context().Value(RequestAuthKey); v != nil {
-			if ra, ok := v.(RequestAuth); ok {
-				reqAuth = &ra
-			}
+		if v, ok := resp.Request.Context().Value(RequestAuthKey).(*RequestAuth); ok {
+			reqAuth = v
 		}
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages, &model.Log{Event: model.EventSSEStart, Level: golibLog.InfoLevel, Message: "sse start", URL: resp.Request.URL.String(), Method: resp.Request.Method, Path: resp.Request.URL.Path, Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages, buildLogFromReq(resp.Request, "sse.start"))
 
 		// Check if request context has been canceled
 		select {
@@ -359,7 +340,7 @@ func modifyResponse(resp *http.Response) error {
 			// Use gzip.Reader to wrap original response body, it will auto-decompress
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
-				writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages, &model.Log{Event: model.EventGzipReaderFailed, Level: golibLog.ErrorLevel, Message: err.Error(), URL: resp.Request.URL.String(), Method: resp.Request.Method, Path: resp.Request.URL.Path, Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+				writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages, buildLogFromReq(resp.Request, fmt.Sprintf("failed to create gzip reader: %v", err)))
 				return &proxyError{
 					message: fmt.Sprintf("failed to create gzip reader: %v", err),
 					status:  http.StatusInternalServerError,
@@ -455,7 +436,6 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:/"), []byte(fmt.Sprintf("data:/%s/", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("old", msgStr), zap.String("new", string(msgBytes)))
-				writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token, golibLog.DebugLevel, model.EventSSEEndpointRewrite, r.reqAuth.Usages, &model.Log{Event: model.EventSSEEndpointRewrite, Level: golibLog.DebugLevel, Message: "endpoint rewritten", URL: "", Method: "", Path: "", Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
 			}
 
 			// Write modified data into internal buffer
