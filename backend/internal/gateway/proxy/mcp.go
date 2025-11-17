@@ -520,7 +520,10 @@ func handleHostingSSEReqForEvent(req *http.Request, instanceInfo *InstanceInfo, 
 	if strings.HasPrefix(req.URL.Path, path.Join(prefix)) {
 		req.URL.Path = strings.Replace(req.URL.Path, path.Join(prefix), "", 1)
 	}
-	if strings.Contains(instanceInfo.Instance.ImgAddr, common.DefatuleHostingImg) {
+
+	if instanceInfo.AccessType == model.AccessTypeHosting &&
+		instanceInfo.McpProtocol == model.McpProtocolStdio &&
+		strings.Contains(instanceInfo.Instance.ImgAddr, common.DefatuleHostingImg) {
 		req.URL.Path = strings.TrimRight(req.URL.Path, "/") + "/"
 	}
 	return req.URL.Path
@@ -541,7 +544,9 @@ func handleHostingStreamableHTTPReq(req *http.Request, instanceInfo *InstanceInf
 			req.Header.Set(key, value)
 		}
 	}
-	if strings.Contains(instanceInfo.Instance.ImgAddr, common.DefatuleHostingImg) {
+	if instanceInfo.AccessType == model.AccessTypeHosting &&
+		instanceInfo.McpProtocol == model.McpProtocolStdio &&
+		strings.Contains(instanceInfo.Instance.ImgAddr, common.DefatuleHostingImg) {
 		req.URL.Path = strings.TrimRight(req.URL.Path, "/") + "/"
 	}
 	return req.URL.Path
