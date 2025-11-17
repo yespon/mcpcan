@@ -92,6 +92,7 @@
             node-key="id"
             :default-expand-all="true"
             :default-checked-keys="checkedKeys"
+            :render-content="renderContent"
           />
         </div>
       </el-splitter-panel>
@@ -174,20 +175,19 @@ const handleGetAPIlist = async () => {
  * @param h
  * @param param1
  */
-//  :render-content="renderContent"
-// const renderContent = (h: any, params: any) => {
-//   const { node } = params as { node: any; data?: any }
-//   return h(
-//     'div',
-//     {
-//       class: ' w-full grid grid-cols-10 ',
-//     },
-//     [
-//       h('div', { class: 'ellipsis-one col-span-8' }, node.method || node.label),
-//       h('div', { class: 'col-span-2 text-right pr-2' }, '其他信息'),
-//     ],
-//   )
-// }
+const renderContent = (h: any, params: any) => {
+  const { node } = params as { node: any; data?: any }
+  return h(
+    'div',
+    {
+      class: ' w-full grid grid-cols-10 ',
+    },
+    [
+      h('div', { class: 'ellipsis-one col-span-8' }, node.method || node.label),
+      h('div', { class: 'col-span-2 text-right pr-2' }, '其他信息'),
+    ],
+  )
+}
 
 const handleBeforeUpload = async (file: File) => {
   try {
