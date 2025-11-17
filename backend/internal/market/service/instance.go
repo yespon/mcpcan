@@ -1190,7 +1190,7 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		SourceType:             model.OpenapiTypeCustom,
 		McpServerID:            "",
 		TemplateID:             0,
-		EnabledToken:           true,
+		EnabledToken:           len(req.Tokens) > 0,
 		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
 		ImgAddr:                containerOptions.ImageName,
 		Port:                   8080,
