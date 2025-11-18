@@ -152,6 +152,7 @@ const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
 const { handleGetEnvList } = useMcpStoreHook()
 const { t } = useI18n()
+const emit = defineEmits(['on-refresh'])
 const dialogInfo = ref<any>({
   visible: false,
   loading: false,
@@ -249,6 +250,79 @@ const renderContent = (h: any, params: any) => {
   )
 }
 
+// 处理默认选中的列表
+const handleDefaultCheckedKeys = (rawText: string) => {
+  try {
+    // 保存原始文本以供后续使用
+    originFileText.value = rawText
+    // 尝试解析为 JSON/YAML（容错）
+    try {
+      docObject.value = JSON.parse(rawText)
+      defaultCheckedKeys.value = []
+      const collectIds = (nodes: any[]) => {
+        nodes.forEach((n) => {
+          if (n.id) defaultCheckedKeys.value.push(n.id)
+          if (n.children && n.children.length) collectIds(n.children)
+        })
+      }
+      collectIds(buildApiTree(docObject.value))
+    } catch (e) {
+      try {
+        docObject.value = yaml.load(rawText)
+
+        defaultCheckedKeys.value = []
+        const collectIds = (nodes: any[]) => {
+          nodes.forEach((n) => {
+            if (n.id) defaultCheckedKeys.value.push(n.id)
+            if (n.children && n.children.length) collectIds(n.children)
+          })
+        }
+        collectIds(buildApiTree(docObject.value))
+        console.log(buildApiTree(docObject.value), defaultCheckedKeys.value)
+      } catch (yamlErr) {
+        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+      }
+    }
+  } catch (err) {
+    console.error('读取文件出错', err)
+  }
+}
+// 处理接口原始列表
+const handleDefaultNodeAPIlist = (rawText: string) => {
+  try {
+    // 保存原始文本以供后续使用
+    originFileText.value = rawText
+    // 尝试解析为 JSON/YAML（容错）
+    try {
+      docObject.value = JSON.parse(rawText)
+      apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+      const collectIds = (nodes: any[]) => {
+        nodes.forEach((n) => {
+          if (n.children && n.children.length) collectIds(n.children)
+        })
+      }
+      collectIds(apiNodeList.value)
+    } catch (e) {
+      // 不是 JSON，就当做 YAML 尝试解析
+      try {
+        docObject.value = yaml.load(rawText)
+        apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+        const collectIds = (nodes: any[]) => {
+          nodes.forEach((n) => {
+            if (n.children && n.children.length) collectIds(n.children)
+          })
+        }
+        collectIds(apiNodeList.value)
+      } catch (yamlErr) {
+        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+      }
+    }
+  } catch (err) {
+    console.error('读取文件出错', err)
+  }
+}
+
+// 处理文件内容渲染默认选中
 const handleFileContent = async (rawText: string) => {
   try {
     // 保存原始文本以供后续使用
@@ -266,7 +340,6 @@ const handleFileContent = async (rawText: string) => {
         })
       }
       collectIds(apiNodeList.value)
-      console.log('解析为 JSON 成功parse')
     } catch (e) {
       console.log(e)
       // 不是 JSON，就当做 YAML 尝试解析
@@ -312,7 +385,9 @@ const handleBeforeUpload = async (file: File) => {
   // 现代浏览器支持直接调用 file.text()
   const rawText = await file.text() // 原始文本内容
   // 保存原始文本以供后续使用
-  handleFileContent(rawText)
+  handleDefaultCheckedKeys(rawText)
+  handleDefaultNodeAPIlist(rawText)
+  // handleFileContent(rawText)
 }
 
 /**
@@ -327,10 +402,13 @@ const handleSuccess = (response: { code: number; data: { openapiFileId: string }
   ElMessage.success(t('action.upload'))
 }
 
+// 获取原始API文档详情内容
 const handleGetAPIDetail = async (id: string) => {
   try {
     const { content } = await DocsAPI.fileContent({ openapiFileId: id })
-    handleFileContent(content)
+    // handleFileContent(content)
+    handleDefaultCheckedKeys(content)
+    handleDefaultNodeAPIlist(content)
   } catch {
     formData.value.openapiFileID = ''
   }
@@ -393,9 +471,12 @@ const handleConfirm = async () => {
   baseInfo.value.validate(async (valid: boolean) => {
     if (valid) {
       // 提交数据
-      await InstanceAPI.createByOpenAPI(formData.value)
+      await (formData.value.instanceId
+        ? InstanceAPI.editByOpenAPI(formData.value)
+        : InstanceAPI.createByOpenAPI(formData.value))
       dialogInfo.value.visible = false
       ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
+      emit('on-refresh')
     }
   })
 }
@@ -408,11 +489,23 @@ const handleGetDetail = async (id: string) => {
   const data = await InstanceAPI.detail({ instanceId: id })
   formData.value = {
     ...data,
-    openapiFileID: data.packageId,
+    chooseOpenapiFileID: data.packageId,
+    openapiFileID: '',
   }
-  const { baseOpenapiFileID } = await DocsAPI.fileContent({ openapiFileId: id })
-  handleGetAPIDetail(baseOpenapiFileID)
-  // chooseOpenapiFileID: data.packageId,
+
+  // 获取选中的api详情
+  const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
+    openapiFileId: data.packageId,
+  })
+  // 处理默认选中的列表
+  handleDefaultCheckedKeys(content)
+
+  formData.value.openapiFileID = baseOpenapiFileID
+  // 获取原始的api文档内容
+  const res = await DocsAPI.fileContent({
+    openapiFileId: baseOpenapiFileID,
+  })
+  handleDefaultNodeAPIlist(res.content)
 }
 
 /**

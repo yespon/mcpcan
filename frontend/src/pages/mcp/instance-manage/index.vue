@@ -267,7 +267,7 @@
       </template>
     </Select>
     <!-- Create a intance by openAPI docs -->
-    <OpenAPIDialog ref="openAPIDialog"></OpenAPIDialog>
+    <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
   </div>
 </template>
 

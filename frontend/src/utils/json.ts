@@ -88,7 +88,7 @@ export function buildApiTree(openapiJson: { paths: any }) {
           summary: opDetail.summary || '无描述',
           path,
           method,
-          id: opDetail.operationId,
+          id: opDetail.operationId || opDetail.id,
         })
       })
     })
