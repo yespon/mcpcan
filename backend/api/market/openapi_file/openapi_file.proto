@@ -106,7 +106,7 @@ message OpenapiFileInfo {
   string createdAt = 6;
   // @inject_tag: json:"updatedAt" desc:"更新时间"
   string updatedAt = 7;
-  // @inject_tag: json:"updatedAt" desc:"基于哪个 openapi 文档的id"
+  // @inject_tag: json:"baseOpenapiFileID" desc:"基于哪个 openapi 文档的id"
   string baseOpenapiFileID = 8;
 }
 
