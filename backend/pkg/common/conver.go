@@ -15,6 +15,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 	accessType, _ := ConvertToProtoAccessType(model.AccessType(instance.AccessType))
 	mcpProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.McpProtocol))
 	proxyProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.ProxyProtocol))
+	protoSourceType, _ := ConvertToProtoSourceType(instance.SourceType)
 	protoTokens := ConvertToProtoMcpToken(instance.Tokens)
 	return &instancepb.ListResp_InstanceInfo{
 		InstanceId:                 instance.InstanceID,
@@ -40,6 +41,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		ServicePath:                instance.ServicePath,
 		PublicProxyPath:            instance.PublicProxyPath,
 		ProxyProtocol:              proxyProtocol,
+		SourceType:                 protoSourceType,
 	}
 }
 

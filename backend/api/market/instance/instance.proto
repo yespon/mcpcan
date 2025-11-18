@@ -361,6 +361,8 @@ message ListResp {
     repeated McpToken tokens = 24;
     // @inject_tag: json:"proxyProtocol" desc:"MCP内网代理协议"
     McpProtocol proxyProtocol = 25;
+    // @inject_tag: json:"sourceType" form:"sourceType" desc:"实例来源"
+    SourceType sourceType = 26;
   }
 }
 
