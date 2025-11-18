@@ -26,12 +26,14 @@ import (
 type OpenapiService struct {
 	openapiPackageRepo *mysql.McpOpenapiPackageRepository
 	fileManager        *openapifile.OpenapiFileManager
+	instanceRepo       *mysql.McpInstanceRepository
 }
 
 // NewOpenapiService creates a new OpenapiService instance
 func NewOpenapiService() *OpenapiService {
 	return &OpenapiService{
 		openapiPackageRepo: mysql.McpOpenapiPackageRepo,
+		instanceRepo:       mysql.McpInstanceRepo,
 		fileManager:        openapifile.NewOpenapiFileManager(&config.GlobalConfig.Code, config.GlobalConfig.Storage.OpenapiFilePath),
 	}
 }
@@ -397,10 +399,42 @@ func (s *OpenapiService) DeleteOpenapiFile(c *gin.Context) {
 		common.GinError(c, i18nresp.OpenapiFileNotFound, "OpenAPI document not found")
 		return
 	}
-
 	if openapiPackage == nil {
 		logger.Warn("OpenAPI document not found", zap.String("openapiFileId", req.OpenapiFileId))
 		common.GinError(c, i18nresp.OpenapiFileNotFound, "OpenAPI document not found")
+		return
+	}
+
+	openapiFileList, _, err := s.openapiPackageRepo.FindWithPagination(context.Background(), 1, 99999, map[string]interface{}{
+		"baseOpenapiFileID": req.OpenapiFileId,
+	})
+	if err != nil {
+		logger.Error("Failed to list openapiFile by baseOpenapiFileID", zap.Error(err),
+			zap.String("baseOpenapiFileID", req.OpenapiFileId),
+			zap.Error(err))
+		common.GinError(c, i18nresp.OpenapiFileDeleteFailed, "Failed to list openapiFile by baseOpenapiFileID")
+		return
+	}
+	chooseOpenapiFileIds := []string{}
+	for _, openapiFile := range openapiFileList {
+		chooseOpenapiFileIds = append(chooseOpenapiFileIds, openapiFile.OpenapiFileID)
+	}
+	findList, err := s.instanceRepo.FindByPackageIDList(ctx, chooseOpenapiFileIds)
+	if err != nil {
+		logger.Error("Failed to list openapiFile by FindByPackageIDList",
+			zap.String("openapiFileId", openapiPackage.OpenapiFileID),
+			zap.String("filePath", openapiPackage.OpenapiFilePath),
+			zap.Error(err))
+		common.GinError(c, i18nresp.OpenapiFileDeleteFailed, "Failed to list openapiFile by FindByPackageIDList")
+		return
+	}
+	if len(findList) > 0 {
+		logger.Error("Failed to delete OpenAPI document files. file used in instance",
+			zap.String("openapiFileId", openapiPackage.OpenapiFileID),
+			zap.String("filePath", openapiPackage.OpenapiFilePath),
+			zap.String("instanceName", findList[0].InstanceName),
+			zap.Error(err))
+		common.GinError(c, i18nresp.OpenapiFileDeleteFailed, "Failed to delete OpenAPI document files. file used in instance: "+findList[0].InstanceName)
 		return
 	}
 
@@ -425,18 +459,7 @@ func (s *OpenapiService) DeleteOpenapiFile(c *gin.Context) {
 		return
 	}
 
-	logger.Info("OpenAPI document deleted successfully", zap.String("openapiFileId", req.OpenapiFileId))
-
 	go func() {
-		openapiFileList, _, err := s.openapiPackageRepo.FindWithPagination(context.Background(), 1, 99999, map[string]interface{}{
-			"baseOpenapiFileID": req.OpenapiFileId,
-		})
-		if err != nil {
-			logger.Error("Failed to list openapiFile by baseOpenapiFileID ", zap.Error(err),
-				zap.String("baseOpenapiFileID", req.OpenapiFileId),
-				zap.Error(err))
-			return
-		}
 		for _, openapiFile := range openapiFileList {
 			if err := s.fileManager.DeleteOpenapiFile(openapiFile.OpenapiFilePath); err != nil {
 				logger.Error("Failed to delete OpenAPI document files",
@@ -451,6 +474,8 @@ func (s *OpenapiService) DeleteOpenapiFile(c *gin.Context) {
 			}
 		}
 	}()
+
+	logger.Info("OpenAPI document deleted successfully", zap.String("openapiFileId", req.OpenapiFileId))
 
 	// Return success response
 	response := &openapi_file.DeleteOpenapiFileResponse{

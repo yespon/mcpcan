@@ -248,6 +248,19 @@ func (r *McpInstanceRepository) FindByPackageID(ctx context.Context, packageID s
 	return instances, nil
 }
 
+// FindByPackageIDList finds instances by package ID List
+func (r *McpInstanceRepository) FindByPackageIDList(ctx context.Context, packageIDs []string) ([]*model.McpInstance, error) {
+	if len(packageIDs) == 0 {
+		return []*model.McpInstance{}, nil
+	}
+	var instances []*model.McpInstance
+	err := r.getDB().WithContext(ctx).Where("package_id in (?)", packageIDs).Find(&instances).Error
+	if err != nil {
+		return nil, err
+	}
+	return instances, nil
+}
+
 // FindByName 根据实例名称查询实例
 func (r *McpInstanceRepository) FindByName(ctx context.Context, name string) (*model.McpInstance, error) {
 	var instance model.McpInstance
