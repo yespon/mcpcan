@@ -363,6 +363,8 @@ message ListResp {
     McpProtocol proxyProtocol = 25;
     // @inject_tag: json:"sourceType" form:"sourceType" desc:"实例来源"
     SourceType sourceType = 26;
+    // @inject_tag: json:"notes" form:"notes" desc:"备注"
+    string notes = 27;
   }
 }
 
