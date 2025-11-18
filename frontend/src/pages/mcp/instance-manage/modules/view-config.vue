@@ -3,7 +3,10 @@
     <template #header>
       <div class="center">{{ dialogInfo.title }}</div>
     </template>
-    <div class="mb-2 flex items-center">
+    <div
+      class="mb-2 flex items-center"
+      v-if="dialogInfo.instanceInfo.accessType !== AccessType.DIRECT"
+    >
       <el-switch
         v-model="dialogInfo.instanceInfo.enabledToken"
         style="--el-switch-on-color: #13ce66"
@@ -16,12 +19,19 @@
       ></el-switch>
       <span class="ml-2">{{ t('mcp.instance.tableHeadDesc.token') }}</span>
     </div>
-    <el-row :gutter="12" class="vc-row" v-loading="dialogInfo.instanceInfo.loading">
+    <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading">
       <el-col
         :span="12"
-        :class="['config-col left', { collapsed: !dialogInfo.instanceInfo.enabledToken }]"
+        :class="[
+          'config-col left',
+          {
+            collapsed:
+              !dialogInfo.instanceInfo.enabledToken ||
+              dialogInfo.instanceInfo.accessType === AccessType.DIRECT,
+          },
+        ]"
       >
-        <el-scrollbar ref="scrollbarRef" max-height="590px" always>
+        <el-scrollbar ref="scrollbarRef" always>
           <div class="token-list">
             <div class="font-bold flex justify-between items-center">
               <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
@@ -131,9 +141,16 @@
       </el-col>
       <el-col
         :span="12"
-        :class="['config-col right', { expanded: !dialogInfo.instanceInfo.enabledToken }]"
+        :class="[
+          'config-col right',
+          {
+            expanded:
+              !dialogInfo.instanceInfo.enabledToken ||
+              dialogInfo.instanceInfo.accessType === AccessType.DIRECT,
+          },
+        ]"
       >
-        <el-scrollbar ref="scrollbarRef" max-height="420px" always class="config-info">
+        <el-scrollbar ref="scrollbarRef" always class="config-info">
           <div class="py-5 px-5">{{ config }}</div>
           <el-tooltip
             class="box-item"
@@ -168,18 +185,16 @@
           </el-tooltip>
         </el-scrollbar>
       </el-col>
-      <el-col :span="24">
-        <el-scrollbar max-height="420px" always class="logs-info mt-3 p-3">
-          <div ref="logEl">
-            <div>令牌日志</div>
-            <div class="py-5 px-5">{{ '日志信息' }}</div>
-            <el-icon v-if="!isFullscreen" class="base-btn-link copy-icon" size="18" @click="toggle">
-              <FullScreen />
-            </el-icon>
-          </div>
-        </el-scrollbar>
-      </el-col>
     </el-row>
+    <el-scrollbar max-height="420px" always class="logs-info mt-3 p-3">
+      <div ref="logEl">
+        <div>令牌日志</div>
+        <div class="py-5 px-5">{{ '日志信息' }}</div>
+        <el-icon v-if="!isFullscreen" class="base-btn-link copy-icon" size="18" @click="toggle">
+          <FullScreen />
+        </el-icon>
+      </div>
+    </el-scrollbar>
     <template #footer>
       <div class="center">
         <!-- <mcp-button @click="handleCopy" class="w100">{{
@@ -306,11 +321,12 @@ import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Operation, CopyDocument, Link, Key, FullScreen } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
-import { type InstanceResult } from '@/types'
+import { AccessType, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
+import { JsonFormatter } from '@/utils/json'
 
 const logEl = ref(null)
 // 将日志容器作为全屏目标。el-scrollbar 的 ref 返回组件实例，需取其 $el
@@ -359,6 +375,9 @@ const configToken = computed(
 // config Info
 const config = computed(() => {
   // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
+  if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
+    return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
+  }
   if (dialogInfo.value.instanceInfo.enabledToken) {
     return `{
       "mcpServers": {
@@ -414,6 +433,7 @@ const handleEabledToken = async () => {
       enabledToken: dialogInfo.value.instanceInfo.enabledToken,
     })
     // dialogInfo.value.currentTokenIndex = 0
+    emit('on-refresh')
   } catch {
     dialogInfo.value.instanceInfo.enabledToken = !dialogInfo.value.instanceInfo.enabledToken
   } finally {
@@ -603,7 +623,7 @@ defineExpose({
   width: 100px;
 }
 .token-list {
-  min-height: 35vh;
+  height: 40vh;
   border-radius: 8px;
   background: var(--ep-bg-color-deep);
   padding: 24px;
@@ -670,11 +690,6 @@ defineExpose({
   top: 12px;
   right: 12px;
   cursor: pointer;
-}
-
-/* layout row fix to allow flex transitions */
-.vc-row {
-  display: flex;
 }
 
 /* config columns: left and right */

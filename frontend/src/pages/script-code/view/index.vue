@@ -168,11 +168,15 @@ const convertToTreeData = (nodes: any) => {
  * Handle download code package
  */
 const handleDownload = async () => {
-  const data = await CodeAPI.download({ ...query })
-  const blobUrl = URL.createObjectURL(new Blob([data], { type: 'application/zip' }))
+  const response = await CodeAPI.download({ ...query })
+  const blobUrl = URL.createObjectURL(
+    new Blob([response.data], { type: response.headers['content-type'] }),
+  )
   const link = document.createElement('a')
   link.href = blobUrl
-  link.download = `code-package-${query.id}.zip`
+  link.download =
+    response.headers['content-disposition']?.split('filename=')[1]?.match(/filename=("?)(.*?)\1/) ||
+    query.name
   document.body.appendChild(link)
   link.click()
 }

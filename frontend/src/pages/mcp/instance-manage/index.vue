@@ -122,6 +122,7 @@
         </template>
         <template #enabledToken="{ row }">
           <el-switch
+            v-if="row.accessType !== AccessType.DIRECT"
             v-model="row.enabledToken"
             style="--el-switch-on-color: #13ce66"
             inline-prompt
@@ -130,6 +131,7 @@
             :loading="row.loading"
             @change="handleEabledToken(row)"
           ></el-switch>
+          <span v-else class="color-gray">无需认证</span>
         </template>
         <template #status="{ row }">
           <el-text :type="activeOptions[row.status as keyof typeof activeOptions].type" link>
@@ -285,7 +287,7 @@ import ProbeStatus from './modules/probe-dialog.vue'
 import Select from '@/components/mcp-select/index.vue'
 import { TemplateAPI } from '@/api/mcp/template'
 import McpImage from '@/components/mcp-image/index.vue'
-import { AccessType, InstanceStatus } from '@/types/instance'
+import { AccessType, InstanceStatus, SourceType } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
 
 const { t } = useI18n()
@@ -419,6 +421,14 @@ const handleViewLog = (row: InstanceResult) => {
  * @param row - instance form data
  */
 const handleEditInstance = (row: InstanceResult) => {
+  if (!row.sourceType) {
+    ElMessage.error('未知类型，无法编辑')
+    return
+  }
+  if (row.sourceType === SourceType.OPENAPI) {
+    openAPIDialog.value.init(row.instanceId)
+    return
+  }
   jumpToPage({
     url: '/new-instance',
     data: {

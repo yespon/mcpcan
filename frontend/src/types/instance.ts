@@ -38,6 +38,16 @@ export enum SourceType {
   MARKET = 1, // market
   TEMPLATE = 2, // template
   CUSTOM = 3, // custom
+  OPENAPI = 4, // openapi
+}
+
+// Token Type of Instance
+export enum TokenType {
+  UNKONWN = 0, // Unkonwn
+  BEARER = 1, // Bearer
+  API_KEY = 2, // API Key
+  X_API_KEY = 3, // X-API-KEY
+  BASIC = 4, // Basic
 }
 
 // the default of instance

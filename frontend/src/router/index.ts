@@ -124,6 +124,14 @@ const router = createRouter({
           component: () => import('../pages/api-docs/update/index.vue'),
         },
         {
+          path: '/view-api-docs',
+          name: 'viewApiDocs',
+          meta: {
+            title: 'viewApiDocs',
+          },
+          component: () => import('../pages/api-docs/view/index.vue'),
+        },
+        {
           path: '/debug-tools',
           name: 'debugTools',
           meta: {

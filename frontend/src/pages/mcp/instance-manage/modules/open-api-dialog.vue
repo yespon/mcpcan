@@ -10,20 +10,6 @@
     <template #title>{{ dialogInfo.title }}</template>
     <el-splitter>
       <el-splitter-panel size="50%" class="p-4">
-        <el-card class="mb-3">
-          <div class="flex items-center">
-            <mcp-image
-              :src="openapi"
-              width="28"
-              height="28"
-              border-radius="4"
-              class="mr-3"
-            ></mcp-image>
-            <div class="flex-sub">
-              支持导入 OpenAPI 3.0、3.1 或 Swagger 2.0 数据格式的 JSON 或 YAML 文件。
-            </div>
-          </div>
-        </el-card>
         <el-form
           ref="baseInfo"
           :model="formData"
@@ -36,6 +22,19 @@
               v-model="formData.name"
               :placeholder="t('mcp.instance.formData.instanceName')"
             />
+          </el-form-item>
+          <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
+            <el-select
+              v-model="formData.environmentId"
+              :placeholder="t('mcp.instance.formData.environmentId')"
+            >
+              <el-option
+                v-for="(env, index) in envList"
+                :key="index"
+                :label="env.name"
+                :value="env.id"
+              />
+            </el-select>
           </el-form-item>
           <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
             <el-input
@@ -52,8 +51,22 @@
         <div class="mt-8 color-gray text-3">注：通过OpenAPI文档导入的MCP服务将以STDIO协议访问</div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
-        <div class="flex-sub link-hover" v-if="!formData.openapiRaw">
+        <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
           <div class="flex flex-col" style="height: 75vh">
+            <el-card class="mb-3">
+              <div class="flex items-center">
+                <mcp-image
+                  :src="openapi"
+                  width="28"
+                  height="28"
+                  border-radius="4"
+                  class="mr-3"
+                ></mcp-image>
+                <div class="flex-sub">
+                  支持导入 OpenAPI 3.0、3.1 或 Swagger 2.0 数据格式的 JSON 或 YAML 文件。
+                </div>
+              </div>
+            </el-card>
             <el-upload
               class="upload-demo flex-sub"
               drag
@@ -91,7 +104,8 @@
             show-checkbox
             node-key="id"
             :default-expand-all="true"
-            :default-checked-keys="checkedKeys"
+            :default-checked-keys="defaultCheckedKeys"
+            ref="apiTreeRef"
             :render-content="renderContent"
           />
         </div>
@@ -108,9 +122,10 @@
   </el-dialog>
   <Select
     v-model="selectVisible"
-    v-model:selected="formData.openapiFileId"
+    v-model:selected="formData.openapiFileID"
     red="opneAPISelect"
     :title="t('api.pageDesc.apiSelectTitle')"
+    @confirm="handleGetAPIDetail"
     :options="docsList"
   ></Select>
 </template>
@@ -128,7 +143,14 @@ import Upload from '@/components/upload/index.vue'
 import yaml from 'js-yaml'
 import { buildApiTree } from '@/utils/json.ts'
 import { DocsAPI } from '@/api/api-docs'
+import { useMcpStoreHook, useUserStore } from '@/stores'
+import { InstanceAPI } from '@/api/mcp/instance'
+import { getToken } from '@/utils/system'
+import { SourceType, TokenType } from '@/types'
 
+const { userInfo } = useUserStore()
+const { envList } = toRefs(useMcpStoreHook())
+const { handleGetEnvList } = useMcpStoreHook()
 const { t } = useI18n()
 const dialogInfo = ref<any>({
   visible: false,
@@ -138,21 +160,59 @@ const dialogInfo = ref<any>({
 const selectVisible = ref(false)
 const docsList = ref<any>([])
 const formData = ref({
+  instanceId: '',
   name: '',
   notes: '',
   iconPath: '',
-  openapiRaw: '',
-  openapiFileId: '',
+  environmentId: '',
+  openapiFileID: '',
+  chooseOpenapiFileID: '', // 选择的文档库文件ID
+  sourceType: SourceType.OPENAPI,
+  tokens: [
+    {
+      enabledTransport: false,
+      expireAt: '',
+      headers: [],
+      publishAt: new Date().getTime(),
+      token:
+        'Bearer ' +
+        getToken(
+          JSON.stringify({
+            expireAt: Date.now(),
+            userId: userInfo.userId,
+            username: userInfo.username,
+          }),
+        ),
+      tokenType: TokenType.BEARER,
+      usage: ['default'],
+    },
+  ],
 })
 const rules = ref({
   name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  environmentId: [
+    { required: true, message: t('mcp.instance.rules.environmentId'), trigger: 'change' },
+  ],
 })
+const baseInfo = ref<any>(null)
 const apiNodeList = ref<any[]>([])
-const checkedKeys = ref<any[]>([])
+const defaultCheckedKeys = ref<any[]>([])
+const apiTreeRef = ref(null)
+const docObject = ref<any>(null)
+const originFileText = ref<any>(null)
 
-const action = ref(baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/code/upload')
+const action = ref(
+  baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/openapi/upload',
+)
 const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
+})
+
+/**
+ * current checked keys
+ */
+const currentCheckedKeys = computed(() => {
+  return (apiTreeRef as any).value.getCheckedKeys().filter((key: string) => key)
 })
 
 /**
@@ -189,22 +249,19 @@ const renderContent = (h: any, params: any) => {
   )
 }
 
-const handleBeforeUpload = async (file: File) => {
+const handleFileContent = async (rawText: string) => {
   try {
-    // 现代浏览器支持直接调用 file.text()
-    const rawText = await file.text() // 原始文本内容
     // 保存原始文本以供后续使用
-    formData.value.openapiRaw = rawText
+    originFileText.value = rawText
     // 尝试解析为 JSON/YAML（容错）
-    let doc: any = null
     try {
-      doc = JSON.parse(rawText)
-      apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(doc) }]
+      docObject.value = JSON.parse(rawText)
+      apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
       // set checked keys to all node ids
-      checkedKeys.value = []
+      defaultCheckedKeys.value = []
       const collectIds = (nodes: any[]) => {
         nodes.forEach((n) => {
-          if (n.id) checkedKeys.value.push(n.id)
+          if (n.id) defaultCheckedKeys.value.push(n.id)
           if (n.children && n.children.length) collectIds(n.children)
         })
       }
@@ -214,13 +271,17 @@ const handleBeforeUpload = async (file: File) => {
       console.log(e)
       // 不是 JSON，就当做 YAML 尝试解析
       try {
-        doc = yaml.load(rawText)
-        console.log('解析为 YAML 成功load', doc, Object.keys(doc.paths).length)
-        apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(doc) }]
-        checkedKeys.value = []
+        docObject.value = yaml.load(rawText)
+        console.log(
+          '解析为 YAML 成功load',
+          docObject.value,
+          Object.keys(docObject.value.paths).length,
+        )
+        apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+        defaultCheckedKeys.value = []
         const collectIds = (nodes: any[]) => {
           nodes.forEach((n) => {
-            if (n.id) checkedKeys.value.push(n.id)
+            if (n.id) defaultCheckedKeys.value.push(n.id)
             if (n.children && n.children.length) collectIds(n.children)
           })
         }
@@ -244,29 +305,159 @@ const handleBeforeUpload = async (file: File) => {
 }
 
 /**
+ * get build api tree
+ * @param file Handle before upload
+ */
+const handleBeforeUpload = async (file: File) => {
+  // 现代浏览器支持直接调用 file.text()
+  const rawText = await file.text() // 原始文本内容
+  // 保存原始文本以供后续使用
+  handleFileContent(rawText)
+}
+
+/**
  *  Handle update success
  * @param response
  */
-const handleSuccess = (response: { code: number; data: { path: string } }) => {
+const handleSuccess = (response: { code: number; data: { openapiFileId: string } }) => {
   if (response.code !== 0) {
     return
   }
+  formData.value.openapiFileID = response.data.openapiFileId
   ElMessage.success(t('action.upload'))
+}
+
+const handleGetAPIDetail = async (id: string) => {
+  try {
+    const { content } = await DocsAPI.fileContent({ openapiFileId: id })
+    handleFileContent(content)
+  } catch {
+    formData.value.openapiFileID = ''
+  }
+}
+
+/**
+ * Handle file upload again
+ */
+const handleUploadAgain = async () => {
+  // Reset form data
+  const newDoc = JSON.parse(JSON.stringify(docObject.value))
+  for (const path in newDoc.paths) {
+    const obj = newDoc.paths[path] || {}
+    for (const method in obj) {
+      const mKey = method as unknown as string
+      if (!currentCheckedKeys.value.includes(obj[mKey].operationId)) {
+        delete obj[mKey]
+      }
+    }
+    if (Object.keys(newDoc.paths[path]).length === 0) {
+      delete newDoc.paths[path]
+    }
+  }
+
+  // 转成 YAML 并上传
+  const yamlText = yaml.dump(newDoc)
+  const fd = new FormData()
+  const blob = new Blob([yamlText], { type: 'application/x-yaml' })
+  fd.append('file', blob, 'openapi.yaml')
+  fd.append('baseOpenapiFileID', formData.value.openapiFileID)
+  try {
+    const res = await fetch(action.value, {
+      method: 'POST',
+      headers: Object.assign({}, headers.value),
+      body: fd,
+    })
+    const body = await res.json()
+    if (body?.code === 0 && body.data?.openapiFileId) {
+      formData.value.chooseOpenapiFileID = body.data.openapiFileId
+      ElMessage.success(t('action.upload'))
+    } else {
+      ElMessage.error(t('action.uploadFail') || '上传失败')
+    }
+  } catch (err) {
+    console.error('upload error', err)
+    ElMessage.error(t('action.uploadFail') || '上传失败')
+  }
 }
 
 /**
  * Handle confirm and submit data
  */
-const handleConfirm = () => {
-  console.log(checkedKeys.value)
+const handleConfirm = async () => {
+  // 处理选中的接口；将选中的paths 组装成新的OpenAPI文档上传
+  if (originFileText.value) {
+    await handleUploadAgain()
+  } else {
+    ElMessage.error('请先上传或选择OpenAPI文档')
+  }
+  baseInfo.value.validate(async (valid: boolean) => {
+    if (valid) {
+      // 提交数据
+      await InstanceAPI.createByOpenAPI(formData.value)
+      dialogInfo.value.visible = false
+      ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
+    }
+  })
+}
+
+/**
+ * Handle instance detail and openAPI data
+ * @param id instance id
+ */
+const handleGetDetail = async (id: string) => {
+  const data = await InstanceAPI.detail({ instanceId: id })
+  formData.value = {
+    ...data,
+    openapiFileID: data.packageId,
+  }
+  const { baseOpenapiFileID } = await DocsAPI.fileContent({ openapiFileId: id })
+  handleGetAPIDetail(baseOpenapiFileID)
+  // chooseOpenapiFileID: data.packageId,
 }
 
 /**
  * Init dialog data
  */
-const init = () => {
+const init = (id: string | null) => {
   dialogInfo.value.visible = true
+  baseInfo.value?.resetFields()
+  if (id) {
+    // 获取详情
+    handleGetDetail(id)
+  } else {
+    formData.value = {
+      instanceId: '',
+      name: '',
+      notes: '',
+      iconPath: '',
+      environmentId: '',
+      openapiFileID: '',
+      chooseOpenapiFileID: '',
+      sourceType: SourceType.OPENAPI,
+      tokens: [
+        {
+          enabledTransport: false,
+          expireAt: '',
+          headers: [],
+          publishAt: new Date().getTime(),
+          token:
+            'Bearer ' +
+            getToken(
+              JSON.stringify({
+                expireAt: Date.now(),
+                userId: userInfo.userId,
+                username: userInfo.username,
+              }),
+            ),
+          tokenType: TokenType.BEARER,
+          usage: ['default'],
+        },
+      ],
+    }
+  }
+
   handleGetAPIlist()
+  handleGetEnvList()
 }
 
 defineExpose({

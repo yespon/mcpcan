@@ -111,7 +111,7 @@ const handleUpdatePackage = () => {
  */
 const handleViewCode = (code: any) => {
   jumpToPage({
-    url: '/view-code-package',
+    url: '/view-api-docs',
     data: {
       id: code.id,
       name: code.name,

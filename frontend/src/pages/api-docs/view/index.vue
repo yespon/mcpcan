@@ -23,16 +23,15 @@
       </div>
     </div>
     <div class="mt-4">
-      <el-card :style="{ height: 'calc(100vh - 150px)' }">
+      <el-card>
         <template #header>
           <el-space>
             <span> {{ t('code.codeEditor') }}<span class="ml-4"></span> </span>
           </el-space>
         </template>
-        <el-scrollbar ref="scrollbarRef" height="calc(100vh - 260px)" always>
+        <el-scrollbar ref="scrollbarRef" height="calc(100vh - 260px)" class="border-rd-1" always>
           <div v-if="!currentContent">{{ t('api.pageDesc.empty') }}</div>
           <div class="text-conetnt" v-else>
-            <!-- 图片显示 -->
             {{ currentContent }}
           </div>
         </el-scrollbar>
@@ -42,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { CodeAPI } from '@/api/code/index'
+import { DocsAPI } from '@/api/api-docs/index'
 import GlareHover from '@/components/Animation/GlareHover.vue'
 
 const { t } = useI18n()
@@ -54,18 +53,22 @@ const currentContent = ref('')
  * Handle download code package
  */
 const handleDownload = async () => {
-  const data = await CodeAPI.download({ ...query })
-  const blobUrl = URL.createObjectURL(new Blob([data], { type: 'application/yaml' }))
+  const response = await DocsAPI.download({ ...query })
+  const blobUrl = URL.createObjectURL(
+    new Blob([response.data], { type: response.headers['content-type'] }),
+  )
   const link = document.createElement('a')
   link.href = blobUrl
-  link.download = `${query.name}.yaml`
+  link.download =
+    response.headers['content-disposition']?.split('filename=')[1]?.match(/filename=("?)(.*?)\1/) ||
+    query.name
   document.body.appendChild(link)
   link.click()
 }
 
 const handleGetContent = async () => {
-  const { data } = await CodeAPI.fileContent({ openapiFileId: query.id })
-  currentContent.value = data
+  const { content } = await DocsAPI.fileContent({ openapiFileId: query.id })
+  currentContent.value = content
 }
 
 /**
@@ -80,7 +83,6 @@ onMounted(init)
 
 <style lang="scss" scoped>
 .text-conetnt {
-  height: calc(100vh - 260px);
   font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
   font-size: 12px;
   line-height: 1.5;

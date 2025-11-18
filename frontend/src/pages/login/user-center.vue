@@ -155,7 +155,7 @@ const handleDelAvatar = () => {
  * 初始化
  */
 const init = () => {
-  formData.value.oldPassword = loginFormData.value.password
+  formData.value.oldPassword = JSON.parse(atob(loginFormData.value)).password
 }
 
 onMounted(init)

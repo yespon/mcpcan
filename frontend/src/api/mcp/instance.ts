@@ -19,6 +19,14 @@ export const InstanceAPI = {
       data,
     })
   },
+  // 创建实例
+  createByOpenAPI(data: any) {
+    return request<any, List>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/create`,
+      method: 'POST',
+      data,
+    })
+  },
   // 实例详情
   detail(data: any) {
     return request<any, any>({
@@ -31,6 +39,14 @@ export const InstanceAPI = {
   edit(data: any) {
     return request<any, any>({
       url: `${baseConfig.baseUrlVersion}/market/instance/edit`,
+      method: 'PUT',
+      data,
+    })
+  },
+  // 编辑实例
+  editByOpenAPI(data: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/update`,
       method: 'PUT',
       data,
     })

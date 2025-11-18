@@ -13,7 +13,7 @@ const { reload } = useRouterHooks()
 export const useUserStore = defineStore('user', () => {
   const userInfo = useStorage('userInfo', {} as UserInfo)
   const encryptionInfo = ref<EncryptionInfo>({} as EncryptionInfo)
-  const loginFormData = useStorage('loginFormData', {} as LoginFormData)
+  const loginFormData = useStorage('loginFormData', {} as string)
 
   // PEM interchange ArrayBuffer
   function pemToArrayBuffer(pem: string) {
@@ -98,7 +98,7 @@ export const useUserStore = defineStore('user', () => {
    * @returns
    */
   async function login(LoginFormData: LoginFormData) {
-    loginFormData.value = LoginFormData
+    loginFormData.value = btoa(JSON.stringify(LoginFormData))
     const encryptedPassword = await encryptPassword(LoginFormData.password || '')
     return new Promise((resolve, reject) => {
       AuthAPI.login({

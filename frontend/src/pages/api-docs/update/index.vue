@@ -20,7 +20,7 @@
               multiple
               :on-success="handleSuccess"
               :headers="headers"
-              accept=".zip, .tar, .tar.gz, application/zip, application/x-tar, application/gzip"
+              accept=".json, .yaml, application/json, application/yaml"
             >
               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
               <div class="el-upload__text">
