@@ -323,59 +323,59 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
 }
 
 // 处理文件内容渲染默认选中
-const handleFileContent = async (rawText: string) => {
-  try {
-    // 保存原始文本以供后续使用
-    originFileText.value = rawText
-    // 尝试解析为 JSON/YAML（容错）
-    try {
-      docObject.value = JSON.parse(rawText)
-      apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
-      // set checked keys to all node ids
-      defaultCheckedKeys.value = []
-      const collectIds = (nodes: any[]) => {
-        nodes.forEach((n) => {
-          if (n.id) defaultCheckedKeys.value.push(n.id)
-          if (n.children && n.children.length) collectIds(n.children)
-        })
-      }
-      collectIds(apiNodeList.value)
-    } catch (e) {
-      console.log(e)
-      // 不是 JSON，就当做 YAML 尝试解析
-      try {
-        docObject.value = yaml.load(rawText)
-        console.log(
-          '解析为 YAML 成功load',
-          docObject.value,
-          Object.keys(docObject.value.paths).length,
-        )
-        apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
-        defaultCheckedKeys.value = []
-        const collectIds = (nodes: any[]) => {
-          nodes.forEach((n) => {
-            if (n.id) defaultCheckedKeys.value.push(n.id)
-            if (n.children && n.children.length) collectIds(n.children)
-          })
-        }
-        collectIds(apiNodeList.value)
-        console.log(apiNodeList.value)
-      } catch (yamlErr) {
-        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
-      }
-    }
+// const handleFileContent = async (rawText: string) => {
+//   try {
+//     // 保存原始文本以供后续使用
+//     originFileText.value = rawText
+//     // 尝试解析为 JSON/YAML（容错）
+//     try {
+//       docObject.value = JSON.parse(rawText)
+//       apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+//       // set checked keys to all node ids
+//       defaultCheckedKeys.value = []
+//       const collectIds = (nodes: any[]) => {
+//         nodes.forEach((n) => {
+//           if (n.id) defaultCheckedKeys.value.push(n.id)
+//           if (n.children && n.children.length) collectIds(n.children)
+//         })
+//       }
+//       collectIds(apiNodeList.value)
+//     } catch (e) {
+//       console.log(e)
+//       // 不是 JSON，就当做 YAML 尝试解析
+//       try {
+//         docObject.value = yaml.load(rawText)
+//         console.log(
+//           '解析为 YAML 成功load',
+//           docObject.value,
+//           Object.keys(docObject.value.paths).length,
+//         )
+//         apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+//         defaultCheckedKeys.value = []
+//         const collectIds = (nodes: any[]) => {
+//           nodes.forEach((n) => {
+//             if (n.id) defaultCheckedKeys.value.push(n.id)
+//             if (n.children && n.children.length) collectIds(n.children)
+//           })
+//         }
+//         collectIds(apiNodeList.value)
+//         console.log(apiNodeList.value)
+//       } catch (yamlErr) {
+//         console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+//       }
+//     }
 
-    // 如果你想在客户端先处理并阻止 Element Plus 直接上传，返回 false
-    // return false
+//     // 如果你想在客户端先处理并阻止 Element Plus 直接上传，返回 false
+//     // return false
 
-    // 若不阻止上传，返回 true 或不返回（或者 return file）
-    return true
-  } catch (err) {
-    console.error('读取文件出错', err)
-    // 阻止上传
-    return false
-  }
-}
+//     // 若不阻止上传，返回 true 或不返回（或者 return file）
+//     return true
+//   } catch (err) {
+//     console.error('读取文件出错', err)
+//     // 阻止上传
+//     return false
+//   }
+// }
 
 /**
  * get build api tree

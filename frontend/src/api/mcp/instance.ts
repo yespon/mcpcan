@@ -46,7 +46,7 @@ export const InstanceAPI = {
   // 编辑实例
   editByOpenAPI(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/update`,
+      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/edit`,
       method: 'PUT',
       data,
     })
