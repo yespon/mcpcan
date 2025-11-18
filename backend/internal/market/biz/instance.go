@@ -288,6 +288,9 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 	oriInstance.ContainerStatus = model.ContainerStatusPending
 	oriInstance.ContainerIsReady = false
 	oriInstance.IconPath = req.IconPath
+	if req.ChooseOpenapiFileID != oriInstance.PackageID {
+		oriInstance.PackageID = req.ChooseOpenapiFileID
+	}
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
