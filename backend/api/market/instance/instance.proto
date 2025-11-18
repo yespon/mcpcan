@@ -881,7 +881,7 @@ service InstanceService {
   // 编辑 Openapi 实例
   rpc OpenapiUpdate(UpdateOpenapiRequest) returns (EditResp) {
     option (google.api.http) = {
-      put:  "/instance/openapi/update",
+      put:  "/instance/openapi/edit",
       body: "*",
     };
   }
