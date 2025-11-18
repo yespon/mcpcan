@@ -23,10 +23,10 @@ GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
 # Build flags module github.com/kymo-mcp/mcpcan
-LDFLAGS := -X '${BACKEND_PATH}/pkg/version.Version=${VERSION}' \
-		-X '${BACKEND_PATH}/pkg/version.BuildTime=${BUILD_TIME}' \
-		-X '${BACKEND_PATH}/pkg/version.Commit=${COMMIT}' \
-		-X '${BACKEND_PATH}/pkg/version.GoVersion=${GO_VERSION}'
+LDFLAGS := -X 'pkg/version.Version=${VERSION}' \
+		-X 'pkg/version.BuildTime=${BUILD_TIME}' \
+		-X 'pkg/version.Commit=${COMMIT}' \
+		-X 'pkg/version.GoVersion=${GO_VERSION}'
 
 # Backend build targets
 define go_build_service

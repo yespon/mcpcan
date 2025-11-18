@@ -1,5 +1,7 @@
 package version
 
+import "fmt"
+
 var (
 	Version   string
 	GoVersion string
@@ -21,4 +23,9 @@ func GetVersionInfo() *VersionInfo {
 		Commit:    Commit,
 		BuildTime: BuildTime,
 	}
+}
+
+func init() {
+	fmt.Printf("Version: %s\n", Version)
+	fmt.Printf("Commit: %s\n", Commit)
 }
