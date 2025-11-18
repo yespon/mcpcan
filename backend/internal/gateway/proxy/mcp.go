@@ -82,11 +82,13 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 			)
 			reqAuth := &RequestAuth{}
 			if v := req.Context().Value(RequestAuthKey); v != nil {
-				if ra, ok := v.(RequestAuth); ok {
-					reqAuth = &ra
+				if ra, ok := v.(*RequestAuth); ok {
+					reqAuth = ra
 				}
 			}
-			writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventPanicRecovered, reqAuth.Usages,
+			writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token,
+				golibLog.ErrorLevel, model.EventPanicRecovered, reqAuth.Usages,
+
 				buildLogFromReq(req, "panic"))
 			// panic(r) // Re-throw panic that is not ErrAbortHandler
 			// respWriter.WriteHeader(http.StatusInternalServerError)
@@ -103,18 +105,20 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 	if err != nil {
 		reqAuth := &RequestAuth{}
 		if v := req.Context().Value(RequestAuthKey); v != nil {
-			if ra, ok := v.(RequestAuth); ok {
-				reqAuth = &ra
+			if ra, ok := v.(*RequestAuth); ok {
+				reqAuth = ra
 			}
 		}
-		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventRequestValidationFail, reqAuth.Usages,
+		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.ErrorLevel, model.EventRequestValidationFail, reqAuth.Usages,
+
 			buildLogFromReq(req, err.Error()))
 		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
 		// respWriter.Write([]byte(err.Error()))
 		if strings.HasSuffix(req.URL.Path, MCP_SERVER_SUBFIX_SSE) {
-			WriteMCPSSEError(respWriter, -32603, "Internal error", err.Error())
+			WriteMCPSSEError(respWriter, -32603, err.Error(), err.Error())
 		} else {
-			WriteMCPError(respWriter, http.StatusMethodNotAllowed, -32603, "Internal error", err.Error())
+			WriteMCPError(respWriter, http.StatusInternalServerError, -32603, err.Error(), err.Error())
 		}
 		return
 	}
@@ -122,11 +126,13 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 	if info := req.Context().Value(InstanceInfoKey); info != nil {
 		reqAuth := &RequestAuth{}
 		if v := req.Context().Value(RequestAuthKey); v != nil {
-			if ra, ok := v.(RequestAuth); ok {
-				reqAuth = &ra
+			if ra, ok := v.(*RequestAuth); ok {
+				reqAuth = ra
 			}
 		}
-		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventRequestReceived, reqAuth.Usages,
+		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.InfoLevel, model.EventRequestReceived, reqAuth.Usages,
+
 			buildLogFromReq(req, "received"))
 	}
 
@@ -168,7 +174,9 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	// validate request Authorization header for instance
 	reqAuth, err := validReqAuthorizationForInstance(req, instanceInfo)
 	if err != nil {
-		writeMCPLog(instanceId, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
+		writeMCPLog(instanceId, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
+
 			buildLogFromReq(req, err.Error()))
 		return fmt.Errorf("failed to valid token: %v", err.Error())
 	}
@@ -229,13 +237,17 @@ func director(req *http.Request) {
 	if v, ok := req.Context().Value(RequestAuthKey).(*RequestAuth); ok {
 		reqAuth = v
 	}
-	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventDirectorBefore, reqAuth.Usages,
+	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		golibLog.InfoLevel, model.EventDirectorBefore, reqAuth.Usages,
+
 		buildLogFromReq(req, "director.before"))
 
 	isSSEReq, ok2 := req.Context().Value(IsSSEReqKey).(bool)
 	if !ok2 {
 		logger.Error("No IsSSEReqKey found in context")
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventSSEFlagMissing, reqAuth.Usages,
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.WarnLevel, model.EventSSEFlagMissing, reqAuth.Usages,
+
 			buildLogFromReq(req, "sse.flag.missing"))
 		return
 	}
@@ -244,7 +256,9 @@ func director(req *http.Request) {
 	pathNum := len(parts)
 	if pathNum <= 2 {
 		logger.Error("Path is too short")
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventPathTooShort, reqAuth.Usages,
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.WarnLevel, model.EventPathTooShort, reqAuth.Usages,
+
 			buildLogFromReq(req, "path.too.short"))
 		return
 	}
@@ -254,7 +268,9 @@ func director(req *http.Request) {
 	targetUrl, err := url.Parse(instanceInfo.McpConfig.URL)
 	if err != nil {
 		logger.Error("Failed to parse URL", zap.Error(err))
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventUpstreamURLParseFail, reqAuth.Usages,
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.ErrorLevel, model.EventUpstreamURLParseFail, reqAuth.Usages,
+
 			buildLogFromReq(req, "Failed to parse URL: "+err.Error()))
 		return
 	}
@@ -272,7 +288,9 @@ func director(req *http.Request) {
 			handleHostingStreamableHTTPReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported")
-			writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
+			writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
+
 				buildLogFromReq(req, "McpProtocol is not supported"))
 			return
 		}
@@ -288,13 +306,17 @@ func director(req *http.Request) {
 			handleProxyStreamableHTTPPathReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported")
-			writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
+			writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
+
 				buildLogFromReq(req, "McpProtocol is not supported"))
 			return
 		}
 	default:
 		logger.Error("AccessType is not supported")
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.WarnLevel, model.EventAccessUnsupported, reqAuth.Usages,
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.WarnLevel, model.EventAccessUnsupported, reqAuth.Usages,
+
 			buildLogFromReq(req, "AccessType is not supported"))
 		return
 	}
@@ -305,14 +327,17 @@ func director(req *http.Request) {
 		zap.String("url", req.URL.String()),
 	)
 
-	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventDirectorAfter, reqAuth.Usages,
+	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		golibLog.InfoLevel, model.EventDirectorAfter, reqAuth.Usages,
+
 		buildLogFromReq(req, "director.after"))
 }
 
 // Handle response modification before sending to client
 func modifyResponse(resp *http.Response) error {
 	// Check if it is SSE response
-	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
+	isSSEReq, ok := resp.Request.Context().Value(IsSSEReqKey).(bool)
+	if ok && isSSEReq {
 		// Get instanceId from context
 		instanceInfo, ok := resp.Request.Context().Value(InstanceInfoKey).(*InstanceInfo)
 		if !ok {
@@ -323,11 +348,13 @@ func modifyResponse(resp *http.Response) error {
 		}
 		reqAuth := &RequestAuth{}
 		if v := resp.Request.Context().Value(RequestAuthKey); v != nil {
-			if ra, ok := v.(RequestAuth); ok {
-				reqAuth = &ra
+			if ra, ok := v.(*RequestAuth); ok {
+				reqAuth = ra
 			}
 		}
-		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages, &model.Log{Event: model.EventSSEStart, Level: golibLog.InfoLevel, Message: "sse start", URL: resp.Request.URL.String(), Method: resp.Request.Method, Path: resp.Request.URL.Path, Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+		writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages,
+			buildLogFromReq(resp.Request, "sse start"))
 
 		// Check if request context has been canceled
 		select {
@@ -357,7 +384,9 @@ func modifyResponse(resp *http.Response) error {
 			// Use gzip.Reader to wrap original response body, it will auto-decompress
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
-				writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages, &model.Log{Event: model.EventGzipReaderFailed, Level: golibLog.ErrorLevel, Message: err.Error(), URL: resp.Request.URL.String(), Method: resp.Request.Method, Path: resp.Request.URL.Path, Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+				writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+					golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages,
+					buildLogFromReq(resp.Request, err.Error()))
 				return &proxyError{
 					message: fmt.Sprintf("failed to create gzip reader: %v", err),
 					status:  http.StatusInternalServerError,
@@ -375,11 +404,13 @@ func modifyResponse(resp *http.Response) error {
 			src:     reader,
 			info:    instanceInfo,
 			reqAuth: reqAuth,
+			resp:    resp,
 		})
 
 		// Ensure response header allows chunked transfer
 		resp.Header.Del("Content-Length")
 	}
+
 	return nil
 }
 
@@ -391,6 +422,7 @@ type SSEResponseBodyReader struct {
 	reader  *bufio.Reader // Convenient for reading by line or delimiter
 	reqAuth *RequestAuth
 	info    *InstanceInfo
+	resp    *http.Response
 }
 
 func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
@@ -453,7 +485,9 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:/"), []byte(fmt.Sprintf("data:/%s/", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("old", msgStr), zap.String("new", string(msgBytes)))
-				writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token, golibLog.DebugLevel, model.EventSSEEndpointRewrite, r.reqAuth.Usages, &model.Log{Event: model.EventSSEEndpointRewrite, Level: golibLog.DebugLevel, Message: "endpoint rewritten", URL: "", Method: "", Path: "", Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+				writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+					golibLog.DebugLevel, model.EventSSEEndpointRewrite, r.reqAuth.Usages,
+					buildLogFromReq(r.resp.Request, "endpoint rewritten"))
 			}
 
 			// Write modified data into internal buffer
@@ -462,13 +496,17 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If source is exhausted (EOF) and our buffer is also empty, return EOF
 		if readErr == io.EOF && r.buffer.Len() == 0 {
-			writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token, golibLog.DebugLevel, model.EventSSEEof, r.reqAuth.Usages, &model.Log{Event: model.EventSSEEof, Level: golibLog.DebugLevel, Message: "sse eof", URL: "", Method: "", Path: "", Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+			writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+				golibLog.DebugLevel, model.EventSSEEof, r.reqAuth.Usages,
+				buildLogFromReq(r.resp.Request, "sse eof"))
 			return 0, io.EOF
 		}
 
 		// If other error occurs, return directly
 		if readErr != nil && readErr != io.EOF {
-			writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token, golibLog.WarnLevel, model.EventSSEReadError, r.reqAuth.Usages, &model.Log{Event: model.EventSSEReadError, Level: golibLog.WarnLevel, Message: readErr.Error(), URL: "", Method: "", Path: "", Params: "", IsSSE: true, TS: time.Now().Format(time.RFC3339Nano)})
+			writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+				golibLog.WarnLevel, model.EventSSEReadError, r.reqAuth.Usages,
+				buildLogFromReq(r.resp.Request, readErr.Error()))
 			return 0, readErr
 		}
 	}
