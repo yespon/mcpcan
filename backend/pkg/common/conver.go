@@ -96,6 +96,8 @@ func ConvertToProtoSourceType(sourceType model.SourceType) (instancepb.SourceTyp
 		return instancepb.SourceType_TEMPLATE, nil
 	case model.SourceTypeCustom:
 		return instancepb.SourceType_CUSTOM, nil
+	case model.OpenapiTypeCustom:
+		return instancepb.SourceType_OPENAPI, nil
 	default:
 		return instancepb.SourceType_SourceTypeUnknown, fmt.Errorf("unknown source type: %v", sourceType)
 	}
