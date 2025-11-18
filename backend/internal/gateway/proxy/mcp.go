@@ -108,7 +108,7 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 			}
 		}
 		writeMCPLog(iid0, reqAuth.TokenHeaderKey, reqAuth.Token, golibLog.ErrorLevel, model.EventRequestValidationFail, reqAuth.Usages,
-			buildLogFromReq(req, "validation"))
+			buildLogFromReq(req, err.Error()))
 		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
 		// respWriter.Write([]byte(err.Error()))
 		if strings.HasSuffix(req.URL.Path, MCP_SERVER_SUBFIX_SSE) {
