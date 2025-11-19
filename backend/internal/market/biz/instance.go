@@ -443,6 +443,8 @@ func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol mod
 	addr := ""
 	if mcpProtocol == model.McpProtocolSSE {
 		addr = fmt.Sprintf("/%s/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID, mcpProtocol.String())
+	} else if mcpProtocol == model.McpProtocolStreamableHttp {
+		addr = fmt.Sprintf("/%s/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID, "mcp")
 	} else {
 		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
 	}
