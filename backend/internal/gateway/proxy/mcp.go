@@ -335,8 +335,7 @@ func director(req *http.Request) {
 // Handle response modification before sending to client
 func modifyResponse(resp *http.Response) error {
 	// Check if it is SSE response
-	isSSEReq, ok := resp.Request.Context().Value(IsSSEReqKey).(bool)
-	if ok && isSSEReq {
+	if strings.Contains(resp.Header.Get("Content-Type"), "text/event-stream") {
 		// Get instanceId from context
 		instanceInfo, ok := resp.Request.Context().Value(InstanceInfoKey).(*InstanceInfo)
 		if !ok {
@@ -578,12 +577,6 @@ func handleHostingStreamableHTTPReq(req *http.Request, instanceInfo *InstanceInf
 	// Append RawQuery
 	if targetUrl.RawQuery != "" {
 		req.URL.RawQuery = req.URL.RawQuery + "&" + targetUrl.RawQuery
-	}
-	// Append header
-	if instanceInfo.McpConfig.Headers != nil {
-		for key, value := range instanceInfo.McpConfig.Headers {
-			req.Header.Set(key, value)
-		}
 	}
 	if instanceInfo.AccessType == model.AccessTypeHosting &&
 		instanceInfo.McpProtocol == model.McpProtocolStdio &&
