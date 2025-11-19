@@ -59,6 +59,14 @@ export const InstanceAPI = {
       data,
     })
   },
+  // token网关日志
+  logsByToken(data: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/gateway-log/find`,
+      method: 'POST',
+      data,
+    })
+  },
   // 停止实例
   stop(data: any) {
     return request<any, any>({

@@ -185,7 +185,7 @@ const formData = ref({
           }),
         ),
       tokenType: TokenType.BEARER,
-      usage: ['default'],
+      usages: ['default'],
     },
   ],
 })
@@ -543,7 +543,7 @@ const init = (id: string | null) => {
               }),
             ),
           tokenType: TokenType.BEARER,
-          usage: ['default'],
+          usages: ['default'],
         },
       ],
     }

@@ -186,10 +186,21 @@
         </el-scrollbar>
       </el-col>
     </el-row>
-    <el-scrollbar max-height="420px" always class="logs-info mt-3 p-3">
+    <el-scrollbar
+      :class="[
+        'config-col logs-box  mt-3 p-3',
+        {
+          collapsed:
+            !dialogInfo.instanceInfo.enabledToken ||
+            dialogInfo.instanceInfo.accessType === AccessType.DIRECT,
+        },
+      ]"
+      max-height="420px"
+      always
+    >
       <div ref="logEl">
         <div>令牌日志</div>
-        <div class="py-5 px-5">{{ '日志信息' }}</div>
+        <div class="py-5 px-5">{{ tokenConfig }}</div>
         <el-icon v-if="!isFullscreen" class="base-btn-link copy-icon" size="18" @click="toggle">
           <FullScreen />
         </el-icon>
@@ -221,6 +232,7 @@
               :rules="rules"
               label-width="auto"
               label-position="top"
+              class="mx-2"
             >
               <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
                 <template #label>
@@ -258,6 +270,17 @@
                   style="width: 100%"
                   :disabled-date="(date: Date) => date.getTime() < Date.now()"
                 ></el-date-picker>
+              </el-form-item>
+              <el-form-item :label="'API 认证凭证'" prop="tokenType">
+                <el-select
+                  v-model="formData.tokenType"
+                  :placeholder="t('mcp.instance.formData.sourceType')"
+                >
+                  <el-option label="Basic" value="Basic" />
+                  <el-option label="Bearer" value="Bearer" />
+                  <el-option label="X-API-key" value="X-API-key" />
+                  <el-option label="Api-Key" value="Api-Key" />
+                </el-select>
               </el-form-item>
               <el-form-item label="Token" prop="token">
                 <template #label>
@@ -347,6 +370,9 @@ const formRef = ref()
 const formData = ref({
   visible: false,
   token: '',
+  headers: [],
+  tokenType: '',
+  enabledTransport: false,
   expireAt: null as number | null,
   usages: [] as string[],
 })
@@ -360,7 +386,8 @@ const dialogInfo = ref({
   currentTokenIndex: null as number | null,
   currentEditIndex: null as number | null,
 })
-
+// logs with token
+const tokenConfig = ref('')
 const configUrl = computed(
   () => `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`,
 )
@@ -538,7 +565,6 @@ const handleDeleteToken = (index: number) => {
 const handleConfirmToken = async () => {
   const result = await formRef.value.validate()
   if (!result) return
-
   if (dialogInfo.value.currentEditIndex) {
     dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
       token: formData.value.token,
@@ -547,11 +573,16 @@ const handleConfirmToken = async () => {
       usages: formData.value.usages,
     }
     dialogInfo.value.currentEditIndex = null
-    formData.value.visible = false
-    formData.value.token = ''
-    formData.value.expireAt = null
-    formData.value.usages = []
-    handleSaveTokens()
+    await handleSaveTokens()
+    formData.value = {
+      visible: false,
+      token: '',
+      headers: [],
+      tokenType: '',
+      enabledTransport: false,
+      expireAt: null,
+      usages: [],
+    }
     return
   }
   try {
@@ -561,10 +592,16 @@ const handleConfirmToken = async () => {
       publishAt: Date.now(),
       usages: formData.value.usages,
     })
-    formData.value.visible = false
-    formData.value.token = ''
-    formData.value.expireAt = null
     await handleSaveTokens()
+    formData.value = {
+      visible: false,
+      token: '',
+      headers: [],
+      tokenType: '',
+      enabledTransport: false,
+      expireAt: null,
+      usages: [],
+    }
   } catch {
     dialogInfo.value.instanceInfo.tokens.pop()
   }
@@ -600,6 +637,25 @@ const handleCopy = async (type: string) => {
   ElMessage.success(t('action.copy'))
 }
 
+const handleGetLogs = async () => {
+  if (dialogInfo.value.currentTokenIndex === null) {
+    ElMessage.warning('请先选择一个Token')
+    return
+  }
+  try {
+    dialogInfo.value.instanceInfo.loading = true
+    const { logs } = await InstanceAPI.logsByToken({
+      instanceId: dialogInfo.value.instanceInfo.instanceId,
+      token: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token,
+      pageNum: 1,
+      pageSize: 100,
+    })
+    tokenConfig.value = logs
+  } finally {
+    dialogInfo.value.instanceInfo.loading = false
+  }
+}
+
 /**
  * Handle init model data
  * @param config - public proxy config
@@ -609,6 +665,7 @@ const init = (instanceInfo: InstanceResult) => {
   dialogInfo.value.instanceInfo = cloneDeep(instanceInfo)
   if (instanceInfo.enabledToken) {
     dialogInfo.value.currentTokenIndex = 0
+    handleGetLogs()
   } else {
     dialogInfo.value.currentTokenIndex = null
   }
@@ -722,6 +779,25 @@ defineExpose({
   /* when left collapsed, right expands to full width */
   flex-basis: 100% !important;
   max-width: 100% !important;
+}
+.logs-box {
+  height: 36vh;
+  font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre;
+  word-break: normal;
+  border-radius: 8px;
+  background: var(--ep-bg-color-deep);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+.logs-box.collapsed {
+  opacity: 0;
+  padding: 0 !important;
+  max-width: 0 !important;
+  min-height: 0;
+  height: 0 !important;
 }
 .tag-input {
   :deep(.el-tag) {
