@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -24,6 +25,8 @@ func (e *proxyError) Error() string {
 
 // errorHandler 处理代理请求过程中的错误
 func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
+	xInstanceID := r.Header.Get("X-Instance-ID")
+	xTraceID := r.Header.Get("X-Trace-ID")
 	// 检查是否是连接中断相关的错误
 	if isProxyConnectionError(err) {
 		// 连接中断是正常情况，使用 Debug 级别记录
@@ -33,29 +36,20 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 			zap.String("path", r.URL.Path),
 			zap.String("remote_addr", r.RemoteAddr),
 		)
-		parts := strings.Split(r.URL.Path, "/")
-		var iid string
-		if len(parts) > 2 {
-			iid = parts[2]
-		}
 		reqAuth, _ := r.Context().Value(RequestAuthKey).(*RequestAuth)
 		if reqAuth == nil {
 			logger.Error("RequestAuth not found in context")
 			return
 		}
-		writeMCPLog(iid, reqAuth.TokenHeaderKey, reqAuth.Token, log.ErrorLevel, model.EventUpstreamConnInterrupted, reqAuth.Usages,
-			buildLogFromReq(r, err.Error()))
+		WriteMCPLog(xTraceID, xInstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			log.ErrorLevel, model.EventUpstreamConnInterrupted, reqAuth.Usages,
+			fmt.Sprintf("Proxy connection interrupted: %s", err.Error()))
 		// 对于连接中断，不需要向客户端发送错误响应
 		return
 	}
 
 	// 其他错误使用 Error 级别记录
 	logger.Error("Proxy error", zap.Error(err))
-	parts := strings.Split(r.URL.Path, "/")
-	var iid string
-	if len(parts) > 2 {
-		iid = parts[2]
-	}
 	// 计算HTTP状态码
 	status := http.StatusBadGateway
 	var msg string
@@ -70,8 +64,9 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 		logger.Error("RequestAuth not found in context")
 		return
 	}
-	writeMCPLog(iid, reqAuth.TokenHeaderKey, reqAuth.Token, log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
-		buildLogFromReq(r, msg))
+	WriteMCPLog(xTraceID, xInstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
+		fmt.Sprintf("Proxy error: %s", msg))
 
 	// 当协议为 SSE 且开关启用时，输出 SSE 错误事件
 	if v := r.Context().Value(IsSSEReqKey); v != nil {
@@ -86,6 +81,9 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	if EnableMCPErrorOnUpstreamFailure {
 		code := MapErrorToCode(err)
 		WriteMCPError(w, status, code, "Upstream error", msg)
+		WriteMCPLog(xTraceID, xInstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
+			fmt.Sprintf("Upstream error: %s", msg))
 		return
 	}
 

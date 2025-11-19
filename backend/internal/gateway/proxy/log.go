@@ -161,7 +161,7 @@ func InitGatewayLogQueue() {
 }
 
 // RecordGatewayLog builds a log record and enqueues it to be persisted.
-func RecordGatewayLog(instanceID string, tokenHeader string, token string, usages []string, level log.Level, event model.Event, log *model.Log) error {
+func RecordGatewayLog(traceID string, instanceID string, tokenHeader string, token string, usages []string, level log.Level, event model.Event, log *model.Log) error {
 	if GatewayLogQ == nil {
 		InitGatewayLogQueue()
 	}
@@ -174,16 +174,17 @@ func RecordGatewayLog(instanceID string, tokenHeader string, token string, usage
 		InstanceID:  instanceID,
 		TokenHeader: tokenHeader,
 		Token:       token,
+		Usages:      strings.TrimSpace(strings.Join(usages, ",")),
 		Level:       level,
 		Event:       event,
-		Usages:      strings.TrimSpace(strings.Join(usages, ",")),
 		Log:         json.RawMessage(logRaw),
 	}
 	return GatewayLogQ.Enqueue(rec)
 }
 
 var allowedEvents = map[model.Event]struct{}{
-	model.EventRequestReceived:         {},
+	model.EventRequest:                 {},
+	model.EventResponse:                {},
 	model.EventPanicRecovered:          {},
 	model.EventRequestValidationFail:   {},
 	model.EventDirectorBefore:          {},
@@ -195,6 +196,7 @@ var allowedEvents = map[model.Event]struct{}{
 	model.EventProtocolUnsupported:     {},
 	model.EventAccessUnsupported:       {},
 	model.EventSSEStart:                {},
+	model.EventSSECancel:               {},
 	model.EventGzipReaderFailed:        {},
 	model.EventSSEEndpointRewrite:      {},
 	model.EventSSEEof:                  {},
@@ -210,14 +212,18 @@ func isAllowedEvent(e model.Event) bool {
 	return ok
 }
 
-func writeMCPLog(instanceID string, tokenHeader string, token string, level log.Level, event model.Event, usages []string, log *model.Log) {
+func WriteMCPLog(traceID, instanceID string, tokenHeader string, token string, level log.Level, event model.Event, usages []string, msg string) {
 	if strings.TrimSpace(instanceID) == "" {
 		return
 	}
 	if !isAllowedEvent(event) {
 		return
 	}
-	log.Event = event
-	log.Level = level
-	_ = RecordGatewayLog(instanceID, tokenHeader, strings.TrimSpace(token), usages, level, event, log)
+	log := &model.Log{
+		Event:   event,
+		Level:   level,
+		Message: msg,
+		TS:      time.Now().Format(time.RFC3339Nano),
+	}
+	_ = RecordGatewayLog(traceID, instanceID, tokenHeader, strings.TrimSpace(token), usages, level, event, log)
 }

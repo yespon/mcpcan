@@ -8,8 +8,11 @@ import (
 	"strings"
 	"time"
 
+	golibLog "github.com/fatedier/golib/log"
+	"github.com/google/uuid"
 	"github.com/kymo-mcp/mcpcan/internal/gateway/proxy"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -27,15 +30,32 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
 
+		traceID := c.GetHeader("X-Trace-ID")
+		if traceID == "" {
+			traceID = uuid.New().String()
+			c.Request.Header.Set("X-Trace-ID", traceID)
+			c.Writer.Header().Set("X-Trace-ID", traceID)
+		}
 		logFields := []zap.Field{
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.String("ip", c.ClientIP()),
 			zap.String("userAgent", c.Request.UserAgent()),
 			zap.String("host", c.Request.Host),
+			zap.String("traceID", traceID),
 			zap.String("origin", c.GetHeader("Origin")),
 			zap.String("referer", c.GetHeader("Referer")),
 		}
+
+		serversPrefix := strings.Trim(common.GetGatewayRoutePrefix(), "/")
+		parts := strings.Split(strings.Trim(c.Request.URL.Path, "/"), "/")
+		instanceID := ""
+		if len(parts) >= 2 && parts[0] == serversPrefix {
+			instanceID = parts[1]
+		}
+		logFields = append(logFields, zap.String("instanceID", instanceID))
+		c.Request.Header.Set("X-Instance-ID", instanceID)
+		c.Writer.Header().Set("X-Instance-ID", instanceID)
 
 		headers := make(map[string]string)
 		for k, v := range c.Request.Header {
@@ -80,6 +100,23 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 		}
 
 		logger.Info("Request", logFields...)
+		reqMsg, _ := json.Marshal(map[string]interface{}{
+			"method":      c.Request.Method,
+			"path":        c.Request.URL.Path,
+			"ip":          c.ClientIP(),
+			"userAgent":   c.Request.UserAgent(),
+			"host":        c.Request.Host,
+			"origin":      c.GetHeader("Origin"),
+			"referer":     c.GetHeader("Referer"),
+			"headers":     headers,
+			"cookies":     cookies,
+			"query":       c.Request.URL.RawQuery,
+			"form":        c.Request.Form,
+			"pathParams":  c.Params,
+			"contentType": contentType,
+			"requestBody": string(requestBody),
+		})
+		proxy.WriteMCPLog(traceID, instanceID, "", "", golibLog.InfoLevel, model.EventRequest, nil, string(reqMsg))
 
 		c.Next()
 
@@ -91,13 +128,24 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 				respHeaders[k] = v[0]
 			}
 		}
-		logger.Info("Response",
+
+		respLogFields := []zap.Field{
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.Int("status", c.Writer.Status()),
 			zap.Duration("latency", latency),
 			zap.Any("responseHeaders", respHeaders),
-		)
+		}
+		logger.Info("Response", respLogFields...)
+
+		respMsg, _ := json.Marshal(map[string]interface{}{
+			"method":          c.Request.Method,
+			"path":            c.Request.URL.Path,
+			"status":          c.Writer.Status(),
+			"latency":         latency,
+			"responseHeaders": respHeaders,
+		})
+		proxy.WriteMCPLog(traceID, instanceID, "", "", golibLog.InfoLevel, model.EventResponse, nil, string(respMsg))
 	}
 }
 

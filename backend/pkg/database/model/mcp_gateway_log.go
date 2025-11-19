@@ -10,7 +10,8 @@ import (
 type Event string
 
 const (
-	EventRequestReceived         Event = "request.received"
+	EventRequest                 Event = "request"
+	EventResponse                Event = "response"
 	EventPanicRecovered          Event = "panic.recovered"
 	EventRequestValidationFail   Event = "request.validation.failed"
 	EventDirectorBefore          Event = "director.before"
@@ -22,6 +23,7 @@ const (
 	EventProtocolUnsupported     Event = "protocol.unsupported"
 	EventAccessUnsupported       Event = "access.unsupported"
 	EventSSEStart                Event = "sse.start"
+	EventSSECancel               Event = "sse.cancel"
 	EventGzipReaderFailed        Event = "gzip.reader.failed"
 	EventSSEEndpointRewrite      Event = "sse.endpoint.rewrite"
 	EventSSEEof                  Event = "sse.eof"
@@ -34,6 +36,7 @@ const (
 
 type GatewayLog struct {
 	ID          uint            `gorm:"primaryKey"`
+	TraceID     string          `gorm:"size:100;not null;default:'';comment:trace ID" json:"traceID"`
 	InstanceID  string          `gorm:"size:100;not null;comment:instance ID" json:"instanceID"`
 	TokenHeader string          `gorm:"size:100;not null;default:'';comment:token header" json:"tokenHeader"`
 	Token       string          `gorm:"size:1000;not null;default:'';comment:token" json:"token"`
@@ -49,11 +52,6 @@ type Log struct {
 	Event   Event     `json:"event"`
 	Level   log.Level `json:"level"`
 	Message string    `json:"message"`
-	URL     string    `json:"url"`
-	Method  string    `json:"method"`
-	Path    string    `json:"path"`
-	Params  string    `json:"params"`
-	IsSSE   bool      `json:"isSSE"`
 	TS      string    `json:"ts"`
 }
 
