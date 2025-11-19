@@ -1047,7 +1047,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
 	downloadLink := cd.createDownloadLink(downloadLinkPath)
-	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --extended --http=:8080 run.yaml", downloadLink)
+	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 run.yaml", downloadLink)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
