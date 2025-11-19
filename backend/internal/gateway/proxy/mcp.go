@@ -329,7 +329,6 @@ func director(req *http.Request) {
 
 	writeMCPLog(instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
 		golibLog.InfoLevel, model.EventDirectorAfter, reqAuth.Usages,
-
 		buildLogFromReq(req, "director.after"))
 }
 
@@ -474,7 +473,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 		if len(msgBytes) > 0 {
 			msgStr := string(msgBytes)
 			// Handle SSE messages of type event: endpoint
-			if strings.Contains(msgStr, "event: endpoint") || strings.Contains(msgStr, "event:endpoint") {
+			if strings.Contains(msgStr, "event: endpoint") || strings.Contains(msgStr, "event:pathParams") {
 				// Add prefix proxy rule
 				// If contains data: / , replace with data: /{prefix}/
 				// If contains data:/ , replace with data: /{prefix}/
@@ -483,6 +482,10 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data: /"), []byte(fmt.Sprintf("data: /%s/", strings.Trim(prefix, "/"))))
 				} else if strings.Contains(msgStr, "data:/") {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:/"), []byte(fmt.Sprintf("data:/%s/", strings.Trim(prefix, "/"))))
+				} else if strings.Contains(msgStr, "data: ?") {
+					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data: ?"), []byte(fmt.Sprintf("data: /%s?", strings.Trim(prefix, "/"))))
+				} else if strings.Contains(msgStr, "data:?") {
+					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:?"), []byte(fmt.Sprintf("data:/%s?", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("old", msgStr), zap.String("new", string(msgBytes)))
 				writeMCPLog(r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
