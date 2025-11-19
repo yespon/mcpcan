@@ -8,7 +8,7 @@ RUN apk add --no-cache git make
 WORKDIR /workspace
 
 # 克隆源码
-RUN git clone https://github.com/jedisct1/openapi-mcp.git .
+RUN git clone https://gitee.com/mirrors_jedisct1/openapi-mcp.git .
 
 # 构建二进制文件
 RUN make
