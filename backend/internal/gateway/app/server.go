@@ -20,25 +20,24 @@ import (
 // RequestResponseLoggingMiddleware detailed request-response logging middleware
 func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// record request start time
 		start := time.Now()
 
-		// read request body
 		var requestBody []byte
 		if c.Request.Body != nil {
 			requestBody, _ = io.ReadAll(c.Request.Body)
-			// reset request body so subsequent handlers can read it
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
-		// prepare log fields
+
 		logFields := []zap.Field{
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.String("ip", c.ClientIP()),
-			zap.String("user_agent", c.Request.UserAgent()),
+			zap.String("userAgent", c.Request.UserAgent()),
+			zap.String("host", c.Request.Host),
+			zap.String("origin", c.GetHeader("Origin")),
+			zap.String("referer", c.GetHeader("Referer")),
 		}
 
-		// record request headers
 		headers := make(map[string]string)
 		for k, v := range c.Request.Header {
 			if len(v) > 0 {
@@ -47,19 +46,32 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 		}
 		logFields = append(logFields, zap.Any("headers", headers))
 
-		// record query parameters
+		cookies := make(map[string]string)
+		for _, ck := range c.Request.Cookies() {
+			cookies[ck.Name] = ck.Value
+		}
+		if len(cookies) > 0 {
+			logFields = append(logFields, zap.Any("cookies", cookies))
+		}
+
 		if c.Request.URL.RawQuery != "" {
 			logFields = append(logFields, zap.String("query", c.Request.URL.RawQuery))
 		}
 
-		// record form parameters
 		if err := c.Request.ParseForm(); err == nil {
 			if len(c.Request.Form) > 0 {
 				logFields = append(logFields, zap.Any("form", c.Request.Form))
 			}
 		}
 
-		// check if Content-Type is JSON and attempt to parse request body
+		if len(c.Params) > 0 {
+			pathParams := make(map[string]string)
+			for _, p := range c.Params {
+				pathParams[p.Key] = p.Value
+			}
+			logFields = append(logFields, zap.Any("pathParams", pathParams))
+		}
+
 		contentType := c.GetHeader("Content-Type")
 		if strings.Contains(contentType, "application/json") && len(requestBody) > 0 {
 			var jsonBody interface{}
@@ -68,49 +80,26 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		// create custom ResponseWriter to capture response
-		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
-		c.Writer = blw
+		logger.Info("Request", logFields...)
 
-		// continue processing request
 		c.Next()
 
-		// record response info
 		latency := time.Since(start)
-		// check if Content-Type is streaming or download data
-		responseContentType := c.Writer.Header().Get("Content-Type")
-		if strings.Contains(responseContentType, "text/event-stream") ||
-			strings.Contains(responseContentType, "application/octet-stream") ||
-			strings.Contains(c.Writer.Header().Get("Content-Disposition"), "attachment") {
-			// for streaming and download data, log only basic info
-			logger.Info("request completed",
-				zap.String("method", c.Request.Method),
-				zap.String("path", c.Request.URL.Path),
-				zap.Int("status", c.Writer.Status()),
-				zap.Duration("latency", latency),
-			)
-		} else {
-			// for other data, log full response
-			logger.Info("request completed",
-				zap.String("method", c.Request.Method),
-				zap.String("path", c.Request.URL.Path),
-				zap.Int("status", c.Writer.Status()),
-				zap.Duration("latency", latency),
-				zap.String("response_body", blw.body.String()),
-			)
+
+		respHeaders := make(map[string]string)
+		for k, v := range c.Writer.Header() {
+			if len(v) > 0 {
+				respHeaders[k] = v[0]
+			}
 		}
+		logger.Info("Response",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", c.Writer.Status()),
+			zap.Duration("latency", latency),
+			zap.Any("responseHeaders", respHeaders),
+		)
 	}
-}
-
-// bodyLogWriter custom ResponseWriter to capture response body
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
 }
 
 // CORSMiddleware allows all origins, methods, and headers
