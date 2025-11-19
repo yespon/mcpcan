@@ -129,19 +129,19 @@ message McpToken {
     BASIC              = 4;
   }
 
-  // Token type
+  // @inject_tag: json:"tokenType" desc:"Token type"
   TokenType tokenType = 1;
-  // Token content
+  // @inject_tag: json:"token" desc:"Token content"
   string token = 2;
-  // Optional custom headers
+  // @inject_tag: json:"headers" desc:"Optional custom headers"
   map<string, string> headers = 3;
-  // Whether transport layer security is enabled
+  // @inject_tag: json:"enabledTransport" desc:"enabledTransport"
   bool enabledTransport = 4;
-  // Expiration time (Unix timestamp, milliseconds)
+  // @inject_tag: json:"expireAt" desc:"Expiration time"
   int64 expireAt = 5;
-  // Publish time (Unix timestamp, milliseconds)
+  // @inject_tag: json:"publishAt" desc:"Publish time"
   int64 publishAt = 6;
-  // List of usage scenarios
+  // @inject_tag: json:"usages" desc:"List of usage scenarios"
   repeated string usages = 7;
 }
 
