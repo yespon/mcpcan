@@ -166,17 +166,17 @@ func (r *GatewayLogRepository) FindWithPagination(
 				startTime = t
 				hasStart = true
 			}
-        case "createdAtEnd":
-            if t, ok := v.(time.Time); ok && !t.IsZero() {
-                endTime = t
-                hasEnd = true
-            }
-        case "traceId":
-            if s, ok := v.(string); ok && s != "" {
-                q = q.Where("trace_id = ?", s)
-            }
-        }
-    }
+		case "createdAtEnd":
+			if t, ok := v.(time.Time); ok && !t.IsZero() {
+				endTime = t
+				hasEnd = true
+			}
+		case "traceId":
+			if s, ok := v.(string); ok && s != "" {
+				q = q.Where("trace_id = ?", s)
+			}
+		}
+	}
 
 	// Apply default range if none provided; clamp and validate max range
 	now := time.Now()
@@ -277,6 +277,16 @@ func (r *GatewayLogRepository) InitTable() error {
 		sql2 := fmt.Sprintf("CREATE INDEX idx_instance_id ON %v(instance_id)", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
 			return fmt.Errorf("failed to create instance_id index: %v", err)
+		}
+	}
+
+	// Index on trace_id for fast per-trace queries
+	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_trace_id'", mod.TableName())
+	r.getDB().Raw(sql).Count(&count)
+	if count == 0 {
+		sql2 := fmt.Sprintf("CREATE INDEX idx_trace_id ON %v(trace_id)", mod.TableName())
+		if err := r.getDB().Exec(sql2).Error; err != nil {
+			return fmt.Errorf("failed to create trace_id index: %v", err)
 		}
 	}
 
