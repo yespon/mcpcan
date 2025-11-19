@@ -144,13 +144,46 @@ func ConvertToProtoMcpToken(tokens json.RawMessage) []*instancepb.McpToken {
 	protoTokens := make([]*instancepb.McpToken, 0, len(modelTokens))
 	for _, token := range modelTokens {
 		protoTokens = append(protoTokens, &instancepb.McpToken{
-			Token:     token.Token,
-			ExpireAt:  token.ExpireAt,
-			PublishAt: token.PublishAt,
-			Usages:    token.Usages,
+			Token:            token.Token,
+			ExpireAt:         token.ExpireAt,
+			PublishAt:        token.PublishAt,
+			Usages:           token.Usages,
+			EnabledTransport: token.EnabledTransport,
+			TokenType:        CoverTokenTypeToProto(token.TokenType),
+			Headers:          token.Headers,
 		})
 	}
 	return protoTokens
+}
+
+func CoverTokenTypeToProto(tokenType model.TokenType) instancepb.McpToken_TokenType {
+	switch tokenType {
+	case model.TokenTypeBearer:
+		return instancepb.McpToken_BEARER
+	case model.TokenTypeBasic:
+		return instancepb.McpToken_BASIC
+	case model.TokenTypeKey:
+		return instancepb.McpToken_API_KEY
+	case model.TokenTypeXAPIKey:
+		return instancepb.McpToken_X_API_KEY
+	default:
+		return instancepb.McpToken_BEARER
+	}
+}
+
+func CoverTokenTypeToModel(tokenType instancepb.McpToken_TokenType) model.TokenType {
+	switch tokenType {
+	case instancepb.McpToken_BEARER:
+		return model.TokenTypeBearer
+	case instancepb.McpToken_BASIC:
+		return model.TokenTypeBasic
+	case instancepb.McpToken_API_KEY:
+		return model.TokenTypeKey
+	case instancepb.McpToken_X_API_KEY:
+		return model.TokenTypeXAPIKey
+	default:
+		return model.TokenTypeBearer
+	}
 }
 
 // convertProtoTokensToModel converts tokens from proto structure to model structure
@@ -162,6 +195,10 @@ func ConvertProtoTokensToModel(tokens []*instancepb.McpToken) json.RawMessage {
 			ExpireAt:  token.ExpireAt,
 			PublishAt: token.PublishAt,
 			Usages:    token.Usages,
+
+			EnabledTransport: token.EnabledTransport,
+			TokenType:        CoverTokenTypeToModel(token.TokenType),
+			Headers:          token.Headers,
 		})
 	}
 	jsonTokens, err := json.Marshal(modelTokens)
