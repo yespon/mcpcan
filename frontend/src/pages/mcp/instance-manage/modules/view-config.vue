@@ -127,11 +127,13 @@
                 <div class="grid-cols-span-1" v-if="true || 'API服务'">
                   是否开启透传:
                   <el-switch
+                    v-model="token.enabledTransport"
                     style="--el-switch-on-color: #13ce66"
                     inline-prompt
                     :loading="dialogInfo.instanceInfo.loading"
                     :active-text="t('common.on')"
                     :inactive-text="t('common.off')"
+                    @change="handleChangeTransport(token, index)"
                   ></el-switch>
                 </div>
               </div>
@@ -216,119 +218,220 @@
   </el-dialog>
   <el-dialog
     v-model="formData.visible"
-    width="720px"
+    width="60%"
     top="20vh"
     :show-close="false"
     @close="formRef?.resetFields()"
+    header-class="token-header-border"
+    footer-class="token-footer-border"
   >
     <template #header>
       <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
-      <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading">
-        <el-col :span="12" class="collapsed">
-          <el-scrollbar ref="scrollbarRef" max-height="50vh" always class="pr-4">
-            <el-form
-              ref="formRef"
-              :model="formData"
-              :rules="rules"
-              label-width="auto"
-              label-position="top"
-              class="mx-2"
-            >
-              <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
-                <template #label>
-                  <div class="center">
-                    <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
-                    <el-button
-                      class="base-btn"
-                      type="primary"
-                      size="small"
-                      @click.stop="handleAddExpireAt(7)"
-                      >7{{ t('mcp.instance.token.day') }}
-                    </el-button>
-                    <el-button
-                      class="base-btn"
-                      type="primary"
-                      size="small"
-                      @click.stop="handleAddExpireAt(15)"
-                      >15{{ t('mcp.instance.token.day') }}
-                    </el-button>
-                    <el-button
-                      class="base-btn"
-                      type="primary"
-                      size="small"
-                      @click.stop="handleAddExpireAt(30)"
-                      >30{{ t('mcp.instance.token.day') }}
-                    </el-button>
-                  </div>
-                </template>
-                <el-date-picker
-                  ref="datePicker"
-                  v-model="formData.expireAt"
-                  type="datetime"
-                  value-format="x"
-                  :placeholder="t('mcp.instance.token.placeholderDate')"
-                  style="width: 100%"
-                  :disabled-date="(date: Date) => date.getTime() < Date.now()"
-                ></el-date-picker>
-              </el-form-item>
-              <el-form-item :label="'API 认证凭证'" prop="tokenType">
-                <el-select
-                  v-model="formData.tokenType"
-                  :placeholder="t('mcp.instance.formData.sourceType')"
-                >
-                  <el-option label="Basic" value="Basic" />
-                  <el-option label="Bearer" value="Bearer" />
-                  <el-option label="X-API-key" value="X-API-key" />
-                  <el-option label="Api-Key" value="Api-Key" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="Token" prop="token">
-                <template #label>
-                  Token
-                  <el-tag
-                    class="ml-2 base-btn cursor-pointer"
-                    effect="dark"
-                    @click="handleRandomToken"
-                    >{{ t('mcp.instance.token.random') }}</el-tag
-                  >
-                </template>
+    </template>
+    <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading" class="mt-4">
+      <el-col :span="12" class="collapsed">
+        <el-scrollbar ref="scrollbarRef" height="50vh" always class="pr-4">
+          <el-form
+            ref="formRef"
+            :model="formData"
+            :rules="rules"
+            label-width="auto"
+            label-position="top"
+            class="mx-2"
+          >
+            <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
+              <template #label>
+                <div class="center">
+                  <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
+                  <el-button
+                    class="base-btn"
+                    type="primary"
+                    size="small"
+                    @click.stop="handleAddExpireAt(7)"
+                    >7{{ t('mcp.instance.token.day') }}
+                  </el-button>
+                  <el-button
+                    class="base-btn"
+                    type="primary"
+                    size="small"
+                    @click.stop="handleAddExpireAt(15)"
+                    >15{{ t('mcp.instance.token.day') }}
+                  </el-button>
+                  <el-button
+                    class="base-btn"
+                    type="primary"
+                    size="small"
+                    @click.stop="handleAddExpireAt(30)"
+                    >30{{ t('mcp.instance.token.day') }}
+                  </el-button>
+                </div>
+              </template>
+              <el-date-picker
+                ref="datePicker"
+                v-model="formData.expireAt"
+                type="datetime"
+                value-format="x"
+                :placeholder="t('mcp.instance.token.placeholderDate')"
+                style="width: 100%"
+                :disabled-date="(date: Date) => date.getTime() < Date.now()"
+              ></el-date-picker>
+            </el-form-item>
+            <el-form-item :label="'API 认证凭证'" prop="tokenType">
+              <el-select
+                v-model="formData.tokenType"
+                :placeholder="'请选择API 认证凭证'"
+                clearable
+                @change="handleTokenTypeChange"
+              >
+                <el-option label="Bearer" :value="1" />
+                <el-option label="Api-Key" :value="2" />
+                <el-option label="X-API-key" :value="3" />
+                <el-option label="Basic" :value="4" />
+              </el-select>
+
+              <div v-if="Number(formData.tokenType) === 1" class="center my-2 w-full">
+                Authorization：<el-input
+                  v-model="formData.token"
+                  :placeholder="t('mcp.instance.token.placeholderToken')"
+                  class="flex-sub"
+                  clearable
+                />
+                <el-tag
+                  class="ml-2 base-btn cursor-pointer"
+                  effect="dark"
+                  @click="handleRandomToken"
+                  >{{ t('mcp.instance.token.random') }}
+                </el-tag>
+              </div>
+              <div v-if="Number(formData.tokenType) === 2" class="center my-2 w-full">
+                Api-Key：
                 <el-input
                   v-model="formData.token"
-                  :rows="4"
-                  type="textarea"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                />
-              </el-form-item>
-              <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-                <el-input-tag
-                  v-model="formData.usages"
-                  collapse-tags
-                  collapse-tags-tooltip
-                  :max-collapse-tags="3"
+                  :placeholder="'请输入token值或自动随机生成'"
+                  class="flex-sub"
                   clearable
-                  draggable
-                  tag-type="primary"
-                  tag-effect="plain"
-                  :placeholder="t('mcp.instance.token.placeholderTag')"
-                  class="tag-input"
-                >
-                  <template #tag="{ value }">
-                    <div class="flex items-center">
-                      <span>{{ value }}</span>
+                />
+                <el-tag
+                  class="ml-2 base-btn cursor-pointer"
+                  effect="dark"
+                  @click="handleRandomToken"
+                  >{{ t('mcp.instance.token.random') }}
+                </el-tag>
+              </div>
+              <div v-if="Number(formData.tokenType) === 3" class="center my-2 w-full">
+                X-API-Key：
+                <el-input
+                  v-model="formData.token"
+                  :placeholder="'请输入token值或自动随机生成'"
+                  class="flex-sub"
+                  clearable
+                />
+                <el-tag
+                  class="ml-2 base-btn cursor-pointer"
+                  effect="dark"
+                  @click="handleRandomToken"
+                  >{{ t('mcp.instance.token.random') }}
+                </el-tag>
+              </div>
+              <div v-if="Number(formData.tokenType) === 4" class="center my-2 w-full">
+                <el-input
+                  v-model="userDataKey.username"
+                  placeholder="username"
+                  class="flex-sub mr-2"
+                  clearable
+                />
+                <el-input
+                  v-model="userDataKey.password"
+                  placeholder="password"
+                  class="flex-sub"
+                  clearable
+                />
+              </div>
+            </el-form-item>
+            <el-form-item prop="enabledTransport" class="enabledTransport">
+              <template #label>
+                <div class="w-full flex justify-between items-center">
+                  <div class="center">
+                    <span class="mr-2"> HTTP 请求头 </span>
+                    <el-popover placement="top" width="250">
+                      <div>{{ '开启透传之后；请求头的值将透传至后续服务' }}</div>
+                      <template #reference>
+                        <el-icon class="cursor-pointer"><Warning /></el-icon>
+                      </template>
+                    </el-popover>
+                  </div>
+                  <div class="center">
+                    <el-switch
+                      v-model="formData.enabledTransport"
+                      style="--el-switch-on-color: #13ce66"
+                      inline-prompt
+                      :active-text="'透传'"
+                      :inactive-text="'不透传'"
+                    ></el-switch>
+                    <div
+                      class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
+                      @click="handleAddHeader"
+                    >
+                      <el-icon>
+                        <Plus />
+                      </el-icon>
                     </div>
-                  </template>
-                </el-input-tag>
-              </el-form-item>
-            </el-form>
-          </el-scrollbar>
-        </el-col>
-        <el-col :span="12" class="expanded">
-          <el-scrollbar ref="scrollbarRef" max-height="50vh" always class="config-info">
-            <div class="py-5 px-5">{{ config }}</div>
-          </el-scrollbar>
-        </el-col>
-      </el-row>
-    </template>
+                  </div>
+                </div>
+              </template>
+              <div
+                v-for="(header, index) in formData.headers"
+                :key="index"
+                class="flex items-center my-2 pr-3"
+              >
+                <el-input
+                  v-model="header.key"
+                  :placeholder="'请求头键名'"
+                  class="flex-sub mr-2"
+                ></el-input>
+                ：
+                <el-input
+                  v-model="header.value"
+                  :placeholder="'请求头键值'"
+                  class="flex-sub mr-2"
+                ></el-input>
+                <div
+                  class="cursor-pointer border border-style-solid border-rd-md border-white p-1 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
+                  @click="formData.headers.splice(index, 1)"
+                >
+                  <el-icon><Minus /></el-icon>
+                </div>
+              </div>
+            </el-form-item>
+            <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
+              <el-input-tag
+                v-model="formData.usages"
+                collapse-tags
+                collapse-tags-tooltip
+                :max-collapse-tags="3"
+                clearable
+                draggable
+                tag-type="primary"
+                tag-effect="plain"
+                :placeholder="t('mcp.instance.token.placeholderTag')"
+                class="tag-input"
+              >
+                <template #tag="{ value }">
+                  <div class="flex items-center">
+                    <span>{{ value }}</span>
+                  </div>
+                </template>
+              </el-input-tag>
+            </el-form-item>
+          </el-form>
+        </el-scrollbar>
+      </el-col>
+      <el-col :span="12" class="expanded">
+        <el-scrollbar ref="scrollbarRef" height="50vh" always class="config-info">
+          <div class="py-5 px-5">{{ config }}</div>
+        </el-scrollbar>
+      </el-col>
+    </el-row>
     <template #footer>
       <div class="center">
         <el-button @click="formData.visible = false" class="mr-4 w-25">{{
@@ -342,7 +445,16 @@
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Operation, CopyDocument, Link, Key, FullScreen } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Operation,
+  CopyDocument,
+  Link,
+  Key,
+  FullScreen,
+  Warning,
+  Minus,
+} from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -370,13 +482,18 @@ const formRef = ref()
 const formData = ref({
   visible: false,
   token: '',
-  headers: [],
+  headers: [] as { key: string; value: string }[],
   tokenType: '',
   enabledTransport: false,
   expireAt: null as number | null,
   usages: [] as string[],
 })
+const userDataKey = ref({
+  username: '',
+  password: '',
+})
 const rules = reactive({
+  tokenType: [{ required: true, message: '请选择API凭证类型', trigger: 'change' }],
   token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
 })
 const dialogInfo = ref({
@@ -441,6 +558,19 @@ const tokenList = computed(
     })) || [],
 )
 
+const handleChangeTransport = async (token: any, index: number) => {
+  try {
+    dialogInfo.value.instanceInfo.loading = true
+    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+    await handleSaveTokens()
+    emit('on-refresh')
+  } catch {
+    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+  } finally {
+    dialogInfo.value.instanceInfo.loading = false
+  }
+}
+
 // handle add token
 const handleAddToken = () => {
   formData.value.token = ''
@@ -449,6 +579,11 @@ const handleAddToken = () => {
   dialogInfo.value.currentEditIndex = null
   formData.value.visible = true
   formRef.value?.resetFields()
+}
+
+// handle add header
+const handleAddHeader = () => {
+  formData.value.headers.push({ key: '', value: '' })
 }
 
 // handle enabled token switch
@@ -479,6 +614,11 @@ const handleSelectedToken = (index: number) => {
   dialogInfo.value.currentTokenIndex = index
 }
 
+// handle token type change and clear token value
+const handleTokenTypeChange = () => {
+  formData.value.token = ''
+}
+
 // handle random token
 const handleRandomToken = () => {
   if (dialogInfo.value.currentEditIndex !== null) {
@@ -495,30 +635,44 @@ const handleRandomToken = () => {
         height: '247px',
       },
     }).then(() => {
-      formData.value.token =
-        'Bearer ' +
-        getToken(
-          JSON.stringify({
-            expireAt: formData.value.expireAt,
-            userId: userInfo.userId,
-            username: userInfo.username,
-          }),
-        )
+      handleGetTokenValue()
     })
     return
   }
 
-  formData.value.token =
-    'Bearer ' +
-    getToken(
+  handleGetTokenValue()
+}
+
+// handle get token value
+const handleGetTokenValue = () => {
+  if (Number(formData.value.tokenType) === 1) {
+    formData.value.token =
+      'Bearer ' +
+      getToken(
+        JSON.stringify({
+          expireAt: formData.value.expireAt,
+          userId: userInfo.userId,
+          username: userInfo.username,
+        }),
+      )
+  } else if (Number(formData.value.tokenType) === 2) {
+    formData.value.token = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
         username: userInfo.username,
       }),
     )
+  } else if (Number(formData.value.tokenType) === 3) {
+    formData.value.token = getToken(
+      JSON.stringify({
+        expireAt: formData.value.expireAt,
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
+  }
 }
-
 // handle add expire at
 const handleAddExpireAt = (days: number) => {
   const expireDate = new Date()
@@ -565,12 +719,18 @@ const handleDeleteToken = (index: number) => {
 const handleConfirmToken = async () => {
   const result = await formRef.value.validate()
   if (!result) return
+  if (Number(formData.value.tokenType) === 4) {
+    const base64Credentials = btoa(`${userDataKey.value.username}:${userDataKey.value.password}`)
+    formData.value.token = `Basic ${base64Credentials}`
+  }
   if (dialogInfo.value.currentEditIndex) {
     dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
       publishAt: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].publishAt,
       usages: formData.value.usages,
+      enabledTransport: formData.value.enabledTransport,
+      headers: formData.value.headers,
     }
     dialogInfo.value.currentEditIndex = null
     await handleSaveTokens()
@@ -587,10 +747,12 @@ const handleConfirmToken = async () => {
   }
   try {
     dialogInfo.value.instanceInfo.tokens.push({
+      enabledTransport: formData.value.enabledTransport,
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
       publishAt: Date.now(),
       usages: formData.value.usages,
+      headers: formData.value.headers,
     })
     await handleSaveTokens()
     formData.value = {
@@ -810,5 +972,24 @@ defineExpose({
       }
     }
   }
+}
+.enabledTransport {
+  :deep(.el-form-item__label) {
+    width: 100%;
+  }
+  :deep(.el-form-item__content) {
+    display: block;
+    width: 100%;
+  }
+}
+</style>
+<style lang="scss">
+.el-dialog__header.token-header-border {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--el-border-color-light) !important;
+}
+.el-dialog__footer.token-footer-border {
+  background-color: transparent !important;
+  border-top: 1px solid var(--el-border-color-light) !important;
 }
 </style>
