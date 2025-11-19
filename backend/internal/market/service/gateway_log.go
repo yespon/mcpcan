@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	gatewaylogpb "github.com/kymo-mcp/mcpcan/api/market/gateway_log"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
-	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
@@ -24,6 +22,11 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
+	// instanceId or traceId must be provided
+	if strings.TrimSpace(req.InstanceId) == "" && strings.TrimSpace(req.TraceId) == "" {
+		common.GinError(c, i18nresp.CodeParameterRequired, "instanceId or traceId is required")
+		return
+	}
 
 	page := req.Page
 	if page <= 0 {
@@ -31,7 +34,10 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	}
 	pageSize := req.PageSize
 	if pageSize <= 0 {
-		pageSize = 20
+		pageSize = int32(common.DefaultPageSize)
+	}
+	if pageSize > int32(common.MaxPageSize) {
+		pageSize = int32(common.MaxPageSize)
 	}
 
 	filters := map[string]interface{}{}
@@ -56,7 +62,9 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	if req.EndTime > 0 {
 		filters["createdAtEnd"] = time.Unix(req.EndTime, 0)
 	}
-
+	if strings.TrimSpace(req.TraceId) != "" {
+		filters["traceId"] = strings.TrimSpace(req.TraceId)
+	}
 	logs, total, err := mysql.GatewayLogRepo.FindWithPagination(context.Background(), page, pageSize, filters, "createdAt", "desc")
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
@@ -65,22 +73,6 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 
 	result := make([]*gatewaylogpb.GatewayLog, 0, len(logs))
 	for _, g := range logs {
-		var inner *gatewaylogpb.GatewayLog_Log
-		if g.Log != nil {
-			var ml model.Log
-			_ = json.Unmarshal(g.Log, &ml)
-			inner = &gatewaylogpb.GatewayLog_Log{
-				Event:   string(ml.Event),
-				Level:   intToProtoLevel(int(ml.Level)),
-				Message: ml.Message,
-				Url:     ml.URL,
-				Method:  ml.Method,
-				Path:    ml.Path,
-				Params:  ml.Params,
-				IsSSE:   ml.IsSSE,
-				Ts:      ml.TS,
-			}
-		}
 		result = append(result, &gatewaylogpb.GatewayLog{
 			Id:          uint32(g.ID),
 			InstanceId:  g.InstanceID,
@@ -90,7 +82,8 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 			Level:       intToProtoLevel(int(g.Level)),
 			Event:       string(g.Event),
 			CreatedAt:   g.CreatedAt.Format(time.RFC3339Nano),
-			Log:         inner,
+			Log:         string(g.Log),
+			TraceId:     g.TraceID,
 		})
 	}
 

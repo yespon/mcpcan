@@ -6,14 +6,13 @@ import "google/api/annotations.proto";
 
 option go_package = "github.com/kymo-mcp/mcpcan/api/market/gateway_log";
 
-
 // GatewayLogService 网关日志服务
 service GatewayLogService {
   // FindGatewayLog 查询网关日志
   rpc FindGatewayLog(FindGatewayLogRequest) returns (FindGatewayLogResponse) {
     option (google.api.http) = {
-        post: "/gateway-log/find",
-        body: "*",
+      post: "/gateway-log/find",
+      body: "*",
     };
   }
 }
@@ -52,6 +51,8 @@ message FindGatewayLogRequest {
   int32 pageSize = 8;
   // @inject_tag: json:"page" form:"page" desc:"page number"
   int32 page = 9;
+  // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
+  string traceId = 10;
 }
 
 message FindGatewayLogResponse {
@@ -83,26 +84,7 @@ message GatewayLog {
   // @inject_tag: json:"createdAt" form:"createdAt" desc:"creation time"
   string createdAt = 8;
   // @inject_tag: json:"log" form:"log" desc:"log details"
-  Log log = 9;
-
-  message Log {
-    // @inject_tag: json:"event" form:"event" desc:"event type"
-    string event = 1;
-    // @inject_tag: json:"level" form:"level" desc:"log level"
-    Level level = 2;
-    // @inject_tag: json:"message" form:"message" desc:"log message"
-    string message = 3;
-    // @inject_tag: json:"url" form:"url" desc:"URL"
-    string url = 4;
-    // @inject_tag: json:"method" form:"method" desc:"HTTP method"
-    string method = 5;
-    // @inject_tag: json:"path" form:"path" desc:"URL path"
-    string path = 6;
-    // @inject_tag: json:"params" form:"params" desc:"URL parameters"
-    string params = 7;
-    // @inject_tag: json:"isSSE" form:"isSSE" desc:"whether it is SSE"
-    bool isSSE = 8;
-    // @inject_tag: json:"ts" form:"ts" desc:"timestamp"
-    string ts = 9;
-  }
+  string log = 9;
+  // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
+  string traceId = 10;
 }

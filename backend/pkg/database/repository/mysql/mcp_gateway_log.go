@@ -166,13 +166,17 @@ func (r *GatewayLogRepository) FindWithPagination(
 				startTime = t
 				hasStart = true
 			}
-		case "createdAtEnd":
-			if t, ok := v.(time.Time); ok && !t.IsZero() {
-				endTime = t
-				hasEnd = true
-			}
-		}
-	}
+        case "createdAtEnd":
+            if t, ok := v.(time.Time); ok && !t.IsZero() {
+                endTime = t
+                hasEnd = true
+            }
+        case "traceId":
+            if s, ok := v.(string); ok && s != "" {
+                q = q.Where("trace_id = ?", s)
+            }
+        }
+    }
 
 	// Apply default range if none provided; clamp and validate max range
 	now := time.Now()
