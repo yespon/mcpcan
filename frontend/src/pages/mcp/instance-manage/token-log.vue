@@ -101,7 +101,7 @@ const route = useRoute()
 const logList = ref<LogItem[]>([])
 const loading = ref(false)
 const dateRange = ref<[Date, Date] | null>(null)
-const level = ref('')
+const level = ref<string | number>('') // 修复类型定义
 const traceId = ref('')
 
 // 日志级别选项
@@ -119,7 +119,7 @@ const instanceId = computed(() => (route.query.instanceId as string) || '')
 const token = computed(() => (route.query.token as string) || '')
 
 // 切换日志级别
-const handleLevelChange = (val: string) => {
+const handleLevelChange = (val: string | number) => {
   level.value = val
   handleGetLogs()
 }
