@@ -462,7 +462,7 @@ func (ksm *KubernetesServiceManager) Restart(ctx context.Context, options Contai
 	if err != nil {
 		// If service does not exist, directly create new service
 		if isNotFoundError(err) {
-			_, createErr := ksm.Create(ctx, options.ServiceName, options.Port, nil)
+			_, createErr := ksm.Create(ctx, options.ServiceName, options.Port, options.Labels)
 			if createErr != nil {
 				return fmt.Errorf("failed to create service: %w", createErr)
 			}
