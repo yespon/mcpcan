@@ -226,7 +226,8 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 					zap.Int64("timeout_at_ms", instance.StartupTimeout))
 
 				return cm.cleanupAndUpdateStatus(ctx, instance,
-					fmt.Sprintf("Container startup timeout, startup duration: %d milliseconds, timeout time: %s", startupDuration, time.UnixMilli(instance.StartupTimeout).Format(time.RFC3339)))
+					fmt.Sprintf("Container startup timeout, startup duration: %d milliseconds, timeout time: %s", startupDuration,
+						time.UnixMilli(instance.StartupTimeout).Format(time.RFC3339)))
 			}
 		}
 
@@ -242,9 +243,13 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 					zap.Int64("timeout_at_ms", instance.RunningTimeout),
 					zap.String("run_info", runInfo))
 
-				return cm.updateInstanceStatus(ctx, instance,
-					model.ContainerStatusRunTimeoutStop,
-					fmt.Sprintf("Container running but not ready, running timeout, running duration: %d milliseconds, status info: %s", runningDuration, runInfo))
+				instance.ContainerIsReady = false
+				instance.ContainerStatus = model.ContainerStatusRunTimeoutStop
+				instance.ContainerLastMessage = fmt.Sprintf("Container running but not ready, running timeout, running duration: %d milliseconds, status info: %s", runningDuration, runInfo)
+				err := cm.instanceRepo.Update(ctx, instance)
+				if err != nil {
+					return fmt.Errorf("failed to update instance status: %w", err)
+				}
 			}
 		}
 
@@ -277,7 +282,13 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 					zap.Int64("running_duration_ms", runningDuration),
 					zap.Int64("timeout_at_ms", instance.RunningTimeout))
 
-				return cm.updateInstanceStatus(ctx, instance, model.ContainerStatusRunTimeoutStop, message)
+				instance.ContainerIsReady = false
+				instance.ContainerStatus = model.ContainerStatusRunTimeoutStop
+				instance.ContainerLastMessage = message
+				err := cm.instanceRepo.Update(ctx, instance)
+				if err != nil {
+					return fmt.Errorf("failed to update instance status: %w", err)
+				}
 			}
 		}
 
@@ -288,32 +299,15 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 
 		// Ensure instance status is running
 		if instance.ContainerStatus != model.ContainerStatusRunning {
-			return cm.updateInstanceStatus(ctx, instance, model.ContainerStatusRunning, "Container running normally and ready")
+			instance.ContainerIsReady = true
+			instance.ContainerStatus = model.ContainerStatusRunning
+			instance.ContainerLastMessage = "Container running normally and ready"
+			err := cm.instanceRepo.Update(ctx, instance)
+			if err != nil {
+				return fmt.Errorf("failed to update instance status: %w", err)
+			}
 		}
 	}
-
-	return nil
-}
-
-// updateInstanceStatus updates instance status
-func (cm *ContainerMonitorImpl) updateInstanceStatus(ctx context.Context, instance *model.McpInstance, containerStatus model.ContainerStatus, message string) error {
-
-	instance.ContainerStatus = containerStatus
-	instance.ContainerLastMessage = message
-
-	err := cm.instanceRepo.Update(ctx, instance)
-	if err != nil {
-		cm.logger.Error("Failed to update instance status",
-			zap.String("instance_id", instance.InstanceID),
-			zap.String("container_status", string(containerStatus)),
-			zap.Error(err))
-		return fmt.Errorf("failed to update instance status: %w", err)
-	}
-
-	cm.logger.Info("Instance status updated successfully",
-		zap.String("instance_id", instance.InstanceID),
-		zap.String("container_status", string(containerStatus)),
-		zap.String("message", message))
 
 	return nil
 }
@@ -370,9 +364,14 @@ func (cm *ContainerMonitorImpl) cleanupAndUpdateStatus(ctx context.Context, inst
 		}
 	}
 
-	// Update instance status to startup timeout stop
-	return cm.updateInstanceStatus(ctx, instance,
-		model.ContainerStatusInitTimeoutStop, message)
+	instance.ContainerIsReady = false
+	instance.ContainerStatus = model.ContainerStatusInitTimeoutStop
+	instance.ContainerLastMessage = message
+	err = cm.instanceRepo.Update(ctx, instance)
+	if err != nil {
+		return fmt.Errorf("failed to update instance status: %w", err)
+	}
+	return nil
 }
 
 // recreateContainerWithStatus recreates container and sets specified status
