@@ -84,10 +84,10 @@ export function buildApiTree(openapiJson: { paths: any }) {
         }
         // 将接口加入 tag 分组
         tagMap.get(tag).children.push({
-          label: `${method.toUpperCase()} · ${path}`,
+          label: `${path}`,
           summary: opDetail.summary || '无描述',
           path,
-          method,
+          method: method.toUpperCase(),
           id: opDetail.operationId || opDetail.id,
         })
       })

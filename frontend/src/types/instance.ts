@@ -144,8 +144,9 @@ export interface InstanceResult extends InstanceForm {
     token: string
     expireAt: number
     publishAt: number
-    headers: { [key: string]: string }[]
+    headers: { [key: string]: string }
     usages: string[]
+    tokenType: TokenType | null
   }>
   [key: string]: any
 }

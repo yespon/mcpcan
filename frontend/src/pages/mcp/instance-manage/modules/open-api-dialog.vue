@@ -8,7 +8,7 @@
     footer-class="footer-border"
   >
     <template #title>{{ dialogInfo.title }}</template>
-    <el-splitter>
+    <el-splitter v-loading="dialogInfo.loading">
       <el-splitter-panel size="50%" class="p-4">
         <el-form
           ref="baseInfo"
@@ -147,6 +147,7 @@ import { useMcpStoreHook, useUserStore } from '@/stores'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { SourceType, TokenType } from '@/types'
+import { ElTooltip } from 'element-plus'
 
 const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
@@ -237,16 +238,82 @@ const handleGetAPIlist = async () => {
  * @param param1
  */
 const renderContent = (h: any, params: any) => {
-  const { node } = params as { node: any; data?: any }
+  const { data } = params as { node: any; data?: any }
+
+  // 构建 tooltip 内容
+  const buildTooltipContent = () => {
+    if (!data || !data.method) return ''
+    const parts = []
+    if (data.id) parts.push(`ID: <span class="font-500">${data.id}</span>`)
+    if (data.method)
+      parts.push(
+        `Method: <span class="${
+          {
+            GET: 'color-green',
+            POST: 'color-orange',
+            PUT: 'color-blue',
+            DELETE: 'color-red',
+          }[data.method as string]
+        }">${data.method.toUpperCase()}</span>`,
+      )
+    if (data.path) parts.push(`Path: <span class="font-500">${data.path}</span>`)
+    if (data.summary) parts.push(`Summary: <span class="font-500">${data.summary}</span>`)
+    return `<div class="font-bold">${parts.join('\n')}</div>`
+  }
+
+  const tooltipContent = buildTooltipContent()
+
   return h(
     'div',
     {
       class: ' w-full grid grid-cols-10 ',
     },
     [
-      h('div', { class: 'ellipsis-one col-span-8' }, node.method || node.label),
-      h('div', { class: 'col-span-2 text-right pr-2' }, '其他信息'),
-    ],
+      h(
+        'div',
+        { class: 'ellipsis-one col-span-9' },
+        h('div', { class: 'flex' }, [
+          h(
+            'span',
+            {
+              class:
+                {
+                  GET: 'color-green',
+                  POST: 'color-orange',
+                  PUT: 'color-blue',
+                  DELETE: 'color-red',
+                }[data.method as string] + ' font-bold',
+            },
+            data.method,
+          ),
+          h('div', { class: 'flex-sub ml-2 u-line-1' }, data.label),
+        ]),
+      ),
+      tooltipContent &&
+        h(
+          'div',
+          { class: 'col-span-1 text-right pr-2' },
+          h(
+            ElTooltip,
+            {
+              content: tooltipContent,
+              placement: 'left',
+              rawContent: true,
+              effect: 'dark',
+              popperClass: 'api-detail-tooltip',
+              style: { width: '400px' },
+            },
+            {
+              default: () =>
+                h(
+                  'span',
+                  { class: 'cursor-pointer', style: { color: 'var(--ep-purple-color)' } },
+                  '更多',
+                ),
+            },
+          ),
+        ),
+    ].filter(Boolean),
   )
 }
 
@@ -322,61 +389,6 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
   }
 }
 
-// 处理文件内容渲染默认选中
-// const handleFileContent = async (rawText: string) => {
-//   try {
-//     // 保存原始文本以供后续使用
-//     originFileText.value = rawText
-//     // 尝试解析为 JSON/YAML（容错）
-//     try {
-//       docObject.value = JSON.parse(rawText)
-//       apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
-//       // set checked keys to all node ids
-//       defaultCheckedKeys.value = []
-//       const collectIds = (nodes: any[]) => {
-//         nodes.forEach((n) => {
-//           if (n.id) defaultCheckedKeys.value.push(n.id)
-//           if (n.children && n.children.length) collectIds(n.children)
-//         })
-//       }
-//       collectIds(apiNodeList.value)
-//     } catch (e) {
-//       console.log(e)
-//       // 不是 JSON，就当做 YAML 尝试解析
-//       try {
-//         docObject.value = yaml.load(rawText)
-//         console.log(
-//           '解析为 YAML 成功load',
-//           docObject.value,
-//           Object.keys(docObject.value.paths).length,
-//         )
-//         apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
-//         defaultCheckedKeys.value = []
-//         const collectIds = (nodes: any[]) => {
-//           nodes.forEach((n) => {
-//             if (n.id) defaultCheckedKeys.value.push(n.id)
-//             if (n.children && n.children.length) collectIds(n.children)
-//           })
-//         }
-//         collectIds(apiNodeList.value)
-//         console.log(apiNodeList.value)
-//       } catch (yamlErr) {
-//         console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
-//       }
-//     }
-
-//     // 如果你想在客户端先处理并阻止 Element Plus 直接上传，返回 false
-//     // return false
-
-//     // 若不阻止上传，返回 true 或不返回（或者 return file）
-//     return true
-//   } catch (err) {
-//     console.error('读取文件出错', err)
-//     // 阻止上传
-//     return false
-//   }
-// }
-
 /**
  * get build api tree
  * @param file Handle before upload
@@ -387,7 +399,6 @@ const handleBeforeUpload = async (file: File) => {
   // 保存原始文本以供后续使用
   handleDefaultCheckedKeys(rawText)
   handleDefaultNodeAPIlist(rawText)
-  // handleFileContent(rawText)
 }
 
 /**
@@ -405,12 +416,14 @@ const handleSuccess = (response: { code: number; data: { openapiFileId: string }
 // 获取原始API文档详情内容
 const handleGetAPIDetail = async (id: string) => {
   try {
+    dialogInfo.value.loading = true
+
     const { content } = await DocsAPI.fileContent({ openapiFileId: id })
-    // handleFileContent(content)
     handleDefaultCheckedKeys(content)
     handleDefaultNodeAPIlist(content)
   } catch {
     formData.value.openapiFileID = ''
+    dialogInfo.value.loading = false
   }
 }
 
@@ -462,23 +475,28 @@ const handleUploadAgain = async () => {
  * Handle confirm and submit data
  */
 const handleConfirm = async () => {
-  // 处理选中的接口；将选中的paths 组装成新的OpenAPI文档上传
-  if (originFileText.value) {
-    await handleUploadAgain()
-  } else {
-    ElMessage.error('请先上传或选择OpenAPI文档')
-  }
-  baseInfo.value.validate(async (valid: boolean) => {
-    if (valid) {
-      // 提交数据
-      await (formData.value.instanceId
-        ? InstanceAPI.editByOpenAPI(formData.value)
-        : InstanceAPI.createByOpenAPI(formData.value))
-      dialogInfo.value.visible = false
-      ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
-      emit('on-refresh')
+  try {
+    dialogInfo.value.loading = true
+    // 处理选中的接口；将选中的paths 组装成新的OpenAPI文档上传
+    if (originFileText.value) {
+      await handleUploadAgain()
+    } else {
+      ElMessage.error('请先上传或选择OpenAPI文档')
     }
-  })
+    baseInfo.value.validate(async (valid: boolean) => {
+      if (valid) {
+        // 提交数据
+        await (formData.value.instanceId
+          ? InstanceAPI.editByOpenAPI(formData.value)
+          : InstanceAPI.createByOpenAPI(formData.value))
+        dialogInfo.value.visible = false
+        ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
+        emit('on-refresh')
+      }
+    })
+  } finally {
+    dialogInfo.value.loading = false
+  }
 }
 
 /**
@@ -486,26 +504,31 @@ const handleConfirm = async () => {
  * @param id instance id
  */
 const handleGetDetail = async (id: string) => {
-  const data = await InstanceAPI.detail({ instanceId: id })
-  formData.value = {
-    ...data,
-    chooseOpenapiFileID: data.packageId,
-    openapiFileID: '',
+  try {
+    dialogInfo.value.loading = true
+    const data = await InstanceAPI.detail({ instanceId: id })
+    formData.value = {
+      ...data,
+      chooseOpenapiFileID: data.packageId,
+      openapiFileID: '',
+    }
+
+    // 获取选中的api详情
+    const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
+      openapiFileId: data.packageId,
+    })
+    // 处理默认选中的列表
+    handleDefaultCheckedKeys(content)
+
+    formData.value.openapiFileID = baseOpenapiFileID
+    // 获取原始的api文档内容
+    const res = await DocsAPI.fileContent({
+      openapiFileId: baseOpenapiFileID,
+    })
+    handleDefaultNodeAPIlist(res.content)
+  } finally {
+    dialogInfo.value.loading = false
   }
-
-  // 获取选中的api详情
-  const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
-    openapiFileId: data.packageId,
-  })
-  // 处理默认选中的列表
-  handleDefaultCheckedKeys(content)
-
-  formData.value.openapiFileID = baseOpenapiFileID
-  // 获取原始的api文档内容
-  const res = await DocsAPI.fileContent({
-    openapiFileId: baseOpenapiFileID,
-  })
-  handleDefaultNodeAPIlist(res.content)
 }
 
 /**
@@ -633,5 +656,10 @@ defineExpose({
 .el-dialog__footer.footer-border {
   background-color: transparent !important;
   border-top: 1px solid var(--el-border-color-light) !important;
+}
+.api-detail-tooltip {
+  max-width: 400px !important;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

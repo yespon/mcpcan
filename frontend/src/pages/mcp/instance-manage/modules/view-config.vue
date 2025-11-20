@@ -31,7 +31,7 @@
           },
         ]"
       >
-        <el-scrollbar ref="scrollbarRef" always>
+        <el-scrollbar ref="scrollbarRef" max-height="75vh" always>
           <div class="token-list">
             <div class="font-bold flex justify-between items-center">
               <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
@@ -67,7 +67,6 @@
                   {{ token.token }}
                 </div>
                 <el-dropdown
-                  v-if="index !== 0"
                   trigger="click"
                   class="ml-2"
                   style="cursor: pointer !important"
@@ -77,10 +76,17 @@
                   <el-icon size="18"><Operation /></el-icon>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item command="handleViewLog" @click="handleEditToken(index)">
-                        {{ t('env.run.action.edit') }}
+                      <el-dropdown-item v-if="index !== 0" @click="handleEditToken(index)">
+                        <el-button link>
+                          {{ t('env.run.action.edit') }}
+                        </el-button>
                       </el-dropdown-item>
-                      <el-dropdown-item command="handleViewLog" @click="handleDeleteToken(index)">
+                      <el-dropdown-item @click="handleViewLog(index)">
+                        <el-button link>
+                          {{ '日志' }}
+                        </el-button>
+                      </el-dropdown-item>
+                      <el-dropdown-item v-if="index !== 0" @click="handleDeleteToken(index)">
                         <el-button type="danger" link>
                           {{ t('mcp.instance.action.delete') }}
                         </el-button>
@@ -112,7 +118,6 @@
                   {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
                 </div>
               </div>
-
               <div class="grid grid-cols-2 mt-2">
                 <div class="ellipsis-one grid-cols-span-1">
                   {{ t('mcp.instance.token.tag') }}：<el-tag
@@ -124,7 +129,7 @@
                     {{ tag }}
                   </el-tag>
                 </div>
-                <div class="grid-cols-span-1" v-if="true || 'API服务'">
+                <div class="grid-cols-span-1" v-if="dialogInfo.instanceInfo.sourceType === 4">
                   是否开启透传:
                   <el-switch
                     v-model="token.enabledTransport"
@@ -188,26 +193,6 @@
         </el-scrollbar>
       </el-col>
     </el-row>
-    <el-scrollbar
-      :class="[
-        'config-col logs-box  mt-3 p-3',
-        {
-          collapsed:
-            !dialogInfo.instanceInfo.enabledToken ||
-            dialogInfo.instanceInfo.accessType === AccessType.DIRECT,
-        },
-      ]"
-      max-height="420px"
-      always
-    >
-      <div ref="logEl">
-        <div>令牌日志</div>
-        <div class="py-5 px-5">{{ tokenConfig }}</div>
-        <el-icon v-if="!isFullscreen" class="base-btn-link copy-icon" size="18" @click="toggle">
-          <FullScreen />
-        </el-icon>
-      </div>
-    </el-scrollbar>
     <template #footer>
       <div class="center">
         <!-- <mcp-button @click="handleCopy" class="w100">{{
@@ -428,7 +413,7 @@
       </el-col>
       <el-col :span="12" class="expanded">
         <el-scrollbar ref="scrollbarRef" height="50vh" always class="config-info">
-          <div class="py-5 px-5">{{ config }}</div>
+          <div class="py-5 px-5">{{ editConfig }}</div>
         </el-scrollbar>
       </el-col>
     </el-row>
@@ -445,34 +430,21 @@
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Plus,
-  Operation,
-  CopyDocument,
-  Link,
-  Key,
-  FullScreen,
-  Warning,
-  Minus,
-} from '@element-plus/icons-vue'
+import { Plus, Operation, CopyDocument, Link, Key, Warning, Minus } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
-import { AccessType, type InstanceResult } from '@/types'
+import { AccessType, TokenType, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 import { JsonFormatter } from '@/utils/json'
+import { useRouterHooks } from '@/utils/url'
 
-const logEl = ref(null)
-// 将日志容器作为全屏目标。el-scrollbar 的 ref 返回组件实例，需取其 $el
-const targetEl = computed(() => {
-  const el = (logEl as any).value
-  return (el && (el.$el || el)) as any
-})
+const { jumpToPage } = useRouterHooks()
+
 const disabledTokenStatus = computed(() => {
-  return false // !'存在一个透传的时候必须开启'
+  return tokenList.value.some((item) => item.enabledTransport) // !'存在一个透传的时候必须开启'
 })
-const { isFullscreen, toggle } = useFullscreen(targetEl)
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
@@ -483,7 +455,7 @@ const formData = ref({
   visible: false,
   token: '',
   headers: [] as { key: string; value: string }[],
-  tokenType: '',
+  tokenType: null as TokenType | null,
   enabledTransport: false,
   expireAt: null as number | null,
   usages: [] as string[],
@@ -493,7 +465,27 @@ const userDataKey = ref({
   password: '',
 })
 const rules = reactive({
-  tokenType: [{ required: true, message: '请选择API凭证类型', trigger: 'change' }],
+  tokenType: [
+    {
+      required: true,
+      validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
+        if (!value) {
+          callback(new Error('请选择API凭证类型'))
+        }
+        if (value === 4) {
+          if (!userDataKey.value.username || !userDataKey.value.password) {
+            callback(new Error('请输入Basic认证的用户名和密码'))
+          }
+        } else {
+          if (!formData.value.token) {
+            callback(new Error('token不能为空'))
+          }
+        }
+        callback()
+      },
+      trigger: 'change',
+    },
+  ],
   token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
 })
 const dialogInfo = ref({
@@ -523,30 +515,77 @@ const config = computed(() => {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
   if (dialogInfo.value.instanceInfo.enabledToken) {
-    return `{
-      "mcpServers": {
-            "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-                  "url": "${configUrl.value}",
-                  "headers": {
-                        "Authorization": "${
-                          dialogInfo.value.currentTokenIndex !== null
-                            ? dialogInfo.value.instanceInfo.tokens[
-                                dialogInfo.value.currentTokenIndex
-                              ].token
-                            : ''
-                        }"
-                  }
-            }
-      }
-  }`
+    let headersString = null
+    let tokenType = 0
+    if (dialogInfo.value.currentTokenIndex !== null) {
+      const headers =
+        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].headers || {}
+      tokenType = Number(
+        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].tokenType,
+      )
+      headersString = Object.entries(headers)
+        .map(([key, value]) => `"${key}": "${value.replace(/"/g, '\\"')}"`)
+        .join(',\n                        ')
+    }
+
+    return JsonFormatter.format(
+      `{
+          "mcpServers": {
+                "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
+                      "url": "${configUrl.value}",
+                      "headers": {
+                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][tokenType]}": "${
+                              dialogInfo.value.currentTokenIndex !== null
+                                ? dialogInfo.value.instanceInfo.tokens[
+                                    dialogInfo.value.currentTokenIndex
+                                  ].token
+                                : ''
+                            }"${headersString ? ',' + headersString : ''}
+                      }
+                }
+          }
+      }`,
+      4,
+    )
   }
-  return `{
+  return JsonFormatter.format(
+    `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
               "url": "${configUrl.value}"
           }
       }
-  }`
+  }`,
+    4,
+  )
+})
+
+const editConfig = computed(() => {
+  const headersString = formData.value.headers
+    .filter((header) => header.key && header.value)
+    .map((header) => `"${header.key}": "${header.value.replace(/"/g, '\\"')}"`)
+    .join(',\n                        ')
+
+  return JsonFormatter.format(
+    `{
+          "mcpServers": {
+                "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
+                      "url": "${configUrl.value}",
+                      "headers": {
+                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][formData.value.tokenType || 0]}": "${
+                              formData.value.tokenType === 4
+                                ? 'Basic ' +
+                                  btoa(
+                                    userDataKey.value.username + ':' + userDataKey.value.password,
+                                  )
+                                : formData.value.token || ''
+                            }"${headersString ? ',' + headersString : ''}
+                      }
+                }
+          }
+      }`,
+    4,
+  )
 })
 
 // token list
@@ -616,7 +655,16 @@ const handleSelectedToken = (index: number) => {
 
 // handle token type change and clear token value
 const handleTokenTypeChange = () => {
-  formData.value.token = ''
+  let roginData = { token: '', tokenType: '' }
+  if (dialogInfo.value.currentEditIndex !== null) {
+    roginData = dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] as any
+  }
+  if (Number(roginData.tokenType) === 4) {
+    userDataKey.value.username = atob(roginData.token.split(' ')[1]).split(':')[0]
+    userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
+    return
+  }
+  formData.value.token = roginData.token
 }
 
 // handle random token
@@ -688,6 +736,13 @@ const handleEditToken = (index: number) => {
   formData.value.token = token.token
   formData.value.expireAt = token.expireAt
   formData.value.usages = token.usages || []
+  formData.value.headers = Object.entries(token.headers || {}).map(([key, value]) => ({
+    key: key,
+    value: value,
+  }))
+  formData.value.tokenType = token.tokenType
+  formData.value.enabledTransport = token.enabledTransport
+  handleTokenTypeChange()
 }
 
 // handle delete token
@@ -715,6 +770,17 @@ const handleDeleteToken = (index: number) => {
   })
 }
 
+const handleViewLog = (index: number) => {
+  jumpToPage({
+    url: '/token-log',
+    data: {
+      instanceId: dialogInfo.value.instanceInfo.instanceId,
+      token: dialogInfo.value.instanceInfo.tokens[index].token || '',
+    },
+    isOpen: true,
+  })
+}
+
 // handle confirm token
 const handleConfirmToken = async () => {
   const result = await formRef.value.validate()
@@ -730,7 +796,10 @@ const handleConfirmToken = async () => {
       publishAt: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].publishAt,
       usages: formData.value.usages,
       enabledTransport: formData.value.enabledTransport,
-      headers: formData.value.headers,
+      headers: Object.fromEntries(
+        formData.value.headers.map((header) => [header.key, header.value]),
+      ),
+      tokenType: formData.value.tokenType,
     }
     dialogInfo.value.currentEditIndex = null
     await handleSaveTokens()
@@ -738,7 +807,7 @@ const handleConfirmToken = async () => {
       visible: false,
       token: '',
       headers: [],
-      tokenType: '',
+      tokenType: null,
       enabledTransport: false,
       expireAt: null,
       usages: [],
@@ -752,14 +821,17 @@ const handleConfirmToken = async () => {
       expireAt: formData.value.expireAt || 0,
       publishAt: Date.now(),
       usages: formData.value.usages,
-      headers: formData.value.headers,
+      headers: Object.fromEntries(
+        formData.value.headers.map((header) => [header.key, header.value]),
+      ),
+      tokenType: formData.value.tokenType,
     })
     await handleSaveTokens()
     formData.value = {
       visible: false,
       token: '',
       headers: [],
-      tokenType: '',
+      tokenType: null,
       enabledTransport: false,
       expireAt: null,
       usages: [],
@@ -842,7 +914,7 @@ defineExpose({
   width: 100px;
 }
 .token-list {
-  height: 40vh;
+  min-height: 75vh;
   border-radius: 8px;
   background: var(--ep-bg-color-deep);
   padding: 24px;
@@ -880,18 +952,7 @@ defineExpose({
   border-radius: 8px;
   box-sizing: border-box;
 }
-.logs-info {
-  min-height: 36vh;
-  font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
-  font-size: 12px;
-  line-height: 1.8;
-  white-space: pre;
-  word-break: normal;
-  border-radius: 8px;
-  background: var(--ep-bg-color-deep);
-  border-radius: 8px;
-  box-sizing: border-box;
-}
+
 .copy-icon-url {
   position: absolute;
   top: 12px;
@@ -942,25 +1003,7 @@ defineExpose({
   flex-basis: 100% !important;
   max-width: 100% !important;
 }
-.logs-box {
-  height: 36vh;
-  font-family: 'Monaco, Menlo, "Ubuntu Mono", monospace';
-  font-size: 12px;
-  line-height: 1.8;
-  white-space: pre;
-  word-break: normal;
-  border-radius: 8px;
-  background: var(--ep-bg-color-deep);
-  border-radius: 8px;
-  box-sizing: border-box;
-}
-.logs-box.collapsed {
-  opacity: 0;
-  padding: 0 !important;
-  max-width: 0 !important;
-  min-height: 0;
-  height: 0 !important;
-}
+
 .tag-input {
   :deep(.el-tag) {
     color: var(--ep-purple-color);

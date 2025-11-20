@@ -57,6 +57,14 @@ const router = createRouter({
           component: () => import('../pages/mcp/instance-manage/form-instance.vue'),
         },
         {
+          path: '/token-log',
+          name: 'tokenLog',
+          meta: {
+            title: 'tokenLog',
+          },
+          component: () => import('../pages/mcp/instance-manage/token-log.vue'),
+        },
+        {
           path: '/working-environment',
           name: 'workingEnvironment',
           meta: {
