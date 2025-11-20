@@ -265,7 +265,7 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 }
 
 func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *instancepb.UpdateOpenapiRequest, oriInstance *model.McpInstance) (*instancepb.EditResp, error) {
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
@@ -288,6 +288,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 	oriInstance.ContainerStatus = model.ContainerStatusPending
 	oriInstance.ContainerIsReady = false
 	oriInstance.IconPath = req.IconPath
+	oriInstance.OpenapiBaseUrl = req.OpenapiBaseUrl
 	if req.ChooseOpenapiFileID != oriInstance.PackageID {
 		oriInstance.PackageID = req.ChooseOpenapiFileID
 	}

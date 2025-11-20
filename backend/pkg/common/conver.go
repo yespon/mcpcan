@@ -43,6 +43,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		ProxyProtocol:              proxyProtocol,
 		SourceType:                 protoSourceType,
 		Notes:                      instance.Notes,
+		OpenapiBaseUrl:             instance.OpenapiBaseUrl,
 	}
 }
 

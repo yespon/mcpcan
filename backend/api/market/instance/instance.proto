@@ -223,6 +223,8 @@ message DetailResp {
   string containerStatus = 27;
   // @inject_tag: json:"containerLastMessage" desc:"容器最后一条消息"
   string containerLastMessage = 28;
+  // @inject_tag: json:"openapiBaseUrl" desc:"访问基础路径"
+  string openapiBaseUrl = 29;
 }
 
 // EditRequest 编辑实例请求结构体
@@ -365,6 +367,8 @@ message ListResp {
     SourceType sourceType = 26;
     // @inject_tag: json:"notes" form:"notes" desc:"备注"
     string notes = 27;
+    // @inject_tag: json:"openapiBaseUrl" desc:"访问基础路径"
+    string openapiBaseUrl = 28;
   }
 }
 
@@ -740,6 +744,8 @@ message CreateOpenapiRequest {
   int32 environmentId = 6;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
   string iconPath = 7;
+  // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"访问基础路径"
+  string openapiBaseUrl = 8;
 }
 
 
@@ -757,6 +763,8 @@ message UpdateOpenapiRequest {
   string chooseOpenapiFileID = 5;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
   string iconPath = 6;
+  // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"访问基础路径"
+  string openapiBaseUrl = 7;
 }
 
 // InstanceService 实例管理服务

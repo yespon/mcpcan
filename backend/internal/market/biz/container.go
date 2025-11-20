@@ -1022,7 +1022,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 }
 
 // BuildOpenapiContainerOptions builds openapi container creation options
-func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, startupTimeout int32, runningTimeout int32) (*container.ContainerCreateOptions, error) {
+func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, startupTimeout int32, runningTimeout int32, openapiBaseUrl string) (*container.ContainerCreateOptions, error) {
 	containerName := cd.generateContainerName(instanceID)
 	serviceName := cd.generateServiceName(instanceID)
 
@@ -1047,7 +1047,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
 	downloadLink := cd.createDownloadLink(downloadLinkPath)
-	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 run.yaml", downloadLink)
+	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 --base-url=%s run.yaml", downloadLink, openapiBaseUrl)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{

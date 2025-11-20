@@ -368,14 +368,15 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 
 	// Build response
 	resp := &instancepb.DetailResp{
-		InstanceId:   instance.InstanceID,
-		Name:         instance.InstanceName,
-		Status:       string(instance.Status),
-		AccessType:   pbAccessType,
-		McpProtocol:  pbMcpProtocol,
-		Notes:        instance.Notes,
-		IconPath:     instance.IconPath,
-		EnabledToken: instance.EnabledToken,
+		InstanceId:     instance.InstanceID,
+		Name:           instance.InstanceName,
+		Status:         string(instance.Status),
+		AccessType:     pbAccessType,
+		McpProtocol:    pbMcpProtocol,
+		Notes:          instance.Notes,
+		IconPath:       instance.IconPath,
+		EnabledToken:   instance.EnabledToken,
+		OpenapiBaseUrl: instance.OpenapiBaseUrl,
 	}
 
 	if instance.EnabledToken {
@@ -1161,7 +1162,7 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 	}
 
 	instanceID := uuid.New().String()
-	containerOptions, err := biz.GContainerBiz.BuildOpenapiContainerOptions(s.ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0)
+	containerOptions, err := biz.GContainerBiz.BuildOpenapiContainerOptions(s.ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to build container options: %w", err))
 		return
@@ -1212,6 +1213,7 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		IconPath:               req.IconPath,
 		PublicProxyPath:        biz.GInstanceBiz.CreatePublicProxyPath(instanceID, model.McpProtocolStreamableHttp),
 		ProxyProtocol:          model.McpProtocolStreamableHttp,
+		OpenapiBaseUrl:         req.OpenapiBaseUrl,
 	}
 
 	// Save instance to database
