@@ -205,7 +205,7 @@ func ProbePort(ctx context.Context, options PortProbeOptions) *PortProbeResult {
 	result.Latency = time.Since(start)
 
 	if err != nil {
-		result.Error = fmt.Sprintf("connection failed: %v", err)
+		result.Error = fmt.Sprintf("connection failed: %v (addr: %s)", err, address)
 		return result
 	}
 
