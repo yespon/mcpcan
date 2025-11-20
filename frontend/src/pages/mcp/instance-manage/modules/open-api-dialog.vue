@@ -36,6 +36,9 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="服务地址" prop="openapiBaseUrl">
+            <el-input v-model="formData.openapiBaseUrl" placeholder="服务地址" />
+          </el-form-item>
           <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
             <el-input
               v-model="formData.notes"
@@ -167,6 +170,7 @@ const formData = ref({
   notes: '',
   iconPath: '',
   environmentId: '',
+  openapiBaseUrl: '',
   openapiFileID: '',
   chooseOpenapiFileID: '', // 选择的文档库文件ID
   sourceType: SourceType.OPENAPI,
@@ -192,6 +196,7 @@ const formData = ref({
 })
 const rules = ref({
   name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  openapiBaseUrl: [{ required: true, message: '服务地址必填', trigger: 'blur' }],
   environmentId: [
     { required: true, message: t('mcp.instance.rules.environmentId'), trigger: 'change' },
   ],
@@ -239,7 +244,6 @@ const handleGetAPIlist = async () => {
  */
 const renderContent = (h: any, params: any) => {
   const { data } = params as { node: any; data?: any }
-
   // 构建 tooltip 内容
   const buildTooltipContent = () => {
     if (!data || !data.method) return ''
@@ -325,6 +329,9 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     // 尝试解析为 JSON/YAML（容错）
     try {
       docObject.value = JSON.parse(rawText)
+      formData.value.openapiBaseUrl = docObject.value.servers?.length
+        ? docObject.value.servers[0]?.url
+        : ''
       defaultCheckedKeys.value = []
       const collectIds = (nodes: any[]) => {
         nodes.forEach((n) => {
@@ -336,7 +343,9 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     } catch (e) {
       try {
         docObject.value = yaml.load(rawText)
-
+        formData.value.openapiBaseUrl = docObject.value.servers?.length
+          ? docObject.value.servers[0]?.url
+          : ''
         defaultCheckedKeys.value = []
         const collectIds = (nodes: any[]) => {
           nodes.forEach((n) => {
@@ -417,12 +426,12 @@ const handleSuccess = (response: { code: number; data: { openapiFileId: string }
 const handleGetAPIDetail = async (id: string) => {
   try {
     dialogInfo.value.loading = true
-
     const { content } = await DocsAPI.fileContent({ openapiFileId: id })
     handleDefaultCheckedKeys(content)
     handleDefaultNodeAPIlist(content)
   } catch {
     formData.value.openapiFileID = ''
+  } finally {
     dialogInfo.value.loading = false
   }
 }
@@ -546,6 +555,7 @@ const init = (id: string | null) => {
       name: '',
       notes: '',
       iconPath: '',
+      openapiBaseUrl: '',
       environmentId: '',
       openapiFileID: '',
       chooseOpenapiFileID: '',
