@@ -23,8 +23,8 @@
 
         <!-- 第二行：时间范围 -->
         <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label">时间范围：</span>
-          <div class="flex-sub">
+          <span class="font-bold filter-label"> 时间范围 ： </span>
+          <div>
             <el-date-picker
               v-model="dateRange"
               type="datetimerange"
@@ -32,18 +32,19 @@
               start-placeholder="开始时间"
               end-placeholder="结束时间"
               size="small"
+              class="w-full"
               :disabled-date="disabledDate"
               @change="handleDateRangeChange"
             />
-            <span class="ml-2">
-              <el-popover placement="top" width="300">
-                <div>{{ '仅保留24小时内的日志；超出时间范围的数据将自动清除' }}</div>
-                <template #reference>
-                  <el-icon class="cursor-pointer"><Warning /></el-icon>
-                </template>
-              </el-popover>
-            </span>
           </div>
+          <span class="ml-1">
+            <el-popover placement="top" width="300">
+              <div>{{ '仅保留24小时内的日志；超出时间范围的数据将自动清除' }}</div>
+              <template #reference>
+                <el-icon class="cursor-pointer"><Warning /></el-icon>
+              </template>
+            </el-popover>
+          </span>
         </div>
       </div>
 
@@ -288,6 +289,7 @@ const handleInstanceChange = async (val: string) => {
   tokenList.value = []
   logList.value = []
   if (val) {
+    handleGetLogs()
     await getTokenList(val)
   }
 }
@@ -344,8 +346,8 @@ const formatLogOneLine = (log: string) => {
 }
 
 const handleGetLogs = async () => {
-  if (!instanceId.value || !token.value) {
-    ElMessage.warning('请选择实例和 Token')
+  if (!instanceId.value) {
+    ElMessage.warning('请选择实例')
     return
   }
 

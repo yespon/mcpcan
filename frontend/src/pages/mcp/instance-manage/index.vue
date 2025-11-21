@@ -199,6 +199,12 @@
                   >
                     {{ t('mcp.instance.action.log') }}
                   </el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="row.accessType !== AccessType.DIRECT"
+                    command="handleViewAccessLog"
+                  >
+                    {{ '访问日志' }}
+                  </el-dropdown-item>
                   <el-dropdown-item command="handleEditInstance">
                     {{ t('env.run.action.edit') }}
                   </el-dropdown-item>
@@ -416,6 +422,20 @@ const handleViewLog = (row: InstanceResult) => {
     isOpen: true,
   })
 }
+
+/**
+ * handle view instance access logs
+ * @param row - item of instance
+ */
+const handleViewAccessLog = (row: InstanceResult) => {
+  jumpToPage({
+    url: '/token-log',
+    data: {
+      instanceId: row.instanceId,
+    },
+  })
+}
+
 /**
  * Handle eidt the instance form
  * @param row - instance form data
@@ -550,6 +570,9 @@ const handleCommand = (callback: string, row: InstanceResult) => {
       break
     case 'handleAddByDocs':
       handleAddByDocs()
+      break
+    case 'handleViewAccessLog':
+      handleViewAccessLog(row)
       break
     default:
       ElMessage.warning(`未找到 "${callback}" 对应的操作`)

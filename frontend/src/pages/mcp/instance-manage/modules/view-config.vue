@@ -83,7 +83,7 @@
                       </el-dropdown-item>
                       <el-dropdown-item @click="handleViewLog(index)">
                         <el-button link>
-                          {{ '日志' }}
+                          {{ '访问日志' }}
                         </el-button>
                       </el-dropdown-item>
                       <el-dropdown-item v-if="index !== 0" @click="handleDeleteToken(index)">

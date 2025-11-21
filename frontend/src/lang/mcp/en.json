@@ -87,7 +87,7 @@
         "save": "Save Instance",
         "create": "Add a new MCP",
         "view": "View",
-        "log": "Log",
+        "log": "Container Logs",
         "stop": "Stop",
         "start": "Start",
         "reStart": "Restart",

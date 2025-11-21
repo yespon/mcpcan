@@ -128,6 +128,7 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'accessType',
       label: t('mcp.instance.form.accessType'),
+      props: { width: '100px' },
       searchConfig: {
         component: 'el-select',
         label: t('mcp.instance.form.accessType'),
@@ -147,6 +148,7 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'mcpProtocol',
       label: t('mcp.instance.form.mcpProtocol'),
+      props: { width: '160px' },
       searchConfig: {
         component: 'el-select',
         label: t('mcp.instance.form.mcpProtocol'),
@@ -162,11 +164,17 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'enabledToken',
       label: t('mcp.instance.enabledToken'),
+      props: { width: '120px' },
       headSlot: 'enabledTokenHeader',
     },
-    { dataIndex: 'publicProxyConfig', label: t('mcp.instance.publicProxyConfig') },
+    {
+      dataIndex: 'publicProxyConfig',
+      props: { width: '120px' },
+      label: t('mcp.instance.publicProxyConfig'),
+    },
     {
       dataIndex: 'status',
+      props: { width: '120px' },
       label: t('mcp.instance.status'),
       searchConfig: {
         component: 'el-select',
