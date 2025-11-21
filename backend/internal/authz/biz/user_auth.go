@@ -332,8 +332,6 @@ func (uc *AuthUseCase) ValidateToken(ctx context.Context, token string) (*Valida
 	// Check if session is expired
 	if sessionRecord.ExpiresAt != nil && time.Now().After(*sessionRecord.ExpiresAt) {
 		uc.logger.Warn("Session has expired")
-		// Clean up expired session
-		redis.DeleteUserSession(sessionRecord.SessionID)
 		return &ValidateResult{Valid: false}, nil
 	}
 

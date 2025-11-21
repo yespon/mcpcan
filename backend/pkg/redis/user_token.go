@@ -47,7 +47,7 @@ const (
 	// UserSessionPrefix 用户会话Redis键前缀
 	UserSessionPrefix = "user_session:"
 	// UserSessionsByUserIDPrefix 按用户ID索引的会话键前缀
-	UserSessionsByUserIDPrefix = "user_sessions_by_user:"
+	UserSessionsByUserIDPrefix = "user_sessions_by_user_id:"
 )
 
 // GenerateSessionID 生成会话ID
@@ -72,55 +72,58 @@ func SaveUserSession(session *UserSession) error {
 		return fmt.Errorf("failed to marshal session: %v", err)
 	}
 
-	// 计算过期时间
-	var expiration time.Duration
+	// Calculate expiration times
+	var accessExpiration, refreshExpiration time.Duration
 	if session.ExpiresAt != nil {
-		expiration = time.Until(*session.ExpiresAt)
-		if expiration <= 0 {
-			return fmt.Errorf("session already expired")
+		accessExpiration = time.Until(*session.ExpiresAt)
+		if accessExpiration <= 0 {
+			return fmt.Errorf("access token already expired")
 		}
 	} else {
 		return fmt.Errorf("session expiresAt is nil")
 	}
 
-	// 保存会话
+	if session.RefreshExpiresAt != nil {
+		refreshExpiration = time.Until(*session.RefreshExpiresAt)
+		if refreshExpiration <= 0 {
+			return fmt.Errorf("refresh token already expired")
+		}
+	} else {
+		return fmt.Errorf("session refreshExpiresAt is nil")
+	}
+
+	// Save main session data with refresh token's expiration
 	sessionKey := UserSessionPrefix + session.SessionID
-	err = client.client.Set(ctx, sessionKey, sessionData, expiration).Err()
+	err = client.client.Set(ctx, sessionKey, sessionData, refreshExpiration).Err()
 	if err != nil {
 		return fmt.Errorf("failed to save session: %v", err)
 	}
 
-	// 保存访问令牌映射
+	// Save access token to session ID mapping with access token's expiration
 	tokenKey := UserTokenPrefix + session.Token
-	err = client.client.Set(ctx, tokenKey, session.SessionID, expiration).Err()
+	err = client.client.Set(ctx, tokenKey, session.SessionID, accessExpiration).Err()
 	if err != nil {
 		return fmt.Errorf("failed to save token mapping: %v", err)
 	}
 
-	// 保存刷新令牌映射
+	// Save refresh token to session ID mapping with refresh token's expiration
 	if session.RefreshToken != "" {
 		refreshKey := RefreshTokenPrefix + session.RefreshToken
-		var refreshExpiration time.Duration
-		if session.RefreshExpiresAt != nil {
-			refreshExpiration = time.Until(*session.RefreshExpiresAt)
-		} else {
-			return fmt.Errorf("session refreshExpiresAt is nil")
-		}
 		err = client.client.Set(ctx, refreshKey, session.SessionID, refreshExpiration).Err()
 		if err != nil {
 			return fmt.Errorf("failed to save refresh token mapping: %v", err)
 		}
 	}
 
-	// 保存用户ID到会话的映射
+	// Save user ID to session ID set mapping
 	userSessionsKey := fmt.Sprintf("%s%d", UserSessionsByUserIDPrefix, session.UserID)
 	err = client.client.SAdd(ctx, userSessionsKey, session.SessionID).Err()
 	if err != nil {
 		return fmt.Errorf("failed to save user session mapping: %v", err)
 	}
 
-	// 设置用户会话集合的过期时间
-	client.client.Expire(ctx, userSessionsKey, expiration)
+	// Set expiration for the user's session set, aligned with the refresh token's expiration
+	client.client.Expire(ctx, userSessionsKey, refreshExpiration)
 
 	return nil
 }
@@ -341,8 +344,6 @@ func IsTokenValid(token string) bool {
 
 	// 检查是否过期
 	if userSession.ExpiresAt != nil && time.Now().After(*userSession.ExpiresAt) {
-		// 令牌已过期，删除会话
-		DeleteUserSession(userSession.SessionID)
 		return false
 	}
 

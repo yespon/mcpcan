@@ -11,7 +11,7 @@ const (
 	// EncryptionPublicKeyPrefix 加密公钥前缀
 	EncryptionPublicKeyPrefix = "encryption_public_key"
 	// DefaultEncryptionKeyTTL 默认加密密钥过期时间（todo: 5分钟）
-	DefaultEncryptionKeyTTL = 24 * 60 * time.Minute
+	DefaultEncryptionKeyTTL = 5 * time.Minute
 )
 
 // SetEncryptionPrivateKey 保存加密私钥到Redis
