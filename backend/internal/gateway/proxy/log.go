@@ -171,6 +171,7 @@ func RecordGatewayLog(traceID string, instanceID string, tokenHeader string, tok
 	logRaw, _ := json.Marshal(log)
 
 	rec := &model.GatewayLog{
+		TraceID:     traceID,
 		InstanceID:  instanceID,
 		TokenHeader: tokenHeader,
 		Token:       token,
