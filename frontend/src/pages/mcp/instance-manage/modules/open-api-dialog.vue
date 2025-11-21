@@ -66,7 +66,7 @@
                   class="mr-3"
                 ></mcp-image>
                 <div class="flex-sub">
-                  支持导入 OpenAPI 3.0、3.1 或 Swagger 2.0 数据格式的 JSON 或 YAML 文件。
+                  支持导入 OpenAPI 3.0.0 以上版本数据格式的 JSON 或 YAML 文件。
                 </div>
               </div>
             </el-card>

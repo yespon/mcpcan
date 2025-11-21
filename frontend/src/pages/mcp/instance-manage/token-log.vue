@@ -345,6 +345,7 @@ const formatLogOneLine = (log: string) => {
   }
 }
 
+// 获取日志数据
 const handleGetLogs = async () => {
   if (!instanceId.value) {
     ElMessage.warning('请选择实例')
@@ -378,21 +379,13 @@ const handleGetLogs = async () => {
 const init = async () => {
   // 获取实例列表
   await getInstanceList()
-
   // 如果路由中有 instanceId 和 token，则初始化选中
-  const routeInstanceId = route.query.instanceId as string
-  const routeToken = route.query.token as string
-
-  if (routeInstanceId) {
-    selectedInstanceId.value = routeInstanceId
-    await getTokenList(routeInstanceId)
-
-    if (routeToken) {
-      selectedToken.value = routeToken
-      // 自动查询日志
-      handleGetLogs()
-    }
+  selectedInstanceId.value = route.query.instanceId as string
+  selectedToken.value = route.query.token as string
+  if (route.query.instanceId) {
+    await getTokenList(selectedInstanceId.value)
   }
+  handleGetLogs()
 }
 
 onMounted(init)
@@ -461,7 +454,7 @@ onMounted(init)
   cursor: pointer;
 
   &:hover {
-    background-color: var(--ep-bg-color-overlay);
+    background-color: var(--ep-purple-color-hover);
   }
 
   &:last-child {
@@ -471,7 +464,7 @@ onMounted(init)
   // 展开状态
   &.expanded {
     align-items: flex-start;
-    background-color: var(--ep-bg-color-overlay);
+    // background-color: var(--ep-bg-color-overlay);
 
     .log-detail {
       white-space: pre-wrap;
