@@ -66,6 +66,12 @@ func (r *GatewayLogRepository) FindByID(ctx context.Context, id uint) (*model.Ga
 	return &log, nil
 }
 
+// DeleteBefore deletes logs created before a specified time
+func (r *GatewayLogRepository) DeleteBefore(ctx context.Context, t time.Time) (int64, error) {
+	result := r.getDB().WithContext(ctx).Where("created_at < ?", t).Delete(&model.GatewayLog{})
+	return result.RowsAffected, result.Error
+}
+
 // FindByInstanceID lists logs for a given instance ID, ordered by creation time desc
 func (r *GatewayLogRepository) FindByInstanceID(ctx context.Context, instanceID string) ([]*model.GatewayLog, error) {
 	var logs []*model.GatewayLog

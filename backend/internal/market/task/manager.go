@@ -50,7 +50,7 @@ func (tm *TaskManagerImpl) SetupGlobalTasks(ctx context.Context) error {
 
 	// Create task function adapter
 	taskFunc := func(ctx context.Context) error {
-		return containerMonitor.MonitorContainers(ctx)
+		return containerMonitor.Run(ctx)
 	}
 
 	// Create container monitoring task - using Cron task, execute every 30 seconds

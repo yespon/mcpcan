@@ -31,7 +31,7 @@ type ContainerMonitorImpl struct {
 func NewContainerMonitor(
 	instanceRepo *mysql.McpInstanceRepository,
 	logger *zap.Logger,
-) ContainerMonitor {
+) Task {
 	return &ContainerMonitorImpl{
 		instanceRepo:   instanceRepo,
 		logger:         logger,
@@ -39,8 +39,8 @@ func NewContainerMonitor(
 	}
 }
 
-// MonitorContainers monitors all containers
-func (cm *ContainerMonitorImpl) MonitorContainers(ctx context.Context) error {
+// Run monitors all containers
+func (cm *ContainerMonitorImpl) Run(ctx context.Context) error {
 	cm.logger.Info("Starting global container monitoring task")
 
 	// Get hosting instances in service
