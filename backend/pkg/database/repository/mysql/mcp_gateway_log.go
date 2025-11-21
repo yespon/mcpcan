@@ -131,7 +131,7 @@ func (r *GatewayLogRepository) FindWithPagination(
 			}
 		case "tokenHeader":
 			if s, ok := v.(string); ok && s != "" {
-				q = q.Where("token_header = ?", s)
+				q = q.Where("LOWER(token_header) = ?", strings.ToLower(s))
 			}
 		case "tokenType":
 			if tt, ok := v.(model.TokenType); ok {
@@ -296,13 +296,13 @@ func (r *GatewayLogRepository) InitTable() error {
 		}
 	}
 
-	// Index on token_header for filtering by authentication header source
-	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_token_header'", mod.TableName())
+	// Functional index on token_header for case-insensitive filtering
+	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_lower_token_header'", mod.TableName())
 	r.getDB().Raw(sql).Count(&count)
 	if count == 0 {
-		sql2 := fmt.Sprintf("CREATE INDEX idx_token_header ON %v(token_header)", mod.TableName())
+		sql2 := fmt.Sprintf("CREATE INDEX idx_lower_token_header ON %v((LOWER(token_header)))", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
-			return fmt.Errorf("failed to create token_header index: %v", err)
+			return fmt.Errorf("failed to create lower_token_header index: %v", err)
 		}
 	}
 
