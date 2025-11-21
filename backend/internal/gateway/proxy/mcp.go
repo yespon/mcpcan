@@ -254,7 +254,7 @@ func director(req *http.Request) {
 
 	switch instanceInfo.AccessType {
 	case model.AccessTypeHosting:
-		switch instanceInfo.McpProtocol {
+		switch instanceInfo.ProxyMcpProtocol {
 		case model.McpProtocolSSE:
 			if isSSEReq {
 				handleHostingSSEReq(req, instanceInfo, targetUrl)
@@ -271,7 +271,7 @@ func director(req *http.Request) {
 			return
 		}
 	case model.AccessTypeProxy:
-		switch instanceInfo.McpProtocol {
+		switch instanceInfo.ProxyMcpProtocol {
 		case model.McpProtocolSSE:
 			if isSSEReq {
 				handleProxySSEReq(req, instanceInfo, targetUrl)

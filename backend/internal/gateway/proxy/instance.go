@@ -14,13 +14,14 @@ import (
 )
 
 type InstanceInfo struct {
-	InstanceID   string
-	AccessType   model.AccessType
-	McpProtocol  model.McpProtocol
-	Instance     *model.McpInstance
-	McpConfig    *model.McpConfig
-	EnabledToken bool
-	Tokens       []*model.McpToken
+	InstanceID       string
+	AccessType       model.AccessType
+	McpProtocol      model.McpProtocol
+	ProxyMcpProtocol model.McpProtocol
+	Instance         *model.McpInstance
+	McpConfig        *model.McpConfig
+	EnabledToken     bool
+	Tokens           []*model.McpToken
 }
 
 // McpInstanceService MCP instance business service
@@ -150,13 +151,14 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 	}
 
 	return &InstanceInfo{
-		InstanceID:   instance.InstanceID,
-		AccessType:   instance.AccessType,
-		McpProtocol:  instance.ProxyProtocol,
-		Instance:     instance,
-		McpConfig:    mcpConfig,
-		EnabledToken: instance.EnabledToken,
-		Tokens:       tokens,
+		InstanceID:       instance.InstanceID,
+		AccessType:       instance.AccessType,
+		McpProtocol:      instance.McpProtocol,
+		ProxyMcpProtocol: instance.ProxyProtocol,
+		Instance:         instance,
+		McpConfig:        mcpConfig,
+		EnabledToken:     instance.EnabledToken,
+		Tokens:           tokens,
 	}, nil
 }
 
