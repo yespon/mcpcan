@@ -261,7 +261,19 @@
                 :disabled-date="(date: Date) => date.getTime() < Date.now()"
               ></el-date-picker>
             </el-form-item>
-            <el-form-item :label="'API 认证凭证'" prop="tokenType">
+            <el-form-item prop="tokenType">
+              <template #label>
+                API 认证凭证
+                <el-popover placement="top" width="250">
+                  <div>{{ 'Bearer：可随机生成令牌也可自定义填写令牌' }}</div>
+                  <div>{{ 'Api-Key：可随机生成令牌也可自定义填写令牌' }}</div>
+                  <div>{{ 'X-API-key：可随机生成令牌也可自定义填写令牌。' }}</div>
+                  <div>{{ 'Basic：usename和password需要填写;也可以自定义值' }}</div>
+                  <template #reference>
+                    <el-icon class="cursor-pointer"><Warning /></el-icon>
+                  </template>
+                </el-popover>
+              </template>
               <el-select
                 v-model="formData.tokenType"
                 :placeholder="'请选择API 认证凭证'"
@@ -319,18 +331,33 @@
                 </el-tag>
               </div>
               <div v-if="Number(formData.tokenType) === 4" class="center my-2 w-full">
-                <el-input
-                  v-model="userDataKey.username"
-                  placeholder="username"
-                  class="flex-sub mr-2"
-                  clearable
-                />
-                <el-input
-                  v-model="userDataKey.password"
-                  placeholder="password"
-                  class="flex-sub"
-                  clearable
-                />
+                <template v-if="userDataKey.visible">
+                  <el-input
+                    v-model="userDataKey.username"
+                    placeholder="username"
+                    class="flex-sub mr-2"
+                    clearable
+                  />
+                  <el-input
+                    v-model="userDataKey.password"
+                    placeholder="password"
+                    type="password"
+                    show-password
+                    class="flex-sub"
+                    clearable
+                  />
+                </template>
+                <template v-else>
+                  Authorization：
+                  <el-input
+                    v-model="formData.token"
+                    :placeholder="'请输入自定义token值'"
+                    clearable
+                  />
+                </template>
+                <el-button link class="ml-2 link-hover base-btn-link" @click="handleChangeBasic">
+                  <el-icon><Refresh /></el-icon>{{ userDataKey.visible ? '自定义' : '账号密码' }}
+                </el-button>
               </div>
             </el-form-item>
             <el-form-item prop="enabledTransport" class="enabledTransport">
@@ -430,7 +457,16 @@
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Operation, CopyDocument, Link, Key, Warning, Minus } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Operation,
+  CopyDocument,
+  Link,
+  Key,
+  Warning,
+  Minus,
+  Refresh,
+} from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -461,6 +497,7 @@ const formData = ref({
   usages: [] as string[],
 })
 const userDataKey = ref({
+  visible: false,
   username: '',
   password: '',
 })
@@ -474,7 +511,11 @@ const rules = reactive({
         }
         if (value === 4) {
           if (!userDataKey.value.username || !userDataKey.value.password) {
-            callback(new Error('请输入Basic认证的用户名和密码'))
+            callback(
+              new Error(
+                userDataKey.value.visible ? '请输入Basic认证的用户名和密码' : '请输入Token值',
+              ),
+            )
           }
         } else {
           if (!formData.value.token) {
@@ -495,19 +536,25 @@ const dialogInfo = ref({
   currentTokenIndex: null as number | null,
   currentEditIndex: null as number | null,
 })
-// logs with token
-const tokenConfig = ref('')
-const configUrl = computed(
-  () => `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`,
-)
-const configToken = computed(
-  () =>
-    `${
-      dialogInfo.value.currentTokenIndex !== null
-        ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
-        : ''
-    }`,
-)
+
+const configUrl = computed(() => {
+  if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
+    const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
+    return mcpServers[Object.keys(mcpServers)[0]].url
+  }
+  return `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`
+})
+const configToken = computed(() => {
+  if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
+    const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
+    return mcpServers[Object.keys(mcpServers)[0]].token || '无token信息'
+  }
+  return `${
+    dialogInfo.value.currentTokenIndex !== null
+      ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
+      : ''
+  }`
+})
 // config Info
 const config = computed(() => {
   // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
@@ -612,12 +659,45 @@ const handleChangeTransport = async (token: any, index: number) => {
 
 // handle add token
 const handleAddToken = () => {
-  formData.value.token = ''
-  formData.value.expireAt = null
-  formData.value.usages = []
+  formData.value = {
+    visible: true,
+    token: '',
+    headers: [] as { key: string; value: string }[],
+    tokenType: null as TokenType | null,
+    enabledTransport: false,
+    expireAt: null as number | null,
+    usages: [] as string[],
+  }
+  userDataKey.value = {
+    visible: false,
+    username: '',
+    password: '',
+  }
   dialogInfo.value.currentEditIndex = null
-  formData.value.visible = true
   formRef.value?.resetFields()
+}
+
+// handle edit token
+const handleEditToken = (index: number) => {
+  formRef.value?.resetFields()
+  formData.value.visible = true
+  dialogInfo.value.currentEditIndex = index
+  const token = dialogInfo.value.instanceInfo.tokens[index]
+  formData.value.token = token.token
+  formData.value.expireAt = token.expireAt
+  formData.value.usages = token.usages || []
+  formData.value.headers = Object.entries(token.headers || {}).map(([key, value]) => ({
+    key: key,
+    value: value,
+  }))
+  formData.value.tokenType = token.tokenType
+  formData.value.enabledTransport = token.enabledTransport
+  handleTokenTypeChange()
+}
+
+const handleChangeBasic = () => {
+  userDataKey.value.visible = !userDataKey.value.visible
+  formData.value.token = ''
 }
 
 // handle add header
@@ -727,23 +807,6 @@ const handleAddExpireAt = (days: number) => {
   expireDate.setDate(expireDate.getDate() + days)
   formData.value.expireAt = expireDate.getTime()
 }
-// handle edit token
-const handleEditToken = (index: number) => {
-  formRef.value?.resetFields()
-  formData.value.visible = true
-  dialogInfo.value.currentEditIndex = index
-  const token = dialogInfo.value.instanceInfo.tokens[index]
-  formData.value.token = token.token
-  formData.value.expireAt = token.expireAt
-  formData.value.usages = token.usages || []
-  formData.value.headers = Object.entries(token.headers || {}).map(([key, value]) => ({
-    key: key,
-    value: value,
-  }))
-  formData.value.tokenType = token.tokenType
-  formData.value.enabledTransport = token.enabledTransport
-  handleTokenTypeChange()
-}
 
 // handle delete token
 const handleDeleteToken = (index: number) => {
@@ -777,7 +840,6 @@ const handleViewLog = (index: number) => {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
       token: dialogInfo.value.instanceInfo.tokens[index].token || '',
     },
-    isOpen: true,
   })
 }
 
@@ -786,8 +848,10 @@ const handleConfirmToken = async () => {
   const result = await formRef.value.validate()
   if (!result) return
   if (Number(formData.value.tokenType) === 4) {
-    const base64Credentials = btoa(`${userDataKey.value.username}:${userDataKey.value.password}`)
-    formData.value.token = `Basic ${base64Credentials}`
+    if (userDataKey.value.visible) {
+      const base64Credentials = btoa(`${userDataKey.value.username}:${userDataKey.value.password}`)
+      formData.value.token = `Basic ${base64Credentials}`
+    }
   }
   if (dialogInfo.value.currentEditIndex) {
     dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
@@ -871,25 +935,6 @@ const handleCopy = async (type: string) => {
   ElMessage.success(t('action.copy'))
 }
 
-const handleGetLogs = async () => {
-  if (dialogInfo.value.currentTokenIndex === null) {
-    ElMessage.warning('请先选择一个Token')
-    return
-  }
-  try {
-    dialogInfo.value.instanceInfo.loading = true
-    const { logs } = await InstanceAPI.logsByToken({
-      instanceId: dialogInfo.value.instanceInfo.instanceId,
-      token: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token,
-      pageNum: 1,
-      pageSize: 100,
-    })
-    tokenConfig.value = logs
-  } finally {
-    dialogInfo.value.instanceInfo.loading = false
-  }
-}
-
 /**
  * Handle init model data
  * @param config - public proxy config
@@ -899,7 +944,6 @@ const init = (instanceInfo: InstanceResult) => {
   dialogInfo.value.instanceInfo = cloneDeep(instanceInfo)
   if (instanceInfo.enabledToken) {
     dialogInfo.value.currentTokenIndex = 0
-    handleGetLogs()
   } else {
     dialogInfo.value.currentTokenIndex = null
   }

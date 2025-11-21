@@ -197,9 +197,7 @@ const formData = ref({
 const rules = ref({
   name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
   openapiBaseUrl: [{ required: true, message: '服务地址必填', trigger: 'blur' }],
-  environmentId: [
-    { required: true, message: t('mcp.instance.rules.environmentId'), trigger: 'change' },
-  ],
+  environmentId: [{ required: true, message: '容器环境必填', trigger: 'change' }],
 })
 const baseInfo = ref<any>(null)
 const apiNodeList = ref<any[]>([])
@@ -270,7 +268,7 @@ const renderContent = (h: any, params: any) => {
   return h(
     'div',
     {
-      class: ' w-full grid grid-cols-10 ',
+      class: ' w-full grid grid-cols-10',
     },
     [
       h(
@@ -321,7 +319,32 @@ const renderContent = (h: any, params: any) => {
   )
 }
 
-// 处理默认选中的列表
+const handleValidFile = (rawText: string) => {
+  return new Promise((resolve, reject) => {
+    // 尝试解析为 JSON/YAML（容错）
+    try {
+      docObject.value = JSON.parse(rawText)
+      if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
+        ElMessage.error('仅支持 OpenAPI 3.0.0 及以上版本的文档导入')
+        reject(false)
+      }
+    } catch (e) {
+      try {
+        docObject.value = yaml.load(rawText)
+        if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
+          ElMessage.error('仅支持 OpenAPI 3.0.0 及以上版本的文档导入')
+          reject(false)
+        }
+      } catch (yamlErr) {
+        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+        reject(false)
+      }
+    }
+    resolve(true)
+  })
+}
+
+// 处理默认选中的列表和服务器地址、版本号校验
 const handleDefaultCheckedKeys = (rawText: string) => {
   try {
     // 保存原始文本以供后续使用
@@ -363,6 +386,7 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     console.error('读取文件出错', err)
   }
 }
+
 // 处理接口原始列表
 const handleDefaultNodeAPIlist = (rawText: string) => {
   try {
@@ -405,6 +429,8 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
 const handleBeforeUpload = async (file: File) => {
   // 现代浏览器支持直接调用 file.text()
   const rawText = await file.text() // 原始文本内容
+  // 校验文档合法性
+  await handleValidFile(rawText)
   // 保存原始文本以供后续使用
   handleDefaultCheckedKeys(rawText)
   handleDefaultNodeAPIlist(rawText)
@@ -427,6 +453,8 @@ const handleGetAPIDetail = async (id: string) => {
   try {
     dialogInfo.value.loading = true
     const { content } = await DocsAPI.fileContent({ openapiFileId: id })
+    // 校验文档合法性
+    await handleValidFile(content)
     handleDefaultCheckedKeys(content)
     handleDefaultNodeAPIlist(content)
   } catch {
@@ -526,9 +554,10 @@ const handleGetDetail = async (id: string) => {
     const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
       openapiFileId: data.packageId,
     })
+    // 校验文档合法性
+    await handleValidFile(content)
     // 处理默认选中的列表
     handleDefaultCheckedKeys(content)
-
     formData.value.openapiFileID = baseOpenapiFileID
     // 获取原始的api文档内容
     const res = await DocsAPI.fileContent({
