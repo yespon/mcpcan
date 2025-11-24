@@ -88,6 +88,7 @@
         "create": "创建实例",
         "view": "查看",
         "log": "容器日志",
+        "accessLogs": "访问日志",
         "stop": "停止",
         "start": "启动",
         "reStart": "重启",
@@ -154,12 +155,31 @@
         "servicePathTips": "MCP 服务访问路径"
       },
       "rules": {
-        "name": "请填写实例名称"
+        "name": "请填写实例名称",
+        "openapiBaseUrl": "请填写服务地址",
+        "environmentId": "请选择容器环境"
       },
       "log": {
         "title": "实例日志",
         "instanceId": "实例 ID",
-        "updateTime": "最近跟新"
+        "updateTime": "最近更新",
+        "level": "日志级别",
+        "timeRange": "时间范围",
+        "to": "至",
+        "startTime": "开始时间",
+        "endTime": "结束时间",
+        "timeTips": "仅保留24小时内的日志；超出时间范围的数据将自动清除",
+        "instance": "实例选择",
+        "token": "请选择 Token",
+        "expanded": "点击展开完整日志",
+        "folded": "点击折叠",
+        "empty": "暂无日志数据",
+        "all": "全部",
+        "timeRangeError": "时间范围不能超过24小时，已自动调整结束时间",
+        "instanceError": "获取实例列表失败",
+        "tokenFail": "获取Token列表失败",
+        "getInstance": "请选择实例",
+        "logFail": "获取日志失败"
       },
       "token": {
         "title": "安全认证令牌",
@@ -173,13 +193,39 @@
         "lifespan": "有效期",
         "day": "天",
         "random": "随机生成",
-        "placeholderToken": "Authorization:请输入Token值或自动生成",
+        "placeholderToken": "请输入Token值或自动生成",
         "mustToken": "Token值不能为空",
         "tag": "标签",
         "placeholderTag": "请输入标签名称；回车即可生成标签",
         "copyUrl": "复制URL",
         "copyToken": "复制Token",
-        "copyAll": "复制全部"
+        "copyAll": "复制全部",
+        "passthroughStatus": "是否开启透传",
+        "auth": "认证凭证",
+        "Bearer": " Bearer：可随机生成令牌也可自定义填写令牌",
+        "Api-Key": " Api-Key：可随机生成令牌也可自定义填写令牌",
+        "X-API-key": " X-API-key：可随机生成令牌也可自定义填写令牌",
+        "Basic": " Basic：usename和password需要填写;也可以自定义值",
+        "placeholderTokenType": "请选择API 认证凭证",
+        "custom": "自定义",
+        "accountPassword": "账号密码",
+        "headers": "请求头",
+        "headersPlaceholder": "开启透传之后；请求头的值将透传至后续服务",
+        "passthrough": "透传",
+        "passthroughOff": "不透传",
+        "headersKey": "请求头键名",
+        "headersValue": "请求头键值"
+      },
+      "openApi": {
+        "importTitle": "导入 OpenAPI 文档",
+        "serviceUrl": "服务地址",
+        "tips": "注：通过OpenAPI文档导入的MCP服务将以STDIO协议访问",
+        "support": "支持导入 OpenAPI 3.0.0 以上版本数据格式的 JSON 或 YAML 文件。",
+        "localFile": "本地上传",
+        "selectDocs": "从文档库选择",
+        "support3": "仅支持 OpenAPI 3.0 及以上版本",
+        "interface": "接口",
+        "validFileFail": "请先上传或选择OpenAPI文档"
       },
       "loading": {
         "restart": "正在停用实例...",

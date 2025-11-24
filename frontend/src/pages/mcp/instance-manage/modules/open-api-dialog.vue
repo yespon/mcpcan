@@ -36,8 +36,11 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="服务地址" prop="openapiBaseUrl">
-            <el-input v-model="formData.openapiBaseUrl" placeholder="服务地址" />
+          <el-form-item :label="t('mcp.instance.openApi.serviceUrl')" prop="openapiBaseUrl">
+            <el-input
+              v-model="formData.openapiBaseUrl"
+              :placeholder="t('mcp.instance.openApi.serviceUrl')"
+            />
           </el-form-item>
           <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
             <el-input
@@ -51,7 +54,7 @@
             <Upload v-model="formData.iconPath"></Upload>
           </el-form-item>
         </el-form>
-        <div class="mt-8 color-gray text-3">注：通过OpenAPI文档导入的MCP服务将以STDIO协议访问</div>
+        <div class="mt-8 color-gray text-3">{{ t('mcp.instance.openApi.tips') }}</div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
         <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
@@ -66,7 +69,7 @@
                   class="mr-3"
                 ></mcp-image>
                 <div class="flex-sub">
-                  支持导入 OpenAPI 3.0.0 以上版本数据格式的 JSON 或 YAML 文件。
+                  {{ t('mcp.instance.openApi.support') }}
                 </div>
               </div>
             </el-card>
@@ -84,7 +87,7 @@
               <div>
                 <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                 <div class="el-upload__text">
-                  {{ '本地上传' }}
+                  {{ t('mcp.instance.openApi.localFile') }}
                 </div>
               </div>
             </el-upload>
@@ -94,7 +97,7 @@
             >
               <div>
                 <el-icon class="el-icon--upload" size="67"><Files /></el-icon>
-                <div>从文档库选择</div>
+                <div>{{ t('mcp.instance.openApi.selectDocs') }}</div>
               </div>
             </div>
           </div>
@@ -160,7 +163,7 @@ const emit = defineEmits(['on-refresh'])
 const dialogInfo = ref<any>({
   visible: false,
   loading: false,
-  title: '导入数据',
+  title: t('mcp.instance.openApi.importTitle'),
 })
 const selectVisible = ref(false)
 const docsList = ref<any>([])
@@ -196,8 +199,12 @@ const formData = ref({
 })
 const rules = ref({
   name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
-  openapiBaseUrl: [{ required: true, message: '服务地址必填', trigger: 'blur' }],
-  environmentId: [{ required: true, message: '容器环境必填', trigger: 'change' }],
+  openapiBaseUrl: [
+    { required: true, message: t('mcp.instance.rules.openapiBaseUrl'), trigger: 'blur' },
+  ],
+  environmentId: [
+    { required: true, message: t('mcp.instance.rules.environmentId'), trigger: 'change' },
+  ],
 })
 const baseInfo = ref<any>(null)
 const apiNodeList = ref<any[]>([])
@@ -242,7 +249,7 @@ const handleGetAPIlist = async () => {
  */
 const renderContent = (h: any, params: any) => {
   const { data } = params as { node: any; data?: any }
-  // 构建 tooltip 内容
+  // build tooltip content
   const buildTooltipContent = () => {
     if (!data || !data.method) return ''
     const parts = []
@@ -310,7 +317,7 @@ const renderContent = (h: any, params: any) => {
                 h(
                   'span',
                   { class: 'cursor-pointer', style: { color: 'var(--ep-purple-color)' } },
-                  '更多',
+                  t('common.more'),
                 ),
             },
           ),
@@ -321,22 +328,21 @@ const renderContent = (h: any, params: any) => {
 
 const handleValidFile = (rawText: string) => {
   return new Promise((resolve, reject) => {
-    // 尝试解析为 JSON/YAML（容错）
     try {
       docObject.value = JSON.parse(rawText)
       if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
-        ElMessage.error('仅支持 OpenAPI 3.0.0 及以上版本的文档导入')
+        ElMessage.error(t('mcp.instance.openApi.support3'))
         reject(false)
       }
     } catch (e) {
       try {
         docObject.value = yaml.load(rawText)
         if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
-          ElMessage.error('仅支持 OpenAPI 3.0.0 及以上版本的文档导入')
+          ElMessage.error(t('mcp.instance.openApi.support3'))
           reject(false)
         }
       } catch (yamlErr) {
-        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+        console.warn('Error', yamlErr)
         reject(false)
       }
     }
@@ -344,12 +350,12 @@ const handleValidFile = (rawText: string) => {
   })
 }
 
-// 处理默认选中的列表和服务器地址、版本号校验
+// handle default checked keys and server url、 version check
 const handleDefaultCheckedKeys = (rawText: string) => {
   try {
-    // 保存原始文本以供后续使用
+    // keep original file text
     originFileText.value = rawText
-    // 尝试解析为 JSON/YAML（容错）
+    // try to parse as JSON/YAML (fault tolerance)
     try {
       docObject.value = JSON.parse(rawText)
       formData.value.openapiBaseUrl = docObject.value.servers?.length
@@ -379,23 +385,29 @@ const handleDefaultCheckedKeys = (rawText: string) => {
         collectIds(buildApiTree(docObject.value))
         console.log(buildApiTree(docObject.value), defaultCheckedKeys.value)
       } catch (yamlErr) {
-        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+        console.warn('Error', yamlErr)
       }
     }
   } catch (err) {
-    console.error('读取文件出错', err)
+    console.error('Error', err)
   }
 }
 
-// 处理接口原始列表
+// Handle default node api list
 const handleDefaultNodeAPIlist = (rawText: string) => {
   try {
-    // 保存原始文本以供后续使用
+    // keep original text for later use
     originFileText.value = rawText
-    // 尝试解析为 JSON/YAML（容错）
+    // try to parse as JSON/YAML (fault tolerance)
     try {
       docObject.value = JSON.parse(rawText)
-      apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+      apiNodeList.value = [
+        {
+          id: 'root',
+          label: t('mcp.instance.openApi.interface'),
+          children: buildApiTree(docObject.value),
+        },
+      ]
       const collectIds = (nodes: any[]) => {
         nodes.forEach((n) => {
           if (n.children && n.children.length) collectIds(n.children)
@@ -403,10 +415,16 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
       }
       collectIds(apiNodeList.value)
     } catch (e) {
-      // 不是 JSON，就当做 YAML 尝试解析
+      // Not JSON, try to parse as YAML
       try {
         docObject.value = yaml.load(rawText)
-        apiNodeList.value = [{ id: 'root', label: '接口', children: buildApiTree(docObject.value) }]
+        apiNodeList.value = [
+          {
+            id: 'root',
+            label: t('mcp.instance.openApi.interface'),
+            children: buildApiTree(docObject.value),
+          },
+        ]
         const collectIds = (nodes: any[]) => {
           nodes.forEach((n) => {
             if (n.children && n.children.length) collectIds(n.children)
@@ -414,11 +432,11 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
         }
         collectIds(apiNodeList.value)
       } catch (yamlErr) {
-        console.warn('无法解析为 JSON 或 YAML，可当作纯文本处理', yamlErr)
+        console.warn('Error', yamlErr)
       }
     }
   } catch (err) {
-    console.error('读取文件出错', err)
+    console.error('Error', err)
   }
 }
 
@@ -427,11 +445,10 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
  * @param file Handle before upload
  */
 const handleBeforeUpload = async (file: File) => {
-  // 现代浏览器支持直接调用 file.text()
-  const rawText = await file.text() // 原始文本内容
-  // 校验文档合法性
+  const rawText = await file.text()
+  // validate file content
   await handleValidFile(rawText)
-  // 保存原始文本以供后续使用
+  // keep original text for later use
   handleDefaultCheckedKeys(rawText)
   handleDefaultNodeAPIlist(rawText)
 }
@@ -448,12 +465,12 @@ const handleSuccess = (response: { code: number; data: { openapiFileId: string }
   ElMessage.success(t('action.upload'))
 }
 
-// 获取原始API文档详情内容
+// get openapi file detail
 const handleGetAPIDetail = async (id: string) => {
   try {
     dialogInfo.value.loading = true
     const { content } = await DocsAPI.fileContent({ openapiFileId: id })
-    // 校验文档合法性
+    // validate file content
     await handleValidFile(content)
     handleDefaultCheckedKeys(content)
     handleDefaultNodeAPIlist(content)
@@ -483,7 +500,7 @@ const handleUploadAgain = async () => {
     }
   }
 
-  // 转成 YAML 并上传
+  // Convert to YAML and upload
   const yamlText = yaml.dump(newDoc)
   const fd = new FormData()
   const blob = new Blob([yamlText], { type: 'application/x-yaml' })
@@ -500,11 +517,11 @@ const handleUploadAgain = async () => {
       formData.value.chooseOpenapiFileID = body.data.openapiFileId
       ElMessage.success(t('action.upload'))
     } else {
-      ElMessage.error(t('action.uploadFail') || '上传失败')
+      ElMessage.error(t('action.uploadFail'))
     }
   } catch (err) {
     console.error('upload error', err)
-    ElMessage.error(t('action.uploadFail') || '上传失败')
+    ElMessage.error(t('action.uploadFail'))
   }
 }
 
@@ -514,11 +531,11 @@ const handleUploadAgain = async () => {
 const handleConfirm = async () => {
   try {
     dialogInfo.value.loading = true
-    // 处理选中的接口；将选中的paths 组装成新的OpenAPI文档上传
+    // handle selected APIs; assemble the selected paths into a new OpenAPI document and upload
     if (originFileText.value) {
       await handleUploadAgain()
     } else {
-      ElMessage.error('请先上传或选择OpenAPI文档')
+      ElMessage.error(t('mcp.instance.openApi.validFileFail'))
     }
     baseInfo.value.validate(async (valid: boolean) => {
       if (valid) {
@@ -550,16 +567,16 @@ const handleGetDetail = async (id: string) => {
       openapiFileID: '',
     }
 
-    // 获取选中的api详情
+    // get openapi file content
     const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
       openapiFileId: data.packageId,
     })
-    // 校验文档合法性
+    // validate file content
     await handleValidFile(content)
-    // 处理默认选中的列表
+    // handle default checked keys
     handleDefaultCheckedKeys(content)
     formData.value.openapiFileID = baseOpenapiFileID
-    // 获取原始的api文档内容
+    // get original api document content
     const res = await DocsAPI.fileContent({
       openapiFileId: baseOpenapiFileID,
     })
@@ -576,7 +593,7 @@ const init = (id: string | null) => {
   dialogInfo.value.visible = true
   baseInfo.value?.resetFields()
   if (id) {
-    // 获取详情
+    // get detail
     handleGetDetail(id)
   } else {
     formData.value = {

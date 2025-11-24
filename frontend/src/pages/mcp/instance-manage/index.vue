@@ -203,7 +203,7 @@
                     v-if="row.accessType !== AccessType.DIRECT"
                     command="handleViewAccessLog"
                   >
-                    {{ '访问日志' }}
+                    {{ t('mcp.instance.action.accessLogs') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleEditInstance">
                     {{ t('env.run.action.edit') }}

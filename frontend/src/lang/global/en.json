@@ -79,7 +79,8 @@
     "ok": "OK",
     "back": "Back",
     "on": "ON",
-    "off": "OFF"
+    "off": "OFF",
+    "more": "More"
   },
   "status": {
     "active": "Active",
@@ -103,7 +104,8 @@
     "download": "Success",
     "upload": "Success",
     "delete": "Success",
-    "copy": "Success"
+    "copy": "Success",
+    "uploadFail": "Failed"
   },
   "desc": {
     "reason": "reason",

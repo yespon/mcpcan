@@ -537,6 +537,7 @@ const currentPackage = computed(() => {
 const handleFormat = () => {
   pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers)
 }
+
 /**
  * Handle access type changed
  */

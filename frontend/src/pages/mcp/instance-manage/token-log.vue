@@ -1,18 +1,18 @@
 <template>
   <div class="token-log-page p-4">
-    <!-- 筛选栏 -->
+    <!-- search bar -->
     <div class="filter-bar mb-4 p-3 border-rd-2">
-      <!-- 第一行：日志级别 -->
+      <!-- level -->
       <div class="grid grid-cols-12">
         <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label">日志级别：</span>
+          <span class="font-bold filter-label">{{ t('mcp.instance.log.level') }}：</span>
           <div class="level-tags flex items-center gap-2">
             <el-tag
               v-for="item in levelOptions"
               :key="item.value"
               :type="item.type"
               :effect="level === item.value ? 'dark' : 'light'"
-              size="mini"
+              size="small"
               class="level-tag"
               @click="handleLevelChange(item.value)"
             >
@@ -21,16 +21,16 @@
           </div>
         </div>
 
-        <!-- 第二行：时间范围 -->
+        <!-- time range -->
         <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label"> 时间范围 ： </span>
+          <span class="font-bold filter-label"> {{ t('mcp.instance.log.timeRange') }} ： </span>
           <div>
             <el-date-picker
               v-model="dateRange"
               type="datetimerange"
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              :range-separator="t('mcp.instance.log.to')"
+              :start-placeholder="t('mcp.instance.log.startTime')"
+              :end-placeholder="t('mcp.instance.log.endTime')"
               size="small"
               class="w-full"
               :disabled-date="disabledDate"
@@ -39,7 +39,7 @@
           </div>
           <span class="ml-1">
             <el-popover placement="top" width="300">
-              <div>{{ '仅保留24小时内的日志；超出时间范围的数据将自动清除' }}</div>
+              <div>{{ t('mcp.instance.log.timeTips') }}</div>
               <template #reference>
                 <el-icon class="cursor-pointer"><Warning /></el-icon>
               </template>
@@ -49,12 +49,12 @@
       </div>
 
       <div class="grid grid-cols-12">
-        <!-- 第三行：实例列表 -->
+        <!-- instance list -->
         <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label">实例选择：</span>
+          <span class="font-bold filter-label">{{ t('mcp.instance.log.instance') }}：</span>
           <el-select
             v-model="selectedInstanceId"
-            placeholder="请选择实例"
+            :placeholder="t('mcp.instance.log.instance')"
             size="small"
             clearable
             filterable
@@ -70,12 +70,12 @@
           </el-select>
         </div>
 
-        <!-- 第四行：Token 列表 -->
+        <!-- Token list -->
         <div class="col-span-6 flex items-center gap-3 mb-3">
           <span class="font-bold filter-label">Token：</span>
           <el-select
             v-model="selectedToken"
-            placeholder="请选择 Token"
+            :placeholder="t('mcp.instance.log.token')"
             size="small"
             clearable
             filterable
@@ -93,7 +93,7 @@
         </div>
       </div>
 
-      <!-- 第五行：Trace ID + 刷新按钮 -->
+      <!-- Trace ID + refresh button -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="font-bold filter-label">Trace ID：</span>
@@ -113,12 +113,12 @@
         </div>
         <el-button size="small" @click="handleGetLogs" :loading="loading">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ t('common.refresh') }}
         </el-button>
       </div>
     </div>
 
-    <!-- 日志内容 -->
+    <!-- logs content -->
     <div class="logs-container" v-loading="loading">
       <el-scrollbar class="logs-box" v-if="logList.length > 0">
         <div
@@ -127,7 +127,11 @@
           v-for="item in logList"
           :key="item.id"
           @click="toggleLogExpand(item.id)"
-          :title="expandedLogIds.includes(item.id) ? '点击折叠' : '点击展开完整日志'"
+          :title="
+            expandedLogIds.includes(item.id)
+              ? t('mcp.instance.log.folded')
+              : t('mcp.instance.log.expanded')
+          "
         >
           <el-icon class="expand-icon" :class="{ rotated: expandedLogIds.includes(item.id) }">
             <CaretRight />
@@ -141,7 +145,7 @@
           <span class="log-detail">{{ formatLogOneLine(item.log) }}</span>
         </div>
       </el-scrollbar>
-      <el-empty v-else description="暂无日志数据" />
+      <el-empty v-else :description="t('mcp.instance.log.empty')" />
     </div>
   </div>
 </template>
@@ -178,21 +182,21 @@ const route = useRoute()
 const logList = ref<LogItem[]>([])
 const loading = ref(false)
 const dateRange = ref<[Date, Date] | null>(null)
-const level = ref<string | number>('') // 修复类型定义
+const level = ref<string | number>('')
 const traceId = ref('')
+const { t } = useI18n()
 
-// 新增状态
 const instanceList = ref<InstanceItem[]>([])
 const tokenList = ref<TokenItem[]>([])
 const selectedInstanceId = ref<string>('')
 const selectedToken = ref<string>('')
 
-// 展开的日志 ID 列表
+// logic for expandedLogIds
 const expandedLogIds = ref<number[]>([])
 
-// 日志级别选项
+// level options
 const levelOptions = [
-  { label: '全部', value: '', type: '' as const },
+  { label: t('mcp.instance.log.all'), value: '', type: 'primary' as const },
   { label: 'Trace', value: 1, type: 'primary' as const },
   { label: 'Debug', value: 2, type: 'info' as const },
   { label: 'Info', value: 3, type: 'primary' as const },
@@ -200,36 +204,32 @@ const levelOptions = [
   { label: 'Error', value: 5, type: 'danger' as const },
 ]
 
-// 从路由参数获取 instanceId 和 token（可选，用于初始化）
+// get instanceId and token by route params
 const instanceId = computed(
   () => selectedInstanceId.value || (route.query.instanceId as string) || '',
 )
 const token = computed(() => selectedToken.value || (route.query.token as string) || '')
 
-// 切换日志级别
+// level change
 const handleLevelChange = (val: string | number) => {
   level.value = val
   handleGetLogs()
 }
 
-// 切换日志展开/折叠
+// handle log expand
 const toggleLogExpand = (logId: number) => {
   const index = expandedLogIds.value.indexOf(logId)
   if (index > -1) {
-    // 已展开，则折叠
     expandedLogIds.value.splice(index, 1)
   } else {
-    // 未展开，则展开
     expandedLogIds.value.push(logId)
   }
 }
 
-// 禁用超过当前时间的日期
 const disabledDate = (date: Date) => {
   return date.getTime() > Date.now() || date.getTime() < Date.now() - 24 * 60 * 60 * 1000
 }
 
-// 处理时间范围变化（限制24小时）
 const handleDateRangeChange = (value: [Date, Date] | null) => {
   if (!value || value.length !== 2) {
     handleGetLogs()
@@ -241,7 +241,7 @@ const handleDateRangeChange = (value: [Date, Date] | null) => {
   const maxDiff = 24 * 60 * 60 * 1000 // 24小时的毫秒数
 
   if (timeDiff > maxDiff) {
-    ElMessage.warning('时间范围不能超过24小时，已自动调整结束时间')
+    ElMessage.warning(t('mcp.instance.log.timeRangeError'))
     // 自动调整结束时间为开始时间 + 24小时
     const newEndDate = new Date(startDate.getTime() + maxDiff)
     dateRange.value = [startDate, newEndDate]
@@ -250,7 +250,7 @@ const handleDateRangeChange = (value: [Date, Date] | null) => {
   handleGetLogs()
 }
 
-// 获取实例列表
+// get instance list
 const getInstanceList = async () => {
   try {
     const { list } = await InstanceAPI.list({ page: '1', pageSize: '999' })
@@ -259,12 +259,12 @@ const getInstanceList = async () => {
       name: item.instanceName || item.instanceId,
     }))
   } catch (error) {
-    console.error('获取实例列表失败', error)
-    ElMessage.error('获取实例列表失败')
+    console.error(t('mcp.instance.log.instanceError'), error)
+    ElMessage.error(t('mcp.instance.log.instanceError'))
   }
 }
 
-// 获取 Token 列表
+// handle get token list
 const getTokenList = async (instanceId: string) => {
   if (!instanceId) {
     tokenList.value = []
@@ -277,13 +277,13 @@ const getTokenList = async (instanceId: string) => {
       usages: item.usages || [],
     }))
   } catch (error) {
-    console.error('获取 Token 列表失败', error)
-    ElMessage.error('获取 Token 列表失败')
+    console.error(t('mcp.instance.log.tokenFail'), error)
+    ElMessage.error(t('mcp.instance.log.tokenFail'))
     tokenList.value = []
   }
 }
 
-// 实例切换
+// change instance
 const handleInstanceChange = async (val: string) => {
   selectedToken.value = ''
   tokenList.value = []
@@ -294,7 +294,6 @@ const handleInstanceChange = async (val: string) => {
   }
 }
 
-// 格式化时间
 const formatTime = (time: string) => {
   if (!time) return ''
   return new Date(time).toLocaleString('zh-CN', {
@@ -307,7 +306,7 @@ const formatTime = (time: string) => {
   })
 }
 
-// 获取日志级别类型
+// getLevelType
 const getLevelType = (
   level: number,
 ): '' | 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
@@ -321,7 +320,7 @@ const getLevelType = (
   return map[level] || ''
 }
 
-// 获取日志级别标签
+// getLevelLabel
 const getLevelLabel = (level: number): string => {
   const map: Record<number, string> = {
     1: 'Trace',
@@ -333,22 +332,22 @@ const getLevelLabel = (level: number): string => {
   return map[level] || 'Unknown'
 }
 
-// 格式化日志为一行
+// format log as a single line
 const formatLogOneLine = (log: string) => {
   if (!log) return ''
   try {
     const logObj = JSON.parse(log)
-    // 将 JSON 对象压缩为一行字符串
+    logObj.message = JSON.parse(logObj.message.replace(/\s+/g, ' '))
     return JSON.stringify(logObj)
   } catch {
     return log
   }
 }
 
-// 获取日志数据
+// get logs based on filters
 const handleGetLogs = async () => {
   if (!instanceId.value) {
-    ElMessage.warning('请选择实例')
+    ElMessage.warning(t('mcp.instance.log.getInstance'))
     return
   }
 
@@ -368,8 +367,8 @@ const handleGetLogs = async () => {
     const { logs: logData } = await InstanceAPI.logsByToken(params)
     logList.value = logData || []
   } catch (error) {
-    console.error('获取日志失败', error)
-    ElMessage.error('获取日志失败')
+    console.error(t('mcp.instance.log.logFail'), error)
+    ElMessage.error(t('mcp.instance.log.logFail'))
     logList.value = []
   } finally {
     loading.value = false
@@ -377,9 +376,9 @@ const handleGetLogs = async () => {
 }
 
 const init = async () => {
-  // 获取实例列表
+  // get instance list
   await getInstanceList()
-  // 如果路由中有 instanceId 和 token，则初始化选中
+  // initialize selected instanceId and token if present in route
   selectedInstanceId.value = route.query.instanceId as string
   selectedToken.value = route.query.token as string
   if (route.query.instanceId) {

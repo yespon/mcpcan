@@ -83,7 +83,7 @@
                       </el-dropdown-item>
                       <el-dropdown-item @click="handleViewLog(index)">
                         <el-button link>
-                          {{ '访问日志' }}
+                          {{ t('mcp.instance.action.accessLogs') }}
                         </el-button>
                       </el-dropdown-item>
                       <el-dropdown-item v-if="index !== 0" @click="handleDeleteToken(index)">
@@ -130,7 +130,7 @@
                   </el-tag>
                 </div>
                 <div class="grid-cols-span-1" v-if="dialogInfo.instanceInfo.sourceType === 4">
-                  是否开启透传:
+                  {{ t('mcp.instance.token.passthrough') }}:
                   <el-switch
                     v-model="token.enabledTransport"
                     style="--el-switch-on-color: #13ce66"
@@ -263,12 +263,12 @@
             </el-form-item>
             <el-form-item prop="tokenType">
               <template #label>
-                API 认证凭证
+                API {{ t('mcp.instance.token.auth') }}
                 <el-popover placement="top" width="250">
-                  <div>{{ 'Bearer：可随机生成令牌也可自定义填写令牌' }}</div>
-                  <div>{{ 'Api-Key：可随机生成令牌也可自定义填写令牌' }}</div>
-                  <div>{{ 'X-API-key：可随机生成令牌也可自定义填写令牌。' }}</div>
-                  <div>{{ 'Basic：usename和password需要填写;也可以自定义值' }}</div>
+                  <div>{{ t('mcp.instance.token.Bearer') }}</div>
+                  <div>{{ t('mcp.instance.token.Api-Key') }}</div>
+                  <div>{{ t('mcp.instance.token.X-API-key') }}</div>
+                  <div>{{ t('mcp.instance.token.Basic') }}</div>
                   <template #reference>
                     <el-icon class="cursor-pointer"><Warning /></el-icon>
                   </template>
@@ -276,7 +276,7 @@
               </template>
               <el-select
                 v-model="formData.tokenType"
-                :placeholder="'请选择API 认证凭证'"
+                :placeholder="t('mcp.instance.token.placeholderTokenType')"
                 clearable
                 @change="handleTokenTypeChange"
               >
@@ -304,7 +304,7 @@
                 Api-Key：
                 <el-input
                   v-model="formData.token"
-                  :placeholder="'请输入token值或自动随机生成'"
+                  :placeholder="t('mcp.instance.token.placeholderToken')"
                   class="flex-sub"
                   clearable
                 />
@@ -319,7 +319,7 @@
                 X-API-Key：
                 <el-input
                   v-model="formData.token"
-                  :placeholder="'请输入token值或自动随机生成'"
+                  :placeholder="t('mcp.instance.token.placeholderToken')"
                   class="flex-sub"
                   clearable
                 />
@@ -351,12 +351,17 @@
                   Authorization：
                   <el-input
                     v-model="formData.token"
-                    :placeholder="'请输入自定义token值'"
+                    :placeholder="t('mcp.instance.token.placeholderToken')"
                     clearable
                   />
                 </template>
                 <el-button link class="ml-2 link-hover base-btn-link" @click="handleChangeBasic">
-                  <el-icon><Refresh /></el-icon>{{ userDataKey.visible ? '自定义' : '账号密码' }}
+                  <el-icon><Refresh /></el-icon
+                  >{{
+                    userDataKey.visible
+                      ? t('mcp.instance.token.custom')
+                      : t('mcp.instance.token.accountPassword')
+                  }}
                 </el-button>
               </div>
             </el-form-item>
@@ -364,9 +369,9 @@
               <template #label>
                 <div class="w-full flex justify-between items-center">
                   <div class="center">
-                    <span class="mr-2"> HTTP 请求头 </span>
+                    <span class="mr-2"> HTTP {{ t('mcp.instance.token.headers') }} </span>
                     <el-popover placement="top" width="250">
-                      <div>{{ '开启透传之后；请求头的值将透传至后续服务' }}</div>
+                      <div>{{ t('mcp.instance.token.headersPlaceholder') }}</div>
                       <template #reference>
                         <el-icon class="cursor-pointer"><Warning /></el-icon>
                       </template>
@@ -377,8 +382,8 @@
                       v-model="formData.enabledTransport"
                       style="--el-switch-on-color: #13ce66"
                       inline-prompt
-                      :active-text="'透传'"
-                      :inactive-text="'不透传'"
+                      :active-text="t('mcp.instance.token.passthrough')"
+                      :inactive-text="t('mcp.instance.token.passthroughOff')"
                     ></el-switch>
                     <div
                       class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
@@ -398,13 +403,13 @@
               >
                 <el-input
                   v-model="header.key"
-                  :placeholder="'请求头键名'"
+                  :placeholder="t('mcp.instance.token.headersKey')"
                   class="flex-sub mr-2"
                 ></el-input>
                 ：
                 <el-input
                   v-model="header.value"
-                  :placeholder="'请求头键值'"
+                  :placeholder="t('mcp.instance.token.headersValue')"
                   class="flex-sub mr-2"
                 ></el-input>
                 <div
@@ -507,19 +512,21 @@ const rules = reactive({
       required: true,
       validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
         if (!value) {
-          callback(new Error('请选择API凭证类型'))
+          callback(new Error(t('mcp.instance.token.placeholderTokenType')))
         }
         if (value === 4) {
           if (!userDataKey.value.username || !userDataKey.value.password) {
             callback(
               new Error(
-                userDataKey.value.visible ? '请输入Basic认证的用户名和密码' : '请输入Token值',
+                userDataKey.value.visible
+                  ? t('mcp.instance.token.Basic')
+                  : t('mcp.instance.token.mustToken'),
               ),
             )
           }
         } else {
           if (!formData.value.token) {
-            callback(new Error('token不能为空'))
+            callback(new Error(t('mcp.instance.token.mustToken')))
           }
         }
         callback()
@@ -547,7 +554,7 @@ const configUrl = computed(() => {
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].token || '无token信息'
+    return mcpServers[Object.keys(mcpServers)[0]].token || 'No Data'
   }
   return `${
     dialogInfo.value.currentTokenIndex !== null

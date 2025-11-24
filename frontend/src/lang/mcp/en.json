@@ -88,6 +88,7 @@
         "create": "Add a new MCP",
         "view": "View",
         "log": "Container Logs",
+        "accessLogs": "Access Logs",
         "stop": "Stop",
         "start": "Start",
         "reStart": "Restart",
@@ -154,12 +155,31 @@
         "servicePathTips": "MCP Service access path"
       },
       "rules": {
-        "name": "Please enter the instance name"
+        "name": "Please enter the instance name",
+        "openapiBaseUrl": "Please enter the service address",
+        "environmentId": "Please select the container environment"
       },
       "log": {
         "title": "Instance of Logs",
         "instanceId": "Instance ID",
-        "updateTime": "Update Time"
+        "updateTime": "Update Time",
+        "level": "Log Level",
+        "timeRange": "Time Range",
+        "to": "To",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "timeTips": "Only logs within 24 hours are retained; data beyond the time range will be automatically cleared",
+        "instance": "Instance",
+        "token": "Token Selection",
+        "expanded": "Click to expand the complete log",
+        "folded": "Click to fold the log",
+        "empty": "No log data",
+        "all": "All",
+        "timeRangeError": "Time range cannot exceed 24 hours, end time has been automatically adjusted",
+        "instanceError": "Failed to get instance list",
+        "tokenFail": "Failed to get token list",
+        "getInstance": "Please select an instance",
+        "logFail": "Failed to get logs"
       },
       "token": {
         "title": "Security authentication token",
@@ -173,13 +193,38 @@
         "lifespan": "Lifespan",
         "day": "Days",
         "random": "Random",
-        "placeholderToken": "Authorization:Please enter the Token value or generate it automatically",
-        "mustToken": "Token value cannot be empty",
+        "placeholderToken": "Please enter the Token value or generate it automatically",
         "tag": "Tag",
         "placeholderTag": "Enter the tag name; Enter to generate tags",
         "copyUrl": "Copy Url",
         "copyToken": "Copy Token",
-        "copyAll": "Copy Config"
+        "copyAll": "Copy Config",
+        "passthroughStatus": "Enable Passthrough",
+        "auth": "Authentication Credential",
+        "Bearer": " Bearer: The token can be randomly generated or customized",
+        "Api-Key": " Api-Key: The token can be randomly generated or customized",
+        "X-API-key": " X-API-key: The token can be randomly generated or customized",
+        "Basic": " Basic: usename and password need to be filled in; it can also be customized",
+        "placeholderTokenType": "Please select API authentication credential",
+        "custom": "Custom",
+        "accountPassword": "Account Password",
+        "headers": "Request Headers",
+        "headersPlaceholder": "After enabling passthrough; the value of the request header will be passed to the subsequent service",
+        "passthrough": "Passthrough",
+        "passthroughOff": "No Passthrough",
+        "headersKey": "Header Key",
+        "headersValue": "Header Value"
+      },
+      "openApi": {
+        "importTitle": "Import OpenAPI Document",
+        "serviceUrl": "Service Url",
+        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STDIO protocol",
+        "support": "Supports importing JSON or YAML files in OpenAPI 3.0.0 or higher version data format.",
+        "localFile": "Local Upload",
+        "selectDocs": "Select from Document Library",
+        "support3": "Only OpenAPI 3.0 and above versions are supported",
+        "interface": "Interface",
+        "validFileFail": "Please upload or select an OpenAPI document first"
       },
       "loading": {
         "restart": "restarting...",
