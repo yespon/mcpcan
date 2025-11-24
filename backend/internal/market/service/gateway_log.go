@@ -42,7 +42,7 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 
 	filters := map[string]interface{}{}
 	if strings.TrimSpace(req.InstanceId) != "" {
-		filters["instance_id"] = strings.TrimSpace(req.InstanceId)
+		filters["instanceId"] = strings.TrimSpace(req.InstanceId)
 	}
 	if strings.TrimSpace(req.TokenHeader) != "" {
 		filters["tokenHeader"] = strings.TrimSpace(req.TokenHeader)

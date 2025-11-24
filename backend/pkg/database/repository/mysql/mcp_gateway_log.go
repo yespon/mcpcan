@@ -121,7 +121,7 @@ func (r *GatewayLogRepository) FindWithPagination(
 
 	for key, v := range filters {
 		switch key {
-		case "instanceId":
+		case "instanceId", "instance_id":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("instance_id = ?", s)
 			}
@@ -129,11 +129,11 @@ func (r *GatewayLogRepository) FindWithPagination(
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("token = ?", s)
 			}
-		case "tokenHeader":
+		case "tokenHeader", "token_header":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("LOWER(token_header) = ?", strings.ToLower(s))
 			}
-		case "tokenType":
+		case "tokenType", "token_type":
 			if tt, ok := v.(model.TokenType); ok {
 				q = q.Where("token_type = ?", tt)
 			}
@@ -167,17 +167,17 @@ func (r *GatewayLogRepository) FindWithPagination(
 					q = q.Where(cond, args...)
 				}
 			}
-		case "createdAtStart":
+		case "createdAtStart", "created_at_start":
 			if t, ok := v.(time.Time); ok && !t.IsZero() {
 				startTime = t
 				hasStart = true
 			}
-		case "createdAtEnd":
+		case "createdAtEnd", "created_at_end":
 			if t, ok := v.(time.Time); ok && !t.IsZero() {
 				endTime = t
 				hasEnd = true
 			}
-		case "traceId":
+		case "traceId", "trace_id":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("trace_id = ?", s)
 			}
