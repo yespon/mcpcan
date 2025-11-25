@@ -114,7 +114,8 @@
         "desc": "Manage your instance list and provide URL links",
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
-        "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing."
+        "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing.",
+        "noToken": "No authentication required"
       },
       "tableHeadDesc": {
         "token": "After enabling token authentication, token verification will be activated, and accessing MCP services requires carrying the token Token"
@@ -194,6 +195,7 @@
         "day": "Days",
         "random": "Random",
         "placeholderToken": "Please enter the Token value or generate it automatically",
+        "mustToken": "Please enter the Token value",
         "tag": "Tag",
         "placeholderTag": "Enter the tag name; Enter to generate tags",
         "copyUrl": "Copy Url",
@@ -224,7 +226,8 @@
         "selectDocs": "Select from Document Library",
         "support3": "Only OpenAPI 3.0 and above versions are supported",
         "interface": "Interface",
-        "validFileFail": "Please upload or select an OpenAPI document first"
+        "validFileFail": "Please upload or select an OpenAPI document first",
+        "selectAtLeastOne": "Please select at least one interface"
       },
       "loading": {
         "restart": "restarting...",

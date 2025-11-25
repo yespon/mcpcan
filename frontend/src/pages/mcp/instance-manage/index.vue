@@ -131,7 +131,7 @@
             :loading="row.loading"
             @change="handleEabledToken(row)"
           ></el-switch>
-          <span v-else class="color-gray">无需认证</span>
+          <span v-else class="color-gray">{{ t('mcp.instance.pageDesc.noToken') }}</span>
         </template>
         <template #status="{ row }">
           <el-text :type="activeOptions[row.status as keyof typeof activeOptions].type" link>

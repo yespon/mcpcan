@@ -73,24 +73,6 @@
                 </div>
               </div>
             </el-card>
-            <el-upload
-              class="upload-demo flex-sub"
-              drag
-              :action="action"
-              :on-success="handleSuccess"
-              :before-upload="handleBeforeUpload"
-              :headers="headers"
-              accept=".yaml, .JSON, application/yaml, application/JSON"
-              :auto-upload="true"
-              :show-file-list="false"
-            >
-              <div>
-                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                <div class="el-upload__text">
-                  {{ t('mcp.instance.openApi.localFile') }}
-                </div>
-              </div>
-            </el-upload>
             <div
               class="flex-sub select-api border-rd-1 mt-2 center cursor-pointer"
               @click="handleSelectDocs"
@@ -133,7 +115,26 @@
     :title="t('api.pageDesc.apiSelectTitle')"
     @confirm="handleGetAPIDetail"
     :options="docsList"
-  ></Select>
+  >
+    <template #action>
+      <el-upload
+        class="mr-8"
+        drag
+        :action="action"
+        :on-success="handleSuccess"
+        :before-upload="handleBeforeUpload"
+        :headers="headers"
+        accept=".yaml, .JSON, application/yaml, application/JSON"
+        :auto-upload="true"
+        :show-file-list="false"
+      >
+        <el-icon><UploadFilled /></el-icon>
+        <div class="ml-2">
+          {{ t('mcp.instance.openApi.localFile') }}
+        </div>
+      </el-upload>
+    </template>
+  </Select>
 </template>
 
 <script lang="ts" setup>
@@ -449,8 +450,8 @@ const handleBeforeUpload = async (file: File) => {
   // validate file content
   await handleValidFile(rawText)
   // keep original text for later use
-  handleDefaultCheckedKeys(rawText)
-  handleDefaultNodeAPIlist(rawText)
+  // handleDefaultCheckedKeys(rawText)
+  // handleDefaultNodeAPIlist(rawText)
 }
 
 /**
@@ -463,6 +464,7 @@ const handleSuccess = (response: { code: number; data: { openapiFileId: string }
   }
   formData.value.openapiFileID = response.data.openapiFileId
   ElMessage.success(t('action.upload'))
+  handleGetAPIlist()
 }
 
 // get openapi file detail
@@ -515,7 +517,6 @@ const handleUploadAgain = async () => {
     const body = await res.json()
     if (body?.code === 0 && body.data?.openapiFileId) {
       formData.value.chooseOpenapiFileID = body.data.openapiFileId
-      ElMessage.success(t('action.upload'))
     } else {
       ElMessage.error(t('action.uploadFail'))
     }
@@ -538,6 +539,10 @@ const handleConfirm = async () => {
       ElMessage.error(t('mcp.instance.openApi.validFileFail'))
     }
     baseInfo.value.validate(async (valid: boolean) => {
+      if (currentCheckedKeys.value.length === 0) {
+        ElMessage.error(t('mcp.instance.openApi.selectAtLeastOne'))
+        return
+      }
       if (valid) {
         // 提交数据
         await (formData.value.instanceId
@@ -646,22 +651,6 @@ defineExpose({
   color: var(--ep-purple-color);
   :deep(.el-upload.is-drag) {
     height: 100%;
-  }
-  :deep(.el-upload-dragger) {
-    height: 100%;
-    border: 1px dashed var(--ep-purple-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    &:hover {
-      border-color: var(--ep-purple-color-hover);
-      .el-icon--upload {
-        color: var(--ep-purple-color-hover);
-      }
-      .el-upload__text {
-        color: var(--ep-purple-color-hover);
-      }
-    }
   }
   .el-icon--upload {
     color: var(--ep-purple-color);

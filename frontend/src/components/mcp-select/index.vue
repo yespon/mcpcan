@@ -3,19 +3,21 @@
     v-model:value="currentVisible"
     v-bind="props"
     width="680px"
-    top="10vh"
+    top="6vh"
     :show-close="false"
   >
     <template #header>
       <div class="center">{{ props.title }}</div>
     </template>
     <el-scrollbar ref="scrollbarRef" max-height="75vh" class="pr-2">
-      <div class="mr-2 ml-2 mb-4 mt-1">
+      <div class="mr-2 ml-2 mb-4 mt-1 flex align-center w-full">
         <el-input
           v-model="searchKeyword"
           :suffix-icon="Search"
           :placeholder="t('desc.placeholderKey')"
+          class="flex-sub mr-4"
         ></el-input>
+        <slot name="action"></slot>
       </div>
 
       <el-radio-group v-model="currentSelected" class="mr-2 ml-2">
@@ -178,5 +180,22 @@ const handleComfirm = () => {
 }
 :deep(.el-radio__input.is-checked + .el-radio__label) {
   color: var(--ep-purple-color);
+}
+:deep(.el-upload-dragger) {
+  height: 100%;
+  border: 1px dashed var(--ep-purple-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  &:hover {
+    border-color: var(--ep-purple-color-hover);
+    .el-icon--upload {
+      color: var(--ep-purple-color-hover);
+    }
+    .el-upload__text {
+      color: var(--ep-purple-color-hover);
+    }
+  }
 }
 </style>
