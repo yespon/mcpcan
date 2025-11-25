@@ -1,7 +1,7 @@
 # MCPCAN：A lightweight MCP service management platform built on a containerized architecture.
 
 <p align="Left">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="https://demo.mcpcan.com">DemoSite</a> | <a href="https://mcpcan.com">MainSite</a>
+   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>  
 </p>
 <div align="center">
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
