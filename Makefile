@@ -198,7 +198,7 @@ docker-build-backend:
 	$(call build_docker_image,backend,mcp-backend)
 
 .PHONY: docker-build-all
-docker-build-all: export-go-build docker-build-init docker-build-market docker-build-authz docker-build-gateway docker-build-frontend
+docker-build-all: export-go-build docker-build-init docker-build-market docker-build-openapi-to-mcp docker-build-authz docker-build-gateway docker-build-frontend
 
 .PHONY: docker-push-init
 docker-push-init:
@@ -229,7 +229,7 @@ docker-push-backend:
 	$(call push_docker_image,mcp-backend)
 
 .PHONY: docker-push-all
-docker-push-all: docker-push-init docker-push-market docker-push-authz docker-push-gateway docker-push-frontend
+docker-push-all: docker-push-init docker-push-market docker-push-openapi-to-mcp docker-push-authz docker-push-gateway docker-push-frontend
 
 # Docker build and push targets (using existing build and push steps)
 .PHONY: docker-build-push-init
@@ -251,7 +251,7 @@ docker-build-push-gateway: docker-build-gateway docker-push-gateway
 docker-build-push-frontend: docker-build-frontend docker-push-frontend
 
 .PHONY: docker-build-push-backend
-docker-build-push-backend: docker-build-push-init docker-build-push-market docker-build-push-authz docker-build-push-gateway
+docker-build-push-backend: docker-build-push-init docker-build-push-market docker-build-push-openapi-to-mcp docker-build-push-authz docker-build-push-gateway
 
 .PHONY: docker-build-push-all
 docker-build-push-all: docker-build-all docker-push-all
@@ -314,7 +314,7 @@ help:
 	@echo "Docker targets: Services"
 	@echo "  docker-build-init          - Build init Docker image"
 	@echo "  docker-build-market        - Build market Docker image"
-	@echo "  docker-build-openapi-to-mcp        - Build openapi-to-mcp Docker image"
+	@echo "  docker-build-openapi-to-mcp- Build openapi-to-mcp Docker image"
 	@echo "  docker-build-authz         - Build authz Docker image"
 	@echo "  docker-build-gateway       - Build gateway Docker image"
 	@echo "  docker-build-frontend      - Build frontend Docker image"
