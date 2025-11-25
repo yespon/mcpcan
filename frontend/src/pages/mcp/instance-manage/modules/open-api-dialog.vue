@@ -77,7 +77,7 @@
               class="flex-sub select-api border-rd-1 mt-2 center cursor-pointer"
               @click="handleSelectDocs"
             >
-              <div>
+              <div class="text-center">
                 <el-icon class="el-icon--upload" size="67"><Files /></el-icon>
                 <div>{{ t('mcp.instance.openApi.selectDocs') }}</div>
               </div>
@@ -111,8 +111,8 @@
   <Select
     v-model="selectVisible"
     v-model:selected="formData.openapiFileID"
-    red="opneAPISelect"
-    :title="t('api.pageDesc.apiSelectTitle')"
+    ref="openAPISelect"
+    :title="t('mcp.instance.pageDesc.apiSelectTitle')"
     @confirm="handleGetAPIDetail"
     :options="docsList"
   >

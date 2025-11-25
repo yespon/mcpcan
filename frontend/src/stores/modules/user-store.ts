@@ -3,13 +3,11 @@ import AuthAPI, { type LoginFormData, type EncryptionInfo } from '@/api/auth-api
 import UserAPI, { type UserInfo } from '@/api/user/user-api'
 import { defineStore } from 'pinia'
 import { Storage } from '@/utils/storage'
-import { useRouterHooks } from '@/utils/url'
 import { useStorage } from '@vueuse/core'
 import { ElLoading, ElMessage } from 'element-plus'
 import { KEYUTIL, KJUR, RSAKey, hextob64 } from 'jsrsasign'
 import i18n from '@/lang'
 
-const { reload } = useRouterHooks()
 export const useUserStore = defineStore('user', () => {
   const userInfo = useStorage('userInfo', {} as UserInfo)
   const encryptionInfo = ref<EncryptionInfo>({} as EncryptionInfo)
@@ -172,7 +170,7 @@ export const useUserStore = defineStore('user', () => {
       })
         .then(() => {
           resetUserState()
-          reload()
+          window.location.reload()
           resolve()
         })
         .catch((error) => {

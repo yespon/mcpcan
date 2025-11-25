@@ -399,7 +399,7 @@ onMounted(init)
 
 .filter-bar {
   // background: var(--ep-bg-color);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0px 4px rgba(0, 0, 0, 0.08);
 
   .filter-label {
     display: inline-block;
@@ -438,6 +438,7 @@ onMounted(init)
 .logs-box {
   height: 100%;
   padding: 12px;
+  box-shadow: 0 0px 4px rgba(0, 0, 0, 0.8);
 }
 
 .log-line {

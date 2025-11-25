@@ -115,7 +115,8 @@
         "total": "实例总数",
         "confirmEdit": "实例编辑之后将重启；确定编辑？",
         "packStatusTips": "状态有延时，通过状态探测或者查看日志排查容器运行情况。",
-        "noToken": "无需认证"
+        "noToken": "无需认证",
+        "apiSelectTitle": "选择 OpenAPI 文档"
       },
       "tableHeadDesc": {
         "token": "启用令牌认证后，将开启令牌验证，访问MCP服务需要携带令牌Token"

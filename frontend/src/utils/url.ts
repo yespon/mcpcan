@@ -26,11 +26,13 @@ interface jumpType {
   jumpWithTenantId?: boolean
 }
 /**
- *
+ * Router hooks - must be called inside setup() or functional components
  * @returns
  */
 export const useRouterHooks = () => {
+  // 在函数调用时（setup内部）才获取 router 实例
   const router = useRouter()
+
   const jumpToPage = (params: jumpType) => {
     return new Promise((resolve: any) => {
       const { url, data = {}, isOpen = false } = params
