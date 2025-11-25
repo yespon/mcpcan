@@ -1,5 +1,6 @@
 # MCPCan
 
+<a href="https://demo.mcpcan.com">体验 Demo 站</a> | <a href="https://www.mcpcan.com">访问主张：www.mcpcan.com</a>
 <div align="center">
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>

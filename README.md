@@ -1,7 +1,7 @@
 # MCPCAN：A lightweight MCP service management platform built on a containerized architecture.
 
 <p align="Left">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a> 
+   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="https://demo.mcpcan.com">DemoSite</a> | <a href="https://mcpcan.com">MainSite</a>
 </p>
 <div align="center">
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
@@ -39,11 +39,6 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 - **🚀 One-stop Deployment**: Quick release, configuration, and distribution of MCP services
 - **📈 Scalability**: Cloud-native architecture based on Kubernetes
 
-## DEMO Site (Under Construction)
-
-MCPCan provides an online demo site where you can experience MCPCan's features and performance.
-
-Under construction...
 
 ## Quickstart
 
