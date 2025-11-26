@@ -58,10 +58,10 @@
         <template #name="{ row }">
           <div class="flex align-center">
             <el-tooltip effect="dark" placement="top" class="flex-sub" :raw-content="true">
-              <div class="flex-sub ml-2 ellipsis-two">{{ row.name }}</div>
+              <div class="flex-sub ml-2 ellipsis-two">{{ (row as any).name }}</div>
               <template #content>
                 <div style="width: 300px">
-                  {{ row.name }}
+                  {{ (row as any).name }}
                 </div>
               </template>
             </el-tooltip>
@@ -77,7 +77,7 @@
             class="ml-4"
             @click.stop
             :show-arrow="false"
-            @command="(cmd: string) => handleCommand(cmd, row)"
+            @command="(cmd: string) => handleCommand(cmd, row as any)"
           >
             <el-icon class="link-hover cursor-pointer"><More /></el-icon>
             <template #dropdown>
@@ -99,7 +99,7 @@
             </template>
             <div class="center">
               <McpImage :src="kymo" width="20" height="20" />
-              <div class="flex-sub ml-2 ellipsis-two">{{ row.name }}</div>
+              <div class="flex-sub ml-2 ellipsis-two">{{ (row as any).name }}</div>
             </div>
           </el-card>
         </template>
