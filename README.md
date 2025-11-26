@@ -43,15 +43,7 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 ## ✨ Key Features
 
 - **🎯 Unified Management**: Centralized management of all MCP service instances and configurations
-  1. Supports visualized management and control of the entire lifecycle of MCP service instances, covering centralized operations such as creation, startup, stop, destruction, and restart. It provides a visual operation panel and progress tracking, eliminating the need for logging into multiple nodes for distributed maintenance.
-
-  2. Currently, it supports instance categorization based on container status and MCP protocol. Future updates will expand to include environment and cluster, business line, and service type grouping dimensions to achieve fine-grained categorization and efficient management of instances.
 - **🔄 Protocol Conversion**: Supports seamless conversion between various MCP protocols
-  1. **Direct Connection Mode:** As a lightweight point-to-point conversion solution, it is directly deployed between the devices/systems at both ends of MCP communication, eliminating the need for intermediate forwarding nodes. It achieves real-time conversion of MCP protocol versions and data formats with a minimalist architecture. Its core function is to reduce conversion latency and deployment complexity, adapting to small-scale, low-latency MCP interoperability scenarios.
-
-  2. **Managed Mode:** This mode encapsulates protocol conversion capabilities as a clustered managed service. Its core function is to achieve centralized conversion management of large-scale MCP terminals. Through cluster load balancing, unified rule configuration, and dynamic updates, it efficiently handles the protocol conversion needs of massive numbers of MCP devices, ensuring consistency and scalability for interoperability between different MCP protocol versions.
-
-  3. **Proxy Mode:** This mode integrates protocol conversion and network proxy capabilities. Its core function is to solve MCP communication problems in complex network environments. It achieves cross-network segment and cross-firewall MCP data forwarding and protocol conversion through intermediate proxy nodes, while also adding access authentication, traffic control, and transmission encryption functions, balancing interoperability and security.
 - **📊 Real-time Monitoring**: Provides detailed service status and performance monitoring
 - **🔐 Security & Authentication**: Built-in identity authentication and permission management system
 - **🚀 One-stop Deployment**: Quick release, configuration, and distribution of MCP services
