@@ -359,9 +359,9 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     // try to parse as JSON/YAML (fault tolerance)
     try {
       docObject.value = JSON.parse(rawText)
-      formData.value.openapiBaseUrl = docObject.value.servers?.length
-        ? docObject.value.servers[0]?.url
-        : ''
+      formData.value.openapiBaseUrl =
+        formData.value.openapiBaseUrl ||
+        (docObject.value.servers?.length ? docObject.value.servers[0]?.url : '')
       defaultCheckedKeys.value = []
       const collectIds = (nodes: any[]) => {
         nodes.forEach((n) => {
@@ -373,9 +373,9 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     } catch (e) {
       try {
         docObject.value = yaml.load(rawText)
-        formData.value.openapiBaseUrl = docObject.value.servers?.length
-          ? docObject.value.servers[0]?.url
-          : ''
+        formData.value.openapiBaseUrl =
+          formData.value.openapiBaseUrl ||
+          (docObject.value.servers?.length ? docObject.value.servers[0]?.url : '')
         defaultCheckedKeys.value = []
         const collectIds = (nodes: any[]) => {
           nodes.forEach((n) => {
@@ -571,6 +571,7 @@ const handleGetDetail = async (id: string) => {
       chooseOpenapiFileID: data.packageId,
       openapiFileID: '',
     }
+    console.log('instance detail data1', data)
 
     // get openapi file content
     const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
@@ -586,6 +587,7 @@ const handleGetDetail = async (id: string) => {
       openapiFileId: baseOpenapiFileID,
     })
     handleDefaultNodeAPIlist(res.content)
+    console.log('instance detail data2', formData.value)
   } finally {
     dialogInfo.value.loading = false
   }

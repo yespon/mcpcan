@@ -87,14 +87,14 @@
 import { UploadFilled, More } from '@element-plus/icons-vue'
 import { DocsAPI } from '@/api/api-docs/index'
 import TablePlus from '@/components/TablePlus/index.vue'
-import { useCodeTableHooks } from './hooks.ts'
+import { useDocsTableHooks } from './hooks.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import codeLogo from '@/assets/logo/code.png'
 import zipLogo from '@/assets/logo/zip.png'
 import McpButton from '@/components/mcp-button/index.vue'
 
-const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo } = useCodeTableHooks()
+const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo } = useDocsTableHooks()
 const { jumpToPage } = useRouterHooks()
 
 /**

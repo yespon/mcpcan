@@ -2,7 +2,7 @@ import { DocsAPI } from '@/api/api-docs/index'
 import type { Code } from '@/types'
 import { timestampToDate, formatFileSize } from '@/utils/system'
 
-export const useDocsTableHooks = () => {
+export const useAgentTableHooks = () => {
   const { t } = useI18n()
   const tablePlus = ref()
   const pageInfo = ref({

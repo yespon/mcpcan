@@ -25,7 +25,7 @@
     <div class="mt-4">
       <el-row :gutter="32" :style="{ height: 'calc(100vh - 150px)' }">
         <el-col :span="4">
-          <el-card :style="{ height: '100%' }">
+          <el-card :style="{ height: 'calc(100vh - 150px)' }">
             <template #header>
               <span>{{ t('code.fileTree') }}</span>
             </template>
@@ -236,7 +236,7 @@ onMounted(init)
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  background-color: #000;
+  background-color: var(--ep-bg-color-deep);
   padding: 10px;
   border-radius: 8px;
 }

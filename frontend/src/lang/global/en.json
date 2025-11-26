@@ -60,7 +60,8 @@
     "codeList": "Code-List",
     "updateCodePackage": "UpdateCodePackage",
     "viewCodePackage": "PackageDetails",
-    "apiDocsList": "API Docs"
+    "apiDocsList": "API Docs",
+    "agentManage": "Agent Manage"
   },
   "common": {
     "search": "Search",

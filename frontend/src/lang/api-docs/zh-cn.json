@@ -16,7 +16,7 @@
       "total": "文档总数",
       "openAI": "OpenAPI",
       "text1": "文件限制：文本文件上传",
-      "text2": "格式支持: OpenAPI(JSON、YAML)",
+      "text2": "格式支持: 支持Openapi 3.0文档(JSON/YAML)以上",
       "text3": "上传后可以在线查看和编辑文档",
       "text4": "支持下载已上传的API文档",
       "text5": "文档仅支持英文命名",

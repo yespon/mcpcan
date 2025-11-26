@@ -21,10 +21,15 @@ import zhCodePackage from './code-package/zh-cn.json'
 import enApiDocs from './api-docs/en.json'
 import zhApiDocs from './api-docs/zh-cn.json'
 
+// agent
+import enAgent from './agent/en.json'
+import zhCnAgent from './agent/zh-cn.json'
+
 const messages = {
   'zh-cn': {
     ...zhCnGlobal,
     ...zhCnHome,
+    ...zhCnAgent,
     ...zhMcpManage,
     ...zhEnvManage,
     ...zhCodePackage,
@@ -33,6 +38,7 @@ const messages = {
   en: {
     ...enGlobal,
     ...enHome,
+    ...enAgent,
     ...enMcpManage,
     ...enEnvManage,
     ...enCodePackage,

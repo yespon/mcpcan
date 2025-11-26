@@ -60,11 +60,22 @@
           </template>
         </FormPlus>
       </el-popover>
+      <el-button
+        v-if="props.showViewMode"
+        style="width: 32px"
+        class="ml-3"
+        @click="changeViewMode"
+        :title="viewMode === 'table' ? '卡片视图' : '表格视图'"
+      >
+        <el-icon v-if="viewMode === 'table'"><Grid /></el-icon>
+        <el-icon v-if="viewMode === 'card'"><List /></el-icon>
+      </el-button>
     </div>
   </Teleport>
 
   <slot name="action"></slot>
   <el-table
+    v-if="viewMode === 'table'"
     ref="dataTableRef"
     v-loading="loading"
     :data="list"
@@ -124,6 +135,29 @@
       <el-empty :image-size="200" :description="t('status.noData')" />
     </template>
   </el-table>
+  <div v-else-if="props.showViewMode && viewMode === 'card'">
+    <el-row :gutter="20">
+      <el-col
+        v-for="(row, index) in list"
+        :key="index"
+        :xs="24"
+        :sm="12"
+        :md="8"
+        :lg="6"
+        :xl="6"
+        class="mb-4"
+      >
+        <slot name="slotCard" :row="row" :index="index">
+          <el-card shadow="hover">
+            <div class="text-center">{{ '数据为空' }}</div>
+          </el-card>
+        </slot>
+      </el-col>
+    </el-row>
+    <div v-if="list.length === 0" class="mt-8">
+      <el-empty :image-size="200" :description="t('status.noData')" />
+    </div>
+  </div>
   <div class="mt-8 flex justify-end" v-if="showPage">
     <el-pagination
       background
@@ -139,11 +173,12 @@
 import { isVNode } from 'vue'
 import { cloneDeep } from 'lodash-es'
 import FormPlus from '../FormPlus/index.vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, List, Grid } from '@element-plus/icons-vue'
 import GlareHover from '../Animation/GlareHover.vue'
 
 const { t } = useI18n()
 const searchInputRef = ref()
+const viewMode = ref<'table' | 'card'>('table')
 interface RequestConfig {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   api: Function
@@ -180,9 +215,11 @@ const props = withDefaults(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     queryFormatter?: Function
     showPage?: boolean
+    showViewMode?: boolean
   }>(),
   {
     showPage: () => true,
+    showViewMode: () => false,
   },
 )
 
@@ -196,6 +233,7 @@ const _pagerConfig = ref(Object.assign({}, props.pageConfig))
 const emit = defineEmits<{
   (e: 'update:pageConfig', value: PageConfig): void
   (e: 'resetFields', value: any): void
+  (e: 'update:viewMode', value: 'card' | 'table'): void
 }>()
 const handlePageChange = (newPage: number) => {
   _pagerConfig.value.page = newPage
@@ -241,6 +279,14 @@ const initFormData = () => {
 const handleQuery = () => {
   showMoreSearch.value = false
   initData()
+}
+
+/**
+ * Handle change view mode
+ */
+const changeViewMode = () => {
+  viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
+  emit('update:viewMode', viewMode.value)
 }
 
 /**
