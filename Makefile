@@ -91,6 +91,17 @@ proto-buf:
 		touch $(BACKEND_PATH)/api/merged.swagger.json; \
 	fi
 
+.PHONY: init
+init:
+	@echo "---------- Initializing Git Hooks ----------"
+	@if [ -d ".git" ]; then \
+		git config core.hooksPath .githooks; \
+		@echo "Git hooks path configured successfully."; \
+	else \
+		@echo "Not a git repository. Skipping hook setup."; \
+	fi
+	@echo "-------------------------------------------"
+
 .PHONY: pnpm-build
 pnpm-build:
 	@echo "---------- Start build frontend ----------"
