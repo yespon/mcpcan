@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// McpCanTokens 定义了存储在数据库中的单个令牌记录
-type McpCanTokens struct {
+// McpToken 定义了存储在数据库中的单个令牌记录
+type McpTokens struct {
 	ID               uint            `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
 	InstanceID       uint            `gorm:"not null;index;comment:关联的实例ID" json:"instanceID"`
 	TokenType        TokenType       `gorm:"size:50;not null;comment:令牌类型" json:"tokenType"`
@@ -21,6 +21,6 @@ type McpCanTokens struct {
 }
 
 // TableName 指定 GORM 使用的表名
-func (McpCanTokens) TableName() string {
+func (McpTokens) TableName() string {
 	return "mcpcan_tokens"
 }

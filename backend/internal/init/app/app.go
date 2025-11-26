@@ -3,11 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"go.uber.org/zap"
 
 	"github.com/kymo-mcp/mcpcan/internal/init/config"
-	"github.com/kymo-mcp/mcpcan/pkg/database"
 	dbpkg "github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -70,7 +70,11 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
+	var wg sync.WaitGroup
+
 	go func() {
+		defer wg.Done()
+		wg.Add(1)
 		// init data scope
 		if err := a.initDataScope(context.Background(), adminUser); err != nil {
 			logger.Error("Failed to init data scope", zap.Error(err))
@@ -78,6 +82,8 @@ func (a *App) Run() error {
 	}()
 
 	go func() {
+		defer wg.Done()
+		wg.Add(1)
 		// init default kubernetes environment
 		if err := a.initDefaultKubernetesEnvironment(context.Background(), adminUser); err != nil {
 			logger.Error("Failed to init default kubernetes environment", zap.Error(err))
@@ -85,9 +91,13 @@ func (a *App) Run() error {
 	}()
 
 	go func() {
+		defer wg.Done()
+		wg.Add(1)
 		// run database migrations
-		database.RunMigrations(database.GetDB())
+		RunMigrations()
 	}()
+
+	wg.Wait()
 
 	logger.Info("Shutting down authz service...")
 

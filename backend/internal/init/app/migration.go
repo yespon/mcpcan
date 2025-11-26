@@ -7,13 +7,15 @@ import (
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"gorm.io/gorm"
 )
 
 // RunMigrations 执行数据库迁移，特别是将 tokens 从 JSON 字段迁移到独立的表中
-func RunMigrations(db *gorm.DB) {
+func RunMigrations() {
 	// 1. 自动创建/更新表结构以确保所有表和列都存在
 	fmt.Println("Running AutoMigrate...")
+	db := mysql.GetDB()
 	if err := db.AutoMigrate(&model.McpInstance{}, &model.McpToken{}, &model.Migration{}); err != nil {
 		fmt.Printf("AutoMigrate failed: %v\n", err)
 		// 在无法更新表结构时停止，因为后续操作会失败
@@ -80,12 +82,12 @@ func RunMigrations(db *gorm.DB) {
 				continue
 			}
 
-			var newTokensToCreate []model.McpCanTokens
+			var newTokensToCreate []model.McpTokens
 			for _, t := range oldTokens {
 				headersJSON, _ := json.Marshal(t.Headers)
 				usagesJSON, _ := json.Marshal(t.Usages)
 
-				newTokensToCreate = append(newTokensToCreate, model.McpCanTokens{
+				newTokensToCreate = append(newTokensToCreate, model.McpTokens{
 					InstanceID:       instance.ID, // 关键：设置外键
 					TokenType:        t.TokenType,
 					Token:            t.Token,
