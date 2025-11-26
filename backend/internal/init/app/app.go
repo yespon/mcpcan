@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kymo-mcp/mcpcan/internal/init/config"
+	"github.com/kymo-mcp/mcpcan/pkg/database"
 	dbpkg "github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -69,10 +70,24 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
-	// init data scope
-	if err := a.initDataScope(context.Background(), adminUser); err != nil {
-		return fmt.Errorf("failed to init data scope: %w", err)
-	}
+	go func() {
+		// init data scope
+		if err := a.initDataScope(context.Background(), adminUser); err != nil {
+			logger.Error("Failed to init data scope", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		// init default kubernetes environment
+		if err := a.initDefaultKubernetesEnvironment(context.Background(), adminUser); err != nil {
+			logger.Error("Failed to init default kubernetes environment", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		// run database migrations
+		database.RunMigrations(database.GetDB())
+	}()
 
 	logger.Info("Shutting down authz service...")
 
@@ -94,17 +109,12 @@ func (a *App) Shutdown() error {
 
 // initDataScope creates the default environment
 func (a *App) initDataScope(ctx context.Context, adminUser *model.SysUser) error {
-	// 初始化默认 Kubernetes 环境
-	envMod, err := a.initDefaultKubernetesEnvironment(ctx, adminUser)
-	if err != nil {
-		return fmt.Errorf("failed to init default kubernetes environment: %w", err)
-	}
 	// 初始化代码包数据
 	if err := a.initCodePackage(ctx); err != nil {
 		return fmt.Errorf("failed to init code package data: %w", err)
 	}
 	// 初始化 MCP 模板数据（使用嵌入式模板 JSON）
-	if err := a.initMcpTemplateData(ctx, envMod); err != nil {
+	if err := a.initMcpTemplateData(ctx); err != nil {
 		return fmt.Errorf("failed to init mcp template data: %w", err)
 	}
 	return nil

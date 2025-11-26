@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"github.com/kymo-mcp/mcpcan/pkg/common"
+	"strings"
+
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"strings"
 )
 
 //go:embed template.json
@@ -26,21 +26,8 @@ func GetEmbeddedTemplateJSON() []byte {
 	return data
 }
 
-// getDefaultEnvironmentID gets the default environment ID by name
-func getDefaultEnvironmentID(ctx context.Context) (uint, error) {
-	defaultEnv, err := mysql.McpEnvironmentRepo.FindByName(ctx, common.EnvironmentDefaultName)
-	if err != nil {
-		return 0, fmt.Errorf("failed to find default environment '%s': %w", common.EnvironmentDefaultName, err)
-	}
-	if defaultEnv == nil {
-		return 0, fmt.Errorf("default environment '%s' not found", common.EnvironmentDefaultName)
-	}
-	log.Printf("Found default environment '%s' with ID: %d", common.EnvironmentDefaultName, defaultEnv.ID)
-	return defaultEnv.ID, nil
-}
-
 // initMcpTemplateData initializes data using embedded JSON templates
-func (a *App) initMcpTemplateData(ctx context.Context, env *model.McpEnvironment) error {
+func (a *App) initMcpTemplateData(ctx context.Context) error {
 	log.Printf("Starting MCP template data initialization...")
 
 	embeddedTemplateJSON := GetEmbeddedTemplateJSON()
@@ -50,7 +37,6 @@ func (a *App) initMcpTemplateData(ctx context.Context, env *model.McpEnvironment
 
 	// Define structure corresponding to embedded JSON
 	type embeddedTemplateItem struct {
-		Environment    bool   `json:"environment,omitempty"` // Environment field to determine if default environment ID should be used
 		Name           string `json:"name"`
 		Port           int32  `json:"port"`
 		InitScript     string `json:"init_script"`
@@ -79,27 +65,6 @@ func (a *App) initMcpTemplateData(ctx context.Context, env *model.McpEnvironment
 
 	log.Printf("Found %d template items in embedded JSON", len(items))
 
-	// Get default environment ID once for templates that need it
-	var defaultEnvironmentID uint
-	var defaultEnvErr error
-	needsDefaultEnv := false
-
-	// Check if any template needs default environment
-	for _, it := range items {
-		if it.Environment {
-			needsDefaultEnv = true
-			break
-		}
-	}
-
-	if needsDefaultEnv {
-		log.Printf("Some templates require default environment, fetching default environment ID...")
-		defaultEnvironmentID, defaultEnvErr = getDefaultEnvironmentID(ctx)
-		if defaultEnvErr != nil {
-			return fmt.Errorf("failed to get default environment ID: %w", defaultEnvErr)
-		}
-	}
-
 	createdCount := 0
 	skippedCount := 0
 
@@ -115,15 +80,6 @@ func (a *App) initMcpTemplateData(ctx context.Context, env *model.McpEnvironment
 		// Determine environment ID based on environment field
 		var environmentID int32
 		var envSource string
-		if it.Environment {
-			// Use default environment ID when environment is true
-			environmentID = int32(defaultEnvironmentID)
-			envSource = fmt.Sprintf("default environment (ID: %d)", defaultEnvironmentID)
-		} else {
-			// Use provided environment ID when environment is false or not set
-			environmentID = int32(env.ID)
-			envSource = fmt.Sprintf("provided environment (ID: %d)", env.ID)
-		}
 
 		log.Printf("Creating template '%s' with %s", it.Name, envSource)
 

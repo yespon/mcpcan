@@ -1,6 +1,5 @@
 [
     {
-        "environment": true,
         "name": "Everything MCP Server - MCP Official Example",
         "port": 8080,
         "init_script": "#!/bin/bash\n# init script\necho 'Initialization completed.'",
@@ -15,7 +14,6 @@
         "icon_path": "/static/images/1760667315741377912.webp"
     },
     {
-        "environment": true,
         "package_name": "mcp-example.zip",
         "name": "Calculator Server - MCP Official Example",
         "port": 3000,
@@ -59,7 +57,6 @@
         "icon_path": "/static/images/1761104832550187000.webp"
     },
     {
-        "environment": true,
         "name": "AutoNavi Maps MCP Server (Map Control Protocol Server) via the STDIO Protocol - MCP Official Example",
         "port": 8080,
         "init_script": "#!/bin/bash\n# init script\necho ''Initialization completed.''",
