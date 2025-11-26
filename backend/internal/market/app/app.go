@@ -238,6 +238,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/instance/status/:instanceId", routerPrefix), instanceService.StatusHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/logs", routerPrefix), instanceService.LogsHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/control", routerPrefix), instanceService.TokenControlHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/token/list", routerPrefix), instanceService.TokenListByInstanceIDHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/edit", routerPrefix), instanceService.TokenEditHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/openapi/create", routerPrefix), instanceService.CreateOpenapiHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)

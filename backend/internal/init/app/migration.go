@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,12 +17,6 @@ func RunMigrations() {
 	// 1. 自动创建/更新表结构以确保所有表和列都存在
 	fmt.Println("Running AutoMigrate...")
 	db := mysql.GetDB()
-	if err := db.AutoMigrate(&model.McpInstance{}, &model.McpToken{}, &model.Migration{}); err != nil {
-		fmt.Printf("AutoMigrate failed: %v\n", err)
-		// 在无法更新表结构时停止，因为后续操作会失败
-		return
-	}
-	fmt.Println("AutoMigrate completed.")
 
 	// 2. 检查迁移任务是否已经完成，实现幂等性
 	const migrationName = "migrate-tokens-from-json-to-table"
@@ -43,36 +38,20 @@ func RunMigrations() {
 
 	// 3. 查找所有需要迁移的旧数据
 	// 定义一个只包含旧 tokens 字段的临时结构体，以避免加载关联数据
-	type McpInstanceWithOldTokens struct {
-		ID     uint            `gorm:"primarykey"`
-		Tokens json.RawMessage `gorm:"type:json"`
-	}
-
-	var instancesToMigrate []McpInstanceWithOldTokens
-	// 只选择那些 `tokens` 字段非空、非'[]'、非'null'的记录
-	if err := db.Table("mcpcan_instance").Where("tokens IS NOT NULL AND tokens != '[]' AND tokens != '' AND tokens != 'null'").Find(&instancesToMigrate).Error; err != nil {
+	instanceList, err := mysql.McpInstanceRepo.FindAll(context.Background())
+	if err != nil {
 		fmt.Printf("Error fetching instances for migration: %v\n", err)
 		return
 	}
 
-	if len(instancesToMigrate) == 0 {
+	if len(instanceList) == 0 {
 		fmt.Println("No instances with old token data found. Migration not needed.")
 	} else {
-		fmt.Printf("Found %d instances to migrate.\n", len(instancesToMigrate))
+		fmt.Printf("Found %d instances to migrate.\n", len(instanceList))
 		// 4. 遍历并迁移每个实例的数据
-		for _, instance := range instancesToMigrate {
-			// 旧的 McpToken 定义，用于反序列化
-			type OldMcpToken struct {
-				TokenType        model.TokenType   `json:"tokenType"`
-				Token            string            `json:"token"`
-				Headers          map[string]string `json:"headers,omitempty"`
-				EnabledTransport bool              `json:"enabledTransport"`
-				ExpireAt         int64             `json:"expireAt"`
-				PublishAt        int64             `json:"publishAt"`
-				Usages           []string          `json:"usages"`
-			}
+		for _, instance := range instanceList {
 
-			var oldTokens []OldMcpToken
+			var oldTokens []model.McpToken
 			if err := json.Unmarshal(instance.Tokens, &oldTokens); err != nil {
 				fmt.Printf("[WARN] Could not unmarshal tokens for instance ID %d: %v. Skipping.\n", instance.ID, err)
 				continue
@@ -82,14 +61,13 @@ func RunMigrations() {
 				continue
 			}
 
-			var newTokensToCreate []model.McpTokens
+			var newTokensToCreate []model.McpToken
 			for _, t := range oldTokens {
 				headersJSON, _ := json.Marshal(t.Headers)
 				usagesJSON, _ := json.Marshal(t.Usages)
 
-				newTokensToCreate = append(newTokensToCreate, model.McpTokens{
-					InstanceID:       instance.ID, // 关键：设置外键
-					TokenType:        t.TokenType,
+				newTokensToCreate = append(newTokensToCreate, model.McpToken{
+					InstanceID:       instance.InstanceID,
 					Token:            t.Token,
 					EnabledTransport: t.EnabledTransport,
 					Headers:          json.RawMessage(headersJSON),
@@ -99,25 +77,8 @@ func RunMigrations() {
 				})
 			}
 
-			// 5. 在事务中创建新记录并清空旧字段
-			err := db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Create(&newTokensToCreate).Error; err != nil {
-					// 如果令牌已经存在（uniqueIndex冲突），这可能不是一个致命错误，但需要记录
-					fmt.Printf("[WARN] Could not create new tokens for instance ID %d (might be duplicates): %v\n", instance.ID, err)
-					// 即使创建失败，我们仍然尝试清空旧字段，因为数据可能已部分迁移
-				}
-
-				// 清空旧的 JSON 字段以防重复迁移
-				if err := tx.Table("mcpcan_instance").Where("id = ?", instance.ID).Update("tokens", "[]").Error; err != nil {
-					return fmt.Errorf("failed to clear old tokens field for instance ID %d: %w", instance.ID, err)
-				}
-				return nil
-			})
-
-			if err != nil {
-				fmt.Printf("[ERROR] Failed to migrate tokens for instance ID %d: %v\n", instance.ID, err)
-			} else {
-				fmt.Printf("Successfully migrated %d tokens for instance ID %d.\n", len(newTokensToCreate), instance.ID)
+			if err := mysql.McpTokenRepo.CreateBatch(context.Background(), newTokensToCreate); err != nil {
+				fmt.Printf("[WARN] Could not batch create tokens for instance ID %d: %v\n", instance.ID, err)
 			}
 		}
 	}

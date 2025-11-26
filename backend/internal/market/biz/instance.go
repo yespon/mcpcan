@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -90,6 +91,119 @@ func (biz *InstanceBiz) UpdateInstanceCache(instanceID string, instance *model.M
 	cache := redis.GetMcpInstanceCache()
 	key := cache.GenerateCacheKey(instanceID)
 	return cache.SetRedisCacheInstance(key, instance, redis.InstanceCacheExpire)
+}
+
+// TokenListByInstanceID lists tokens for an instance with optional filters
+func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanceIDRequest) (*instancepb.TokenListByInstanceIDResponse, error) {
+	if req.InstanceId == "" {
+		return nil, fmt.Errorf("missing required field: instanceId")
+	}
+	instance, err := biz.GetInstance(req.InstanceId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance information: %v", err)
+	}
+	if instance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	rows, err := mysql.McpTokenRepo.ListByInstanceID(biz.ctx, instance.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tokens: %v", err)
+	}
+
+	list := make([]*instancepb.McpToken, 0, len(rows))
+	for _, r := range rows {
+		if req.Token != "" && req.Token != r.Token {
+			continue
+		}
+		var headers map[string]string
+		var usages []string
+		_ = json.Unmarshal(r.Headers, &headers)
+		_ = json.Unmarshal(r.Usages, &usages)
+		if len(req.Usages) > 0 {
+			if !usageIntersect(usages, req.Usages) {
+				continue
+			}
+		}
+		list = append(list, &instancepb.McpToken{
+			Id:               int64(r.ID),
+			InstanceId:       instance.InstanceID,
+			Token:            r.Token,
+			ExpireAt:         r.ExpireAt,
+			PublishAt:        r.PublishAt,
+			Usages:           usages,
+			EnabledTransport: r.EnabledTransport,
+			Headers:          headers,
+		})
+	}
+
+	return &instancepb.TokenListByInstanceIDResponse{List: list}, nil
+}
+
+func usageIntersect(a []string, b []string) bool {
+	if len(a) == 0 || len(b) == 0 {
+		return true
+	}
+	set := make(map[string]struct{}, len(a))
+	for _, x := range a {
+		set[x] = struct{}{}
+	}
+	for _, y := range b {
+		if _, ok := set[y]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// SaveTokensForInstance creates or updates tokens based on incoming id field
+func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*instancepb.McpToken) error {
+	if len(tokens) == 0 {
+		return nil
+	}
+	rows := make([]model.McpToken, 0, len(tokens))
+	nowMs := time.Now().UnixMilli()
+	for _, t := range tokens {
+		if t.InstanceId == "" {
+			return fmt.Errorf("missing required field: instanceId")
+		}
+		headersBytes, _ := json.Marshal(t.Headers)
+		usagesBytes, _ := json.Marshal(t.Usages)
+		publishAt := t.PublishAt
+		if publishAt == 0 {
+			publishAt = nowMs
+		}
+		if t.Id == 0 {
+			rows = append(rows, model.McpToken{
+				InstanceID:       t.InstanceId,
+				Token:            t.Token,
+				EnabledTransport: t.EnabledTransport,
+				Headers:          json.RawMessage(headersBytes),
+				Usages:           json.RawMessage(usagesBytes),
+				ExpireAt:         t.ExpireAt,
+				PublishAt:        publishAt,
+			})
+			continue
+		}
+		existing, err := mysql.McpTokenRepo.FindByID(ctx, uint(t.Id))
+		if err != nil {
+			return fmt.Errorf("failed to find token by id: %v", err)
+		}
+		existing.InstanceID = t.InstanceId
+		existing.Token = t.Token
+		existing.EnabledTransport = t.EnabledTransport
+		existing.Headers = json.RawMessage(headersBytes)
+		existing.Usages = json.RawMessage(usagesBytes)
+		existing.ExpireAt = t.ExpireAt
+		existing.PublishAt = publishAt
+		if err := mysql.McpTokenRepo.Update(ctx, existing); err != nil {
+			return fmt.Errorf("failed to update token: %v", err)
+		}
+	}
+	if len(rows) > 0 {
+		return mysql.McpTokenRepo.CreateBatch(ctx, rows)
+	}
+	return nil
 }
 
 // ListInstance get instance list

@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -21,7 +20,6 @@ type InstanceInfo struct {
 	Instance         *model.McpInstance
 	McpConfig        *model.McpConfig
 	EnabledToken     bool
-	Tokens           []*model.McpToken
 }
 
 // McpInstanceService MCP instance business service
@@ -141,14 +139,7 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 		return nil, fmt.Errorf("unknown access type: %s", instance.AccessType)
 	}
 
-	// Parse Tokens field
-	var tokens []*model.McpToken
-	if instance.Tokens != nil {
-		if err := json.Unmarshal(instance.Tokens, &tokens); err != nil {
-			logger.Warn("Failed to unmarshal tokens", zap.Error(err))
-			tokens = []*model.McpToken{}
-		}
-	}
+	// todo: get tokens from db
 
 	return &InstanceInfo{
 		InstanceID:       instance.InstanceID,
@@ -158,7 +149,6 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 		Instance:         instance,
 		McpConfig:        mcpConfig,
 		EnabledToken:     instance.EnabledToken,
-		Tokens:           tokens,
 	}, nil
 }
 

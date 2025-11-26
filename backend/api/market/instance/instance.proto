@@ -120,17 +120,8 @@ message CreateRequest {
 
 // McpToken MCP token
 message McpToken {
-  // Token type enum
-  enum TokenType {
-    TOKEN_TYPE_UNKNOWN = 0;
-    BEARER             = 1;
-    API_KEY            = 2;
-    X_API_KEY          = 3;
-    BASIC              = 4;
-  }
-
-  // @inject_tag: json:"tokenType" desc:"Token type"
-  TokenType tokenType = 1;
+  // @inject_tag: json:"id" desc:"Token ID"
+  int64 id = 1;
   // @inject_tag: json:"token" desc:"Token content"
   string token = 2;
   // @inject_tag: json:"headers" desc:"Optional custom headers"
@@ -143,6 +134,8 @@ message McpToken {
   int64 publishAt = 6;
   // @inject_tag: json:"usages" desc:"List of usage scenarios"
   repeated string usages = 7;
+  // @inject_tag: json:"instanceId" desc:"实例ID"
+  string instanceId = 8;
 }
 
 // CreateResp 创建实例响应结构体
@@ -207,8 +200,6 @@ message DetailResp {
   string iconPath = 19;
   // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
   bool enabledToken = 20;
-  // @inject_tag: json:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 21;
   // @inject_tag: json:"mcpServerId" desc:"MCP服务器ID"
   string mcpServerId = 22;
   // @inject_tag: json:"templateId" desc:"模板ID"
@@ -359,8 +350,6 @@ message ListResp {
     McpProtocol mcpProtocol = 22;
     // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
     bool enabledToken = 23;
-    // @inject_tag: json:"tokens" desc:"令牌列表"
-    repeated McpToken tokens = 24;
     // @inject_tag: json:"proxyProtocol" desc:"MCP内网代理协议"
     McpProtocol proxyProtocol = 25;
     // @inject_tag: json:"sourceType" form:"sourceType" desc:"实例来源"
@@ -538,8 +527,6 @@ message TemplateCreateRequest {
   string imgAddress = 13;
   // @inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP服务器ID"
   string mcpServerId = 15;
-  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 16;
   // @inject_tag: json:"notes" form:"notes" desc:"备注"
   string notes = 17;
   // @inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP协议"
@@ -592,8 +579,6 @@ message TemplateDetailResp {
   string imgAddress = 14;
   // @inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP服务器ID"
   string mcpServerId = 16;
-  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 17;
   // @inject_tag: json:"notes" form:"notes" desc:"备注"
   string notes = 18;
   // @inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP协议"
@@ -642,8 +627,6 @@ message TemplateEditRequest {
   string imgAddress = 14;
   // @inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP服务器ID"
   string mcpServerId = 16;
-  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 17;
   // @inject_tag: json:"notes" form:"notes" desc:"备注"
   string notes = 18;
   // @inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP协议"
@@ -709,24 +692,35 @@ message TokenControlResponse {
   string message = 3;
 }
 
-// TokenEditRequest 编辑tokens请求
-message TokenEditRequest {
+// TokenListByInstanceIDRequest token列表请求
+message TokenListByInstanceIDRequest {
   // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"实例ID"
   string instanceId = 1;
+  // @inject_tag: json:"token" form:"token" desc:"令牌"
+  string token = 2;
+  // @inject_tag: json:"enabledTransport" form:"enabledTransport" desc:"是否启用传输层令牌"
+  bool enabledTransport = 3;
+  // @inject_tag: json:"usages" form:"usages" desc:"令牌使用场景"
+  repeated string usages = 4;
+}
+
+// TokenListByInstanceIDResponse token列表响应
+message TokenListByInstanceIDResponse {
+  // @inject_tag: json:"tokens" desc:"令牌列表"
+  repeated McpToken list = 2;
+}
+
+// TokenEditRequest 编辑tokens请求
+message TokenEditRequest {
   // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
   repeated McpToken tokens = 2;
 }
 
 // TokenEditResponse 编辑tokens响应
 message TokenEditResponse {
-  // @inject_tag: json:"instanceId" desc:"实例ID"
-  string instanceId = 1;
-  // @inject_tag: json:"tokens" desc:"令牌列表"
-  repeated McpToken tokens = 2;
   // @inject_tag: json:"message" desc:"响应消息"
-  string message = 3;
+  string message = 1;
 }
-
 
 // CreateRequest 创建实例请求结构体
 message CreateOpenapiRequest {
@@ -738,16 +732,17 @@ message CreateOpenapiRequest {
   string notes = 3;
   // @inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"选择的 openapi 文档 ID"
   string chooseOpenapiFileID = 4;
+  // @inject_tag: json:"enableToken" form:"enableToken" desc:"是否启用令牌"
+  bool enableToken = 5;
   // @inject_tag: json:"tokens" form:"tokens" desc:"token 列表"
-  repeated McpToken tokens = 5;
+  repeated McpToken tokens = 6;
   // @inject_tag: json:"environmentId" form:"environmentId" desc:"环境ID"
-  int32 environmentId = 6;
+  int32 environmentId = 7;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"图标路径"
-  string iconPath = 7;
+  string iconPath = 8;
   // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"访问基础路径"
-  string openapiBaseUrl = 8;
+  string openapiBaseUrl = 9;
 }
-
 
 // UpdateOpenapiRequest 编辑实例请求结构体
 message UpdateOpenapiRequest {
@@ -872,6 +867,14 @@ service InstanceService {
     };
   }
 
+  // token列表
+  rpc TokenListByInstanceID(TokenListByInstanceIDRequest) returns (TokenListByInstanceIDResponse) {
+    option (google.api.http) = {
+      post: "/instance/token/list",
+      body: "*",
+    };
+  }
+
   // 编辑tokens
   rpc TokenEdit(TokenEditRequest) returns (TokenEditResponse) {
     option (google.api.http) = {
@@ -883,7 +886,7 @@ service InstanceService {
   // 创建 Openapi 实例
   rpc OpenapiCreate(CreateOpenapiRequest) returns (CreateResp) {
     option (google.api.http) = {
-      post:  "/instance/openapi/create",
+      post: "/instance/openapi/create",
       body: "*",
     };
   }

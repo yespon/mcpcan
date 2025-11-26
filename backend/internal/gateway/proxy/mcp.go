@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"net/textproto"
 	"net/url"
 	"path"
 	"strings"
@@ -643,48 +642,49 @@ func validReqAuthorizationForInstance(req *http.Request, instanceInfo *InstanceI
 	// delete Authorization header from req
 	ra := &RequestAuth{}
 
-	// 1. instance 是否启用了 token 认证，没有则直接返回成功
-	if !instanceInfo.EnabledToken {
-		return ra, nil
-	}
+	// // 1. instance 是否启用了 token 认证，没有则直接返回成功
+	// if !instanceInfo.EnabledToken {
+	// 	return ra, nil
+	// }
 
-	// 2. instance 启用了 token 认证，校验 token 是否有效
-	if len(instanceInfo.Tokens) == 0 {
-		return ra, fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
-	}
+	// // 2. instance 启用了 token 认证，校验 token 是否有效
+	// if len(instanceInfo.Tokens) == 0 {
+	// 	return ra, fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
+	// }
 
-	tokenHeaderKey := ""
-	token := ""
-	for _, tokenInfo := range instanceInfo.Tokens {
-		tokenHeaderKey = tokenInfo.ToTokenHeaderKey()
-		canonKey := textproto.CanonicalMIMEHeaderKey(tokenHeaderKey)
-		token = strings.TrimSpace(req.Header.Get(canonKey))
-		if tokenInfo.Token == token {
-			// 3. token 校验通过，校验 token 是否过期
-			expireAt := time.Unix(0, tokenInfo.ExpireAt*int64(time.Millisecond))
-			if tokenInfo.ExpireAt > 0 && time.Now().After(expireAt) {
-				return ra, fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
-			}
-			if tokenInfo.EnabledTransport {
-				for k, v := range tokenInfo.Headers {
-					if k != tokenHeaderKey {
-						req.Header.Set(k, v)
-					}
-				}
-			} else {
-				req.Header.Del(canonKey)
-			}
-			ra = &RequestAuth{
-				TokenHeaderKey: tokenHeaderKey,
-				Token:          token,
-				Usages:         tokenInfo.Usages,
-			}
-			return ra, nil
-		}
-	}
-	if len(token) == 0 {
-		return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceInfo.Instance.InstanceID, tokenHeaderKey)
-	}
+	// tokenHeaderKey := ""
+	// token := ""
+	// for _, tokenInfo := range instanceInfo.Tokens {
+	// 	// to token header key
+	// 	// tokenHeaderKey = tokenInfo.ToTokenHeaderKey()
+	// 	canonKey := textproto.CanonicalMIMEHeaderKey(tokenHeaderKey)
+	// 	token = strings.TrimSpace(req.Header.Get(canonKey))
+	// 	if tokenInfo.Token == token {
+	// 		// 3. token 校验通过，校验 token 是否过期
+	// 		expireAt := time.Unix(0, tokenInfo.ExpireAt*int64(time.Millisecond))
+	// 		if tokenInfo.ExpireAt > 0 && time.Now().After(expireAt) {
+	// 			return ra, fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
+	// 		}
+	// 		if tokenInfo.EnabledTransport {
+	// 			for k, v := range tokenInfo.Headers {
+	// 				if k != tokenHeaderKey {
+	// 					req.Header.Set(k, v)
+	// 				}
+	// 			}
+	// 		} else {
+	// 			req.Header.Del(canonKey)
+	// 		}
+	// 		ra = &RequestAuth{
+	// 			TokenHeaderKey: tokenHeaderKey,
+	// 			Token:          token,
+	// 			Usages:         tokenInfo.Usages,
+	// 		}
+	// 		return ra, nil
+	// 	}
+	// }
+	// if len(token) == 0 {
+	// 	return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceInfo.Instance.InstanceID, tokenHeaderKey)
+	// }
 
 	return ra, fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.InstanceID)
 }
