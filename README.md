@@ -6,9 +6,9 @@
 <div align="center">
 
 # MCP CAN
-MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services.<br/>
-Providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.<br/>
-MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.<br/>
+The open source integration platform for MCP Server.</br>
+MCPCAN uses containers for flexible deployment of MCP services, resolving potential system configuration conflicts. It supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures. It also provides visual monitoring, security authentication, and one-stop deployment capabilities.</br>
+
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
@@ -36,6 +36,9 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 </p>
 </div>
 
+## Introduction
+MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services,Providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
+MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.<br/>
 
 ## ✨ Key Features
 
