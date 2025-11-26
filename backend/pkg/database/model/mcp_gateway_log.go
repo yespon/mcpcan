@@ -35,17 +35,16 @@ const (
 )
 
 type GatewayLog struct {
-	ID          uint            `gorm:"primaryKey"`
-	TraceID     string          `gorm:"size:100;not null;default:'';comment:trace ID" json:"traceID"`
-	InstanceID  string          `gorm:"size:100;not null;comment:instance ID" json:"instanceID"`
-	TokenHeader string          `gorm:"size:100;not null;default:'';comment:token header" json:"tokenHeader"`
-	Token       string          `gorm:"size:1000;not null;default:'';comment:token" json:"token"`
-	Usages      string          `gorm:"size:1000;not null;default:'';comment:usage scenarios" json:"usages"`
-	Log         json.RawMessage `gorm:"type:text;not null;comment:log details" json:"log"`
-	Level       log.Level       `gorm:"type:int;not null;default:0;comment:log level" json:"level"`
-	Event       Event           `gorm:"size:100;not null;default:'';comment:event type" json:"event"`
-	CreatedAt   time.Time       `gorm:"type:timestamp(3);not null;comment:creation time" json:"createdAt"`
-	UpdatedAt   time.Time       `gorm:"type:timestamp(3);not null;comment:update time" json:"updatedAt"`
+	ID         uint            `gorm:"primaryKey"`
+	TraceID    string          `gorm:"size:100;not null;default:'';comment:trace ID" json:"traceID"`
+	InstanceID string          `gorm:"size:100;not null;comment:instance ID" json:"instanceID"`
+	Token      string          `gorm:"size:1000;not null;default:'';comment:token" json:"token"`
+	Usages     string          `gorm:"size:1000;not null;default:'';comment:usage scenarios" json:"usages"`
+	Log        json.RawMessage `gorm:"type:text;not null;comment:log details" json:"log"`
+	Level      log.Level       `gorm:"type:int;not null;default:0;comment:log level" json:"level"`
+	Event      Event           `gorm:"size:100;not null;default:'';comment:event type" json:"event"`
+	CreatedAt  time.Time       `gorm:"type:timestamp(3);not null;comment:creation time" json:"createdAt"`
+	UpdatedAt  time.Time       `gorm:"type:timestamp(3);not null;comment:update time" json:"updatedAt"`
 }
 
 type Log struct {

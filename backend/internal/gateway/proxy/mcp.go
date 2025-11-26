@@ -19,6 +19,7 @@ import (
 	golibLog "github.com/fatedier/golib/log"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 
 	"go.uber.org/zap"
@@ -84,7 +85,7 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 					reqAuth = ra
 				}
 			}
-			WriteMCPLog(xTraceID, xInstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
 				golibLog.ErrorLevel, model.EventPanicRecovered, reqAuth.Usages,
 				fmt.Sprintf("Panic recovered: %v", r))
 
@@ -104,7 +105,7 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 				reqAuth = ra
 			}
 		}
-		WriteMCPLog(xTraceID, xInstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
 			golibLog.ErrorLevel, model.EventRequestValidationFail, reqAuth.Usages,
 			err.Error())
 		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
@@ -141,7 +142,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	instanceId := parts[2]
 	// Validate if instanceId is valid
 	if len(instanceId) == 0 {
-		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
 			fmt.Sprintf("method Not Allowed: InstanceId is empty: %s", instanceId))
 		return fmt.Errorf("method Not Allowed: InstanceId is empty")
 	}
@@ -149,24 +150,23 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	// mcp config validation
 	instanceInfo, err := GetInstanceInfo(instanceId)
 	if err != nil {
-		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
 			fmt.Sprintf("failed to get MCP configuration: %v for instance: %s", err.Error(), instanceId))
 		return fmt.Errorf("failed to get MCP configuration: %v", err.Error())
 	}
-
-	// validate request Authorization header for instance
-	reqAuth, err := validReqAuthorizationForInstance(req, instanceInfo)
-	if err != nil {
-		WriteMCPLog(xTraceID, instanceId, reqAuth.TokenHeaderKey, reqAuth.Token,
-			golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
-			fmt.Sprintf("failed to valid token: %v for instance: %s", err.Error(), instanceId))
-		return fmt.Errorf("failed to valid token: %v", err.Error())
-	}
-
 	if instanceInfo.McpConfig.Headers != nil {
 		for key, value := range instanceInfo.McpConfig.Headers {
 			req.Header.Set(key, value)
 		}
+	}
+
+	// validate request Authorization header for instance
+	reqAuth, err := validateMcpTokenForInstance(req, instanceId)
+	if err != nil {
+		WriteMCPLog(xTraceID, instanceId, reqAuth.Token,
+			golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
+			fmt.Sprintf("failed to valid token: %v for instance: %s", err.Error(), instanceId))
+		return fmt.Errorf("failed to valid token: %v", err.Error())
 	}
 
 	// Store instanceId in context
@@ -214,7 +214,7 @@ func director(req *http.Request) {
 	instanceInfo, ok := req.Context().Value(InstanceInfoKey).(*InstanceInfo)
 	if !ok {
 		logger.Error("No InstanceInfo found in context", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
 			fmt.Sprintf("no InstanceInfo in context for instance: %s", instanceInfo.InstanceID))
 		return
 	}
@@ -226,7 +226,7 @@ func director(req *http.Request) {
 	isSSEReq, ok2 := req.Context().Value(IsSSEReqKey).(bool)
 	if !ok2 {
 		logger.Error("No IsSSEReqKey found in context", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 			golibLog.WarnLevel, model.EventSSEFlagMissing, reqAuth.Usages,
 			fmt.Sprintf("sse.flag.missing for instance: %s", instanceInfo.InstanceID))
 		return
@@ -235,7 +235,7 @@ func director(req *http.Request) {
 	pathNum := len(parts)
 	if pathNum <= 2 {
 		logger.Error("Path is too short", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 			golibLog.WarnLevel, model.EventPathTooShort, reqAuth.Usages,
 			fmt.Sprintf("path.too.short for instance: %s", instanceInfo.InstanceID))
 		return
@@ -245,7 +245,7 @@ func director(req *http.Request) {
 	targetUrl, err := url.Parse(instanceInfo.McpConfig.URL)
 	if err != nil {
 		logger.Error("Failed to parse URL", zap.String("traceID", xTraceID), zap.Error(err))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 			golibLog.ErrorLevel, model.EventUpstreamURLParseFail, reqAuth.Usages,
 			fmt.Sprintf("Failed to parse URL: %s for instance: %s", err.Error(), instanceInfo.InstanceID))
 		return
@@ -264,7 +264,7 @@ func director(req *http.Request) {
 			handleHostingStreamableHTTPReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported", zap.String("traceID", xTraceID))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
 				fmt.Sprintf("McpProtocol is not supported for instance: %s", instanceInfo.InstanceID))
 			return
@@ -281,14 +281,14 @@ func director(req *http.Request) {
 			handleProxyStreamableHTTPPathReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported", zap.String("traceID", xTraceID))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
 				fmt.Sprintf("McpProtocol is not supported for instance: %s", instanceInfo.InstanceID))
 			return
 		}
 	default:
 		logger.Error("AccessType is not supported", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 			golibLog.WarnLevel, model.EventAccessUnsupported, reqAuth.Usages,
 			fmt.Sprintf("AccessType is not supported for instance: %s", instanceInfo.InstanceID))
 		return
@@ -321,7 +321,7 @@ func modifyResponse(resp *http.Response) error {
 				reqAuth = ra
 			}
 		}
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 			golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages,
 			fmt.Sprintf("sse.start for instance: %s", instanceInfo.InstanceID))
 
@@ -330,7 +330,7 @@ func modifyResponse(resp *http.Response) error {
 		case <-resp.Request.Context().Done():
 			ctxErr := resp.Request.Context().Err()
 			logger.Debug("Request context canceled in modifyResponse", zap.String("traceID", xTraceID), zap.Error(ctxErr))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 				golibLog.InfoLevel, model.EventSSECancel, reqAuth.Usages,
 				fmt.Sprintf("sse.cancel for instance: %s", instanceInfo.InstanceID))
 			return &proxyError{
@@ -356,7 +356,7 @@ func modifyResponse(resp *http.Response) error {
 			// Use gzip.Reader to wrap original response body, it will auto-decompress
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
-				WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.TokenHeaderKey, reqAuth.Token,
+				WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
 					golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages,
 					fmt.Sprintf("failed to create gzip reader: %v", err))
 				return &proxyError{
@@ -462,7 +462,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:?"), []byte(fmt.Sprintf("data:/%s?", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("traceID", xTraceID), zap.String("old", msgStr), zap.String("new", string(msgBytes)))
-				WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+				WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
 					golibLog.DebugLevel, model.EventSSEEndpointRewrite, r.reqAuth.Usages,
 					fmt.Sprintf("endpoint rewritten for instance: %s", r.info.InstanceID))
 			}
@@ -473,7 +473,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If source is exhausted (EOF) and our buffer is also empty, return EOF
 		if readErr == io.EOF && r.buffer.Len() == 0 {
-			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
 				golibLog.DebugLevel, model.EventSSEEof, r.reqAuth.Usages,
 				fmt.Sprintf("sse eof for instance: %s", r.info.InstanceID))
 			return 0, io.EOF
@@ -481,7 +481,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If other error occurs, return directly
 		if readErr != nil && readErr != io.EOF {
-			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.TokenHeaderKey, r.reqAuth.Token,
+			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
 				golibLog.WarnLevel, model.EventSSEReadError, r.reqAuth.Usages,
 				fmt.Sprintf("sse read error for instance: %s, error: %v", r.info.InstanceID, readErr))
 			return 0, readErr
@@ -637,54 +637,52 @@ func extractJSONRPCParams(req *http.Request) string {
 	return string(pb)
 }
 
-// validReqAuthorizationForInstance 校验请求 Authorization header 是否有效
-func validReqAuthorizationForInstance(req *http.Request, instanceInfo *InstanceInfo) (*RequestAuth, error) {
+// validateMcpTokenForInstance 校验请求 Authorization header 是否有效
+func validateMcpTokenForInstance(req *http.Request, instanceID string) (*RequestAuth, error) {
 	// delete Authorization header from req
 	ra := &RequestAuth{}
 
-	// // 1. instance 是否启用了 token 认证，没有则直接返回成功
-	// if !instanceInfo.EnabledToken {
-	// 	return ra, nil
-	// }
+	var tokenHeaderKey string
+	var token string
+	if req.Header.Get("Authorization") != "" {
+		tokenHeaderKey = "Authorization"
+		token = req.Header.Get("Authorization")
+	} else if req.Header.Get("API-Key") != "" {
+		tokenHeaderKey = "API-Key"
+		token = req.Header.Get("API-Key")
+	} else if req.Header.Get("X-API-Key") != "" {
+		tokenHeaderKey = "X-API-Key"
+		token = req.Header.Get("X-API-Key")
+	}
+	req.Header.Del(tokenHeaderKey)
 
-	// // 2. instance 启用了 token 认证，校验 token 是否有效
-	// if len(instanceInfo.Tokens) == 0 {
-	// 	return ra, fmt.Errorf("instance %v enabled token but token list is empty", instanceInfo.Instance.InstanceID)
-	// }
+	if token == "" {
+		return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceID, tokenHeaderKey)
+	}
 
-	// tokenHeaderKey := ""
-	// token := ""
-	// for _, tokenInfo := range instanceInfo.Tokens {
-	// 	// to token header key
-	// 	// tokenHeaderKey = tokenInfo.ToTokenHeaderKey()
-	// 	canonKey := textproto.CanonicalMIMEHeaderKey(tokenHeaderKey)
-	// 	token = strings.TrimSpace(req.Header.Get(canonKey))
-	// 	if tokenInfo.Token == token {
-	// 		// 3. token 校验通过，校验 token 是否过期
-	// 		expireAt := time.Unix(0, tokenInfo.ExpireAt*int64(time.Millisecond))
-	// 		if tokenInfo.ExpireAt > 0 && time.Now().After(expireAt) {
-	// 			return ra, fmt.Errorf("instance %v enabled token validate but token expired", instanceInfo.Instance.InstanceID)
-	// 		}
-	// 		if tokenInfo.EnabledTransport {
-	// 			for k, v := range tokenInfo.Headers {
-	// 				if k != tokenHeaderKey {
-	// 					req.Header.Set(k, v)
-	// 				}
-	// 			}
-	// 		} else {
-	// 			req.Header.Del(canonKey)
-	// 		}
-	// 		ra = &RequestAuth{
-	// 			TokenHeaderKey: tokenHeaderKey,
-	// 			Token:          token,
-	// 			Usages:         tokenInfo.Usages,
-	// 		}
-	// 		return ra, nil
-	// 	}
-	// }
-	// if len(token) == 0 {
-	// 	return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceInfo.Instance.InstanceID, tokenHeaderKey)
-	// }
+	mcpToken, err := mysql.McpTokenRepo.FindByToken(context.Background(), instanceID, token)
+	if err != nil {
+		return ra, fmt.Errorf("failed to get MCP token: %v for instance %v", err.Error(), instanceID)
+	}
 
-	return ra, fmt.Errorf("instance %v enabled token validate but token not found", instanceInfo.Instance.InstanceID)
+	if mcpToken.EnabledTransport {
+		headers := map[string]string{}
+		if len(mcpToken.Headers) > 0 {
+			_ = json.Unmarshal(mcpToken.Headers, &headers)
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+	}
+
+	var usages []string
+	if len(mcpToken.Usages) > 0 {
+		_ = json.Unmarshal(mcpToken.Usages, &usages)
+	}
+	ra = &RequestAuth{
+		TokenHeaderKey: tokenHeaderKey,
+		Token:          token,
+		Usages:         usages,
+	}
+	return ra, nil
 }

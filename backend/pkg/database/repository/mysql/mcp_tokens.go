@@ -123,9 +123,9 @@ func (r *McpTokenRepository) FindByID(ctx context.Context, id uint) (*model.McpT
 }
 
 // FindByToken finds a token by its value
-func (r *McpTokenRepository) FindByToken(ctx context.Context, token string) (*model.McpToken, error) {
+func (r *McpTokenRepository) FindByToken(ctx context.Context, instanceID, token string) (*model.McpToken, error) {
 	var t model.McpToken
-	if err := r.getDB().WithContext(ctx).Where("token = ?", token).First(&t).Error; err != nil {
+	if err := r.getDB().WithContext(ctx).Where("instance_id = ? AND token = ?", instanceID, token).First(&t).Error; err != nil {
 		return nil, err
 	}
 	return &t, nil
