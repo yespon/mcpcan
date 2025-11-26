@@ -27,7 +27,7 @@ type McpEnvironment struct {
 
 // TableName 指定表名
 func (McpEnvironment) TableName() string {
-	return "mcp_environment"
+	return "mcpcan_environment"
 }
 
 // GetConfig 解析配置字符串为JSON对象

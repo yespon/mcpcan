@@ -209,7 +209,7 @@ type InnerProxyConfig = McpServersConfig
 
 // TableName 指定表名
 func (McpInstance) TableName() string {
-	return "mcp_instance"
+	return "mcpcan_instance"
 }
 
 // ParseMcpServersConfig 通用解析 MCP 服务器配置

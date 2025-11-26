@@ -31,5 +31,5 @@ type McpTemplate struct {
 }
 
 func (McpTemplate) TableName() string {
-	return "mcp_template"
+	return "mcpcan_template"
 }

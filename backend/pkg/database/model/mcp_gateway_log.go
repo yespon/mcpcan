@@ -56,5 +56,5 @@ type Log struct {
 }
 
 func (gatewayLog *GatewayLog) TableName() string {
-	return "mcp_gateway_log"
+	return "mcpcan_gateway_log"
 }
