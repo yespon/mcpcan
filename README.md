@@ -39,6 +39,9 @@ MCPCan is an open-source platform focused on efficient management of MCP (Model 
 MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.
 
 
+## Introduction
+MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services,Providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
+MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.<br/>
 
 ## ✨ Key Features
 
