@@ -139,30 +139,6 @@ func (tokenType TokenType) String() string {
 	return string(tokenType)
 }
 
-type McpToken struct {
-	TokenType        TokenType         `json:"tokenType"`
-	Token            string            `json:"token"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	EnabledTransport bool              `json:"enabledTransport"`
-	ExpireAt         int64             `json:"expireAt"`
-	PublishAt        int64             `json:"publishAt"`
-	Usages           []string          `json:"usages"`
-}
-
-func (m *McpToken) ToTokenHeaderKey() string {
-	switch m.TokenType {
-	case TokenTypeBearer:
-		return "Authorization"
-	case TokenTypeBasic:
-		return "Authorization"
-	case TokenTypeKey:
-		return "API-Key"
-	case TokenTypeXAPIKey:
-		return "X-API-Key"
-	}
-	return "Authorization"
-}
-
 // McpConfig 表示单个 MCP 服务器配置
 type McpConfig struct {
 	URL            string            `json:"url"`
