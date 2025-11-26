@@ -4,23 +4,20 @@
 </div>
 
 <div align="center">
+
+# MCP CAN
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0"/>
-</div>
-<p align="center">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="./README_CN.md">繁體字</a> <br>
-   <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>  
-</p>
 <p align="center">
     <a href="https://demo.mcpcan.com" target="_blank">
         <img alt="Static Badge" src="https://img.shields.io/badge/Product-F04438"></a>
     <a href="https://dify.ai/pricing" target="_blank">
         <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
-    <a href="https://discord.gg/FngNHpbcY7" target="_blank">
-        <img src="https://img.shields.io/discord/1082486657678311454?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
+    <a href="https://discord.gg/EegGj7G7Bz" target="_blank">
+        <img src="https://img.shields.io/discord/1428637640856571995?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
             alt="chat on Discord"></a>
     <a href="https://reddit.com/r/Kymo_mcp" target="_blank">  
         <img src="https://img.shields.io/reddit/subreddit-subscribers/Kymo_MCP?style=plastic&logo=reddit&label=r%2Fdifyai&labelColor=white"
@@ -29,6 +26,12 @@
         <img src="https://img.shields.io/twitter/follow/MCPCAN?logo=X&color=%20%23f5f5f5"
             alt="follow on X(Twitter)"></a>
 </p>
+
+<p align="center">
+   <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
+   <a href="https://demo.mcpcan.com">Demo</a> · <a href="https://www.mcpcan.com/en/guide/welcome">Documents</a>  · <a href="https://www.mcpcan.com/en/guide/welcome">Feedback</a>
+</p>
+</div>
 
 MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services, providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
 MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.
