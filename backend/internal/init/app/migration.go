@@ -3,33 +3,23 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"gorm.io/gorm"
 )
 
 // RunMigrations 执行数据库迁移，特别是将 tokens 从 JSON 字段迁移到独立的表中
 func RunMigrations() {
 	// 1. 自动创建/更新表结构以确保所有表和列都存在
 	fmt.Println("Running AutoMigrate...")
-	db := mysql.GetDB()
-
 	// 2. 检查迁移任务是否已经完成，实现幂等性
 	const migrationName = "migrate-tokens-from-json-to-table"
-	var migration model.Migration
-	result := db.Where("name = ?", migrationName).First(&migration)
 
-	if result.Error == nil {
+	migration, _ := mysql.McpMigrationRepo.FindByName(context.Background(), migrationName)
+	if migration != nil {
 		fmt.Printf("Migration '%s' has already been completed. Skipping.\n", migrationName)
-		return
-	}
-
-	if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		fmt.Printf("Error checking migration status: %v\n", result.Error)
 		return
 	}
 
@@ -88,7 +78,7 @@ func RunMigrations() {
 		Name:        migrationName,
 		CompletedAt: time.Now(),
 	}
-	if err := db.Create(&completedMigration).Error; err != nil {
+	if err := mysql.McpMigrationRepo.Create(context.Background(), &completedMigration); err != nil {
 		fmt.Printf("[ERROR] Failed to record migration completion for '%s': %v\n", migrationName, err)
 	}
 

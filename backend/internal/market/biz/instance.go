@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
+	"gorm.io/gorm"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 )
@@ -98,15 +100,8 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 	if req.InstanceId == "" {
 		return nil, fmt.Errorf("missing required field: instanceId")
 	}
-	instance, err := biz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
 
-	rows, err := mysql.McpTokenRepo.ListByInstanceID(biz.ctx, instance.ID)
+	rows, err := mysql.McpTokenRepo.ListByInstanceID(biz.ctx, req.InstanceId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tokens: %v", err)
 	}
@@ -125,9 +120,12 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 				continue
 			}
 		}
+		if headers == nil {
+			headers = make(map[string]string)
+		}
 		list = append(list, &instancepb.McpToken{
 			Id:               int64(r.ID),
-			InstanceId:       instance.InstanceID,
+			InstanceId:       r.InstanceID,
 			Token:            r.Token,
 			ExpireAt:         r.ExpireAt,
 			PublishAt:        r.PublishAt,
@@ -186,7 +184,7 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 			continue
 		}
 		existing, err := mysql.McpTokenRepo.FindByID(ctx, uint(t.Id))
-		if err != nil {
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("failed to find token by id: %v", err)
 		}
 		existing.InstanceID = t.InstanceId

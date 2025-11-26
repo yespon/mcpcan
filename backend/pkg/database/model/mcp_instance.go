@@ -122,6 +122,11 @@ type McpInstance struct {
 	UpdatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
 
+// TableName
+func (i *McpInstance) TableName() string {
+	return "mcpcan_instance"
+}
+
 type TokenType string
 
 const (
@@ -182,11 +187,6 @@ type SourceConfig = McpServersConfig
 type TargetConfig = McpServersConfig
 type PublicProxyConfig = McpServersConfig
 type InnerProxyConfig = McpServersConfig
-
-// TableName 指定表名
-func (McpInstance) TableName() string {
-	return "mcpcan_instance"
-}
 
 // ParseMcpServersConfig 通用解析 MCP 服务器配置
 func ParseMcpServersConfig(rawConfig json.RawMessage) (string, *McpConfig, error) {

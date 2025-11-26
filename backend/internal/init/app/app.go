@@ -70,30 +70,27 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 
-	var wg sync.WaitGroup
+	wg := &sync.WaitGroup{}
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		wg.Add(1)
-		// init data scope
 		if err := a.initDataScope(context.Background(), adminUser); err != nil {
 			logger.Error("Failed to init data scope", zap.Error(err))
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		wg.Add(1)
-		// init default kubernetes environment
 		if err := a.initDefaultKubernetesEnvironment(context.Background(), adminUser); err != nil {
 			logger.Error("Failed to init default kubernetes environment", zap.Error(err))
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		wg.Add(1)
-		// run database migrations
 		RunMigrations()
 	}()
 

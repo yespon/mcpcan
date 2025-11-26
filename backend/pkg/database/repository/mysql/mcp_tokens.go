@@ -109,7 +109,7 @@ func (r *McpTokenRepository) DeleteByToken(ctx context.Context, token string) er
 }
 
 // DeleteByInstanceID deletes tokens belonging to an instance
-func (r *McpTokenRepository) DeleteByInstanceID(ctx context.Context, instanceID uint) error {
+func (r *McpTokenRepository) DeleteByInstanceID(ctx context.Context, instanceID string) error {
 	return r.getDB().WithContext(ctx).Where("instance_id = ?", instanceID).Delete(&model.McpToken{}).Error
 }
 
@@ -132,7 +132,7 @@ func (r *McpTokenRepository) FindByToken(ctx context.Context, token string) (*mo
 }
 
 // ListByInstanceID lists tokens by instance ID
-func (r *McpTokenRepository) ListByInstanceID(ctx context.Context, instanceID uint) ([]*model.McpToken, error) {
+func (r *McpTokenRepository) ListByInstanceID(ctx context.Context, instanceID string) ([]*model.McpToken, error) {
 	var tokens []*model.McpToken
 	if err := r.getDB().WithContext(ctx).Where("instance_id = ?", instanceID).Order("publish_at DESC, created_at DESC").Find(&tokens).Error; err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (r *McpTokenRepository) ListByInstanceID(ctx context.Context, instanceID ui
 }
 
 // ListValidByInstanceID lists non-expired tokens by instance ID
-func (r *McpTokenRepository) ListValidByInstanceID(ctx context.Context, instanceID uint) ([]*model.McpToken, error) {
+func (r *McpTokenRepository) ListValidByInstanceID(ctx context.Context, instanceID string) ([]*model.McpToken, error) {
 	nowMs := time.Now().UnixMilli()
 	var tokens []*model.McpToken
 	if err := r.getDB().WithContext(ctx).
@@ -154,7 +154,7 @@ func (r *McpTokenRepository) ListValidByInstanceID(ctx context.Context, instance
 }
 
 // CountByInstanceID counts tokens by instance ID
-func (r *McpTokenRepository) CountByInstanceID(ctx context.Context, instanceID uint) (int64, error) {
+func (r *McpTokenRepository) CountByInstanceID(ctx context.Context, instanceID string) (int64, error) {
 	var total int64
 	if err := r.getDB().WithContext(ctx).Where("instance_id = ?", instanceID).Count(&total).Error; err != nil {
 		return 0, err
@@ -163,7 +163,7 @@ func (r *McpTokenRepository) CountByInstanceID(ctx context.Context, instanceID u
 }
 
 // ListWithPagination lists tokens with pagination and optional expiration filter
-func (r *McpTokenRepository) ListWithPagination(ctx context.Context, instanceID uint, page, pageSize int32, includeExpired bool) ([]*model.McpToken, int64, error) {
+func (r *McpTokenRepository) ListWithPagination(ctx context.Context, instanceID string, page, pageSize int32, includeExpired bool) ([]*model.McpToken, int64, error) {
 	var tokens []*model.McpToken
 	var total int64
 
