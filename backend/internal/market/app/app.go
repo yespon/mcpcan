@@ -240,6 +240,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/control", routerPrefix), instanceService.TokenControlHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/token/list", routerPrefix), instanceService.TokenListByInstanceIDHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/token/edit", routerPrefix), instanceService.TokenEditHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/token/delete", routerPrefix), instanceService.TokenDeleteHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/openapi/create", routerPrefix), instanceService.CreateOpenapiHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)
 

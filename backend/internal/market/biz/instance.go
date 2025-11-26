@@ -138,6 +138,21 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 	return &instancepb.TokenListByInstanceIDResponse{List: list}, nil
 }
 
+func (biz *InstanceBiz) DeleteTokenByID(ctx context.Context, id int64) error {
+	row, err := mysql.McpTokenRepo.FindByID(ctx, uint(id))
+	if err != nil {
+		return fmt.Errorf("failed to find token by id: %w", err)
+	}
+	if row == nil {
+		return fmt.Errorf("token not found")
+	}
+	if err := mysql.McpTokenRepo.DeleteByID(ctx, uint(id)); err != nil {
+		return fmt.Errorf("failed to delete token: %w", err)
+	}
+	redis.GetMcpTokenCache().Clear(row.InstanceID, row.Token)
+	return nil
+}
+
 func usageIntersect(a []string, b []string) bool {
 	if len(a) == 0 || len(b) == 0 {
 		return true
@@ -181,6 +196,7 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 				ExpireAt:         t.ExpireAt,
 				PublishAt:        publishAt,
 			})
+			redis.GetMcpTokenCache().Clear(t.InstanceId, t.Token)
 			continue
 		}
 		existing, err := mysql.McpTokenRepo.FindByID(ctx, uint(t.Id))
@@ -197,6 +213,7 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		if err := mysql.McpTokenRepo.Update(ctx, existing); err != nil {
 			return fmt.Errorf("failed to update token: %v", err)
 		}
+		redis.GetMcpTokenCache().Clear(existing.InstanceID, existing.Token)
 	}
 	if len(rows) > 0 {
 		return mysql.McpTokenRepo.CreateBatch(ctx, rows)

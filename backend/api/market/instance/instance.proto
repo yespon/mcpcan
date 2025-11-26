@@ -674,51 +674,61 @@ message TemplateDeleteRequest {
 // TemplateDeleteResp 模板删除响应
 message TemplateDeleteResp {}
 
-// TokenControlRequest 控制token启停请求
+// TokenControlRequest control token enable/disable request
 message TokenControlRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"实例ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
-  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"是否启用令牌"
+  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"Whether to enable token"
   bool enabledToken = 2;
 }
 
-// TokenControlResponse 控制token启停响应
+// TokenControlResponse control token enable/disable response
 message TokenControlResponse {
-  // @inject_tag: json:"instanceId" desc:"实例ID"
+  // @inject_tag: json:"instanceId" desc:"Instance ID"
   string instanceId = 1;
-  // @inject_tag: json:"enabledToken" desc:"是否启用令牌"
+  // @inject_tag: json:"enabledToken" desc:"Whether token is enabled"
   bool enabledToken = 2;
-  // @inject_tag: json:"message" desc:"响应消息"
+  // @inject_tag: json:"message" desc:"Response message"
   string message = 3;
 }
 
-// TokenListByInstanceIDRequest token列表请求
+// TokenListByInstanceIDRequest token list request
 message TokenListByInstanceIDRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"实例ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
-  // @inject_tag: json:"token" form:"token" desc:"令牌"
+  // @inject_tag: json:"token" form:"token" desc:"Token"
   string token = 2;
-  // @inject_tag: json:"enabledTransport" form:"enabledTransport" desc:"是否启用传输层令牌"
-  bool enabledTransport = 3;
-  // @inject_tag: json:"usages" form:"usages" desc:"令牌使用场景"
-  repeated string usages = 4;
+  // @inject_tag: json:"usages" form:"usages" desc:"Token usage scenarios"
+  repeated string usages = 3;
 }
 
-// TokenListByInstanceIDResponse token列表响应
+// TokenListByInstanceIDResponse token list response
 message TokenListByInstanceIDResponse {
-  // @inject_tag: json:"tokens" desc:"令牌列表"
+  // @inject_tag: json:"tokens" desc:"Token list"
   repeated McpToken list = 2;
 }
 
-// TokenEditRequest 编辑tokens请求
+// TokenEditRequest edit tokens request
 message TokenEditRequest {
-  // @inject_tag: json:"tokens" form:"tokens" desc:"令牌列表"
+  // @inject_tag: json:"tokens" form:"tokens" desc:"Token list"
   repeated McpToken tokens = 2;
 }
 
-// TokenEditResponse 编辑tokens响应
+// TokenEditResponse edit tokens response
 message TokenEditResponse {
-  // @inject_tag: json:"message" desc:"响应消息"
+  // @inject_tag: json:"message" desc:"Response message"
+  string message = 1;
+}
+
+// TokenDeleteRequest delete token request
+message TokenDeleteRequest {
+  // @inject_tag: json:"id" form:"id" uri:"id" desc:"Token ID"
+  int64 id = 1;
+}
+
+// TokenDeleteResponse delete token response
+message TokenDeleteResponse {
+  // @inject_tag: json:"message" desc:"Response message"
   string message = 1;
 }
 
@@ -859,7 +869,7 @@ service InstanceService {
     };
   }
 
-  // 控制token启停
+  // Control token enable/disable
   rpc TokenControl(TokenControlRequest) returns (TokenControlResponse) {
     option (google.api.http) = {
       put:  "/instance/token/control",
@@ -867,7 +877,7 @@ service InstanceService {
     };
   }
 
-  // token列表
+  // Token list
   rpc TokenListByInstanceID(TokenListByInstanceIDRequest) returns (TokenListByInstanceIDResponse) {
     option (google.api.http) = {
       post: "/instance/token/list",
@@ -875,10 +885,18 @@ service InstanceService {
     };
   }
 
-  // 编辑tokens
+  // Edit tokens
   rpc TokenEdit(TokenEditRequest) returns (TokenEditResponse) {
     option (google.api.http) = {
       put:  "/instance/token/edit",
+      body: "*",
+    };
+  }
+
+  // Delete token
+  rpc TokenDelete(TokenDeleteRequest) returns (TokenDeleteResponse) {
+    option (google.api.http) = {
+      post: "/instance/token/delete",
       body: "*",
     };
   }

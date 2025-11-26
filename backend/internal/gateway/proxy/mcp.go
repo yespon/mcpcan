@@ -21,6 +21,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
+	"github.com/kymo-mcp/mcpcan/pkg/redis"
 
 	"go.uber.org/zap"
 )
@@ -660,9 +661,18 @@ func validateMcpTokenForInstance(req *http.Request, instanceID string) (*Request
 		return ra, fmt.Errorf("instance %v enabled token but request %v header is empty", instanceID, tokenHeaderKey)
 	}
 
-	mcpToken, err := mysql.McpTokenRepo.FindByToken(context.Background(), instanceID, token)
-	if err != nil {
-		return ra, fmt.Errorf("failed to get MCP token: %v for instance %v", err.Error(), instanceID)
+	tokenCache := redis.GetMcpTokenCache()
+	cacheKey := tokenCache.GenerateCacheKey(instanceID, token)
+	var mcpToken *model.McpToken
+	if v := tokenCache.GetRedis(cacheKey); v != nil {
+		mcpToken = v
+	} else {
+		trow, err := mysql.McpTokenRepo.FindByToken(context.Background(), instanceID, token)
+		if err != nil || trow == nil || trow.InstanceID != instanceID {
+			return ra, fmt.Errorf("failed to get MCP token: %v for instance %v", "not found", instanceID)
+		}
+		_ = tokenCache.SetRedis(cacheKey, trow, redis.TokenCacheExpire)
+		mcpToken = trow
 	}
 
 	if mcpToken.EnabledTransport {

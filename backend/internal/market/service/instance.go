@@ -1087,6 +1087,25 @@ func (s *InstanceService) TokenListByInstanceIDHandler(c *gin.Context) {
 	common.GinSuccess(c, resp)
 }
 
+// TokenDeleteHandler delete a token
+func (s *InstanceService) TokenDeleteHandler(c *gin.Context) {
+	var req instancepb.TokenDeleteRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	if req.Id == 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "missing required field: id")
+		return
+	}
+
+	if err := biz.GInstanceBiz.DeleteTokenByID(c, req.Id); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to delete token: %s", err.Error()))
+		return
+	}
+	resp := &instancepb.TokenDeleteResponse{Message: "Token deleted successfully"}
+	common.GinSuccess(c, resp)
+}
+
 // CreateOpenapiHandler creates openapi instance HTTP handler function
 func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 	var req instancepb.CreateOpenapiRequest
