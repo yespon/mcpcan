@@ -1,7 +1,8 @@
 # MCPCAN：A lightweight MCP service management platform built on a containerized architecture.
 
-<p align="Left">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>  
+<p align="center">
+   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="./README_CN.md">繁體字</a> <br>
+   <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>  
 </p>
 <div align="center">
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
@@ -10,7 +11,10 @@
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0"/>
 </div>
-<img width="1836" height="912" alt="image" src="https://github.com/user-attachments/assets/cc706fe0-f53a-464c-b8d7-c336fec9802e" />
+<div align="center">
+  <img width="820" height="500" alt="image" src="https://github.com/user-attachments/assets/b1ea6e09-0af0-44e7-af7f-7759e174f87a" />
+</div>
+
 
 
 ## What is MCPCan ?
