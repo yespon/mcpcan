@@ -126,8 +126,8 @@ message McpToken {
   string token = 2;
   // @inject_tag: json:"headers" desc:"Optional custom headers"
   map<string, string> headers = 3;
-  // @inject_tag: json:"enabledTransport" desc:"enabledTransport"
-  bool enabledTransport = 4;
+  // @inject_tag: json:"enabled" desc:"Whether to enable the token"
+  bool enabled = 4;
   // @inject_tag: json:"expireAt" desc:"Expiration time"
   int64 expireAt = 5;
   // @inject_tag: json:"publishAt" desc:"Publish time"

@@ -675,19 +675,27 @@ func validateMcpTokenForInstance(req *http.Request, instanceID string) (*Request
 		mcpToken = trow
 	}
 
-	if mcpToken.EnabledTransport {
-		headers := map[string]string{}
-		if len(mcpToken.Headers) > 0 {
-			_ = json.Unmarshal(mcpToken.Headers, &headers)
-		}
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
+	if !mcpToken.Enabled {
+		return ra, fmt.Errorf("this token %v is disabled for instance %v", token, instanceID)
+	}
+
+	headers := map[string]string{}
+	if len(mcpToken.Headers) > 0 {
+		_ = json.Unmarshal(mcpToken.Headers, &headers)
+	}
+	if headers == nil {
+		headers = make(map[string]string)
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 
 	var usages []string
 	if len(mcpToken.Usages) > 0 {
 		_ = json.Unmarshal(mcpToken.Usages, &usages)
+	}
+	if usages == nil {
+		usages = make([]string, 0)
 	}
 	ra = &RequestAuth{
 		TokenHeaderKey: tokenHeaderKey,

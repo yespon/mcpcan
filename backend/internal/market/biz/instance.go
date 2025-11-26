@@ -124,14 +124,14 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 			headers = make(map[string]string)
 		}
 		list = append(list, &instancepb.McpToken{
-			Id:               int64(r.ID),
-			InstanceId:       r.InstanceID,
-			Token:            r.Token,
-			ExpireAt:         r.ExpireAt,
-			PublishAt:        r.PublishAt,
-			Usages:           usages,
-			EnabledTransport: r.EnabledTransport,
-			Headers:          headers,
+			Id:         int64(r.ID),
+			InstanceId: r.InstanceID,
+			Token:      r.Token,
+			ExpireAt:   r.ExpireAt,
+			PublishAt:  r.PublishAt,
+			Usages:     usages,
+			Enabled:    r.Enabled,
+			Headers:    headers,
 		})
 	}
 
@@ -188,13 +188,13 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		}
 		if t.Id == 0 {
 			rows = append(rows, model.McpToken{
-				InstanceID:       t.InstanceId,
-				Token:            t.Token,
-				EnabledTransport: t.EnabledTransport,
-				Headers:          json.RawMessage(headersBytes),
-				Usages:           json.RawMessage(usagesBytes),
-				ExpireAt:         t.ExpireAt,
-				PublishAt:        publishAt,
+				InstanceID: t.InstanceId,
+				Token:      t.Token,
+				Enabled:    t.Enabled,
+				Headers:    json.RawMessage(headersBytes),
+				Usages:     json.RawMessage(usagesBytes),
+				ExpireAt:   t.ExpireAt,
+				PublishAt:  publishAt,
 			})
 			redis.GetMcpTokenCache().Clear(t.InstanceId, t.Token)
 			continue
@@ -205,7 +205,7 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		}
 		existing.InstanceID = t.InstanceId
 		existing.Token = t.Token
-		existing.EnabledTransport = t.EnabledTransport
+		existing.Enabled = t.Enabled
 		existing.Headers = json.RawMessage(headersBytes)
 		existing.Usages = json.RawMessage(usagesBytes)
 		existing.ExpireAt = t.ExpireAt

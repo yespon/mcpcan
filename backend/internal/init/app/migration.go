@@ -57,13 +57,13 @@ func RunMigrations() {
 				usagesJSON, _ := json.Marshal(t.Usages)
 
 				newTokensToCreate = append(newTokensToCreate, model.McpToken{
-					InstanceID:       instance.InstanceID,
-					Token:            t.Token,
-					EnabledTransport: t.EnabledTransport,
-					Headers:          json.RawMessage(headersJSON),
-					Usages:           json.RawMessage(usagesJSON),
-					ExpireAt:         t.ExpireAt,
-					PublishAt:        t.PublishAt,
+					InstanceID: instance.InstanceID,
+					Token:      t.Token,
+					Enabled:    true,
+					Headers:    json.RawMessage(headersJSON),
+					Usages:     json.RawMessage(usagesJSON),
+					ExpireAt:   t.ExpireAt,
+					PublishAt:  t.PublishAt,
 				})
 			}
 
