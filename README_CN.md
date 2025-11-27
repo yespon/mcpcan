@@ -95,58 +95,52 @@ MCP CAN 由多个关键组件构成，这些组件共同构成 MCP CAN 的功能
 
 ### 🐧前端
 
-- **Framework**: Vue.js 3.5+ (Composition API)
-- **Language**: TypeScript
-- **Styling**: UnoCSS, SCSS
-- **UI Components**: Element Plus
-- **State Management**: Pinia
-- **Build Tool**: Vite
+- **框架**：Vue.js 3.5+（组合式 API）
+- **开发语言**：TypeScript
+- **样式方案**：UnoCSS、SCSS
+- **UI 组件库**：Element Plus
+- **状态管理**：Pinia
+- **构建工具**：Vite
 
+ 
 ### 🐧后端
 
-- **Language**: Go 1.24.2+
-- **Framework**: Gin, gRPC
-- **Database**: MySQL, Redis
-- **Container**: Docker, Kubernetes
+- **开发语言**：Go 1.24.2+
+- **框架**：Gin、gRPC
+- **数据库**：MySQL、Redis
+- **容器化工具**：Docker、Kubernetes
+
 
 ## 🐧第三方项目
 
-- [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan-deploy) - Official Helm charts source repository for MCPCan
-- [MCPCan Helm Charts](https://kymo-mcp.github.io/mcpcan-deploy/) - Official Helm charts repository for MCPCan
+- [MCP 部署](https://github.com/Kymo-MCP/mcpcan-deploy) - MCPCan 的官方 Helm Charts 源代码库
+- [Helm 图表库](https://kymo-mcp.github.io/mcpcan-deploy/) - MCPCan 的官方 Helm 图表库
 
-## 💝贡献💝
 
-Welcome to submit PR to contribute. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-Before contributing, please:
-
-1. Read our [Code of Conduct](CODE_OF_CONDUCT.md)
-2. Check existing issues and pull requests
-3. Follow our coding standards and commit message conventions
-
+## 💝贡献指南💝
+欢迎提交 PR（Pull Request）参与贡献！请参考 [贡献](CONTRIBUTING.md) 查看详细指引。
+贡献前，请确保：
+1. 阅读我们的[行为准则](CODE_OF_CONDUCT.md)
+2. 检查现有 issue 和拉取请求（避免重复工作）
+3. 遵循我们的编码规范和提交信息约定
+   
 ## 安全
+若发现安全漏洞，请参考我们的 [安全政策](SECURITY.md)，按照负责任的披露准则进行报告。
 
-If you discover a security vulnerability, please refer to our [Security Policy](SECURITY.md) for responsible disclosure guidelines.
-
-## 证书
-
-Copyright (c) 2024-2025 MCPCan Team, All rights reserved.
-
-Licensed under The GNU General Public License version 3 (GPLv3) (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
+## 许可证
+版权所有 (c) 2024-2025 MCPCan 团队，保留所有权利。
+本软件基于 GNU 通用公共许可证第 3 版（GPLv3）（以下简称 “许可证”）授权；除非遵守许可证规定，否则不得使用本文件。您可通过以下链接获取许可证副本：
 https://www.gnu.org/licenses/gpl-3.0.html
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+除非适用法律要求或书面同意，否则根据许可证分发的软件均按 “原样” 提供，不附带任何明示或暗示的担保或条件。请查看许可证以了解具体的权限和限制条款。
 
 ## 社区与支持
-
-- 📖 [Documentation](https://kymo-mcp.github.io/mcpcan-deploy/)
-- 💬 [Discord Community](https://discord.com/channels/1428637640856571995/1428637896532820038)
-- 🐛 [Issue Tracker](https://github.com/Kymo-MCP/mcpcan/issues)
-- 📧 [Mailing List](mailto:opensource@kymo.cn)
+- 📖 [官方文档](https://kymo-mcp.github.io/mcpcan-deploy/)
+- 💬 [Discord 社区](https://discord.com/channels/1428637640856571995/1428637896532820038)
+- 🐛 [问题追踪](https://github.com/Kymo-MCP/mcpcan/issues)
+- 📧 [邮件列表](mailto:opensource@kymo.cn)
 
 ## 致谢
-
-- Thanks to the [MCP Protocol](https://modelcontextprotocol.io/) community
-- Thanks to all contributors and supporters
-- Special thanks to the open-source projects that make MCPCan possible
+感谢 MCP 协议 社区的支持
+感谢所有贡献者与支持者
+特别致谢使 MCPCan 项目成为可能的开源项目
