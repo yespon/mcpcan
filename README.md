@@ -29,11 +29,10 @@ MCPCAN uses containers for flexible deployment of MCP services, resolving potent
 
 <p align="center">
    <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
-   <a href="https://demo.mcpcan.com">Demo</a> · <a href="https://www.mcpcan.com/en/guide/welcome">Documents</a>  · <a href="https://www.mcpcan.com/en/guide/welcome">Feedback</a>
 </p>
 </div>
 
-## Introduction
+## 🎉Introduction
 MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services,Providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
 MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.<br/>
 
@@ -46,8 +45,11 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 - **🚀 One-stop Deployment**: Quick release, configuration, and distribution of MCP services
 - **📈 Scalability**: Cloud-native architecture based on Kubernetes
 
-
-## Quickstart
+## ✨Demon & MainSite
+For the best demo experience, try  <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> directly.<br>
+[MP4]<br>
+To view our official website address, simply click <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>.
+## 👨‍🚀Quickstart
 
 For detailed deployment instructions, please refer to our [Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
 
@@ -76,7 +78,7 @@ helm install mcpcan mcpcan/mcpcan-deploy \
   --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
-## Components
+## 🚀Components
 
 MCPCan consists of multiple key components, which collectively form the functional framework of MCPCan, providing users with comprehensive MCP service management capabilities.
 
@@ -88,9 +90,9 @@ MCPCan consists of multiple key components, which collectively form the function
 | [MCPCan-Market](backend/cmd/market/)   | ![Status](https://img.shields.io/badge/status-active-green) | MCP Service Marketplace                    |
 | [MCPCan-Authz](backend/cmd/authz/)     | ![Status](https://img.shields.io/badge/status-active-green) | Authentication and Authorization Service   |
 
-## Technology Stack
+## 🐧Technology Stack
 
-### Frontend
+### 🐧Frontend
 
 - **Framework**: Vue.js 3.5+ (Composition API)
 - **Language**: TypeScript
@@ -99,19 +101,19 @@ MCPCan consists of multiple key components, which collectively form the function
 - **State Management**: Pinia
 - **Build Tool**: Vite
 
-### Backend
+### 🐧Backend
 
 - **Language**: Go 1.24.2+
 - **Framework**: Gin, gRPC
 - **Database**: MySQL, Redis
 - **Container**: Docker, Kubernetes
 
-## Third-party Projects
+## 🐧Third-party Projects
 
 - [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan-deploy) - Official Helm charts source repository for MCPCan
 - [MCPCan Helm Charts](https://kymo-mcp.github.io/mcpcan-deploy/) - Official Helm charts repository for MCPCan
 
-## Contributing
+## 💝Contributing💝
 
 Welcome to submit PR to contribute. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
