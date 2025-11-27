@@ -27,9 +27,6 @@ MCPCAN uses containers for flexible deployment of MCP services, resolving potent
     <a href="https://discord.gg/FngNHpbcY7" target="_blank">
         <img src="https://img.shields.io/discord/1082486657678311454?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
             alt="chat on Discord"></a>
-    <a href="https://reddit.com/r/Kymo_mcp" target="_blank">  
-        <img src="https://img.shields.io/reddit/subreddit-subscribers/Kymo_MCP?style=plastic&logo=reddit&label=r%2Fdifyai&labelColor=white"
-            alt="join Reddit"></a>
     <a href="https://twitter.com/intent/follow?screen_name=MCPCAN" target="_blank">
         <img src="https://img.shields.io/twitter/follow/MCPCAN?logo=X&color=%20%23f5f5f5"
             alt="follow on X(Twitter)"></a>
