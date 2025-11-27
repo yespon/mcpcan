@@ -21,7 +21,6 @@ type Config struct {
 	VersionInfo *version.VersionInfo  `mapstructure:"-"`
 	Server      common.ServerConfig   `mapstructure:"server"`
 	Services    common.Services       `mapstructure:"services"`
-	Domain      string                `mapstructure:"domain"`
 	Database    common.DatabaseConfig `mapstructure:"database"`
 	Code        common.CodeConfig     `mapstructure:"code"`
 	Market      common.MarketConfig   `mapstructure:"market"`
