@@ -12,6 +12,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
+	"github.com/kymo-mcp/mcpcan/pkg/middleware"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
 )
@@ -143,13 +144,11 @@ func (s *UserAuthService) RefreshToken(c *gin.Context) {
 
 // ValidateToken validate token
 func (s *UserAuthService) ValidateToken(c *gin.Context) {
-	var req user_auth.ValidateTokenRequest
-	if err := common.BindAndValidate(c, &req); err != nil {
-		return
-	}
+	var _ user_auth.ValidateTokenRequest
+	token := middleware.ExtractToken(c)
 
 	// Execute token validation
-	validateResult, err := s.authUseCase.ValidateToken(c.Request.Context(), req.Token)
+	validateResult, err := s.authUseCase.ValidateToken(c.Request.Context(), token)
 	if err != nil {
 		logger.Error("validate token failed", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, "validate token failed: "+err.Error())
@@ -184,6 +183,9 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 			ExpiresAt: validateResult.LoginInfo.ExpiresAt.Unix(),
 		}
 	}
+
+	// response add X-Consum-User-Id header
+	c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", validateResult.UserInfo.UserID))
 
 	common.GinSuccess(c, response)
 }

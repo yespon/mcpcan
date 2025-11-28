@@ -160,7 +160,7 @@ func (a *App) setupRoutes() {
 		authzGroup.POST("/refresh", userAuthService.RefreshToken)
 
 		// Validate Token
-		authzGroup.POST("/validate", userAuthService.ValidateToken)
+		authzGroup.GET("/validate", userAuthService.ValidateToken)
 
 		// Get encryption key
 		authzGroup.POST("/encryption-key", userAuthService.GetEncryptionKey)
