@@ -1,131 +1,146 @@
-# MCPCan
 
-<a href="https://demo.mcpcan.com">体验 demo.mcpcan.com 站</a> | <a href="https://www.mcpcan.com">访问主张：www.mcpcan.com</a>
 <div align="center">
+<img width="1872" height="932" alt="image" src="https://github.com/user-attachments/assets/2502f1af-7f0c-400e-a683-e62bb785d42d" />
+
+</div>
+
+<div align="center">
+
+# MCP CAN
+一款开源集中管理MCP服务的平台</br>
+MCPCAN采用容器技术实现MCP服务的灵活部署，有效解决潜在的系统配置冲突。它支持多协议兼容与转换，可实现不同MCP服务架构之间的无缝集成。此外，它还提供可视化监控、安全认证和一站式部署功能。</br>
+
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0"/>
+<p align="center">
+    <a href="https://demo.mcpcan.com" target="_blank">
+        <img alt="Static Badge" src="https://img.shields.io/badge/Product-F04438"></a>
+    <a href="https://dify.ai/pricing" target="_blank">
+        <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
+    <a href="https://discord.gg/EegGj7G7Bz" target="_blank">
+        <img src="https://img.shields.io/discord/1428637640856571995?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
+            alt="chat on Discord"></a>
+    <a href="https://twitter.com/intent/follow?screen_name=MCPCAN" target="_blank">
+        <img src="https://img.shields.io/twitter/follow/MCPCAN?logo=X&color=%20%23f5f5f5"
+            alt="follow on X(Twitter)"></a>
+</p>
+
+<p align="center">
+   <a href="./README.md">English</a> | <strong>中文版</strong> <br>
+</p>
 </div>
-<img width="1836" height="912" alt="image" src="https://github.com/user-attachments/assets/cc706fe0-f53a-464c-b8d7-c336fec9802e" />
 
-## 什么是 MCPCan ？
+## 🎉介绍
+MCPCan 是一个专注于高效管理 MCP（模型上下文协议）服务的开源平台，通过现代化的 Web 界面，为 DevOps 和开发团队提供全面的 MCP 服务生命周期管理功能。
+MCPCan 支持多协议兼容和转换，能够实现不同 MCP 服务架构之间的无缝集成，同时提供可视化监控、安全认证和一站式部署功能。<br/>
 
-MCPCan 是一个专注于高效管理 MCP（模型上下文协议）服务的开源平台，通过现代化的 Web 界面为 DevOps 和开发团队提供全面的 MCP 服务生命周期管理能力。
+## ✨ 核心功能
 
-MCPCan 支持多协议兼容和转换，能够实现不同 MCP 服务架构之间的无缝集成，同时提供可视化监控、安全认证和一站式部署能力。
+- 🎯 统一管理：集中管理所有 MCP 服务实例及配置项
+- 🔄 协议转换：支持多种 MCP 协议间无缝互转
+- 📊 实时监控：提供详尽的服务状态与性能监控数据
+- 🔐 安全认证：内置身份认证与权限管理体系
+- 🚀 一站式部署：MCP 服务快速发布、配置与分发
+- 📈 可扩展性：基于 Kubernetes 的云原生架构
 
-## 核心特性
+## ✨演示和官网
+为了获得最佳演示体验，请尝试直接  <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> .<br>
+[MP4]<br>
+要查看我们的官方网站地址，只需点击 <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>.即可
+## 👨‍🚀快速开始
 
-- **🎯 统一管理**: 集中管理所有 MCP 服务实例和配置
-- **🔄 协议转换**: 支持多种 MCP 协议间的无缝转换
-- **📊 实时监控**: 提供详细的服务状态和性能监控
-- **🔐 安全认证**: 内置身份验证和权限管理系统
-- **🚀 一站式部署**: 快速发布、配置和分发 MCP 服务
-- **📈 可扩展性**: 基于 Kubernetes 的云原生架构
-
-## DEMO 站 (建设中)
-
-MCPCan 提供了一个在线 Demo 站，您可以在其中体验 MCPCan 的功能和性能。
-
-建设中...
-
-## 快速开始
-
-详细部署说明请参考我们的[部署指南](https://kymo-mcp.github.io/mcpcan-deploy/)。
+有关详细部署说明，请参阅我们的[部署指南](https://kymo-mcp.github.io/mcpcan-deploy/).
 
 ```bash
-# 安装 Helm Chart repository
+# Install Helm Chart repository
 helm repo add mcpcan https://kymo-mcp.github.io/mcpcan-deploy/
 
-# 更新 Helm repository
+# Update Helm repository
 helm repo update mcpcan
 
-# 安装最新版本
+# Install latest version
 helm install mcpcan mcpcan/mcpcan-deploy
 
-# 使用公共 IP 部署
+# Deploy with public IP
 helm install mcpcan mcpcan/mcpcan-deploy \
   --set global.publicIP=192.168.1.100 \
   --set infrastructure.mysql.auth.rootPassword=secure-password \
-  --set infrastructure.redis.auth.password=secure-password
+  --set infrastructure.redis.auth.password=secure-password \
+  --namespace mcpcan --create-namespace --timeout 600s --wait
 
-# 使用域名部署
+# Deploy with domain name
 helm install mcpcan mcpcan/mcpcan-deploy \
   --set global.domain=mcp.example.com \
   --set infrastructure.mysql.auth.rootPassword=secure-password \
-  --set infrastructure.redis.auth.password=secure-password
+  --set infrastructure.redis.auth.password=secure-password \
+  --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
-## 组件
+## 🚀组件
 
-MCPCan 由多个关键组件组成，它们共同构成了 MCPCan 的功能框架，为用户提供全面的 MCP 服务管理能力。
+MCP CAN 由多个关键组件构成，这些组件共同构成 MCP CAN 的功能框架，为用户提供全面的 MCP 服务管理功能。
 
-| 项目                                   | 状态                                                        | 描述                        |
-| -------------------------------------- | ----------------------------------------------------------- | --------------------------- |
-| [MCPCan-Web](frontend/)                | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan Web UI (Vue.js 前端) |
-| [MCPCan-Backend](backend/)             | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan 后端服务 (Go 微服务) |
-| [MCPCan-Gateway](backend/cmd/gateway/) | ![Status](https://img.shields.io/badge/status-active-green) | MCP 网关服务                |
-| [MCPCan-Market](backend/cmd/market/)   | ![Status](https://img.shields.io/badge/status-active-green) | MCP 服务市场                |
-| [MCPCan-Authz](backend/cmd/authz/)     | ![Status](https://img.shields.io/badge/status-active-green) | 认证和授权服务              |
+| Project                                | Status                                                      | Description                                |
+| -------------------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| [MCPCan-Web](frontend/)                | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan Web UI (Vue.js Frontend)            |
+| [MCPCan-Backend](backend/)             | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan Backend Services (Go Microservices) |
+| [MCPCan-Gateway](backend/cmd/gateway/) | ![Status](https://img.shields.io/badge/status-active-green) | MCP Gateway Service                        |
+| [MCPCan-Market](backend/cmd/market/)   | ![Status](https://img.shields.io/badge/status-active-green) | MCP Service Marketplace                    |
+| [MCPCan-Authz](backend/cmd/authz/)     | ![Status](https://img.shields.io/badge/status-active-green) | Authentication and Authorization Service   |
 
-## 技术栈
+## 🐧技术栈
 
-### 前端
+### 🐧前端
 
-- **框架**: Vue.js 3.5+ (Composition API)
-- **语言**: TypeScript
-- **样式**: UnoCSS, SCSS
-- **UI 组件**: Element Plus
-- **状态管理**: Pinia
-- **构建工具**: Vite
+- **框架**：Vue.js 3.5+（组合式 API）
+- **开发语言**：TypeScript
+- **样式方案**：UnoCSS、SCSS
+- **UI 组件库**：Element Plus
+- **状态管理**：Pinia
+- **构建工具**：Vite
 
-### 后端
+ 
+### 🐧后端
 
-- **语言**: Go 1.24.2+
-- **框架**: Gin, gRPC
-- **数据库**: MySQL, Redis
-- **容器**: Docker, Kubernetes
+- **开发语言**：Go 1.24.2+
+- **框架**：Gin、gRPC
+- **数据库**：MySQL、Redis
+- **容器化工具**：Docker、Kubernetes
 
-## 第三方项目
 
-- [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan-deploy) - MCPCan 官方 Helm Charts 源码仓库
-- [MCPCan Helm Charts](https://kymo-mcp.github.io/mcpcan-deploy/) - MCPCan 官方 Helm Charts 仓库
+## 🐧第三方项目
 
-## 贡献
+- [MCP 部署](https://github.com/Kymo-MCP/mcpcan-deploy) - MCPCan 的官方 Helm Charts 源代码库
+- [Helm 图表库](https://kymo-mcp.github.io/mcpcan-deploy/) - MCPCan 的官方 Helm 图表库
 
-欢迎提交 PR 贡献代码。请参考 [CONTRIBUTING.md](CONTRIBUTING.md) 了解贡献指南。
 
-在贡献之前，请：
 
+## 💝贡献指南💝
+欢迎提交 PR（Pull Request）参与贡献！请参考 [贡献](CONTRIBUTING.md) 查看详细指引。
+贡献前，请确保：
 1. 阅读我们的[行为准则](CODE_OF_CONDUCT.md)
-2. 检查现有的 issues 和 pull requests
-3. 遵循我们的编码标准和提交信息约定
-
+2. 检查现有 issue 和拉取请求（避免重复工作）
+3. 遵循我们的编码规范和提交信息约定
+   
 ## 安全
-
-如果您发现安全漏洞，请参考我们的[安全政策](SECURITY.md)进行负责任的披露。
+若发现安全漏洞，请参考我们的 [安全政策](SECURITY.md)，按照负责任的披露准则进行报告。
 
 ## 许可证
-
 版权所有 (c) 2024-2025 MCPCan 团队，保留所有权利。
-
-根据 GNU 通用公共许可证第 3 版 (GPLv3) 许可（"许可证"）；除非遵守许可证，否则您不得使用此文件。您可以在以下位置获得许可证副本：
-
+本软件基于 GNU 通用公共许可证第 3 版（GPLv3）（以下简称 “许可证”）授权；除非遵守许可证规定，否则不得使用本文件。您可通过以下链接获取许可证副本：
 https://www.gnu.org/licenses/gpl-3.0.html
-
-除非适用法律要求或书面同意，否则根据许可证分发的软件按"原样"分发，不提供任何明示或暗示的保证或条件。请参阅许可证以了解许可证下的特定语言管理权限和限制。
+除非适用法律要求或书面同意，否则根据许可证分发的软件均按 “原样” 提供，不附带任何明示或暗示的担保或条件。请查看许可证以了解具体的权限和限制条款。
 
 ## 社区与支持
-
-- 📖 [文档](https://kymo-mcp.github.io/mcpcan-deploy/)
+- 📖 [官方文档](https://kymo-mcp.github.io/mcpcan-deploy/)
 - 💬 [Discord 社区](https://discord.com/channels/1428637640856571995/1428637896532820038)
-- 🐛 [问题跟踪](https://github.com/Kymo-MCP/mcpcan/issues)
+- 🐛 [问题追踪](https://github.com/Kymo-MCP/mcpcan/issues)
 - 📧 [邮件列表](mailto:opensource@kymo.cn)
 
 ## 致谢
-
-- 感谢 [MCP 协议](https://modelcontextprotocol.io/) 社区
-- 感谢所有贡献者和支持者
-- 特别感谢使 MCPCan 成为可能的开源项目
+感谢 MCP 协议 社区的支持
+感谢所有贡献者与支持者
+特别致谢使 MCPCan 项目成为可能的开源项目

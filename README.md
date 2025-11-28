@@ -1,46 +1,55 @@
-# MCPCAN：A lightweight MCP service management platform built on a containerized architecture.
 
-<p align="Left">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a>  | <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>  
-</p>
 <div align="center">
+  <img width="1872" height="932" alt="image" src="https://github.com/user-attachments/assets/a6d8796f-435d-48fd-9833-264a94a5ca1d" />
+</div>
+
+<div align="center">
+
+# MCP CAN
+The open source integration platform for MCP Server.</br>
+MCPCAN uses containers for flexible deployment of MCP services, resolving potential system configuration conflicts. It supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures. It also provides visual monitoring, security authentication, and one-stop deployment capabilities.</br>
+
   <img src="https://img.shields.io/badge/Vue.js-3.2.47-4FC08D?style=for-the-badge&logo=vue.js&logoColor=ffffff" alt="Vue.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge" alt="GPL-3.0"/>
+<p align="center">
+    <a href="https://demo.mcpcan.com" target="_blank">
+        <img alt="Static Badge" src="https://img.shields.io/badge/Product-F04438"></a>
+    <a href="https://dify.ai/pricing" target="_blank">
+        <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
+    <a href="https://discord.gg/EegGj7G7Bz" target="_blank">
+        <img src="https://img.shields.io/discord/1428637640856571995?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
+            alt="chat on Discord"></a>
+    <a href="https://twitter.com/intent/follow?screen_name=MCPCAN" target="_blank">
+        <img src="https://img.shields.io/twitter/follow/MCPCAN?logo=X&color=%20%23f5f5f5"
+            alt="follow on X(Twitter)"></a>
+</p>
+
+<p align="center">
+   <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
+</p>
 </div>
-<img width="1836" height="912" alt="image" src="https://github.com/user-attachments/assets/cc706fe0-f53a-464c-b8d7-c336fec9802e" />
 
-
-## What is MCPCan ?
-
-MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services, providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
-
-MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.
-
-<div align="center">
-</div>
+## 🎉Introduction
+MCPCan is an open-source platform focused on efficient management of MCP (Model Context Protocol) services,Providing DevOps and development teams with comprehensive MCP service lifecycle management capabilities through a modern web interface.
+MCPCan supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures while providing visual monitoring, security authentication, and one-stop deployment capabilities.<br/>
 
 ## ✨ Key Features
 
 - **🎯 Unified Management**: Centralized management of all MCP service instances and configurations
-  1. Supports visualized management and control of the entire lifecycle of MCP service instances, covering centralized operations such as creation, startup, stop, destruction, and restart. It provides a visual operation panel and progress tracking, eliminating the need for logging into multiple nodes for distributed maintenance.
-
-  2. Currently, it supports instance categorization based on container status and MCP protocol. Future updates will expand to include environment and cluster, business line, and service type grouping dimensions to achieve fine-grained categorization and efficient management of instances.
 - **🔄 Protocol Conversion**: Supports seamless conversion between various MCP protocols
-  1. **Direct Connection Mode:** As a lightweight point-to-point conversion solution, it is directly deployed between the devices/systems at both ends of MCP communication, eliminating the need for intermediate forwarding nodes. It achieves real-time conversion of MCP protocol versions and data formats with a minimalist architecture. Its core function is to reduce conversion latency and deployment complexity, adapting to small-scale, low-latency MCP interoperability scenarios.
-
-  2. **Managed Mode:** This mode encapsulates protocol conversion capabilities as a clustered managed service. Its core function is to achieve centralized conversion management of large-scale MCP terminals. Through cluster load balancing, unified rule configuration, and dynamic updates, it efficiently handles the protocol conversion needs of massive numbers of MCP devices, ensuring consistency and scalability for interoperability between different MCP protocol versions.
-
-  3. **Proxy Mode:** This mode integrates protocol conversion and network proxy capabilities. Its core function is to solve MCP communication problems in complex network environments. It achieves cross-network segment and cross-firewall MCP data forwarding and protocol conversion through intermediate proxy nodes, while also adding access authentication, traffic control, and transmission encryption functions, balancing interoperability and security.
 - **📊 Real-time Monitoring**: Provides detailed service status and performance monitoring
 - **🔐 Security & Authentication**: Built-in identity authentication and permission management system
 - **🚀 One-stop Deployment**: Quick release, configuration, and distribution of MCP services
 - **📈 Scalability**: Cloud-native architecture based on Kubernetes
 
-
-## Quickstart
+## ✨Demon & MainSite
+For the best demo experience, try  <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> directly.<br>
+[MP4]<br>
+To view our official website address, simply click <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>.
+## 👨‍🚀Quickstart
 
 For detailed deployment instructions, please refer to our [Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
 
@@ -69,7 +78,7 @@ helm install mcpcan mcpcan/mcpcan-deploy \
   --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
-## Components
+## 🚀Components
 
 MCPCan consists of multiple key components, which collectively form the functional framework of MCPCan, providing users with comprehensive MCP service management capabilities.
 
@@ -81,9 +90,9 @@ MCPCan consists of multiple key components, which collectively form the function
 | [MCPCan-Market](backend/cmd/market/)   | ![Status](https://img.shields.io/badge/status-active-green) | MCP Service Marketplace                    |
 | [MCPCan-Authz](backend/cmd/authz/)     | ![Status](https://img.shields.io/badge/status-active-green) | Authentication and Authorization Service   |
 
-## Technology Stack
+## 🐧Technology Stack
 
-### Frontend
+### 🐧Frontend
 
 - **Framework**: Vue.js 3.5+ (Composition API)
 - **Language**: TypeScript
@@ -92,19 +101,19 @@ MCPCan consists of multiple key components, which collectively form the function
 - **State Management**: Pinia
 - **Build Tool**: Vite
 
-### Backend
+### 🐧Backend
 
 - **Language**: Go 1.24.2+
 - **Framework**: Gin, gRPC
 - **Database**: MySQL, Redis
 - **Container**: Docker, Kubernetes
 
-## Third-party Projects
+## 🐧Third-party Projects
 
 - [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan-deploy) - Official Helm charts source repository for MCPCan
 - [MCPCan Helm Charts](https://kymo-mcp.github.io/mcpcan-deploy/) - Official Helm charts repository for MCPCan
 
-## Contributing
+## 💝Contributing💝
 
 Welcome to submit PR to contribute. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
