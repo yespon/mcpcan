@@ -146,12 +146,23 @@ func (s *UserAuthService) RefreshToken(c *gin.Context) {
 func (s *UserAuthService) ValidateToken(c *gin.Context) {
 	var _ user_auth.ValidateTokenRequest
 	token := middleware.ExtractToken(c)
+	if token == "" {
+		logger.Error("missing token")
+		common.GinUnauthorized(c, "missing token")
+		return
+	}
 
 	// Execute token validation
 	validateResult, err := s.authUseCase.ValidateToken(c.Request.Context(), token)
 	if err != nil {
 		logger.Error("validate token failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "validate token failed: "+err.Error())
+		common.GinUnauthorized(c, "validate token failed: "+err.Error())
+		return
+	}
+
+	if !validateResult.Valid {
+		logger.Error("token is invalid", zap.String("token", token))
+		common.GinUnauthorized(c, "token is invalid")
 		return
 	}
 

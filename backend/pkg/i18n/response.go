@@ -63,42 +63,91 @@ func ErrorResponseWithArgs(c *gin.Context, code int, args ...interface{}) {
 
 // BadRequest 400 错误
 func BadRequest(c *gin.Context, message string) {
-	ErrorResponse(c, CodeBadRequest, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeBadRequest)
+	}
+	c.JSON(http.StatusBadRequest, Response{
+		Code:    CodeBadRequest,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // Unauthorized 401 错误
 func Unauthorized(c *gin.Context, message string) {
-	ErrorResponse(c, CodeUnauthorized, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeUnauthorized)
+	}
+	c.JSON(http.StatusUnauthorized, Response{
+		Code:    CodeUnauthorized,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // Forbidden 403 错误
 func Forbidden(c *gin.Context, message string) {
-	ErrorResponse(c, CodeForbidden, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeForbidden)
+	}
+	c.JSON(http.StatusForbidden, Response{
+		Code:    CodeForbidden,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // NotFound 404 错误
 func NotFound(c *gin.Context, message string) {
-	ErrorResponse(c, CodeNotFound, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeNotFound)
+	}
+	c.JSON(http.StatusNotFound, Response{
+		Code:    CodeNotFound,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // InternalServerError 500 错误
 func InternalServerError(c *gin.Context, message string) {
-	ErrorResponse(c, CodeInternalError, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeInternalError)
+	}
+	c.JSON(http.StatusInternalServerError, Response{
+		Code:    CodeInternalError,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // ServiceUnavailable 503 错误
 func ServiceUnavailable(c *gin.Context, message string) {
-	ErrorResponse(c, CodeServiceUnavailable, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeServiceUnavailable)
+	}
+	c.JSON(http.StatusServiceUnavailable, Response{
+		Code:    CodeServiceUnavailable,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // GatewayTimeout 504 错误
 func GatewayTimeout(c *gin.Context, message string) {
-	ErrorResponse(c, CodeGatewayTimeout, message)
+	if message == "" {
+		message = GetLocalizedMessageWithGin(c, CodeGatewayTimeout)
+	}
+	c.JSON(http.StatusGatewayTimeout, Response{
+		Code:    CodeGatewayTimeout,
+		Message: message,
+		Data:    nil,
+	})
 }
 
 // HandleGinError 处理 Gin 错误
 func HandleGinError(c *gin.Context, err error) {
-	ErrorResponse(c, CodeInternalError, err.Error())
+	InternalServerError(c, err.Error())
 }
 
 // HandleValidationError 处理验证错误

@@ -112,7 +112,7 @@ func (a *App) setupMiddleware() {
 	a.ginEngine.Use(middleware.SecurityMiddleware(config.GlobalConfig.Secret))
 
 	// Add authentication middleware
-	a.ginEngine.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
+	// a.ginEngine.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
 }
 
 // setupRoutes sets up routes
