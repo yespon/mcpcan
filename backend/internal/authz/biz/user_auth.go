@@ -16,16 +16,16 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 )
 
-// AuthUseCase authentication business logic
-type AuthUseCase struct {
+// AuthUseBiz authentication business logic
+type AuthUseBiz struct {
 	userBiz    *UserBiz
 	logger     *zap.Logger
 	jwtManager jwt.Manager
 }
 
-// NewAuthUseCase creates authentication business logic instance
-func NewAuthUseCase() *AuthUseCase {
-	uc := &AuthUseCase{
+// NewAuthUseBiz creates authentication business logic instance
+func NewAuthUseBiz() *AuthUseBiz {
+	uc := &AuthUseBiz{
 		logger:  logger.L().Logger,
 		userBiz: NewUserBiz(),
 	}
@@ -81,7 +81,7 @@ type LoginInfo struct {
 }
 
 // Login user login
-func (uc *AuthUseCase) Login(
+func (uc *AuthUseBiz) Login(
 	ctx context.Context,
 	username string,
 	plainPassword string,
@@ -213,7 +213,7 @@ func (uc *AuthUseCase) Login(
 }
 
 // Logout user logout
-func (uc *AuthUseCase) Logout(ctx context.Context, userID int64, token string) error {
+func (uc *AuthUseBiz) Logout(ctx context.Context, userID int64, token string) error {
 	uc.logger.Info("User logout", zap.Int64("userId", userID), zap.String("token", token[:10]+"..."))
 
 	// Delete session record
@@ -227,7 +227,7 @@ func (uc *AuthUseCase) Logout(ctx context.Context, userID int64, token string) e
 }
 
 // RefreshToken refresh token
-func (uc *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*TokenData, error) {
+func (uc *AuthUseBiz) RefreshToken(ctx context.Context, refreshToken string) (*TokenData, error) {
 	uc.logger.Info("Refresh token request")
 
 	// Find refreshToken record
@@ -312,7 +312,7 @@ func (uc *AuthUseCase) RefreshToken(ctx context.Context, refreshToken string) (*
 }
 
 // ValidateToken validate token
-func (uc *AuthUseCase) ValidateToken(ctx context.Context, token string) (*ValidateResult, error) {
+func (uc *AuthUseBiz) ValidateToken(ctx context.Context, token string) (*ValidateResult, error) {
 	uc.logger.Debug("Validate JWT token request")
 
 	// Validate JWT token
@@ -421,7 +421,7 @@ func (uc *AuthUseCase) ValidateToken(ctx context.Context, token string) (*Valida
 }
 
 // GetUserInfo gets user information
-func (uc *AuthUseCase) GetUserInfo(ctx context.Context, userID uint) (*UserInfo, error) {
+func (uc *AuthUseBiz) GetUserInfo(ctx context.Context, userID uint) (*UserInfo, error) {
 	uc.logger.Debug("Get user information request")
 
 	// Get user information

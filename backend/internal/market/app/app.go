@@ -334,8 +334,8 @@ func (a *App) setupMiddleware() {
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
-	// Add authentication middleware
-	a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
+	// // Add authentication middleware
+	// a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

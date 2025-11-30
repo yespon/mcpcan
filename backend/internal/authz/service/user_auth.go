@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -19,17 +21,17 @@ import (
 
 // UserAuthService user authentication HTTP service
 type UserAuthService struct {
-	authUseCase *biz.AuthUseCase
-	userBiz     *biz.UserBiz
-	logger      zap.Logger
+	authUseBiz *biz.AuthUseBiz
+	userBiz    *biz.UserBiz
+	logger     zap.Logger
 }
 
 // NewUserAuthService creates user authentication service instance
 func NewUserAuthService() *UserAuthService {
 	return &UserAuthService{
-		authUseCase: biz.NewAuthUseCase(),
-		userBiz:     biz.NewUserBiz(),
-		logger:      *logger.L().Logger,
+		authUseBiz: biz.NewAuthUseBiz(),
+		userBiz:    biz.NewUserBiz(),
+		logger:     *logger.L().Logger,
 	}
 }
 
@@ -64,7 +66,7 @@ func (s *UserAuthService) Login(c *gin.Context) {
 	}
 
 	// Execute login
-	loginData, err := s.authUseCase.Login(
+	loginData, err := s.authUseBiz.Login(
 		c.Request.Context(),
 		req.Username,
 		plainPassword,
@@ -108,7 +110,7 @@ func (s *UserAuthService) Logout(c *gin.Context) {
 	}
 
 	// Execute logout
-	if err := s.authUseCase.Logout(c.Request.Context(), req.UserId, req.Token); err != nil {
+	if err := s.authUseBiz.Logout(c.Request.Context(), req.UserId, req.Token); err != nil {
 		logger.Error("user logout failed", zap.Error(err), zap.Int64("userId", req.UserId))
 		common.GinError(c, i18nresp.CodeInternalError, "logout failed: "+err.Error())
 		return
@@ -125,7 +127,7 @@ func (s *UserAuthService) RefreshToken(c *gin.Context) {
 	}
 
 	// Execute token refresh
-	tokenData, err := s.authUseCase.RefreshToken(c.Request.Context(), req.RefreshToken)
+	tokenData, err := s.authUseBiz.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
 		logger.Error("refresh token failed", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, "refresh token failed: "+err.Error())
@@ -152,8 +154,47 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		return
 	}
 
-	// Execute token validation
-	validateResult, err := s.authUseCase.ValidateToken(c.Request.Context(), token)
+	os.Setenv("IS_KYMO", "true")
+	if os.Getenv("IS_KYMO") == "true" {
+		headers := map[string]string{
+			"Accept":           c.GetHeader("Accept"),
+			"Accept-Language":  c.GetHeader("Accept-Language"),
+			"User-Agent":       c.GetHeader("User-Agent"),
+			"X-Requested-With": c.GetHeader("X-Requested-With"),
+		}
+		result, kerr, status := s.authUseBiz.ValidateTokenExternalKymo(c.Request.Context(), token, headers, c.Request.Cookies())
+		if kerr != nil {
+			c.Writer.Header().Set("X-Consum-Error-Code", strconv.Itoa(kerr.Code))
+			c.Writer.Header().Set("X-Consum-Error-Message", kerr.Message)
+			c.JSON(status, i18nresp.Response{Code: kerr.Code, Message: kerr.Message, Data: kerr.Data})
+			return
+		}
+		if result == nil || !result.Valid || result.UserInfo == nil {
+			c.JSON(status, i18nresp.Response{Code: i18nresp.CodeInvalidToken, Message: "token is invalid", Data: nil})
+			return
+		}
+		resp := &user_auth.ValidateTokenResponse{
+			Valid: true,
+			UserInfo: &user_auth.UserInfo{
+				UserId:    result.UserInfo.UserID,
+				Username:  result.UserInfo.Username,
+				Nickname:  result.UserInfo.Nickname,
+				Email:     result.UserInfo.Email,
+				Phone:     result.UserInfo.Phone,
+				Avatar:    result.UserInfo.Avatar,
+				DeptId:    result.UserInfo.DeptID,
+				DeptName:  result.UserInfo.DeptName,
+				RoleIds:   s.convertUintToInt64Slice(result.UserInfo.RoleIDs),
+				RoleNames: result.UserInfo.RoleNames,
+			},
+		}
+		c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", result.UserInfo.UserID))
+		common.GinSuccess(c, resp)
+		return
+	}
+
+	// Execute local token validation
+	validateResult, err := s.authUseBiz.ValidateToken(c.Request.Context(), token)
 	if err != nil {
 		logger.Error("validate token failed", zap.Error(err))
 		common.GinUnauthorized(c, "validate token failed: "+err.Error())
@@ -214,7 +255,7 @@ func (s *UserAuthService) GetUserInfo(c *gin.Context) {
 		return
 	}
 	// Get user information
-	userInfo, err := s.authUseCase.GetUserInfo(c.Request.Context(), uint(userIdInt))
+	userInfo, err := s.authUseBiz.GetUserInfo(c.Request.Context(), uint(userIdInt))
 	if err != nil {
 		logger.Error("get user information failed", zap.Error(err), zap.Int64("userId", int64(userIdInt)))
 		common.GinError(c, i18nresp.CodeInternalError, "get user information failed")
