@@ -154,7 +154,6 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		return
 	}
 
-	os.Setenv("IS_KYMO", "true")
 	if os.Getenv("IS_KYMO") == "true" {
 		headers := map[string]string{
 			"Accept":           c.GetHeader("Accept"),
