@@ -118,7 +118,7 @@
     "env": "Environment",
     "tools": "Support tools",
     "baseCommand": "Basic commands",
-    "demoTips": "The data of the Demo stack is for display purposes and will be reset after 24 hours. Please pay attention to saving your data"
+    "demoTips": "The data of the Demo site is for display purposes and will be reset after 24 hours. Please pay attention to saving your data"
   },
   "request": {
     "error": "error",
