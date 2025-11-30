@@ -203,7 +203,7 @@
   </el-dialog>
   <el-dialog
     v-model="formData.visible"
-    width="60%"
+    width="580px"
     top="20vh"
     :show-close="false"
     @close="formRef?.resetFields()"
@@ -213,8 +213,8 @@
     <template #header>
       <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
     </template>
-    <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading" class="mt-4">
-      <el-col :span="12" class="collapsed">
+    <el-row v-loading="dialogInfo.instanceInfo.loading" class="mt-4">
+      <el-col :span="24" class="collapsed">
         <el-scrollbar ref="scrollbarRef" height="50vh" always class="pr-4">
           <el-form
             ref="formRef"
@@ -261,7 +261,12 @@
                 :disabled-date="(date: Date) => date.getTime() < Date.now()"
               ></el-date-picker>
             </el-form-item>
-            <el-form-item prop="tokenType">
+            <el-form-item :label="'网关认证'" prop="tokenType">
+              <div class="w-full u-line-1" style="white-space: nowrap">
+                Authorization：{{ formData.token }}
+              </div>
+            </el-form-item>
+            <!-- <el-form-item prop="tokenType">
               <template #label>
                 API {{ t('mcp.instance.token.auth') }}
                 <el-popover placement="top" width="250">
@@ -364,27 +369,12 @@
                   }}
                 </el-button>
               </div>
-            </el-form-item>
+            </el-form-item> -->
             <el-form-item prop="enabledTransport" class="enabledTransport">
               <template #label>
                 <div class="w-full flex justify-between items-center">
+                  <span class="mr-2"> 透传 {{ 'Headers' }} </span>
                   <div class="center">
-                    <span class="mr-2"> HTTP {{ t('mcp.instance.token.headers') }} </span>
-                    <el-popover placement="top" width="250">
-                      <div>{{ t('mcp.instance.token.headersPlaceholder') }}</div>
-                      <template #reference>
-                        <el-icon class="cursor-pointer"><Warning /></el-icon>
-                      </template>
-                    </el-popover>
-                  </div>
-                  <div class="center">
-                    <el-switch
-                      v-model="formData.enabledTransport"
-                      style="--el-switch-on-color: #13ce66"
-                      inline-prompt
-                      :active-text="t('mcp.instance.token.passthrough')"
-                      :inactive-text="t('mcp.instance.token.passthroughOff')"
-                    ></el-switch>
                     <div
                       class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
                       @click="handleAddHeader"
@@ -397,27 +387,70 @@
                 </div>
               </template>
               <div
-                v-for="(header, index) in formData.headers"
+                v-for="(item, index) in formData.headers"
                 :key="index"
                 class="flex items-center my-2 pr-3"
               >
-                <el-input
-                  v-model="header.key"
-                  :placeholder="t('mcp.instance.token.headersKey')"
-                  class="flex-sub mr-2"
-                ></el-input>
-                ：
-                <el-input
-                  v-model="header.value"
-                  :placeholder="t('mcp.instance.token.headersValue')"
-                  class="flex-sub mr-2"
-                ></el-input>
-                <div
-                  class="cursor-pointer border border-style-solid border-rd-md border-white p-1 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
-                  @click="formData.headers.splice(index, 1)"
-                >
-                  <el-icon><Minus /></el-icon>
-                </div>
+                <el-row :gutter="12" class="flex-sub">
+                  <el-col :span="7">
+                    <div class="flex h-full">
+                      <el-dropdown
+                        v-if="index === 0"
+                        trigger="click"
+                        class="h-full w-full flex items-center justify-end"
+                        :show-arrow="false"
+                      >
+                        <div class="center cursor-pointer">
+                          {{ item.key }}
+                          <el-icon class="text-purple ml-1"><Sort /></el-icon>
+                        </div>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item @click="handleTokenTypeChange(1)">
+                              Authorization(Bearer)
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleTokenTypeChange(2)">
+                              Api-Key
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleTokenTypeChange(3)">
+                              X-API-key
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleTokenTypeChange(4)">
+                              Authorization(Basic)
+                            </el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                      <el-input
+                        v-else
+                        v-model="item.key"
+                        :placeholder="t('mcp.instance.token.headersKey')"
+                        class="flex-sub"
+                      >
+                      </el-input>
+                      <span class="ml-2">:</span>
+                    </div>
+                  </el-col>
+                  <el-col :span="15" class="flex">
+                    <el-input
+                      v-model="item.value"
+                      :placeholder="t('mcp.instance.token.headersValue')"
+                      class="flex-sub"
+                    ></el-input>
+                  </el-col>
+                  <el-col :span="2">
+                    <div v-if="index === 0" class="text-purple cursor-pointer">
+                      {{ Number(formData.tokenType) === 4 ? '账号' : '  ' }}
+                    </div>
+                    <div
+                      v-else
+                      class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
+                      @click="formData.headers.splice(index, 1)"
+                    >
+                      <el-icon><Minus /></el-icon>
+                    </div>
+                  </el-col>
+                </el-row>
               </div>
             </el-form-item>
             <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
@@ -443,11 +476,11 @@
           </el-form>
         </el-scrollbar>
       </el-col>
-      <el-col :span="12" class="expanded">
+      <!-- <el-col :span="12" class="expanded">
         <el-scrollbar ref="scrollbarRef" height="50vh" always class="config-info">
           <div class="py-5 px-5">{{ editConfig }}</div>
         </el-scrollbar>
-      </el-col>
+      </el-col> -->
     </el-row>
     <template #footer>
       <div class="center">
@@ -462,16 +495,7 @@
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Plus,
-  Operation,
-  CopyDocument,
-  Link,
-  Key,
-  Warning,
-  Minus,
-  Refresh,
-} from '@element-plus/icons-vue'
+import { Plus, Operation, CopyDocument, Link, Key, Sort, Minus } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -492,11 +516,11 @@ const emit = defineEmits<{
   (e: 'on-refresh'): void
 }>()
 const formRef = ref()
-const formData = ref({
+const formData = ref<any>({
   visible: false,
   token: '',
-  headers: [] as { key: string; value: string }[],
-  tokenType: null as TokenType | null,
+  headers: [{ key: 'Authorization', value: '' }],
+  tokenType: 1 as TokenType | null,
   enabledTransport: false,
   expireAt: null as number | null,
   usages: [] as string[],
@@ -569,6 +593,7 @@ const config = computed(() => {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
   if (dialogInfo.value.instanceInfo.enabledToken) {
+    if (!dialogInfo.value.instanceInfo.tokens) return JsonFormatter.format(`{}`, 4)
     let headersString = null
     let tokenType = 0
     if (dialogInfo.value.currentTokenIndex !== null) {
@@ -614,38 +639,10 @@ const config = computed(() => {
   )
 })
 
-const editConfig = computed(() => {
-  const headersString = formData.value.headers
-    .filter((header) => header.key && header.value)
-    .map((header) => `"${header.key}": "${header.value.replace(/"/g, '\\"')}"`)
-    .join(',\n                        ')
-
-  return JsonFormatter.format(
-    `{
-          "mcpServers": {
-                "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-                      "url": "${configUrl.value}",
-                      "headers": {
-                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][formData.value.tokenType || 0]}": "${
-                              formData.value.tokenType === 4
-                                ? 'Basic ' +
-                                  btoa(
-                                    userDataKey.value.username + ':' + userDataKey.value.password,
-                                  )
-                                : formData.value.token || ''
-                            }"${headersString ? ',' + headersString : ''}
-                      }
-                }
-          }
-      }`,
-    4,
-  )
-})
-
 // token list
 const tokenList = computed(
   () =>
-    dialogInfo.value.instanceInfo.tokens.map((item) => ({
+    dialogInfo.value.instanceInfo.tokens?.map((item) => ({
       ...item,
       expire: item.expireAt !== 0 && item.expireAt < Date.now(),
     })) || [],
@@ -666,11 +663,18 @@ const handleChangeTransport = async (token: any, index: number) => {
 
 // handle add token
 const handleAddToken = () => {
+  const baseToken = `Bearer ${getToken(
+    JSON.stringify({
+      expireAt: formData.value.expireAt,
+      userId: userInfo.userId,
+      username: userInfo.username,
+    }),
+  )}`
   formData.value = {
     visible: true,
-    token: '',
-    headers: [] as { key: string; value: string }[],
-    tokenType: null as TokenType | null,
+    token: baseToken,
+    headers: [{ key: 'Authorization', value: baseToken }],
+    tokenType: 1 as TokenType | null,
     enabledTransport: false,
     expireAt: null as number | null,
     usages: [] as string[],
@@ -681,7 +685,6 @@ const handleAddToken = () => {
     password: '',
   }
   dialogInfo.value.currentEditIndex = null
-  formRef.value?.resetFields()
 }
 
 // handle edit token
@@ -699,7 +702,6 @@ const handleEditToken = (index: number) => {
   }))
   formData.value.tokenType = token.tokenType
   formData.value.enabledTransport = token.enabledTransport
-  handleTokenTypeChange()
 }
 
 const handleChangeBasic = () => {
@@ -741,7 +743,9 @@ const handleSelectedToken = (index: number) => {
 }
 
 // handle token type change and clear token value
-const handleTokenTypeChange = () => {
+const handleTokenTypeChange = (tokenType: number) => {
+  formData.value.tokenType = tokenType
+  handleRandomToken()
   let roginData = { token: '', tokenType: '' }
   if (dialogInfo.value.currentEditIndex !== null) {
     roginData = dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] as any
@@ -751,37 +755,17 @@ const handleTokenTypeChange = () => {
     userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
     return
   }
-  formData.value.token = roginData.token
 }
 
 // handle random token
 const handleRandomToken = () => {
-  if (dialogInfo.value.currentEditIndex !== null) {
-    ElMessageBox.confirm(t('mcp.instance.action.random'), t('common.warn'), {
-      confirmButtonText: t('common.ok'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning',
-      customClass: 'tips-box',
-      center: true,
-      showClose: false,
-      confirmButtonClass: 'is-plain el-button--danger danger-btn',
-      customStyle: {
-        width: '517px',
-        height: '247px',
-      },
-    }).then(() => {
-      handleGetTokenValue()
-    })
-    return
-  }
-
   handleGetTokenValue()
 }
 
 // handle get token value
 const handleGetTokenValue = () => {
   if (Number(formData.value.tokenType) === 1) {
-    formData.value.token =
+    formData.value.headers[0].value =
       'Bearer ' +
       getToken(
         JSON.stringify({
@@ -791,7 +775,7 @@ const handleGetTokenValue = () => {
         }),
       )
   } else if (Number(formData.value.tokenType) === 2) {
-    formData.value.token = getToken(
+    formData.value.headers[0].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -799,7 +783,7 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(formData.value.tokenType) === 3) {
-    formData.value.token = getToken(
+    formData.value.headers[0].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -807,6 +791,7 @@ const handleGetTokenValue = () => {
       }),
     )
   }
+  console.log(formData.value.token, formData.value.headers[0]?.value)
 }
 // handle add expire at
 const handleAddExpireAt = (days: number) => {
@@ -878,7 +863,7 @@ const handleConfirmToken = async () => {
       visible: false,
       token: '',
       headers: [],
-      tokenType: null,
+      tokenType: 1,
       enabledTransport: false,
       expireAt: null,
       usages: [],
@@ -902,7 +887,7 @@ const handleConfirmToken = async () => {
       visible: false,
       token: '',
       headers: [],
-      tokenType: null,
+      tokenType: 1,
       enabledTransport: false,
       expireAt: null,
       usages: [],
@@ -1075,6 +1060,11 @@ defineExpose({
     display: block;
     width: 100%;
   }
+}
+.delete-header {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
 }
 </style>
 <style lang="scss">

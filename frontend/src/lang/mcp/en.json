@@ -71,7 +71,7 @@
         "total": "Total",
         "running": "Running",
         "stoped": "Stoped",
-        "connecting": "Connecting"
+        "connecting": "Hosting"
       },
       "form": {
         "placeholderName": "Name and ID",
@@ -221,7 +221,7 @@
       "openApi": {
         "importTitle": "Import OpenAPI Document",
         "serviceUrl": "Service Url",
-        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STDIO protocol",
+        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STEAMABLE_HTTP protocol",
         "support": "Supports importing JSON or YAML files in OpenAPI 3.0.0 or higher version data format.",
         "localFile": "Local Upload",
         "selectDocs": "Select from Document Library",

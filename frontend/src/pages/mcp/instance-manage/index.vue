@@ -75,11 +75,14 @@
         :showOperation="true"
         :requestConfig="requestConfig"
         :columns="columns"
+        :multiple="selection.showSelect"
+        :rowKey="selection.rowKey"
         v-model:pageConfig="pageConfig"
         :handlerColumnConfig="{
           fixed: 'right',
           width: '120px',
         }"
+        @on-selection-change="handleTableSelect"
       >
         <template #action>
           <div class="flex justify-between mb-4">
@@ -88,6 +91,9 @@
               <span class="desc"
                 >{{ t('mcp.instance.pageDesc.total') }}：{{ pageConfig.total }}</span
               >
+              <span class="ml-3 cursor-pointer base-btn-link" @click="handleSync">{{
+                'dify同步'
+              }}</span>
             </div>
             <div id="instanceSearch"></div>
           </div>
@@ -222,7 +228,10 @@
                         : t('mcp.instance.action.stop')
                     }}
                   </el-dropdown-item>
-                  <el-dropdown-item command="handleRestartInstance">
+                  <el-dropdown-item
+                    v-if="row.status === AccessType.HOSTING"
+                    command="handleRestartInstance"
+                  >
                     {{ t('mcp.instance.action.reStart') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleViewStatus">
@@ -274,6 +283,8 @@
     </Select>
     <!-- Create a intance by openAPI docs -->
     <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
+    <!-- select agent with nameSpace  -->
+    <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
   </div>
 </template>
 
@@ -295,6 +306,7 @@ import { TemplateAPI } from '@/api/mcp/template'
 import McpImage from '@/components/mcp-image/index.vue'
 import { AccessType, InstanceStatus, SourceType } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
+import AgentSyncDialog from './modules/agent-sync-dialog.vue'
 
 const { t } = useI18n()
 const {
@@ -318,6 +330,8 @@ const {
   selectVisible,
   templateList,
   timer,
+  selection,
+  agentSyncDialog,
 } = useInstanceTableHooks()
 
 /**
@@ -578,7 +592,32 @@ const handleCommand = (callback: string, row: InstanceResult) => {
       ElMessage.warning(`未找到 "${callback}" 对应的操作`)
   }
 }
-
+/**
+ * Handle table select change
+ * @param selectionList - selected instance list
+ */
+const handleSync = () => {
+  if (!selection.value.selectList.length) {
+    ElMessage.warning('请选择需要同步的实例')
+    return
+  }
+  agentSyncDialog.value.init(selection.value.selectList)
+}
+const handleTableSelect = (selectionList: InstanceResult[]) => {
+  selection.value.selectList = selectionList
+  // 有选择项暂停定时任务；否则启动定时任务
+  if (!selection.value.selectList.length) {
+    init()
+    if (timer.value) {
+      return
+    } else {
+      timer.value = setInterval(init, 30000)
+    }
+  } else {
+    clearInterval(timer.value)
+    timer.value = 0
+  }
+}
 /**
  * Handle get count data
  */
