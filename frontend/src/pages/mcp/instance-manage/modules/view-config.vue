@@ -853,7 +853,7 @@ const handleConfirmToken = async () => {
       usages: formData.value.usages,
       enabledTransport: formData.value.enabledTransport,
       headers: Object.fromEntries(
-        formData.value.headers.map((header) => [header.key, header.value]),
+        formData.value.headers.map((header: any) => [header.key, header.value]),
       ),
       tokenType: formData.value.tokenType,
     }
@@ -878,7 +878,7 @@ const handleConfirmToken = async () => {
       publishAt: Date.now(),
       usages: formData.value.usages,
       headers: Object.fromEntries(
-        formData.value.headers.map((header) => [header.key, header.value]),
+        formData.value.headers.map((header: any) => [header.key, header.value]),
       ),
       tokenType: formData.value.tokenType,
     })

@@ -197,7 +197,7 @@ const init = (list: any[]) => {
   dialogInfo.instanceList = list
   dialogInfo.currentStep = 1
   dialogInfo.selectedPlatform = ''
-  dialogInfo.selectedAgents = []
+  dialogInfo.selectedAgentId = ''
   dialogInfo.selectedNamespaces = []
   // 模拟命名空间数据，实际应该从 API 获取
   dialogInfo.namespaceList = [
