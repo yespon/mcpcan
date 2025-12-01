@@ -1,78 +1,54 @@
 <template>
   <el-dialog
-    :title="dialogInfo.title"
     v-model="dialogInfo.visible"
     :close-on-click-modal="false"
     width="1200px"
     footer-class="footer-border"
   >
+    <template #title>
+      <div class="mb-4">
+        {{ dialogInfo.title }} : 已选择
+        <span class="count-highlight">{{ dialogInfo.instanceList.length }}</span> 个MCP服务
+      </div>
+    </template>
     <el-steps :active="dialogInfo.currentStep" align-center class="mb-6">
       <el-step
-        title="同步平台"
+        title="智能体平台选择"
         :description="
-          dialogInfo.selectedPlatform
-            ? '平台：' + { community: '社区版', business: '商业版' }[dialogInfo.selectedPlatform]
-            : '请选择一个平台'
+          dialogInfo.selectedAgentId
+            ? '平台：' +
+                dialogInfo.instanceList.find(
+                  (agent) => agent.instanceId === dialogInfo.selectedAgentId,
+                )?.name || dialogInfo.selectedAgentId
+            : '请选择一个你需要同步的智能体平台'
         "
       />
       <el-step
-        title="同步的智能体"
-        :description="
-          dialogInfo.selectedAgentId
-            ? '智能体：' + dialogInfo.selectedAgentId
-            : '请选择一个你需要同步的智能体'
-        "
-      >
-        <template #description>
-          <div v-if="dialogInfo.selectedAgentId" class="u-line-1">
-            智能体：
-            {{
-              dialogInfo.instanceList.find(
-                (agent) => agent.instanceId === dialogInfo.selectedAgentId,
-              )?.name || dialogInfo.selectedAgentId
-            }}
-          </div>
-          <div v-else>请选择一个你需要同步的智能体</div>
-        </template>
-      </el-step>
-      <el-step
-        title="同步的空间"
+        title="同步的命名空间"
         :description="
           dialogInfo.selectedNamespaces.length
             ? '已选择空间：' + (dialogInfo.selectedNamespaces.length || 0) + '个'
             : '请选择一个你需要同步的空间'
         "
       />
+      <el-step title="鉴权设置" :description="'请给命名空间进行鉴权设置'"> </el-step>
     </el-steps>
+
     <div v-if="dialogInfo.currentStep === 1" class="step-content">
-      <!-- Step 1: 选择平台 -->
-      <div class="platform-container">
-        <div
-          class="platform-card"
-          :class="{ active: dialogInfo.selectedPlatform === 'community' }"
-          @click="dialogInfo.selectedPlatform = 'community'"
+      <!-- Step 1: 智能体平台选择 -->
+      <div class="mb-6 flex items-center gap-2 mx-4">
+        <el-tag
+          v-for="item in platformFilterList"
+          :key="item.value"
+          :type="item.type"
+          :effect="dialogInfo.selectedPlatform === item.value ? 'dark' : 'light'"
+          size="small"
+          class="cursor-pointer"
+          @click="handleSelectPlatform(item.value)"
         >
-          <div class="platform-logo">
-            <img src="@/assets/images/dify-logo.svg" alt="Dify" class="logo-img" />
-          </div>
-          <div class="platform-badge community">社区版</div>
-        </div>
-
-        <div
-          class="platform-card"
-          :class="{ active: dialogInfo.selectedPlatform === 'business' }"
-          @click="dialogInfo.selectedPlatform = 'business'"
-        >
-          <div class="platform-logo">
-            <img src="@/assets/images/dify-logo.svg" alt="Dify" class="logo-img" />
-          </div>
-          <div class="platform-badge business">商业版</div>
-        </div>
+          {{ item.label }}
+        </el-tag>
       </div>
-    </div>
-    <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
-      <!-- Step 2: 选择智能体 -->
-
       <div class="agent-grid grid grid-cols-12 gap-4 px-3">
         <div
           v-for="(agent, index) in dialogInfo.instanceList"
@@ -102,8 +78,8 @@
         <el-empty description="暂无可同步的智能体" />
       </div>
     </div>
-    <div v-else-if="dialogInfo.currentStep === 3" class="step-content">
-      <!-- Step 3: 选择空间 -->
+    <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
+      <!-- Step 2: 选择空间 -->
       <div class="agent-grid grid grid-cols-12 gap-4 px-3">
         <div
           v-for="(namespace, index) in dialogInfo.namespaceList"
@@ -133,6 +109,83 @@
         <el-empty description="暂无可同步的空间" />
       </div>
     </div>
+    <div v-else-if="dialogInfo.currentStep === 3" class="step-content">
+      <!-- Step 3: 鉴权设置 -->
+      <el-splitter class="h-full" direction="horizontal" :gutter="8">
+        <el-splitter-panel size="30%" class="px-2">
+          <div
+            v-for="(agent, index) in dialogInfo.instanceList"
+            :key="index"
+            class="agent-card center py-3 px-4 mb-2"
+            :class="{ active: dialogInfo.selectedAgentId === agent.instanceId }"
+          >
+            <div class="w-full flex">
+              <div
+                v-if="dialogInfo.selectedAgentId === agent.instanceId"
+                class="selected-badge"
+              ></div>
+              <div class="agent-icon">
+                <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                  ><i class="icon iconfont MCP-zhinengti"></i
+                ></el-icon>
+              </div>
+              <div class="agent-info flex-sub u-line-1">
+                <div class="agent-name">
+                  {{ agent.name || agent.instanceName || '未命名智能体' }}
+                </div>
+                <div class="agent-desc">{{ agent.description || agent.remark || '暂无描述' }}</div>
+              </div>
+            </div>
+          </div>
+        </el-splitter-panel>
+        <el-splitter-panel size="70%" class="px-2">
+          <div
+            v-for="(instance, index) in dialogInfo.instanceList"
+            :key="index"
+            class="py-3 px-4 mb-2"
+            :class="{ active: dialogInfo.selectedNamespaces.includes(instance.id) }"
+          >
+            <div>{{ instance.instanceName }}</div>
+            <div class="pl-2">
+              <div class="w-full u-line-1 pl-2 py-2" style="white-space: nowrap">
+                Authorization：{{ 'lorem ipsum dolor sit amet' }}
+              </div>
+              <div class="flex justify-between items-center">
+                Header 请求头
+                <div
+                  class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
+                >
+                  <el-icon>
+                    <Plus />
+                  </el-icon>
+                </div>
+              </div>
+              <div v-for="head in instance.headers" :key="head.id">
+                <el-row>
+                  <el-col :span="8">
+                    <el-input
+                      v-model="head.key"
+                      :placeholder="t('mcp.instance.token.headersKey')"
+                      class="flex-sub"
+                    />
+                  </el-col>
+                  <el-col :span="14">
+                    <el-input
+                      v-model="head.value"
+                      :placeholder="t('mcp.instance.token.headersValue')"
+                      class="flex-sub"
+                    ></el-input>
+                  </el-col>
+                  <el-col :span="2">
+                    <el-icon><Minus /></el-icon>
+                  </el-col>
+                </el-row>
+              </div>
+            </div>
+          </div>
+        </el-splitter-panel>
+      </el-splitter>
+    </div>
     <template #footer>
       <div class="center">
         <el-button
@@ -146,10 +199,7 @@
           type="primary"
           class="base-btn"
           v-if="dialogInfo.currentStep < 3"
-          :disabled="
-            (dialogInfo.currentStep === 1 && !dialogInfo.selectedPlatform) ||
-            (dialogInfo.currentStep === 2 && !dialogInfo.selectedAgentId)
-          "
+          :disabled="dialogInfo.currentStep === 1 && !dialogInfo.selectedAgentId"
           @click="dialogInfo.currentStep += 1"
           >下一步</el-button
         >
@@ -168,21 +218,35 @@
 </template>
 
 <script setup lang="ts">
+import { Minus, Plus } from '@element-plus/icons-vue'
+const { t } = useI18n()
+
+const platformFilterList = [
+  { label: '全部', value: '', type: 'primary' },
+  { label: 'dify社区版', value: '1', type: 'primary' },
+  { label: 'dify商业版', value: '2', type: 'primary' as const },
+]
 const dialogInfo = reactive({
-  title: '同步至 Dify',
+  title: '智能体平台同步',
   visible: false,
   instanceList: [] as any[],
   namespaceList: [] as any[],
   currentStep: 1,
-  selectedPlatform: '' as 'community' | 'business' | '',
+  selectedPlatform: '',
   selectedAgentId: '',
   selectedNamespaces: [] as string[],
 })
 
+// 选择智能体平台
+const handleSelectPlatform = (platform: string) => {
+  dialogInfo.selectedPlatform = platform
+}
+// 选择智能体平台
 const toggleAgentSelection = (agentId: string) => {
   dialogInfo.selectedAgentId = dialogInfo.selectedAgentId === agentId ? '' : agentId
 }
 
+// 选择命名空间
 const toggleNamespaceSelection = (namespaceId: string) => {
   const index = dialogInfo.selectedNamespaces.indexOf(namespaceId)
   if (index > -1) {
@@ -192,6 +256,7 @@ const toggleNamespaceSelection = (namespaceId: string) => {
   }
 }
 
+// 数据初始化
 const init = (list: any[]) => {
   dialogInfo.visible = true
   dialogInfo.instanceList = list
@@ -229,70 +294,8 @@ defineExpose({
 }
 
 .step-content {
-  min-height: 450px;
+  height: 450px;
   padding: 0 20px 20px;
-}
-
-.platform-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 60px;
-  padding: 20px;
-}
-
-.platform-card {
-  position: relative;
-  width: 300px;
-  height: 260px;
-  background: var(--ep-bg-color);
-  border: 2px solid var(--ep-border-color);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-
-  &:hover {
-    border-color: var(--ep-purple-color);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  }
-
-  &.active {
-    border-color: var(--ep-purple-color);
-    border-width: 3px;
-    background: var(--ep-bg-purple-color);
-    box-shadow: 0 0 20px rgba(124, 77, 255, 0.2);
-  }
-
-  .platform-logo {
-    margin-bottom: 30px;
-
-    .logo-img {
-      width: 120px;
-      height: auto;
-    }
-  }
-
-  .platform-badge {
-    padding: 8px 24px;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-
-    &.community {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    &.business {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-  }
 }
 
 // Selection Info
@@ -302,18 +305,16 @@ defineExpose({
   font-size: 14px;
   color: var(--ep-text-color-regular);
 
-  .count-highlight {
-    color: var(--ep-purple-color);
-    font-weight: 600;
-    margin: 0 4px;
-  }
-
   .count-total {
     font-weight: 600;
     margin: 0 4px;
   }
 }
-
+.count-highlight {
+  color: var(--ep-purple-color);
+  font-weight: 600;
+  margin: 0 4px;
+}
 // Agent Cards Grid Layout
 .agent-grid {
   max-height: 380px;

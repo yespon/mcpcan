@@ -115,7 +115,7 @@
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
         "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing.",
-        "noToken": "No authentication required",
+        "noToken": "Not certified",
         "apiSelectTitle": "Select OpenAPI Document"
       },
       "tableHeadDesc": {

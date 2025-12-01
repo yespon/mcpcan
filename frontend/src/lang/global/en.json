@@ -61,7 +61,7 @@
     "updateCodePackage": "UpdateCodePackage",
     "viewCodePackage": "PackageDetails",
     "apiDocsList": "API Docs",
-    "agentManage": "Agent Manage"
+    "agentManage": "Agent Platform"
   },
   "common": {
     "search": "Search",

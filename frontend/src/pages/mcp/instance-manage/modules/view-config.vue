@@ -15,7 +15,6 @@
         :active-text="t('common.on')"
         :inactive-text="t('common.off')"
         @change="handleEabledToken()"
-        :disabled="disabledTokenStatus"
       ></el-switch>
       <span class="ml-2">{{ t('mcp.instance.tableHeadDesc.token') }}</span>
     </div>
@@ -76,7 +75,10 @@
                   <el-icon size="18"><Operation /></el-icon>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item v-if="index !== 0" @click="handleEditToken(index)">
+                      <el-dropdown-item
+                        v-if="!token.usages.includes('default')"
+                        @click="handleEditToken(index)"
+                      >
                         <el-button link>
                           {{ t('env.run.action.edit') }}
                         </el-button>
@@ -86,7 +88,10 @@
                           {{ t('mcp.instance.action.accessLogs') }}
                         </el-button>
                       </el-dropdown-item>
-                      <el-dropdown-item v-if="index !== 0" @click="handleDeleteToken(index)">
+                      <el-dropdown-item
+                        v-if="!token.usages.includes('default')"
+                        @click="handleDeleteToken(index)"
+                      >
                         <el-button type="danger" link>
                           {{ t('mcp.instance.action.delete') }}
                         </el-button>
@@ -129,15 +134,15 @@
                     {{ tag }}
                   </el-tag>
                 </div>
-                <div class="grid-cols-span-1" v-if="dialogInfo.instanceInfo.sourceType === 4">
-                  {{ t('mcp.instance.token.passthrough') }}:
+                <div class="grid-cols-span-1">
+                  {{ '是否启用' }}:
                   <el-switch
                     v-model="token.enabledTransport"
                     style="--el-switch-on-color: #13ce66"
                     inline-prompt
                     :loading="dialogInfo.instanceInfo.loading"
-                    :active-text="t('common.on')"
-                    :inactive-text="t('common.off')"
+                    :active-text="t('status.active')"
+                    :inactive-text="t('status.inactive')"
                     @change="handleChangeTransport(token, index)"
                   ></el-switch>
                 </div>
@@ -201,6 +206,7 @@
       </div>
     </template>
   </el-dialog>
+  <!-- token config dialog -->
   <el-dialog
     v-model="formData.visible"
     width="580px"
@@ -439,7 +445,11 @@
                     ></el-input>
                   </el-col>
                   <el-col :span="2">
-                    <div v-if="index === 0" class="text-purple cursor-pointer">
+                    <div
+                      v-if="index === 0"
+                      class="text-purple cursor-pointer"
+                      @click="handleChangeBasic"
+                    >
                       {{ Number(formData.tokenType) === 4 ? '账号' : '  ' }}
                     </div>
                     <div
@@ -491,6 +501,22 @@
       </div>
     </template>
   </el-dialog>
+  <!-- user accountPassword -->
+  <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
+    <el-form :model="userDataKey" class="p-4" label-width="80px">
+      <el-form-item label="用户名" prop="username">
+        <el-input v-model="userDataKey.username" placeholder="请输入用户名" />
+      </el-form-item>
+      <el-form-item label="密码" prop="password">
+        <el-input v-model="userDataKey.password" type="password" placeholder="请输入密码" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="center">
+        <mcp-button @click="handleConfirmAccount" class="w-25">{{ t('common.ok') }}</mcp-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
@@ -498,7 +524,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Operation, CopyDocument, Link, Key, Sort, Minus } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
-import { InstanceAPI } from '@/api/mcp/instance'
+import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
@@ -507,9 +533,6 @@ import { useRouterHooks } from '@/utils/url'
 
 const { jumpToPage } = useRouterHooks()
 
-const disabledTokenStatus = computed(() => {
-  return tokenList.value.some((item) => item.enabledTransport) // !'存在一个透传的时候必须开启'
-})
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
@@ -521,7 +544,7 @@ const formData = ref<any>({
   token: '',
   headers: [{ key: 'Authorization', value: '' }],
   tokenType: 1 as TokenType | null,
-  enabledTransport: false,
+  enabled: true,
   expireAt: null as number | null,
   usages: [] as string[],
 })
@@ -593,39 +616,22 @@ const config = computed(() => {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
   if (dialogInfo.value.instanceInfo.enabledToken) {
-    if (!dialogInfo.value.instanceInfo.tokens) return JsonFormatter.format(`{}`, 4)
-    let headersString = null
-    let tokenType = 0
-    if (dialogInfo.value.currentTokenIndex !== null) {
-      const headers =
-        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].headers || {}
-      tokenType = Number(
-        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].tokenType,
-      )
-      headersString = Object.entries(headers)
-        .map(([key, value]) => `"${key}": "${value.replace(/"/g, '\\"')}"`)
-        .join(',\n                        ')
-    }
-
-    return JsonFormatter.format(
-      `{
+    if (!tokenList.value) return JsonFormatter.format(`{}`, 4)
+    if (dialogInfo.value.currentTokenIndex !== null && tokenList.value.length) {
+      return JsonFormatter.format(
+        `{
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
                       "headers": {
-                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][tokenType]}": "${
-                              dialogInfo.value.currentTokenIndex !== null
-                                ? dialogInfo.value.instanceInfo.tokens[
-                                    dialogInfo.value.currentTokenIndex
-                                  ].token
-                                : ''
-                            }"${headersString ? ',' + headersString : ''}
+                            "Authorization": "${tokenList.value[dialogInfo.value.currentTokenIndex].token}"
                       }
                 }
           }
       }`,
-      4,
-    )
+        4,
+      )
+    }
   }
   return JsonFormatter.format(
     `{
@@ -640,22 +646,16 @@ const config = computed(() => {
 })
 
 // token list
-const tokenList = computed(
-  () =>
-    dialogInfo.value.instanceInfo.tokens?.map((item) => ({
-      ...item,
-      expire: item.expireAt !== 0 && item.expireAt < Date.now(),
-    })) || [],
-)
+const tokenList = ref<Array<any>>([])
 
 const handleChangeTransport = async (token: any, index: number) => {
   try {
     dialogInfo.value.instanceInfo.loading = true
-    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+    tokenList.value[index].enabled = token.enabled
     await handleSaveTokens()
     emit('on-refresh')
   } catch {
-    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+    tokenList.value[index].enabled = token.enabled
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
@@ -675,7 +675,7 @@ const handleAddToken = () => {
     token: baseToken,
     headers: [{ key: 'Authorization', value: baseToken }],
     tokenType: 1 as TokenType | null,
-    enabledTransport: false,
+    enabled: true,
     expireAt: null as number | null,
     usages: [] as string[],
   }
@@ -701,12 +701,12 @@ const handleEditToken = (index: number) => {
     value: value,
   }))
   formData.value.tokenType = token.tokenType
-  formData.value.enabledTransport = token.enabledTransport
+  formData.value.enabled = token.enabled
 }
 
 const handleChangeBasic = () => {
   userDataKey.value.visible = !userDataKey.value.visible
-  formData.value.token = ''
+  // formData.value.token = ''
 }
 
 // handle add header
@@ -790,8 +790,16 @@ const handleGetTokenValue = () => {
         username: userInfo.username,
       }),
     )
+  } else if (Number(formData.value.tokenType) === 4) {
+    formData.value.headers[0].value =
+      'Basic ' + btoa(`${userDataKey.value.username}:${userDataKey.value.password}`) // Base64 编码
   }
   console.log(formData.value.token, formData.value.headers[0]?.value)
+}
+
+const handleConfirmAccount = () => {
+  handleGetTokenValue()
+  userDataKey.value.visible = false
 }
 // handle add expire at
 const handleAddExpireAt = (days: number) => {
@@ -814,14 +822,17 @@ const handleDeleteToken = (index: number) => {
       width: '517px',
       height: '247px',
     },
-  }).then(() => {
-    dialogInfo.value.instanceInfo.tokens.splice(index, 1)
+  }).then(async () => {
+    await TokenAPI.delete({
+      id: tokenList.value[index].id,
+    })
+    ElMessage.success(t('action.delete'))
     if (dialogInfo.value.currentTokenIndex === index) {
       dialogInfo.value.currentTokenIndex = null
     } else if (dialogInfo.value.currentTokenIndex && dialogInfo.value.currentTokenIndex > index) {
       dialogInfo.value.currentTokenIndex!--
     }
-    handleSaveTokens()
+    tokenList.value.splice(index, 1)
   })
 }
 
@@ -830,7 +841,7 @@ const handleViewLog = (index: number) => {
     url: '/token-log',
     data: {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
-      token: dialogInfo.value.instanceInfo.tokens[index].token || '',
+      token: tokenList.value[index].token || '',
     },
   })
 }
@@ -839,23 +850,16 @@ const handleViewLog = (index: number) => {
 const handleConfirmToken = async () => {
   const result = await formRef.value.validate()
   if (!result) return
-  if (Number(formData.value.tokenType) === 4) {
-    if (userDataKey.value.visible) {
-      const base64Credentials = btoa(`${userDataKey.value.username}:${userDataKey.value.password}`)
-      formData.value.token = `Basic ${base64Credentials}`
-    }
-  }
   if (dialogInfo.value.currentEditIndex) {
-    dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
+    tokenList.value[dialogInfo.value.currentEditIndex] = {
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
-      publishAt: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].publishAt,
+      publishAt: tokenList.value[dialogInfo.value.currentEditIndex].publishAt,
       usages: formData.value.usages,
-      enabledTransport: formData.value.enabledTransport,
+      enabled: tokenList.value[dialogInfo.value.currentEditIndex].enabled,
       headers: Object.fromEntries(
         formData.value.headers.map((header: any) => [header.key, header.value]),
       ),
-      tokenType: formData.value.tokenType,
     }
     dialogInfo.value.currentEditIndex = null
     await handleSaveTokens()
@@ -863,16 +867,15 @@ const handleConfirmToken = async () => {
       visible: false,
       token: '',
       headers: [],
-      tokenType: 1,
-      enabledTransport: false,
+      enabled: true,
       expireAt: null,
       usages: [],
     }
     return
   }
   try {
-    dialogInfo.value.instanceInfo.tokens.push({
-      enabledTransport: formData.value.enabledTransport,
+    tokenList.value.push({
+      enabled: true,
       token: formData.value.token,
       expireAt: formData.value.expireAt || 0,
       publishAt: Date.now(),
@@ -880,20 +883,18 @@ const handleConfirmToken = async () => {
       headers: Object.fromEntries(
         formData.value.headers.map((header: any) => [header.key, header.value]),
       ),
-      tokenType: formData.value.tokenType,
     })
     await handleSaveTokens()
     formData.value = {
       visible: false,
       token: '',
       headers: [],
-      tokenType: 1,
-      enabledTransport: false,
+      enabled: true,
       expireAt: null,
       usages: [],
     }
   } catch {
-    dialogInfo.value.instanceInfo.tokens.pop()
+    tokenList.value.pop()
   }
 }
 
@@ -903,11 +904,33 @@ const handleConfirmToken = async () => {
 const handleSaveTokens = async () => {
   try {
     dialogInfo.value.instanceInfo.loading = true
-    await InstanceAPI.updateInstanceTokens({
-      instanceId: dialogInfo.value.instanceInfo.instanceId,
-      tokens: dialogInfo.value.instanceInfo.tokens,
+    console.log('tokens', tokenList.value)
+
+    await TokenAPI.edit({
+      tokens: tokenList.value.map((token) => ({
+        ...token,
+        instanceId: dialogInfo.value.instanceInfo.instanceId,
+      })),
     })
     emit('on-refresh')
+  } finally {
+    dialogInfo.value.instanceInfo.loading = false
+  }
+}
+
+const handleTokenList = async () => {
+  dialogInfo.value.instanceInfo.loading = true
+  try {
+    const { tokens } = await TokenAPI.list({
+      instanceId: dialogInfo.value.instanceInfo.instanceId,
+    })
+    // 翻转一次；使默认token 在最前面
+    tokenList.value = (tokens || [])
+      .map((token: any) => ({
+        ...token,
+        expire: token.expireAt !== 0 && token.expireAt < Date.now(),
+      }))
+      .reverse()
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
@@ -936,6 +959,7 @@ const init = (instanceInfo: InstanceResult) => {
   dialogInfo.value.instanceInfo = cloneDeep(instanceInfo)
   if (instanceInfo.enabledToken) {
     dialogInfo.value.currentTokenIndex = 0
+    handleTokenList()
   } else {
     dialogInfo.value.currentTokenIndex = null
   }

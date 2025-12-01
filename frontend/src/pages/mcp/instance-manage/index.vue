@@ -91,9 +91,10 @@
               <span class="desc"
                 >{{ t('mcp.instance.pageDesc.total') }}：{{ pageConfig.total }}</span
               >
-              <span class="ml-3 cursor-pointer base-btn-link" @click="handleSync">{{
-                'dify同步'
-              }}</span>
+              <span class="ml-4 cursor-pointer base-btn-link font-bold center" @click="handleSync">
+                <el-icon class="mr-1"><Share /></el-icon>
+                {{ '智能体平台同步' }}
+              </span>
             </div>
             <div id="instanceSearch"></div>
           </div>
@@ -289,7 +290,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, More, Warning } from '@element-plus/icons-vue'
+import { Plus, More, Warning, Share } from '@element-plus/icons-vue'
 import { timestampToDate } from '@/utils/system'
 import TablePlus from '@/components/TablePlus/index.vue'
 import { useInstanceTableHooks } from './hooks/index.ts'
