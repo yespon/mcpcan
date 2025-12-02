@@ -137,7 +137,7 @@
                 <div class="grid-cols-span-1">
                   {{ '是否启用' }}:
                   <el-switch
-                    v-model="token.enabledTransport"
+                    v-model="token.enabled"
                     style="--el-switch-on-color: #13ce66"
                     inline-prompt
                     :loading="dialogInfo.instanceInfo.loading"
@@ -554,34 +554,34 @@ const userDataKey = ref({
   password: '',
 })
 const rules = reactive({
-  tokenType: [
-    {
-      required: true,
-      validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
-        if (!value) {
-          callback(new Error(t('mcp.instance.token.placeholderTokenType')))
-        }
-        if (value === 4) {
-          if (!userDataKey.value.username || !userDataKey.value.password) {
-            callback(
-              new Error(
-                userDataKey.value.visible
-                  ? t('mcp.instance.token.Basic')
-                  : t('mcp.instance.token.mustToken'),
-              ),
-            )
-          }
-        } else {
-          if (!formData.value.token) {
-            callback(new Error(t('mcp.instance.token.mustToken')))
-          }
-        }
-        callback()
-      },
-      trigger: 'change',
-    },
-  ],
-  token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
+  // tokenType: [
+  //   {
+  //     required: true,
+  //     validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
+  //       if (!value) {
+  //         callback(new Error(t('mcp.instance.token.placeholderTokenType')))
+  //       }
+  //       if (value === 4) {
+  //         if (!userDataKey.value.username || !userDataKey.value.password) {
+  //           callback(
+  //             new Error(
+  //               userDataKey.value.visible
+  //                 ? t('mcp.instance.token.Basic')
+  //                 : t('mcp.instance.token.mustToken'),
+  //             ),
+  //           )
+  //         }
+  //       } else {
+  //         if (!formData.value.token) {
+  //           callback(new Error(t('mcp.instance.token.mustToken')))
+  //         }
+  //       }
+  //       callback()
+  //     },
+  //     trigger: 'change',
+  //   },
+  // ],
+  // token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
 })
 const dialogInfo = ref({
   visible: false,
@@ -692,7 +692,7 @@ const handleEditToken = (index: number) => {
   formRef.value?.resetFields()
   formData.value.visible = true
   dialogInfo.value.currentEditIndex = index
-  const token = dialogInfo.value.instanceInfo.tokens[index]
+  const token = tokenList.value[index]
   formData.value.token = token.token
   formData.value.expireAt = token.expireAt
   formData.value.usages = token.usages || []
