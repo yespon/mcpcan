@@ -708,6 +708,9 @@ const handleEditToken = (index: number) => {
   }))
   formData.value.tokenType = token.tokenType
   formData.value.enabled = token.enabled
+  if(formData.value.headers[0].value.startsWith('Basic')) {
+    handleTokenTypeChange(4)
+  }
 }
 
 const handleChangeBasic = () => {
@@ -752,13 +755,12 @@ const handleSelectedToken = (index: number) => {
 const handleTokenTypeChange = (tokenType: number) => {
   formData.value.tokenType = tokenType
   formData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
-  let roginData = { token: '', tokenType: '' }
+  let roginData = null
   if (dialogInfo.value.currentEditIndex) {
     roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
-    formData.value.headers[0].token = roginData.token
-    if (Number(roginData.tokenType) === 4) {
-      userDataKey.value.username = atob(roginData.token.split(' ')[1]).split(':')[0]
-      userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
+    if ( tokenType === 4) {
+      userDataKey.value.username = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[0]
+      userDataKey.value.password = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[1]
     }
     return
   }

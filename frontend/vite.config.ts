@@ -25,16 +25,11 @@ export default defineConfig({
         changeOrigin: true,
         // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
-      '/api': {
-        target: 'http://192.168.6.91:8081',
+      '/api/': {
+        target: 'https://mcp-dev.itqm.com',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+        // rewrite: (path: string) => path.replace(/^\/api/, '/'),
       },
-      // '/api/': {
-      //   target: 'https://mcp-dev.itqm.com',
-      //   changeOrigin: true,
-      //   // rewrite: (path: string) => path.replace(/^\/api/, '/'),
-      // },
     },
   },
   css: {
