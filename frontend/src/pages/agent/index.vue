@@ -105,12 +105,16 @@
         </template>
       </TablePlus>
     </div>
-    <FormAgent ref="formAgent"></FormAgent>
+    <FormAgent ref="formAgent" @success="handleFormSuccess"></FormAgent>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Plus, More } from '@element-plus/icons-vue'
+
+defineOptions({
+  name: 'AgentPage',
+})
 import TablePlus from '@/components/TablePlus/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
@@ -125,8 +129,14 @@ const viewMode = ref<'card' | 'table'>('table')
 const loading = ref(false)
 const formAgent = ref()
 
-const handleNewAgent = (type: string) => {
-  formAgent.value.init(type)
+const handleNewAgent = () => {
+  formAgent.value.init()
+}
+
+// 表单提交成功后的回调
+const handleFormSuccess = () => {
+  // 刷新列表
+  tablePlus.value?.initData()
 }
 
 const handleEdit = (row: any) => {

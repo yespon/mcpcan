@@ -553,6 +553,12 @@ const userDataKey = ref({
   username: '',
   password: '',
 })
+const tokenTypeOptions = [
+  { label: 'Authorization', value: 1 },
+  { label: 'Api-Key', value: 2 },
+  { label: 'X-API-key', value: 3 },
+  { label: 'Authorization', value: 4 },
+]
 const rules = reactive({
   // tokenType: [
   //   {
@@ -745,16 +751,18 @@ const handleSelectedToken = (index: number) => {
 // handle token type change and clear token value
 const handleTokenTypeChange = (tokenType: number) => {
   formData.value.tokenType = tokenType
-  handleRandomToken()
+  formData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
   let roginData = { token: '', tokenType: '' }
-  if (dialogInfo.value.currentEditIndex !== null) {
-    roginData = dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] as any
-  }
-  if (Number(roginData.tokenType) === 4) {
-    userDataKey.value.username = atob(roginData.token.split(' ')[1]).split(':')[0]
-    userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
+  if (dialogInfo.value.currentEditIndex) {
+    roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
+    formData.value.headers[0].token = roginData.token
+    if (Number(roginData.tokenType) === 4) {
+      userDataKey.value.username = atob(roginData.token.split(' ')[1]).split(':')[0]
+      userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
+    }
     return
   }
+  handleRandomToken()
 }
 
 // handle random token

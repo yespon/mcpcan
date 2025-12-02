@@ -1,6 +1,5 @@
-import { DocsAPI } from '@/api/api-docs/index'
-import type { Code } from '@/types'
-import { timestampToDate, formatFileSize } from '@/utils/system'
+import { AgentAPI } from '@/api/agent/index'
+import { timestampToDate } from '@/utils/system'
 
 export const useAgentTableHooks = () => {
   const { t } = useI18n()
@@ -11,61 +10,54 @@ export const useAgentTableHooks = () => {
   })
   const columns = ref<any>([
     {
-      label: t('api.columns.name'),
-      dataIndex: 'name',
+      label: t('agent.columns.accessName'),
+      dataIndex: 'accessName',
       searchConfig: {
         component: 'el-input',
-        label: t('api.columns.name'),
+        label: t('agent.columns.accessName'),
         props: {
-          placeholder: t('api.columns.name'),
+          placeholder: t('agent.columns.accessName'),
         },
       },
     },
     {
-      label: t('api.columns.size'),
-      dataIndex: 'size',
-      customRender: ({ row }: { row: Code }) => {
-        return formatFileSize(row.size)
-      },
-    },
-    {
-      label: t('api.columns.type'),
-      dataIndex: 'types',
+      label: t('agent.columns.accessType'),
+      dataIndex: 'accessType',
       searchConfig: {
         component: 'el-select',
-        label: t('api.columns.type'),
+        label: t('agent.columns.accessType'),
         props: {
-          placeholder: t('api.columns.type'),
-          multiple: true,
+          placeholder: t('agent.columns.accessType'),
           options: [
-            { label: t('api.columns.json'), value: 1 },
-            { label: t('api.columns.yaml'), value: 2 },
+            { label: 'MySQL', value: 'mysql' },
+            { label: 'PostgreSQL', value: 'postgres' },
+            { label: 'SQLServer', value: 'sqlserver' },
+            { label: 'SQLite', value: 'sqlite' },
           ],
         },
       },
-      customRender: ({ row }: { row: Code }) => {
-        return [t('api.columns.unspecified'), t('api.columns.json'), t('api.columns.yaml')][
-          row.type
-        ]
-      },
+    },
+    {
+      label: t('agent.columns.dbHost'),
+      dataIndex: 'dbHost',
     },
     {
       dataIndex: 'createdAt',
       label: t('api.columns.createdAt'),
-      customRender: ({ row }: { row: Code }) => {
+      customRender: ({ row }: { row: any }) => {
         return timestampToDate(row.createdAt)
       },
     },
     {
       dataIndex: 'updatedAt',
       label: t('api.columns.updatedAt'),
-      customRender: ({ row }: { row: Code }) => {
+      customRender: ({ row }: { row: any }) => {
         return timestampToDate(row.updatedAt)
       },
     },
   ])
   const requestConfig = {
-    api: DocsAPI.list,
+    api: AgentAPI.list,
     searchQuery: {
       model: {},
     },

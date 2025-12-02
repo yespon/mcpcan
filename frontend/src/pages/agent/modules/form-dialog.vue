@@ -73,7 +73,8 @@
 import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import McpButton from '@/components/mcp-button/index.vue'
-// import {} from ''
+import { AgentAPI } from '@/api/agent/index'
+import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
 const dialogInfo = ref<{
@@ -138,22 +139,67 @@ const handleCancel = () => {
 // 提交
 const emit = defineEmits<{
   (e: 'submit', payload: typeof formModel.value): void
+  (e: 'success'): void
 }>()
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (!valid) return
-    emit('submit', { ...formModel.value })
-    dialogInfo.value.visible = false
+
+    try {
+      dialogInfo.value.loading = true
+      await AgentAPI.create({
+        accessName: formModel.value.accessName,
+        accessType: formModel.value.accessType,
+        dbHost: formModel.value.dbHost,
+        dbPort: formModel.value.dbPort,
+        dbUser: formModel.value.dbUser,
+        dbPassword: formModel.value.dbPassword,
+        dbName: formModel.value.dbName,
+      })
+
+      ElMessage.success(t('common.createSuccess') || '创建成功')
+      emit('submit', { ...formModel.value })
+      emit('success')
+      dialogInfo.value.visible = false
+
+      // 重置表单
+      formRef.value?.resetFields()
+      formModel.value = {
+        accessName: '',
+        accessType: '',
+        dbHost: '',
+        dbPort: 3306,
+        dbUser: '',
+        dbPassword: '',
+        dbName: '',
+      }
+    } catch (error: any) {
+      console.error('Failed to create agent:', error)
+      ElMessage.error(error?.message || t('common.createFailed') || '创建失败')
+    } finally {
+      dialogInfo.value.loading = false
+    }
   })
 }
 
 /**
  * Init and open dialog
  */
-const init = (type: string) => {
+const init = () => {
   dialogInfo.value.visible = true
+  // 重置表单
+  formRef.value?.resetFields()
+  formModel.value = {
+    accessName: '',
+    accessType: '',
+    dbHost: '',
+    dbPort: 3306,
+    dbUser: '',
+    dbPassword: '',
+    dbName: '',
+  }
 }
 defineExpose({
   init,

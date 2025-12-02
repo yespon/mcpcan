@@ -1,12 +1,19 @@
 {
   "agent": {
     "pageDesc": {
-      "title": "智能体管理",
-      "desc": "有效管理您的智能体;为MCP和智能体连接提供支持",
-      "total": "智能体总数"
+      "title": "智能体平台管理",
+      "desc": "有效管理您的智能体平台;为MCP和智能体连接提供支持",
+      "total": "智能体平台总数"
+    },
+    "columns": {
+      "accessName": "名称",
+      "accessType": "数据库类型",
+      "dbHost": "数据库地址",
+      "createdAt": "创建时间",
+      "updatedAt": "更新时间"
     },
     "action": {
-      "create": "创建智能体"
+      "create": "创建智能体平台"
     }
   }
 }
