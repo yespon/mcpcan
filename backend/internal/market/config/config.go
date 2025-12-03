@@ -30,7 +30,6 @@ type Config struct {
 	// RunMode indicates current running mode, e.g., "demo" or "prod"
 	RunMode string `mapstructure:"runMode"`
 	RunKimo bool   `mapstructure:"runKimo"`
-	Domain  string `mapstructure:"domain"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
 	DemoMaxInstances int `mapstructure:"demoMaxInstances"`
 }

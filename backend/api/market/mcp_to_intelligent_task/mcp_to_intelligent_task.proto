@@ -67,6 +67,8 @@ message CreateRequest {
   repeated InsertIntelligentInfo insertIntelligentInfos = 3;
   // mcp 实例id 列表
   repeated string mcpInstanceIDs = 4;
+  // 访问域名
+  string domain = 5;
 }
 
 message CreateResponse {

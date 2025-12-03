@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
-	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -123,6 +122,7 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		McpInstanceIDs:         req.McpInstanceIDs,
 		Status:                 pb.McpToIntelligentTaskStatus_Running.String(), // 默认状态为运行中
 		InstallLogs:            model.InstallLogs{},
+		Domain:                 req.Domain,
 	}
 
 	if err := mysql.McpToIntelligentTaskRepo.Create(s.ctx, task); err != nil {
@@ -364,7 +364,7 @@ func ProcessMcpToIntelligentTask(id int64) {
 			}
 
 			// 执行创建 dify tools
-			err = createDifyTools(instanceID, insertInfo, mcpInstance, userSpaces, conn)
+			err = createDifyTools(instanceID, task.Domain, insertInfo, mcpInstance, userSpaces, conn)
 			if err != nil {
 				insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
 					InsertIntelligentInfo: insertInfo,
@@ -453,7 +453,7 @@ func createOrUpdateInstanceToken(instanceID string, insertInfo *model.InsertInte
 	return nil
 }
 
-func createDifyTools(instanceID string, insertInfo *model.InsertIntelligentInfo, mcpInstance *model.McpInstance, userSpaces []*iapb.DifyUserSpace, difyConn *sql.DB) error {
+func createDifyTools(instanceID string, domain string, insertInfo *model.InsertIntelligentInfo, mcpInstance *model.McpInstance, userSpaces []*iapb.DifyUserSpace, difyConn *sql.DB) error {
 	var findUserSpace *iapb.DifyUserSpace
 	for _, userSpace := range userSpaces {
 		if userSpace.UserID == insertInfo.DifyUserID && userSpace.TenantID == insertInfo.DifySpaceID {
@@ -500,7 +500,7 @@ func createDifyTools(instanceID string, insertInfo *model.InsertIntelligentInfo,
 		return fmt.Errorf("failed to marshal tools failed: %s", err.Error())
 	}
 
-	mcpServerUrl := fmt.Sprintf("%s%s", config.GetConfig().Domain, mcpInstance.PublicProxyPath)
+	mcpServerUrl := fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
 	serverURL, err := dify.EncryptToken(findUserSpace.EncryptPublicKey, mcpServerUrl)
 	if err != nil {
 		return fmt.Errorf("encrypt token failed: %s", err.Error())

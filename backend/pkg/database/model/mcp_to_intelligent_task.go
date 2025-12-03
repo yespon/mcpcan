@@ -51,6 +51,7 @@ type McpToIntelligentTask struct {
 	McpInstanceIDs         StringSlice            `gorm:"type:json;not null;column:mcp_instance_ids;comment:MCP实例ID列表"`
 	Status                 string                 `gorm:"type:varchar(255);not null;column:status;comment:任务状态"`
 	InstallLogs            InstallLogs            `gorm:"type:json;not null;column:install_logs;comment:安装日志"`
+	Domain                 string                 `gorm:"type:varchar(255);not null;column:domain;comment:mcp访问域名"`
 	CreatedAt              time.Time              `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt              time.Time              `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
