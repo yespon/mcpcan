@@ -68,7 +68,7 @@ message GetResponse {
 message ListRequest {}
 
 message ListResponse {
-    repeated IntelligentAccess intelligentAccesses = 1;
+    repeated IntelligentAccess list = 1;
 }
 
 message TestConnectionRequest {

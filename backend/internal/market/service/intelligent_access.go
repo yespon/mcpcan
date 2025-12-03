@@ -203,7 +203,7 @@ func (s *IntelligentAccessService) ListHandler(c *gin.Context) {
 	}
 
 	common.GinSuccess(c, &pb.ListResponse{
-		IntelligentAccesses: pbIntelligentAccesses,
+		List: pbIntelligentAccesses,
 	})
 }
 

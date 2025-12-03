@@ -214,7 +214,7 @@ func (s *McpToIntelligentTaskService) ListHandler(c *gin.Context) {
 	}
 
 	common.GinSuccess(c, &pb.ListResponse{
-		Tasks: pbTasks,
+		List:  pbTasks,
 		Total: total,
 	})
 }
