@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
+	"github.com/kymo-mcp/mcpcan/internal/market/repository"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -61,7 +62,7 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 		DbName:     req.DbName,
 	}
 
-	if err := mysql.IntelligentAccessRepo.Create(s.ctx, intelligentAccess); err != nil {
+	if err := repository.IntelligentAccessRepo.Create(s.ctx, intelligentAccess); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create intelligent access: %s", err.Error()))
 		return
 	}
@@ -98,7 +99,7 @@ func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
 		return
 	}
 
-	dbIntelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
+	dbIntelligentAccess, err := repository.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
 		return
@@ -111,7 +112,7 @@ func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
 	dbIntelligentAccess.DbPort = int(req.DbPort)
 	dbIntelligentAccess.DbUser = req.DbUser
 
-	if err := mysql.IntelligentAccessRepo.Update(s.ctx, dbIntelligentAccess); err != nil {
+	if err := repository.IntelligentAccessRepo.Update(s.ctx, dbIntelligentAccess); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update intelligent access: %s", err.Error()))
 		return
 	}
@@ -143,7 +144,7 @@ func (s *IntelligentAccessService) DeleteHandler(c *gin.Context) {
 		return
 	}
 
-	if err := mysql.IntelligentAccessRepo.Delete(s.ctx, req.AccessID); err != nil {
+	if err := repository.IntelligentAccessRepo.Delete(s.ctx, req.AccessID); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to delete intelligent access: %s", err.Error()))
 		return
 	}
@@ -159,7 +160,7 @@ func (s *IntelligentAccessService) GetHandler(c *gin.Context) {
 		return
 	}
 
-	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
+	intelligentAccess, err := repository.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
 		return
@@ -181,7 +182,7 @@ func (s *IntelligentAccessService) GetHandler(c *gin.Context) {
 
 // ListHandler finds all intelligent access HTTP handler function
 func (s *IntelligentAccessService) ListHandler(c *gin.Context) {
-	intelligentAccesses, err := mysql.IntelligentAccessRepo.FindAll(s.ctx)
+	intelligentAccesses, err := repository.IntelligentAccessRepo.FindAll(s.ctx)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find all intelligent access: %s", err.Error()))
 		return
@@ -254,7 +255,7 @@ func (s *IntelligentAccessService) ListDifyUserSpaceHandler(c *gin.Context) {
 		return
 	}
 
-	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
+	intelligentAccess, err := repository.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
 		return

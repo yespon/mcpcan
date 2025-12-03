@@ -1,17 +1,18 @@
-package mysql
+package repository
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"gorm.io/gorm"
 )
 
 var IntelligentAccessRepo *IntelligentAccessRepository
 
 func init() {
-	RegisterInit(func() {
+	mysql.RegisterInit(func() {
 		repo := NewIntelligentAccessRepository()
 		if err := repo.InitTable(); err != nil {
 			panic(fmt.Sprintf("Failed to initialize intelligent_access table: %v", err))
@@ -30,7 +31,7 @@ func NewIntelligentAccessRepository() *IntelligentAccessRepository {
 
 // getDB 获取数据库连接
 func (r *IntelligentAccessRepository) getDB() *gorm.DB {
-	return GetDB().Model(&model.IntelligentAccess{})
+	return mysql.GetDB().Model(&model.IntelligentAccess{})
 }
 
 // Create 创建

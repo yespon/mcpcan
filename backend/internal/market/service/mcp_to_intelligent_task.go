@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
+	"github.com/kymo-mcp/mcpcan/internal/market/repository"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -108,7 +109,7 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 	}
 
 	// 获取智能体平台名称
-	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.IntelligentAccessID)
+	intelligentAccess, err := repository.IntelligentAccessRepo.FindByID(s.ctx, req.IntelligentAccessID)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
 		return
@@ -297,7 +298,7 @@ func ProcessMcpToIntelligentTask(id int64) {
 		return
 	}
 	// 从数据库中获取智能体访问信息
-	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(context.Background(), task.IntelligentAccessID)
+	intelligentAccess, err := repository.IntelligentAccessRepo.FindByID(context.Background(), task.IntelligentAccessID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to find intelligent access: %s", err.Error()), zap.Int64("IntelligentAccessID", task.IntelligentAccessID))
 		return
