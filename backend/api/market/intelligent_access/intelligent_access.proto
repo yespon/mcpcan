@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package intelligent_access;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/intelligent_access";
+
+enum IntelligentAccessType {
+  Unknown = 0;
+  DifyEnterprise = 1;
+  Dify = 2;
+}
+
+message IntelligentAccess {
+    int64 accessID = 1;
+    string accessName = 2;
+    string accessType = 3;
+    string dbHost = 4;
+    int32 dbPort = 5;
+    string dbUser = 6;
+    string dbPassword = 7;
+    string dbName = 8;
+}
+
+message CreateRequest {
+    string accessName = 1;
+    string accessType = 2;
+    string dbHost = 3;
+    int32 dbPort = 4;
+    string dbUser = 5;
+    string dbPassword = 6;
+    string dbName = 7;
+}
+
+message CreateResponse {
+    IntelligentAccess intelligentAccess = 1;
+}
+
+message UpdateRequest {
+    int64 accessID = 1;
+    string accessName = 2;
+    string dbHost = 4;
+    int32 dbPort = 5;
+    string dbUser = 6;
+    string dbPassword = 7;
+    string dbName = 8;
+}
+
+message UpdateResponse {
+    IntelligentAccess intelligentAccess = 1;
+}
+
+message DeleteRequest {
+    int64 accessID = 1;
+}
+
+message DeleteResponse {}
+
+message GetRequest {
+    int64 accessID = 1;
+}
+
+message GetResponse {
+    IntelligentAccess intelligentAccess = 1;
+}
+
+message ListRequest {}
+
+message ListResponse {
+    repeated IntelligentAccess intelligentAccesses = 1;
+}
+
+message TestConnectionRequest {
+  string dbHost = 1;
+  int32 dbPort = 2;
+  string dbUser = 3;
+  string dbPassword = 4;
+  string dbName = 5;
+}
+
+message TestConnectionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListDifyUserSpaceRequest {
+    int64 accessID = 1;
+    repeated string instancesIDs = 2;
+}
+
+message HeaderInfo {
+  // 平台的网关 token
+  string Token = 1;
+  // 透传的 headers
+  map<string, string> Headers = 2;
+}
+
+
+message DifyUserSpace {
+  string userID = 1;
+  string tenantID = 2;
+  string userName = 3;
+  string tenantName = 4;
+  string encryptPublicKey = 5;
+
+  // key 为 实例ID, value 为每个实例需要创建的 header 内容
+  map<string, HeaderInfo> headers = 6;
+}
+
+message ListDifyUserSpaceResponse {
+  repeated DifyUserSpace userSpaces = 1;
+}
+
+service IntelligentAccessService {
+    rpc Create(CreateRequest) returns (CreateResponse) {
+        option (google.api.http) = {
+            post: "/intelligent_access"
+            body: "*"
+        };
+    }
+    rpc Update(UpdateRequest) returns (UpdateResponse) {
+        option (google.api.http) = {
+            put: "/intelligent_access/edit"
+            body: "*"
+        };
+    }
+    rpc Delete(DeleteRequest) returns (DeleteResponse) {
+        option (google.api.http) = {
+            delete: "/intelligent_access/delete"
+        };
+    }
+    rpc Get(GetRequest) returns (GetResponse) {
+        option (google.api.http) = {
+            get: "/intelligent_access/{accessID}"
+        };
+    }
+    rpc List(ListRequest) returns (ListResponse) {
+        option (google.api.http) = {
+            get: "/intelligent_access/list"
+        };
+    }
+    rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {
+        option (google.api.http) = {
+          post: "/intelligent_access/test-connection"
+          body: "*"
+        };
+    }
+
+    rpc ListDifyUserSpace(ListDifyUserSpaceRequest) returns (ListDifyUserSpaceResponse) {
+      option (google.api.http) = {
+        post: "/intelligent_access/list-dify-user-space"
+        body: "*"
+      };
+    }
+}

@@ -1,0 +1,40 @@
+### 1. 创建同步到dify任务
+POST {{baseUrl}}/{{routerPrefix}}/mcp_to_intelligent_task
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "desc": "同步到dify",
+  "intelligentAccessID": 1,
+  "insertIntelligentInfos": [
+    {
+      "difyUserID": "967ecbcd-36c0-4996-8cd2-0ad35824fe9c",
+      "difySpaceID": "0367fd04-7744-44f4-af74-72bb1242d898",
+      "difyUserName": "kakj",
+      "difySpaceName": "kakj's Workspace",
+      "headers": {
+        "4a10d139-56d3-417f-918e-9a1827eec30f": {
+          "Token": "Bearer ZGExN2ZmNWYtOTMwNC00YTZhLTg2ZjgtZmQ2ZjA4MWFhNzkyeyJleHBpcmVBdCI6MTc2NDY3MDg5NzIwNywidXNlcklkIjoxLCJ1c2VybmFtZSI6ImFkbWluIn0=",
+          "Headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJleHAiOjE3NjQ3NTEzMjcsImlhdCI6MTc2NDY2NDkyN30.eWUixcKcHZA8YI40vJP1tTcsmkauUMOuog7JGMla3c8"
+          }
+        }
+      }
+    }
+  ],
+  "mcpInstanceIDs": [
+    "4a10d139-56d3-417f-918e-9a1827eec30f"
+  ]
+}
+
+### 2. 查询同步到dify任务列表
+GET {{baseUrl}}/{{routerPrefix}}/mcp_to_intelligent_task/list
+Authorization: {{token}}
+
+### 3. 查询同步到dify任务详情
+GET {{baseUrl}}/{{routerPrefix}}/mcp_to_intelligent_task/1
+Authorization: {{token}}
+
+### 4. 取消同步到dify任务
+POST {{baseUrl}}/{{routerPrefix}}/mcp_to_intelligent_task/1/cancel
+Authorization: {{token}}
