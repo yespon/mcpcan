@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"gorm.io/gorm"
 )
@@ -71,14 +70,10 @@ func (r *IntelligentAccessRepository) FindAll(ctx context.Context) ([]*model.Int
 
 // InitTable 初始化表结构
 func (r *IntelligentAccessRepository) InitTable() error {
-	// 在 kimo 中运行不初始化表结构
-	if !config.GetConfig().RunKimo {
-		// 创建表
-		mod := &model.IntelligentAccess{}
-		if err := r.getDB().AutoMigrate(mod); err != nil {
-			return fmt.Errorf("failed to migrate table: %v", err)
-		}
-		return nil
+	// 创建表
+	mod := &model.IntelligentAccess{}
+	if err := r.getDB().AutoMigrate(mod); err != nil {
+		return fmt.Errorf("failed to migrate table: %v", err)
 	}
 	return nil
 }
