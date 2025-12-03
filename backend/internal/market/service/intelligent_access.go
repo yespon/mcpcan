@@ -47,7 +47,7 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
 		return
 	}
-	if req.AccessType != pb.IntelligentAccessType_DifyEnterprise.String() && req.AccessType != pb.IntelligentAccessType_Dify.String() {
+	if req.AccessType != pb.IntelligentAccessType_DifyEnterprise.String() && req.AccessType != pb.IntelligentAccessType_QAgent.String() {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid access type")
 		return
 	}

@@ -9,7 +9,7 @@ option go_package = "github.com/kymo-mcp/mcpcan/api/market/intelligent_access";
 enum IntelligentAccessType {
   Unknown = 0;
   DifyEnterprise = 1;
-  Dify = 2;
+  QAgent = 2;
 }
 
 message IntelligentAccess {
