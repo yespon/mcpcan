@@ -13,13 +13,12 @@ var GlobalConfig *InitConfig
 
 // InitConfig 表示初始化配置结构
 type InitConfig struct {
-	ServiceName string                      `mapstructure:"-"`
-	VersionInfo *version.VersionInfo        `mapstructure:"-"`
-	Database    common.DatabaseConfig       `mapstructure:"database"`
-	Storage     common.StorageConfig        `mapstructure:"storage"`
-	Log         common.LogConfig            `mapstructure:"log"`
-	Init        InitUserConfig              `mapstructure:"init"`
-	Kubernetes  common.InitKubernetesConfig `mapstructure:"kubernetes"`
+	ServiceName string                `mapstructure:"-"`
+	VersionInfo *version.VersionInfo  `mapstructure:"-"`
+	Database    common.DatabaseConfig `mapstructure:"database"`
+	Storage     common.StorageConfig  `mapstructure:"storage"`
+	Log         common.LogConfig      `mapstructure:"log"`
+	Init        InitUserConfig        `mapstructure:"init"`
 }
 
 // InitUserConfig 初始化用户配置

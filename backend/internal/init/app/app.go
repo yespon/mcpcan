@@ -83,14 +83,6 @@ func (a *App) Run() error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := a.initDefaultKubernetesEnvironment(context.Background(), adminUser); err != nil {
-			logger.Error("Failed to init default kubernetes environment", zap.Error(err))
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
 		RunMigrations()
 	}()
 
