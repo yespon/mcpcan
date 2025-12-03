@@ -379,10 +379,6 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 		OpenapiBaseUrl: instance.OpenapiBaseUrl,
 	}
 
-	if instance.EnabledToken {
-		resp.Tokens = common.ConvertToProtoMcpToken(instance.Tokens)
-	}
-
 	// Add specific fields based on access type
 	switch instance.AccessType {
 	case model.AccessTypeHosting:
@@ -757,6 +753,11 @@ func (s *InstanceService) createInstanceDirectMode(req *instancepb.CreateRequest
 		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
 		TemplateID:   uint(req.TemplateId), // Add templateId field handling
 	}
+	if len(req.Tokens) > 0 {
+		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
+			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
+		}
+	}
 
 	// Save instance to database
 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
@@ -820,9 +821,14 @@ func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest,
 		McpServerID:     req.McpServerId,      // Add mcpServerId field handling
 		TemplateID:      uint(req.TemplateId), // Add templateId field handling
 		EnabledToken:    req.EnabledToken,
-		Tokens:          common.ConvertProtoTokensToModel(req.Tokens),
 		PublicProxyPath: publicProxyPath,
 		ProxyProtocol:   proxyProtocol,
+	}
+
+	if len(req.Tokens) > 0 {
+		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
+			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
+		}
 	}
 
 	// Save instance to database
@@ -944,7 +950,6 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		McpServerID:            req.McpServerId,
 		TemplateID:             uint(req.TemplateId),
 		EnabledToken:           req.EnabledToken,
-		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
 		ImgAddr:                req.ImgAddress,
 		Port:                   req.Port,
 		InitScript:             req.InitScript,
@@ -966,7 +971,11 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		PublicProxyPath:        publicProxyPath,
 		ProxyProtocol:          proxyProtocol,
 	}
-
+	if len(req.Tokens) > 0 {
+		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
+			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
+		}
+	}
 	// Save instance to database
 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
 		return nil, fmt.Errorf("failed to create instance: %w", err)
@@ -1054,58 +1063,47 @@ func (s *InstanceService) TokenEditHandler(c *gin.Context) {
 		return
 	}
 
-	// Validate required fields
-	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
-		return
-	}
-
-	// Get original instance information
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
-		return
-	}
-	if instance == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
-		return
-	}
-
-	// Validate tokens
-	if len(req.Tokens) == 0 {
-		common.GinError(c, i18nresp.CodeInternalError, "tokens cannot be empty")
-		return
-	}
-
-	// Validate each token
-	for _, token := range req.Tokens {
-		if token.Token == "" {
-			common.GinError(c, i18nresp.CodeInternalError, "token value cannot be empty")
-			return
-		}
-		if token.ExpireAt < 0 {
-			common.GinError(c, i18nresp.CodeInternalError, "expireAt cannot be negative")
-			return
-		}
-		if token.ExpireAt > 0 && token.ExpireAt <= time.Now().Unix() {
-			common.GinError(c, i18nresp.CodeInternalError, "expireAt must be in the future")
-			return
-		}
-	}
-
-	// Convert proto tokens to model tokens and overwrite existing tokens
-	instance.Tokens = common.ConvertProtoTokensToModel(req.Tokens)
-	if err := biz.GInstanceBiz.UpdateInstance(instance); err != nil {
+	// Delegate to biz for upsert logic
+	if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance tokens: %s", err.Error()))
 		return
 	}
-
-	// Return success response with updated tokens
 	common.GinSuccess(c, &instancepb.TokenEditResponse{
-		InstanceId: instance.InstanceID,
-		Tokens:     common.ConvertToProtoMcpToken(instance.Tokens),
-		Message:    "Tokens updated successfully",
+		Message: "Tokens updated successfully",
 	})
+}
+
+// TokenListByInstanceIDHandler lists tokens for instance
+func (s *InstanceService) TokenListByInstanceIDHandler(c *gin.Context) {
+	var req instancepb.TokenListByInstanceIDRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	resp, err := biz.GInstanceBiz.TokenListByInstanceID(&req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list tokens: %s", err.Error()))
+		return
+	}
+	common.GinSuccess(c, resp)
+}
+
+// TokenDeleteHandler delete a token
+func (s *InstanceService) TokenDeleteHandler(c *gin.Context) {
+	var req instancepb.TokenDeleteRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	if req.Id == 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "missing required field: id")
+		return
+	}
+
+	if err := biz.GInstanceBiz.DeleteTokenByID(c, req.Id); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to delete token: %s", err.Error()))
+		return
+	}
+	resp := &instancepb.TokenDeleteResponse{Message: "Token deleted successfully"}
+	common.GinSuccess(c, resp)
 }
 
 // CreateOpenapiHandler creates openapi instance HTTP handler function
@@ -1191,8 +1189,7 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		SourceType:             model.OpenapiTypeCustom,
 		McpServerID:            "",
 		TemplateID:             0,
-		EnabledToken:           len(req.Tokens) > 0,
-		Tokens:                 common.ConvertProtoTokensToModel(req.Tokens),
+		EnabledToken:           req.EnableToken,
 		ImgAddr:                containerOptions.ImageName,
 		Port:                   8080,
 		InitScript:             "",
@@ -1214,6 +1211,13 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		PublicProxyPath:        biz.GInstanceBiz.CreatePublicProxyPath(instanceID, model.McpProtocolStreamableHttp),
 		ProxyProtocol:          model.McpProtocolStreamableHttp,
 		OpenapiBaseUrl:         req.OpenapiBaseUrl,
+	}
+
+	if len(req.Tokens) > 0 {
+		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to save tokens for instance: %w", err))
+			return
+		}
 	}
 
 	// Save instance to database

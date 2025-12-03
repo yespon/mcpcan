@@ -38,7 +38,7 @@ type McpCodePackage struct {
 
 // TableName 指定表名
 func (McpCodePackage) TableName() string {
-	return "mcp_code_package"
+	return "mcpcan_code_package"
 }
 
 // IsDeletedRecord 检查代码包是否已被删除

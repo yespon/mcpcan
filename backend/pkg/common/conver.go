@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
 
 	codepb "github.com/kymo-mcp/mcpcan/api/market/code"
@@ -16,7 +15,6 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 	mcpProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.McpProtocol))
 	proxyProtocol, _ := ConvertToProtoMcpProtocol(model.McpProtocol(instance.ProxyProtocol))
 	protoSourceType, _ := ConvertToProtoSourceType(instance.SourceType)
-	protoTokens := ConvertToProtoMcpToken(instance.Tokens)
 	return &instancepb.ListResp_InstanceInfo{
 		InstanceId:                 instance.InstanceID,
 		InstanceName:               instance.InstanceName,
@@ -36,7 +34,6 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		UpdatedAt:                  instance.UpdatedAt.String(),
 		McpProtocol:                mcpProtocol,
 		EnabledToken:               instance.EnabledToken,
-		Tokens:                     protoTokens,
 		IconPath:                   instance.IconPath,
 		ServicePath:                instance.ServicePath,
 		PublicProxyPath:            instance.PublicProxyPath,
@@ -131,82 +128,6 @@ func ConvertToProtoAccessType(accessType model.AccessType) (instancepb.AccessTyp
 	default:
 		return instancepb.AccessType_AccessTypeUnknown, fmt.Errorf("unknown access type: %v", accessType)
 	}
-}
-
-func ConvertToProtoMcpToken(tokens json.RawMessage) []*instancepb.McpToken {
-	var modelTokens []model.McpToken
-	if len(tokens) == 0 {
-		return []*instancepb.McpToken{}
-	}
-	err := json.Unmarshal(tokens, &modelTokens)
-	if err != nil {
-		return []*instancepb.McpToken{}
-	}
-	protoTokens := make([]*instancepb.McpToken, 0, len(modelTokens))
-	for _, token := range modelTokens {
-		protoTokens = append(protoTokens, &instancepb.McpToken{
-			Token:            token.Token,
-			ExpireAt:         token.ExpireAt,
-			PublishAt:        token.PublishAt,
-			Usages:           token.Usages,
-			EnabledTransport: token.EnabledTransport,
-			TokenType:        CoverTokenTypeToProto(token.TokenType),
-			Headers:          token.Headers,
-		})
-	}
-	return protoTokens
-}
-
-func CoverTokenTypeToProto(tokenType model.TokenType) instancepb.McpToken_TokenType {
-	switch tokenType {
-	case model.TokenTypeBearer:
-		return instancepb.McpToken_BEARER
-	case model.TokenTypeBasic:
-		return instancepb.McpToken_BASIC
-	case model.TokenTypeKey:
-		return instancepb.McpToken_API_KEY
-	case model.TokenTypeXAPIKey:
-		return instancepb.McpToken_X_API_KEY
-	default:
-		return instancepb.McpToken_BEARER
-	}
-}
-
-func CoverTokenTypeToModel(tokenType instancepb.McpToken_TokenType) model.TokenType {
-	switch tokenType {
-	case instancepb.McpToken_BEARER:
-		return model.TokenTypeBearer
-	case instancepb.McpToken_BASIC:
-		return model.TokenTypeBasic
-	case instancepb.McpToken_API_KEY:
-		return model.TokenTypeKey
-	case instancepb.McpToken_X_API_KEY:
-		return model.TokenTypeXAPIKey
-	default:
-		return model.TokenTypeBearer
-	}
-}
-
-// convertProtoTokensToModel converts tokens from proto structure to model structure
-func ConvertProtoTokensToModel(tokens []*instancepb.McpToken) json.RawMessage {
-	var modelTokens []model.McpToken
-	for _, token := range tokens {
-		modelTokens = append(modelTokens, model.McpToken{
-			Token:     token.Token,
-			ExpireAt:  token.ExpireAt,
-			PublishAt: token.PublishAt,
-			Usages:    token.Usages,
-
-			EnabledTransport: token.EnabledTransport,
-			TokenType:        CoverTokenTypeToModel(token.TokenType),
-			Headers:          token.Headers,
-		})
-	}
-	jsonTokens, err := json.Marshal(modelTokens)
-	if err != nil {
-		return json.RawMessage{}
-	}
-	return json.RawMessage(jsonTokens)
 }
 
 // ConvertToModelPackageType converts proto PackageType to model PackageType

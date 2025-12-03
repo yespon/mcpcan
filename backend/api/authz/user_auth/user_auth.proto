@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package authz.user_auth;
 
-option go_package = "github.com/kymo-mcp/mcpcan/api/authz/user_auth";
-
 import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/authz/user_auth";
 
 // 用户登录请求
 message LoginRequest {
@@ -109,10 +109,7 @@ message RefreshTokenResponse {
 }
 
 // Token校验请求
-message ValidateTokenRequest {
-  // @inject_tag: json:"token" form:"token" desc:"访问令牌"
-  string token = 1;
-}
+message ValidateTokenRequest {}
 
 // Token校验响应
 message ValidateTokenResponse {
@@ -137,8 +134,7 @@ message LoginInfo {
 }
 
 // 获取加密密钥请求
-message GetEncryptionKeyRequest {
-}
+message GetEncryptionKeyRequest {}
 
 // 获取加密密钥响应
 message GetEncryptionKeyResponse {
@@ -159,47 +155,47 @@ service UserAuthService {
   // 用户登录
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
-      post: "/authz/login"
-      body: "*"
+      post: "/authz/login",
+      body: "*",
     };
   }
 
   // 用户退出
   rpc Logout(LogoutRequest) returns (LogoutResponse) {
     option (google.api.http) = {
-      post: "/authz/logout"
-      body: "*"
+      post: "/authz/logout",
+      body: "*",
     };
   }
 
   // 获取用户配置
   rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse) {
     option (google.api.http) = {
-      get: "/authz/user-info"
+      get: "/authz/user-info",
     };
   }
 
   // 刷新Token
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
     option (google.api.http) = {
-      post: "/authz/refresh"
-      body: "*"
+      post: "/authz/refresh",
+      body: "*",
     };
   }
 
   // 校验Token
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {
     option (google.api.http) = {
-      post: "/authz/validate"
-      body: "*"
+      post: "/authz/validate",
+      body: "*",
     };
   }
 
   // 获取加密密钥
   rpc GetEncryptionKey(GetEncryptionKeyRequest) returns (GetEncryptionKeyResponse) {
     option (google.api.http) = {
-      post: "/authz/encryption-key"
-      body: "*"
+      post: "/authz/encryption-key",
+      body: "*",
     };
   }
 }

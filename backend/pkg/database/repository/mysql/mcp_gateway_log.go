@@ -129,14 +129,6 @@ func (r *GatewayLogRepository) FindWithPagination(
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("token = ?", s)
 			}
-		case "tokenHeader", "token_header":
-			if s, ok := v.(string); ok && s != "" {
-				q = q.Where("LOWER(token_header) = ?", strings.ToLower(s))
-			}
-		case "tokenType", "token_type":
-			if tt, ok := v.(model.TokenType); ok {
-				q = q.Where("token_type = ?", tt)
-			}
 		case "event":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("event = ?", s)

@@ -61,7 +61,8 @@
     "codeList": "代码包列表",
     "updateCodePackage": "上传代码包",
     "viewCodePackage": "代码包详情",
-    "apiDocsList": "API 文档"
+    "apiDocsList": "API 文档",
+    "agentManage": "智能体管理"
   },
   "common": {
     "search": "搜索",

@@ -32,7 +32,8 @@ func NewMcpInstanceRepository() *McpInstanceRepository {
 
 // getDB 获取数据库连接
 func (r *McpInstanceRepository) getDB() *gorm.DB {
-	return GetDB().Model(&model.McpInstance{})
+	model := &model.McpInstance{}
+	return GetDB().Model(model).Table(model.TableName())
 }
 
 // FindByInstanceID 通过 instanceId 查询数据

@@ -1,0 +1,12 @@
+{
+  "agent": {
+    "pageDesc": {
+      "title": "Agent Management",
+      "desc": "Manage your agents effectively, with support for MCP and agent connections",
+      "total": "Total Agents"
+    },
+    "action": {
+      "create": "Create Agent"
+    }
+  }
+}

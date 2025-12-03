@@ -1,9 +1,9 @@
 @font-face {
   font-family: "iconfont"; /* Project id 5029591 */
-  src: url('iconfont.woff2?t=1761119447079') format('woff2'),
-       url('iconfont.woff?t=1761119447079') format('woff'),
-       url('iconfont.ttf?t=1761119447079') format('truetype'),
-       url('iconfont.svg?t=1761119447079#iconfont') format('svg');
+  src: url('iconfont.woff2?t=1764126966322') format('woff2'),
+       url('iconfont.woff?t=1764126966322') format('woff'),
+       url('iconfont.ttf?t=1764126966322') format('truetype'),
+       url('iconfont.svg?t=1764126966322#iconfont') format('svg');
 }
 
 .iconfont {
@@ -12,6 +12,14 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.MCP-zhinengti:before {
+  content: "\e684";
+}
+
+.MCP-icon_zhinengti:before {
+  content: "\e606";
 }
 
 .MCP-GitHub1:before {

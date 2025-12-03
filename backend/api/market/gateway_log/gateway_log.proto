@@ -35,24 +35,22 @@ enum Level {
 message FindGatewayLogRequest {
   // @inject_tag: json:"instanceId" form:"instanceId" desc:"实例ID"
   string instanceId = 1;
-  // @inject_tag: json:"tokenHeader" form:"tokenHeader" desc:"token header"
-  string tokenHeader = 2;
   // @inject_tag: json:"token" form:"token" desc:"token"
-  string token = 3;
+  string token = 2;
   // @inject_tag: json:"usages" form:"usages" desc:"usage scenarios"
-  repeated string usages = 4;
+  repeated string usages = 3;
   // @inject_tag: json:"level" form:"level" desc:"log level"
-  Level level = 5;
+  Level level = 4;
   // @inject_tag: json:"startTime" form:"startTime" desc:"start time：seconds since epoch"
-  int64 startTime = 6;
+  int64 startTime = 5;
   // @inject_tag: json:"endTime" form:"endTime" desc:"end time：seconds since epoch"
-  int64 endTime = 7;
+  int64 endTime = 6;
   // @inject_tag: json:"pageSize" form:"pageSize" desc:"page size"
-  int32 pageSize = 8;
+  int32 pageSize = 7;
   // @inject_tag: json:"page" form:"page" desc:"page number"
-  int32 page = 9;
+  int32 page = 8;
   // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
-  string traceId = 10;
+  string traceId = 9;
 }
 
 message FindGatewayLogResponse {
@@ -71,20 +69,18 @@ message GatewayLog {
   uint32 id = 1;
   // @inject_tag: json:"instanceId" form:"instanceId" desc:"instance ID"
   string instanceId = 2;
-  // @inject_tag: json:"tokenHeader" form:"tokenHeader" desc:"token header"
-  string tokenHeader = 3;
   // @inject_tag: json:"token" form:"token" desc:"token"
-  string token = 4;
+  string token = 3;
   // @inject_tag: json:"usages" form:"usages" desc:"usage scenarios"
-  repeated string usages = 5;
+  repeated string usages = 4;
   // @inject_tag: json:"level" form:"level" desc:"log level"
-  Level level = 6;
+  Level level = 5;
   // @inject_tag: json:"event" form:"event" desc:"event type"
-  string event = 7;
+  string event = 6;
   // @inject_tag: json:"createdAt" form:"createdAt" desc:"creation time"
-  string createdAt = 8;
+  string createdAt = 7;
   // @inject_tag: json:"log" form:"log" desc:"log details"
-  string log = 9;
+  string log = 8;
   // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
-  string traceId = 10;
+  string traceId = 9;
 }

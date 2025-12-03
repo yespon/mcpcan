@@ -122,6 +122,11 @@ type McpInstance struct {
 	UpdatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
 
+// TableName
+func (i *McpInstance) TableName() string {
+	return "mcpcan_instance"
+}
+
 type TokenType string
 
 const (
@@ -137,30 +142,6 @@ const (
 
 func (tokenType TokenType) String() string {
 	return string(tokenType)
-}
-
-type McpToken struct {
-	TokenType        TokenType         `json:"tokenType"`
-	Token            string            `json:"token"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	EnabledTransport bool              `json:"enabledTransport"`
-	ExpireAt         int64             `json:"expireAt"`
-	PublishAt        int64             `json:"publishAt"`
-	Usages           []string          `json:"usages"`
-}
-
-func (m *McpToken) ToTokenHeaderKey() string {
-	switch m.TokenType {
-	case TokenTypeBearer:
-		return "Authorization"
-	case TokenTypeBasic:
-		return "Authorization"
-	case TokenTypeKey:
-		return "API-Key"
-	case TokenTypeXAPIKey:
-		return "X-API-Key"
-	}
-	return "Authorization"
 }
 
 // McpConfig 表示单个 MCP 服务器配置
@@ -206,11 +187,6 @@ type SourceConfig = McpServersConfig
 type TargetConfig = McpServersConfig
 type PublicProxyConfig = McpServersConfig
 type InnerProxyConfig = McpServersConfig
-
-// TableName 指定表名
-func (McpInstance) TableName() string {
-	return "mcp_instance"
-}
 
 // ParseMcpServersConfig 通用解析 MCP 服务器配置
 func ParseMcpServersConfig(rawConfig json.RawMessage) (string, *McpConfig, error) {

@@ -33,7 +33,7 @@ type McpOpenapiPackage struct {
 
 // TableName 指定表名
 func (McpOpenapiPackage) TableName() string {
-	return "mcp_openapi_package"
+	return "mcpcan_openapi_package"
 }
 
 // IsDeletedRecord 检查OpenAPI文档是否已被删除

@@ -3,14 +3,6 @@ server:
 
 secret: "dev-app-secret"
 
-services:
-  mcpMarket:
-    host: "mcp-market-svc"
-    port: 8081
-  mcpAuthz:
-    host: "127.0.0.1"
-    port: 8082
-
 database:
   mysql:
     host: "mysql-svc"

@@ -98,7 +98,6 @@ type LogConfig struct {
 
 type Services struct {
 	McpMarket *Service `mapstructure:"mcpMarket"`
-	McpAuthz  *Service `mapstructure:"mcpAuthz"`
 }
 
 type Service struct {

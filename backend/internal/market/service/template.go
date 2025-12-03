@@ -116,25 +116,6 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 		template.McpServers = json.RawMessage(req.McpServers)
 	}
 
-	// Handle tokens
-	if len(req.Tokens) > 0 {
-		tokens := make([]model.McpToken, 0, len(req.Tokens))
-		for _, token := range req.Tokens {
-			tokens = append(tokens, model.McpToken{
-				Token:     token.Token,
-				ExpireAt:  token.ExpireAt,
-				PublishAt: token.PublishAt,
-				Usages:    token.Usages,
-			})
-		}
-		tokensJSON, err := json.Marshal(tokens)
-		if err != nil {
-			logger.Error("failed to marshal tokens", zap.Error(err))
-			return nil, fmt.Errorf("failed to process tokens: %v", err)
-		}
-		template.Tokens = json.RawMessage(tokensJSON)
-	}
-
 	// Create template
 	if err := s.templateData.CreateTemplate(ctx, template); err != nil {
 		logger.Error("failed to create template", zap.Error(err), zap.String("name", req.Name))
@@ -231,16 +212,6 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 		}
 	}
 
-	// Handle tokens
-	if len(template.Tokens) > 0 {
-		tokens := make([]*instance.McpToken, 0, len(template.Tokens))
-		if err := json.Unmarshal(template.Tokens, &tokens); err != nil {
-			logger.Error("failed to unmarshal tokens", zap.Error(err))
-		} else {
-			resp.Tokens = tokens
-		}
-	}
-
 	return resp, nil
 }
 
@@ -321,25 +292,6 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	// Handle MCP server configuration
 	if req.McpServers != "" {
 		template.McpServers = json.RawMessage(req.McpServers)
-	}
-
-	// Handle tokens
-	if len(req.Tokens) > 0 {
-		tokens := make([]model.McpToken, 0, len(req.Tokens))
-		for _, token := range req.Tokens {
-			tokens = append(tokens, model.McpToken{
-				Token:     token.Token,
-				ExpireAt:  token.ExpireAt,
-				PublishAt: token.PublishAt,
-				Usages:    token.Usages,
-			})
-		}
-		tokensJSON, err := json.Marshal(tokens)
-		if err != nil {
-			logger.Error("failed to marshal tokens", zap.Error(err))
-			return nil, fmt.Errorf("failed to process tokens: %v", err)
-		}
-		template.Tokens = json.RawMessage(tokensJSON)
 	}
 
 	// Update template
@@ -482,16 +434,6 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 			}
 		}
 
-		// Handle tokens
-		if len(template.Tokens) > 0 {
-			tokens := make([]*instance.McpToken, 0, len(template.Tokens))
-			if err := json.Unmarshal(template.Tokens, &tokens); err != nil {
-				logger.Error("failed to unmarshal tokens", zap.Error(err))
-			} else {
-				templateResp.Tokens = tokens
-			}
-		}
-
 		resp.List = append(resp.List, templateResp)
 	}
 
@@ -570,16 +512,6 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 				logger.Error("failed to unmarshal volume mounts", zap.Error(err))
 			} else {
 				templateResp.VolumeMounts = volumeMounts
-			}
-		}
-
-		// Handle tokens
-		if len(template.Tokens) > 0 {
-			tokens := make([]*instance.McpToken, 0, len(template.Tokens))
-			if err := json.Unmarshal(template.Tokens, &tokens); err != nil {
-				logger.Error("failed to unmarshal tokens", zap.Error(err))
-			} else {
-				templateResp.Tokens = tokens
 			}
 		}
 

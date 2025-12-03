@@ -21,6 +21,11 @@ func GinError(c *gin.Context, code int, message string) {
 	i18nresp.ErrorResponse(c, code, message)
 }
 
+// GinUnauthorized returns an unauthorized response with error code and message
+func GinUnauthorized(c *gin.Context, message string) {
+	i18nresp.Unauthorized(c, message)
+}
+
 // BindAndValidateUniversal binds request data and performs validation
 func BindAndValidateUniversal(c *gin.Context, req interface{}) error {
 	contentType := c.GetHeader("Content-Type")

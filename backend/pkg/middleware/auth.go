@@ -34,7 +34,7 @@ func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		tokenString := extractToken(c)
+		tokenString := ExtractToken(c)
 		if tokenString == "" {
 			i18n.Unauthorized(c, "缺少认证令牌")
 			c.Abort()
@@ -92,8 +92,8 @@ func shouldSkipAuth(path string) bool {
 	return false
 }
 
-// extractToken 提取令牌
-func extractToken(c *gin.Context) string {
+// ExtractToken 提取令牌
+func ExtractToken(c *gin.Context) string {
 	// 从Authorization头提取
 	auth := c.GetHeader("Authorization")
 	if auth != "" && strings.HasPrefix(auth, "Bearer ") {

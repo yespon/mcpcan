@@ -112,7 +112,7 @@ func (a *App) setupMiddleware() {
 	a.ginEngine.Use(middleware.SecurityMiddleware(config.GlobalConfig.Secret))
 
 	// Add authentication middleware
-	a.ginEngine.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
+	// a.ginEngine.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
 }
 
 // setupRoutes sets up routes
@@ -160,7 +160,7 @@ func (a *App) setupRoutes() {
 		authzGroup.POST("/refresh", userAuthService.RefreshToken)
 
 		// Validate Token
-		authzGroup.POST("/validate", userAuthService.ValidateToken)
+		authzGroup.GET("/validate", userAuthService.ValidateToken)
 
 		// Get encryption key
 		authzGroup.POST("/encryption-key", userAuthService.GetEncryptionKey)
