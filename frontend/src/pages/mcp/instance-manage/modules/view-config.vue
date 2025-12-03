@@ -75,10 +75,7 @@
                   <el-icon size="18"><Operation /></el-icon>
                   <template #dropdown>
                     <el-dropdown-menu>
-                      <el-dropdown-item
-                        v-if="!token.usages.includes('default')"
-                        @click="handleEditToken(index)"
-                      >
+                      <el-dropdown-item @click="handleEditToken(index)">
                         <el-button link>
                           {{ t('env.run.action.edit') }}
                         </el-button>
@@ -272,110 +269,7 @@
                 Authorization：{{ formData.token }}
               </div>
             </el-form-item>
-            <!-- <el-form-item prop="tokenType">
-              <template #label>
-                API {{ t('mcp.instance.token.auth') }}
-                <el-popover placement="top" width="250">
-                  <div>{{ t('mcp.instance.token.Bearer') }}</div>
-                  <div>{{ t('mcp.instance.token.Api-Key') }}</div>
-                  <div>{{ t('mcp.instance.token.X-API-key') }}</div>
-                  <div>{{ t('mcp.instance.token.Basic') }}</div>
-                  <template #reference>
-                    <el-icon class="cursor-pointer"><Warning /></el-icon>
-                  </template>
-                </el-popover>
-              </template>
-              <el-select
-                v-model="formData.tokenType"
-                :placeholder="t('mcp.instance.token.placeholderTokenType')"
-                clearable
-                @change="handleTokenTypeChange"
-              >
-                <el-option label="Bearer" :value="1" />
-                <el-option label="Api-Key" :value="2" />
-                <el-option label="X-API-key" :value="3" />
-                <el-option label="Basic" :value="4" />
-              </el-select>
 
-              <div v-if="Number(formData.tokenType) === 1" class="center my-2 w-full">
-                Authorization：<el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 2" class="center my-2 w-full">
-                Api-Key：
-                <el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 3" class="center my-2 w-full">
-                X-API-Key：
-                <el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 4" class="center my-2 w-full">
-                <template v-if="userDataKey.visible">
-                  <el-input
-                    v-model="userDataKey.username"
-                    placeholder="username"
-                    class="flex-sub mr-2"
-                    clearable
-                  />
-                  <el-input
-                    v-model="userDataKey.password"
-                    placeholder="password"
-                    type="password"
-                    show-password
-                    class="flex-sub"
-                    clearable
-                  />
-                </template>
-                <template v-else>
-                  Authorization：
-                  <el-input
-                    v-model="formData.token"
-                    :placeholder="t('mcp.instance.token.placeholderToken')"
-                    clearable
-                  />
-                </template>
-                <el-button link class="ml-2 link-hover base-btn-link" @click="handleChangeBasic">
-                  <el-icon><Refresh /></el-icon
-                  >{{
-                    userDataKey.visible
-                      ? t('mcp.instance.token.custom')
-                      : t('mcp.instance.token.accountPassword')
-                  }}
-                </el-button>
-              </div>
-            </el-form-item> -->
             <el-form-item prop="enabledTransport" class="enabledTransport">
               <template #label>
                 <div class="w-full flex justify-between items-center">
@@ -559,36 +453,7 @@ const tokenTypeOptions = [
   { label: 'X-API-key', value: 3 },
   { label: 'Authorization', value: 4 },
 ]
-const rules = reactive({
-  // tokenType: [
-  //   {
-  //     required: true,
-  //     validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
-  //       if (!value) {
-  //         callback(new Error(t('mcp.instance.token.placeholderTokenType')))
-  //       }
-  //       if (value === 4) {
-  //         if (!userDataKey.value.username || !userDataKey.value.password) {
-  //           callback(
-  //             new Error(
-  //               userDataKey.value.visible
-  //                 ? t('mcp.instance.token.Basic')
-  //                 : t('mcp.instance.token.mustToken'),
-  //             ),
-  //           )
-  //         }
-  //       } else {
-  //         if (!formData.value.token) {
-  //           callback(new Error(t('mcp.instance.token.mustToken')))
-  //         }
-  //       }
-  //       callback()
-  //     },
-  //     trigger: 'change',
-  //   },
-  // ],
-  // token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
-})
+const rules = reactive({})
 const dialogInfo = ref({
   visible: false,
   title: t('mcp.instance.config'),
@@ -708,7 +573,7 @@ const handleEditToken = (index: number) => {
   }))
   formData.value.tokenType = token.tokenType
   formData.value.enabled = token.enabled
-  if(formData.value.headers[0].value.startsWith('Basic')) {
+  if (formData.value.headers[0].value.startsWith('Basic')) {
     handleTokenTypeChange(4)
   }
 }
@@ -758,7 +623,7 @@ const handleTokenTypeChange = (tokenType: number) => {
   let roginData = null
   if (dialogInfo.value.currentEditIndex) {
     roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
-    if ( tokenType === 4) {
+    if (tokenType === 4) {
       userDataKey.value.username = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[0]
       userDataKey.value.password = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[1]
     }

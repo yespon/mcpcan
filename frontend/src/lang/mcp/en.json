@@ -158,6 +158,7 @@
       },
       "rules": {
         "name": "Please enter the instance name",
+        "nameMax40": "The instance name cannot exceed 40 characters",
         "openapiBaseUrl": "Please enter the service address",
         "environmentId": "Please select the container environment"
       },

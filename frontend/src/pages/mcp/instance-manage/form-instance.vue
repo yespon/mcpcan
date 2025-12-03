@@ -462,6 +462,11 @@
         </el-row>
       </el-form>
     </div>
+    <el-row v-if="!pageInfo.formData.instanceId">
+      <el-col :span="12">
+        <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
+      </el-col>
+    </el-row>
     <div class="action-footer mt-4 flex">
       <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
       <mcp-button @click="handleConfirm">{{
@@ -487,6 +492,7 @@ import { TemplateAPI } from '@/api/mcp/template'
 import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
 import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts'
 import { cloneDeep } from 'lodash-es'
+import TokenForm from './modules/components/token-form.vue'
 
 const { t } = useI18n()
 const {
@@ -683,6 +689,14 @@ const handleConfirm = async () => {
   if (isBaseValid && isConfigValid) {
     try {
       pageInfo.value.loading = true
+      if (!pageInfo.value.formData.instanceId) {
+        pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
+          pageInfo.value.formData.tokens[0].headers.map((header: any) => [
+            header.key,
+            header.value,
+          ]),
+        )
+      }
       await (query.instanceId ? InstanceAPI.edit : InstanceAPI.create)({
         ...pageInfo.value.formData,
         environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
