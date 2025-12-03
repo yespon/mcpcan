@@ -185,7 +185,9 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 		Docker: container.DockerConfig{
 			Network:        dockerEnvConfig.Network,
 			DockerHost:     dockerEnvConfig.Host,
-			DockerCertPath: dockerEnvConfig.CertPath,
+			DockerCertData: dockerEnvConfig.CertData,
+			DockerKeyData:  dockerEnvConfig.KeyData,
+			DockerCAData:   dockerEnvConfig.CaData,
 			DockerUseTLS:   dockerEnvConfig.UseTLS,
 		},
 	}

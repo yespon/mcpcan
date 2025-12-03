@@ -108,7 +108,6 @@ func (biz *ResourceBiz) getK8sEntryByEnvironmentID(environmentID uint) (*k8s.Ent
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
 		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
-		Network:    "bridge", // Default network configuration
 	}
 
 	// Create container runtime entry

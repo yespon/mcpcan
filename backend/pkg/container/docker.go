@@ -74,6 +74,19 @@ func initDockerClient(config DockerConfig) (*client.Client, error) {
 				options.RootCAs = caCertPool
 				options.InsecureSkipVerify = false
 			}
+		} else if config.DockerCertData != "" && config.DockerKeyData != "" && config.DockerCAData != "" {
+			// Load from data strings
+			cert, errCert := tls.X509KeyPair([]byte(config.DockerCertData), []byte(config.DockerKeyData))
+			if errCert == nil {
+				caCertPool := x509.NewCertPool()
+				if caCertPool.AppendCertsFromPEM([]byte(config.DockerCAData)) {
+					options.Certificates = []tls.Certificate{cert}
+					options.RootCAs = caCertPool
+					options.InsecureSkipVerify = false
+				}
+			} else {
+				fmt.Printf("Warning: Failed to load Docker certificates from data: %v\n", errCert)
+			}
 		}
 
 		httpClient = &http.Client{

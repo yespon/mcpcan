@@ -65,7 +65,7 @@ func (a *App) Run() error {
 	}
 
 	// 创建管理员用户
-	adminUser, err := a.createAdminUser()
+	_, err := a.createAdminUser()
 	if err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
@@ -75,7 +75,7 @@ func (a *App) Run() error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := a.initDataScope(context.Background(), adminUser); err != nil {
+		if err := a.initDataScope(context.Background()); err != nil {
 			logger.Error("Failed to init data scope", zap.Error(err))
 		}
 	}()
@@ -107,7 +107,7 @@ func (a *App) Shutdown() error {
 }
 
 // initDataScope creates the default environment
-func (a *App) initDataScope(ctx context.Context, adminUser *model.SysUser) error {
+func (a *App) initDataScope(ctx context.Context) error {
 	// 初始化代码包数据
 	if err := a.initCodePackage(ctx); err != nil {
 		return fmt.Errorf("failed to init code package data: %w", err)

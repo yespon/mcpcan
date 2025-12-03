@@ -17,9 +17,9 @@ const (
 type DockerEnvironmentConfig struct {
 	Host     string `json:"host"`     // Docker host (tcp://... or unix://...)
 	UseTLS   bool   `json:"useTLS"`   // Enable TLS
-	CaPath   string `json:"caPath"`   // CA certificate path
-	CertPath string `json:"certPath"` // Certificate path
-	KeyPath  string `json:"keyPath"`  // Private key path
+	CaData   string `json:"caData"`   // CA certificate data
+	CertData string `json:"certData"` // Certificate data
+	KeyData  string `json:"keyData"`  // Private key data
 	Network  string `json:"network"`  // Network name
 }
 

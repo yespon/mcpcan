@@ -54,6 +54,7 @@ type RunEnvironmentConfig struct {
 
 type RunKubernetesConfig struct {
 	ConfigPath string `mapstructure:"configPath"`
+	Namespace  string `mapstructure:"namespace"`
 }
 
 type RunDockerConfig struct {

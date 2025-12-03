@@ -25,6 +25,9 @@ type DockerConfig struct {
 	Network        string `yaml:"network" json:"network"`               // Docker network name
 	DockerHost     string `yaml:"dockerHost" json:"dockerHost"`         // Docker host URL
 	DockerCertPath string `yaml:"dockerCertPath" json:"dockerCertPath"` // Docker certificate directory path
+	DockerCertData string `yaml:"dockerCertData" json:"dockerCertData"` // Docker certificate data
+	DockerKeyData  string `yaml:"dockerKeyData" json:"dockerKeyData"`   // Docker key data
+	DockerCAData   string `yaml:"dockerCAData" json:"dockerCAData"`     // Docker CA data
 	DockerUseTLS   bool   `yaml:"dockerUseTLS" json:"dockerUseTLS"`     // Enable TLS for Docker
 }
 
