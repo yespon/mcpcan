@@ -88,6 +88,11 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to initialize Redis: %w", err)
 	}
 
+	// load run environment
+	if err := a.initRunEnvironment(context.Background()); err != nil {
+		return fmt.Errorf("failed to init run environment: %w", err)
+	}
+
 	// Use global database repository instance (already initialized in init)
 	if mysql.McpInstanceRepo == nil {
 		return fmt.Errorf("McpInstanceRepo not properly initialized, please check database initialization process")

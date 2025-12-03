@@ -24,7 +24,7 @@ type DockerRuntime struct {
 }
 
 // NewDockerRuntime creates Docker runtime
-func NewDockerRuntime(config Config) *DockerRuntime {
+func NewDockerRuntime(config DockerConfig) *DockerRuntime {
 	networkName := config.Network
 	if networkName == "" {
 		networkName = "bridge" // default network
@@ -44,7 +44,7 @@ func NewDockerRuntime(config Config) *DockerRuntime {
 }
 
 // initDockerClient initializes the Docker client with TLS support and fallback
-func initDockerClient(config Config) (*client.Client, error) {
+func initDockerClient(config DockerConfig) (*client.Client, error) {
 	ctx := context.Background()
 	var cli *client.Client
 	var err error

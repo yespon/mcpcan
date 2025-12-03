@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/services/authz"
 	"github.com/kymo-mcp/mcpcan/pkg/services/market"

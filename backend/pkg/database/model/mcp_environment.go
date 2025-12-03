@@ -13,16 +13,36 @@ const (
 	McpEnvironmentDocker     McpEnvironmentType = "docker"
 )
 
+// DockerEnvironmentConfig Docker 环境配置结构
+type DockerEnvironmentConfig struct {
+	Host     string `json:"host"`     // Docker host (tcp://... or unix://...)
+	UseTLS   bool   `json:"useTLS"`   // Enable TLS
+	CaPath   string `json:"caPath"`   // CA certificate path
+	CertPath string `json:"certPath"` // Certificate path
+	KeyPath  string `json:"keyPath"`  // Private key path
+	Network  string `json:"network"`  // Network name
+}
+
+type McpEnvironmentLevel string
+
+const (
+	// McpEnvironmentLevelSystem 系统环境等级，不允许编辑删除
+	McpEnvironmentLevelSystem McpEnvironmentLevel = "system"
+	// McpEnvironmentLevelUser 用户环境等级，允许自定义编辑
+	McpEnvironmentLevelUser McpEnvironmentLevel = "user"
+)
+
 type McpEnvironment struct {
-	ID          uint               `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
-	Name        string             `gorm:"size:100;not null;comment:环境名称" json:"name"`
-	Environment McpEnvironmentType `gorm:"size:20;not null;comment:运行环境 (kubernetes/docker)" json:"environment"`
-	Config      string             `gorm:"type:text;comment:连接配置" json:"config"`
-	Namespace   string             `gorm:"size:100;not null;comment:命名空间" json:"namespace"`
-	CreatorID   string             `gorm:"size:100;not null;comment:创建人ID" json:"creatorID"`
-	CreatedAt   time.Time          `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
-	UpdatedAt   time.Time          `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
-	IsDeleted   bool               `gorm:"default:false;comment:是否删除" json:"isDeleted"`
+	ID          uint                `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
+	Name        string              `gorm:"size:100;not null;comment:环境名称" json:"name"`
+	Environment McpEnvironmentType  `gorm:"size:20;not null;comment:运行环境 (kubernetes/docker)" json:"environment"`
+	Config      string              `gorm:"type:text;comment:连接配置" json:"config"`
+	Namespace   string              `gorm:"size:100;not null;comment:命名空间" json:"namespace"`
+	CreatorID   string              `gorm:"size:100;not null;comment:创建人ID" json:"creatorID"`
+	IsDeleted   bool                `gorm:"default:false;comment:是否删除" json:"isDeleted"`
+	Level       McpEnvironmentLevel `gorm:"size:20;not null;comment:环境等级: system 不允许编辑删除, user 允许自定义编辑" json:"level"`
+	CreatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
+	UpdatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }
 
 // TableName 指定表名
@@ -171,12 +191,36 @@ func (m *McpEnvironment) GetKubernetesConfig() (map[string]interface{}, error) {
 }
 
 // GetDockerConfig 获取Docker配置（如果环境类型是docker）
-func (m *McpEnvironment) GetDockerConfig() (map[string]interface{}, error) {
+func (m *McpEnvironment) GetDockerConfig() (*DockerEnvironmentConfig, error) {
 	if m.Environment != McpEnvironmentDocker {
 		return nil, fmt.Errorf("environment type is not docker")
 	}
 
-	return m.GetConfig()
+	if m.Config == "" {
+		return &DockerEnvironmentConfig{}, nil
+	}
+
+	var config DockerEnvironmentConfig
+	if err := json.Unmarshal([]byte(m.Config), &config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal docker config: %w", err)
+	}
+
+	return &config, nil
+}
+
+// SetDockerEnvConfig 设置Docker配置
+func (m *McpEnvironment) SetDockerEnvConfig(config DockerEnvironmentConfig) error {
+	if m.Environment != McpEnvironmentDocker {
+		return fmt.Errorf("environment type is not docker")
+	}
+
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal docker config: %w", err)
+	}
+
+	m.Config = string(configBytes)
+	return nil
 }
 
 // Clone 创建环境的副本

@@ -125,7 +125,7 @@ func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, envir
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
 		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
-		Network:    "bridge", // Default network configuration
+		Docker:     container.DockerConfig{Network: "bridge"}, // Default network configuration
 	}
 
 	// Create container runtime entry
@@ -171,10 +171,23 @@ func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, envir
 
 // testDockerConnectivity test Docker connectivity
 func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environment *model.McpEnvironment) (*mcp_environment.TestConnectivityResponse, error) {
+	dockerEnvConfig, err := environment.GetDockerConfig()
+	if err != nil {
+		return &mcp_environment.TestConnectivityResponse{
+			Success: false,
+			Message: fmt.Sprintf("failed to get docker config: %v", err),
+		}, nil
+	}
+
 	// Create container runtime configuration
 	config := container.Config{
 		Runtime: container.RuntimeDocker,
-		Network: "bridge", // Default Docker network
+		Docker: container.DockerConfig{
+			Network:        dockerEnvConfig.Network,
+			DockerHost:     dockerEnvConfig.Host,
+			DockerCertPath: dockerEnvConfig.CertPath,
+			DockerUseTLS:   dockerEnvConfig.UseTLS,
+		},
 	}
 
 	// Create container runtime entry
@@ -266,7 +279,7 @@ func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, en
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  "default", // Use default namespace to connect to cluster
 		Kubeconfig: kubeconfig,
-		Network:    "bridge",
+		Docker:     container.DockerConfig{Network: "bridge"},
 	}
 
 	// Create container runtime entry
