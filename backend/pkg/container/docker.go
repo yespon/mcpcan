@@ -2,28 +2,135 @@ package container
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
 )
 
 // DockerRuntime Docker runtime implementation
 type DockerRuntime struct {
-	networkName string // Docker network name
+	networkName string         // Docker network name
+	client      *client.Client // Docker client
 }
 
 // NewDockerRuntime creates Docker runtime
-func NewDockerRuntime(networkName string) *DockerRuntime {
+func NewDockerRuntime(config Config) *DockerRuntime {
+	networkName := config.Network
 	if networkName == "" {
 		networkName = "bridge" // default network
 	}
+
+	cli, err := initDockerClient(config)
+	if err != nil {
+		// Log warning but do not fail, to maintain backward compatibility with existing logic
+		// that relies on os/exec and doesn't strictly require the client yet.
+		fmt.Printf("Warning: Failed to initialize Docker client: %v\n", err)
+	}
+
 	return &DockerRuntime{
 		networkName: networkName,
+		client:      cli,
 	}
+}
+
+// initDockerClient initializes the Docker client with TLS support and fallback
+func initDockerClient(config Config) (*client.Client, error) {
+	ctx := context.Background()
+	var cli *client.Client
+	var err error
+	var httpClient *http.Client
+
+	hostURL := config.DockerHost
+	certDir := config.DockerCertPath
+	useTLS := config.DockerUseTLS
+
+	// Configure HTTP/TLS Client if needed
+	if useTLS {
+		options := tls.Config{InsecureSkipVerify: true}
+
+		// Attempt to load certificates if directory is provided
+		if certDir != "" {
+			certPath := filepath.Join(certDir, "cert.pem")
+			keyPath := filepath.Join(certDir, "key.pem")
+			caPath := filepath.Join(certDir, "ca.pem")
+
+			cert, errCert := tls.LoadX509KeyPair(certPath, keyPath)
+			caCert, errCA := os.ReadFile(caPath)
+
+			if errCert == nil && errCA == nil {
+				caCertPool := x509.NewCertPool()
+				caCertPool.AppendCertsFromPEM(caCert)
+				options.Certificates = []tls.Certificate{cert}
+				options.RootCAs = caCertPool
+				options.InsecureSkipVerify = false
+			}
+		}
+
+		httpClient = &http.Client{
+			Transport: &http.Transport{TLSClientConfig: &options},
+		}
+	} else if hostURL != "" {
+		httpClient = &http.Client{}
+	}
+
+	// Build client options
+	opts := []client.Opt{
+		client.WithAPIVersionNegotiation(),
+	}
+
+	if hostURL != "" {
+		opts = append(opts, client.WithHost(hostURL))
+	}
+	if httpClient != nil {
+		opts = append(opts, client.WithHTTPClient(httpClient))
+	}
+
+	// If no specific config, use FromEnv
+	if hostURL == "" && !useTLS {
+		opts = append(opts, client.FromEnv)
+	}
+
+	// Create Client
+	cli, err = client.NewClientWithOpts(opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Test connection (Ping)
+	_, errPing := cli.Ping(ctx)
+	if errPing != nil {
+		// If connection fails and we were trying a specific host, fallback to local
+		if hostURL != "" || useTLS {
+			fmt.Printf("⚠️ Connection to Docker failed (%s): %v. Falling back to local socket (client.FromEnv)...\n", hostURL, errPing)
+			cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			if err != nil {
+				return nil, fmt.Errorf("failed to create local Docker client fallback: %w", err)
+			}
+			// Verify fallback
+			if _, err := cli.Ping(ctx); err != nil {
+				return nil, fmt.Errorf("failed to connect to local Docker fallback: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to connect to Docker: %w", errPing)
+		}
+	}
+
+	return cli, nil
+}
+
+// GetClient returns the Docker client
+func (dr *DockerRuntime) GetClient() *client.Client {
+	return dr.client
 }
 
 // GetContainerManager gets container manager

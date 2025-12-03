@@ -18,6 +18,10 @@ type Config struct {
 	Namespace  string           `yaml:"namespace" json:"namespace"`   // Kubernetes namespace
 	Kubeconfig *rest.Config     `yaml:"kubeconfig" json:"kubeconfig"` // Kubernetes configuration file path
 	Network    string           `yaml:"network" json:"network"`       // Docker network name
+	// Docker connection configuration
+	DockerHost     string `yaml:"dockerHost" json:"dockerHost"`         // Docker host URL
+	DockerCertPath string `yaml:"dockerCertPath" json:"dockerCertPath"` // Docker certificate directory path
+	DockerUseTLS   bool   `yaml:"dockerUseTLS" json:"dockerUseTLS"`     // Enable TLS for Docker
 }
 
 // NewEntry creates container runtime entry
@@ -32,7 +36,7 @@ func NewEntry(config Config) (*Entry, error) {
 			return nil, fmt.Errorf("failed to initialize Kubernetes runtime: %w", err)
 		}
 	case RuntimeDocker:
-		runtime = NewDockerRuntime(config.Network)
+		runtime = NewDockerRuntime(config)
 	default:
 		return nil, fmt.Errorf("unsupported container runtime: %s", config.Runtime)
 	}
@@ -80,7 +84,7 @@ func (e *Entry) SwitchRuntime(config Config) error {
 			return fmt.Errorf("failed to switch to Kubernetes runtime: %w", err)
 		}
 	case RuntimeDocker:
-		runtime = NewDockerRuntime(config.Network)
+		runtime = NewDockerRuntime(config)
 	default:
 		return fmt.Errorf("unsupported container runtime: %s", config.Runtime)
 	}
