@@ -31,6 +31,8 @@ api/**/*.json
 # config
 config/*
 !config/.empty
+config-*
+!config-example
 
 # cmd
 cmd/**/__debug_*
