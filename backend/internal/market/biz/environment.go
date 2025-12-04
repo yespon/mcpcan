@@ -87,6 +87,16 @@ func (biz *EnvironmentBiz) ListEnvironmentsByType(ctx context.Context, environme
 	return biz.repo.FindByEnvironment(ctx, environmentType)
 }
 
+// ListEnvironmentsWithPagination get environment list with pagination
+func (biz *EnvironmentBiz) ListEnvironmentsWithPagination(ctx context.Context, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	return biz.repo.FindAllWithPagination(ctx, page, pageSize)
+}
+
+// ListEnvironmentsByTypeWithPagination get environment list by environment type with pagination
+func (biz *EnvironmentBiz) ListEnvironmentsByTypeWithPagination(ctx context.Context, environmentType model.McpEnvironmentType, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	return biz.repo.FindByEnvironmentWithPagination(ctx, environmentType, page, pageSize)
+}
+
 // GetDeletedEnvironment get deleted environment by ID
 func (biz *EnvironmentBiz) GetDeletedEnvironment(ctx context.Context, id uint) (*model.McpEnvironment, error) {
 	return biz.repo.FindDeletedByID(ctx, id)

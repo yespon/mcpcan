@@ -169,6 +169,44 @@ func (r *McpEnvironmentRepository) FindByEnvironment(ctx context.Context, enviro
 	return environments, nil
 }
 
+// FindAllWithPagination 分页查找所有MCP环境（排除已删除）
+func (r *McpEnvironmentRepository) FindAllWithPagination(ctx context.Context, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	var environments []*model.McpEnvironment
+	var total int64
+
+	db := r.getDB().WithContext(ctx).Where("is_deleted = ?", false)
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	err := db.Offset(offset).Limit(pageSize).Find(&environments).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return environments, total, nil
+}
+
+// FindByEnvironmentWithPagination 分页根据环境类型查找MCP环境（排除已删除）
+func (r *McpEnvironmentRepository) FindByEnvironmentWithPagination(ctx context.Context, environmentType model.McpEnvironmentType, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	var environments []*model.McpEnvironment
+	var total int64
+
+	db := r.getDB().WithContext(ctx).Where("environment = ? AND is_deleted = ?", environmentType, false)
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	err := db.Offset(offset).Limit(pageSize).Find(&environments).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return environments, total, nil
+}
+
 // FindDeletedByID 根据ID查找已删除的MCP环境
 func (r *McpEnvironmentRepository) FindDeletedByID(ctx context.Context, id uint) (*model.McpEnvironment, error) {
 	var environment model.McpEnvironment

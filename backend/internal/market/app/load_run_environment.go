@@ -145,6 +145,22 @@ func (a *App) createDockerEnv(ctx context.Context, cfg common.RunEnvironmentConf
 	if dockerCfg.Host == "" {
 		return nil, fmt.Errorf("docker host is empty")
 	}
+	if dockerCfg.Network == "" {
+		return nil, fmt.Errorf("docker network is empty")
+	}
+
+	// If host is a unix socket, verify it exists
+	if strings.HasPrefix(dockerCfg.Host, "unix://") {
+		socketPath := strings.TrimPrefix(dockerCfg.Host, "unix://")
+		if _, err := os.Stat(socketPath); err != nil {
+			if os.IsNotExist(err) {
+				return nil, fmt.Errorf("docker socket file does not exist: %s", socketPath)
+			}
+			return nil, fmt.Errorf("failed to check docker socket file: %v", err)
+		}
+	} else {
+		return nil, fmt.Errorf("docker host must be a unix socket")
+	}
 
 	// Note: We do not support loading TLS certificates from file configuration anymore.
 	// Config file only supports local docker.sock. Non-local environments must be configured via system backend.
@@ -152,8 +168,8 @@ func (a *App) createDockerEnv(ctx context.Context, cfg common.RunEnvironmentConf
 	// Prepare DB config
 	dbConfig := model.DockerEnvironmentConfig{
 		Host:    dockerCfg.Host,
-		UseTLS:  false, // Always false for file-based init as per requirement
 		Network: dockerCfg.Network,
+		UseTLS:  false, // Always false for file-based init as per requirement
 	}
 
 	configBytes, err := json.Marshal(dbConfig)
