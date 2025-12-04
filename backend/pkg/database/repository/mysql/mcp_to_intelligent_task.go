@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"gorm.io/gorm"
 )
@@ -47,7 +48,7 @@ func (r *McpToIntelligentTaskRepository) Update(ctx context.Context, task *model
 // Update log 更新日志
 func (r *McpToIntelligentTaskRepository) UpdateLogs(ctx context.Context, id int64, logs []*model.InstallLog, status string) error {
 	logJson, _ := json.Marshal(logs)
-	return r.getDB().WithContext(ctx).Where("id = ?", id).Updates(map[string]interface{}{
+	return r.getDB().WithContext(ctx).Where("id = ?", id).Where("status != ?", pb.McpToIntelligentTaskStatus_Cancel.String()).Updates(map[string]interface{}{
 		"install_logs": logJson,
 		"status":       status,
 	}).Error
