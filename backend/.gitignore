@@ -31,6 +31,9 @@ api/**/*.json
 # config
 config/*
 !config/.empty
+config-*
+!config-example
+
 
 # cmd
 cmd/**/__debug_*
@@ -41,3 +44,6 @@ cmd/**/logs/
 .idea
 .DS_Store
 .vscode
+
+
+
