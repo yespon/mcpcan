@@ -20,7 +20,7 @@ const (
 
 type McpOpenapiPackage struct {
 	ID                uint            `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
-	OpenapiFileID     string          `gorm:"size:100;not null;unique;comment:openapi文档ID" json:"openapiFileID"`
+	OpenapiFileID     string          `gorm:"size:100;not null;comment:openapi文档ID" json:"openapiFileID"`
 	OpenapiFileType   OpenapiFileType `gorm:"size:10;not null;comment:openai文档类型 (json/yaml)" json:"openapiFileType"`
 	OpenapiFilePath   string          `gorm:"size:500;not null;comment:存储路径" json:"openapiFilePath"`
 	OriginalName      string          `gorm:"size:255;comment:原始文件名" json:"originalName"`
