@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -496,6 +497,7 @@ func (r *SysRoleRepository) InitTable() error {
 		{"idx_create_by", "create_by"},
 		{"idx_create_time", "create_time"},
 		{"idx_update_time", "update_time"},
+		{"uniq_name", "name"},
 	}
 
 	for _, idx := range indexes {
@@ -504,8 +506,15 @@ func (r *SysRoleRepository) InitTable() error {
 			mod.TableName(), idx.name).Scan(&count)
 
 		if count == 0 {
-			if err := r.getDB().Exec(fmt.Sprintf("CREATE INDEX %s ON %s (%s)", idx.name, mod.TableName(), idx.column)).Error; err != nil {
-				return fmt.Errorf("failed to create index %s: %v", idx.name, err)
+			// 对于唯一索引，使用不同的创建语句
+			if strings.Contains(idx.name, "uniq") {
+				if err := r.getDB().Exec(fmt.Sprintf("CREATE UNIQUE INDEX %s ON %s (%s)", idx.name, mod.TableName(), idx.column)).Error; err != nil {
+					return fmt.Errorf("failed to create unique index %s: %v", idx.name, err)
+				}
+			} else {
+				if err := r.getDB().Exec(fmt.Sprintf("CREATE INDEX %s ON %s (%s)", idx.name, mod.TableName(), idx.column)).Error; err != nil {
+					return fmt.Errorf("failed to create index %s: %v", idx.name, err)
+				}
 			}
 		}
 	}

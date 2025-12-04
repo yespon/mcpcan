@@ -24,7 +24,7 @@ const (
 // McpCodePackage 代码包数据库模型
 type McpCodePackage struct {
 	ID            uint        `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
-	PackageID     string      `gorm:"size:100;not null;unique;comment:包ID" json:"packageId"`
+	PackageID     string      `gorm:"size:100;not null;comment:包ID" json:"packageId"`
 	PackageType   PackageType `gorm:"size:10;not null;comment:包类型 (tar/zip)" json:"packageType"`
 	PackagePath   string      `gorm:"size:500;not null;comment:包存储目录路径" json:"packagePath"`
 	OriginalPath  string      `gorm:"size:500;comment:原始压缩包文件路径" json:"originalPath"`

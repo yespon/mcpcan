@@ -18,17 +18,17 @@ const (
 type SysUser struct {
 	UserID             uint       `gorm:"column:user_id;primaryKey;autoIncrement;comment:ID" json:"userId"`
 	DeptID             *uint      `gorm:"column:dept_id;comment:部门名称" json:"deptId"`
-	Username           *string    `gorm:"column:username;size:180;uniqueIndex:uniq_username;comment:用户名" json:"username"`
+	Username           *string    `gorm:"column:username;size:180;comment:用户名" json:"username"`
 	NickName           *string    `gorm:"column:nick_name;size:255;comment:昵称" json:"nickName"`
 	Gender             *string    `gorm:"column:gender;size:2;comment:性别" json:"gender"`
 	Phone              *string    `gorm:"column:phone;size:255;comment:手机号码" json:"phone"`
-	Email              *string    `gorm:"column:email;size:180;uniqueIndex:uniq_email;comment:邮箱" json:"email"`
+	Email              *string    `gorm:"column:email;size:180;comment:邮箱" json:"email"`
 	AvatarName         *string    `gorm:"column:avatar_name;size:255;comment:头像地址" json:"avatarName"`
 	AvatarPath         *string    `gorm:"column:avatar_path;size:255;comment:头像真实路径" json:"avatarPath"`
 	Password           *string    `gorm:"column:password;size:255;comment:密码" json:"password"`
 	Salt               *string    `gorm:"column:salt;size:255;comment:密码盐" json:"salt"`
 	IsAdmin            bool       `gorm:"column:is_admin;default:false;comment:是否为admin账号" json:"isAdmin"`
-	Enabled            *bool      `gorm:"column:enabled;index:inx_enabled;comment:状态：1启用、0禁用" json:"enabled"`
+	Enabled            *bool      `gorm:"column:enabled;comment:状态：1启用、0禁用" json:"enabled"`
 	CreateBy           *string    `gorm:"column:create_by;size:255;comment:创建者" json:"createBy"`
 	UpdateBy           *string    `gorm:"column:update_by;size:255;comment:更新者" json:"updateBy"`
 	PwdResetTime       *time.Time `gorm:"column:pwd_reset_time;comment:修改密码的时间" json:"pwdResetTime"`

@@ -24,7 +24,7 @@ const (
 // SysRole 角色数据库模型
 type SysRole struct {
 	RoleID      uint       `gorm:"primarykey;autoIncrement;column:role_id;comment:ID" json:"roleId"`
-	Name        string     `gorm:"column:name;size:100;not null;uniqueIndex:uniq_name;index:role_name_index;comment:名称" json:"name"`
+	Name        string     `gorm:"column:name;size:100;not null;comment:名称" json:"name"`
 	Level       *int       `gorm:"column:level;comment:角色级别" json:"level"`
 	Description *string    `gorm:"column:description;size:255;comment:描述" json:"description"`
 	DataScope   *string    `gorm:"column:data_scope;size:255;comment:数据权限" json:"dataScope"`
