@@ -181,24 +181,16 @@ func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, envir
 
 // testDockerConnectivity test Docker connectivity
 func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environment *model.McpEnvironment) (*mcp_environment.TestConnectivityResponse, error) {
-	dockerEnvConfig, err := environment.GetDockerConfig()
-	if err != nil {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: fmt.Sprintf("failed to get docker config: %v", err),
-		}, nil
-	}
-
 	// Create container runtime configuration
 	config := container.Config{
 		Runtime: container.RuntimeDocker,
 		Docker: container.DockerConfig{
-			Network:        dockerEnvConfig.Network,
-			DockerHost:     dockerEnvConfig.Host,
-			DockerCertData: dockerEnvConfig.CertData,
-			DockerKeyData:  dockerEnvConfig.KeyData,
-			DockerCAData:   dockerEnvConfig.CaData,
-			DockerUseTLS:   dockerEnvConfig.UseTLS,
+			Network:        environment.DockerNetwork,
+			DockerHost:     environment.DockerHost,
+			DockerCertData: environment.DockerCertData,
+			DockerKeyData:  environment.DockerKeyData,
+			DockerCAData:   environment.DockerCaData,
+			DockerUseTLS:   environment.DockerUseTLS,
 		},
 	}
 

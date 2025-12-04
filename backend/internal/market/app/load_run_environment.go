@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -164,24 +163,14 @@ func (a *App) createDockerEnv(ctx context.Context, cfg common.RunEnvironmentConf
 
 	// Note: We do not support loading TLS certificates from file configuration anymore.
 	// Config file only supports local docker.sock. Non-local environments must be configured via system backend.
-
 	// Prepare DB config
-	dbConfig := model.DockerEnvironmentConfig{
-		Host:    dockerCfg.Host,
-		Network: dockerCfg.Network,
-		UseTLS:  false, // Always false for file-based init as per requirement
+	env := &model.McpEnvironment{
+		Name:          name,
+		Environment:   model.McpEnvironmentDocker,
+		DockerHost:    dockerCfg.Host,
+		DockerNetwork: dockerCfg.Network,
+		CreatorID:     creatorID,
+		Level:         model.McpEnvironmentLevelSystem,
 	}
-
-	configBytes, err := json.Marshal(dbConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal docker config: %v", err)
-	}
-
-	return &model.McpEnvironment{
-		Name:        name,
-		Environment: model.McpEnvironmentDocker,
-		Config:      string(configBytes),
-		CreatorID:   creatorID,
-		Level:       model.McpEnvironmentLevelSystem,
-	}, nil
+	return env, nil
 }
