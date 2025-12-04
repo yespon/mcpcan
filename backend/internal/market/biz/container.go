@@ -949,6 +949,12 @@ func (ed *ContainerBiz) getKubernetesRuntimeConfig(ctx context.Context, environm
 
 // getDockerRuntimeConfig gets runtime configuration for Docker environment
 func (ed *ContainerBiz) getDockerRuntimeConfig(ctx context.Context, environment *model.McpEnvironment) (container.Config, error) {
+	network := environment.DockerNetwork
+	// If DockerNetwork is empty, try to use default user-defined network for development environment
+	if network == "" {
+		return container.Config{}, fmt.Errorf("docker network is empty")
+	}
+
 	return container.Config{
 		Runtime: container.RuntimeDocker,
 		Docker: container.DockerConfig{
@@ -957,7 +963,7 @@ func (ed *ContainerBiz) getDockerRuntimeConfig(ctx context.Context, environment 
 			DockerCAData:   environment.DockerCaData,
 			DockerCertData: environment.DockerCertData,
 			DockerKeyData:  environment.DockerKeyData,
-			Network:        environment.DockerNetwork,
+			Network:        network,
 		},
 	}, nil
 }
