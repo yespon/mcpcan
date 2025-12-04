@@ -350,6 +350,14 @@ func ProcessMcpToIntelligentTask(id int64) {
 			continue
 		}
 
+		log := &model.InstallLog{
+			McpInstanceID:         instanceID,
+			McpInstanceName:       mcpInstance.InstanceName,
+			Status:                true,
+			ErrorLog:              "",
+			InsertIntelligentLogs: nil,
+		}
+		logs = append(logs, log)
 		// 记录每条 space 的插入日志
 		var insertIntelligentLogs []*model.InsertIntelligentLog
 		// 遍历插入信息列表
@@ -372,13 +380,11 @@ func ProcessMcpToIntelligentTask(id int64) {
 					Status:                false,
 					ErrorLog:              err.Error(),
 				})
-				logs = append(logs, &model.InstallLog{
-					McpInstanceID:         instanceID,
-					McpInstanceName:       mcpInstance.InstanceName,
-					Status:                false,
-					ErrorLog:              err.Error(),
-					InsertIntelligentLogs: insertIntelligentLogs,
-				})
+
+				log.Status = false
+				log.ErrorLog = err.Error()
+				log.InsertIntelligentLogs = insertIntelligentLogs
+
 				lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
 				if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
 					logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
@@ -394,19 +400,26 @@ func ProcessMcpToIntelligentTask(id int64) {
 						Status:                false,
 						ErrorLog:              err.Error(),
 					})
-					logs = append(logs, &model.InstallLog{
-						McpInstanceID:         instanceID,
-						McpInstanceName:       mcpInstance.InstanceName,
-						Status:                false,
-						ErrorLog:              err.Error(),
-						InsertIntelligentLogs: insertIntelligentLogs,
-					})
+					log.Status = false
+					log.ErrorLog = err.Error()
+					log.InsertIntelligentLogs = insertIntelligentLogs
+
 					lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
 					if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
 						logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
 					}
 					continue
 				}
+			}
+
+			insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
+				InsertIntelligentInfo: insertInfo,
+				Status:                true,
+				ErrorLog:              "",
+			})
+			log.InsertIntelligentLogs = insertIntelligentLogs
+			if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
+				logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
 			}
 		}
 	}

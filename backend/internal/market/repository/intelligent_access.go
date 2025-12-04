@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -36,11 +37,14 @@ func (r *IntelligentAccessRepository) getDB() *gorm.DB {
 
 // Create 创建
 func (r *IntelligentAccessRepository) Create(ctx context.Context, intelligentAccess *model.IntelligentAccess) error {
+	intelligentAccess.CreateTime = time.Now()
+	intelligentAccess.UpdateTime = time.Now()
 	return r.getDB().WithContext(ctx).Create(intelligentAccess).Error
 }
 
 // Update 更新
 func (r *IntelligentAccessRepository) Update(ctx context.Context, intelligentAccess *model.IntelligentAccess) error {
+	intelligentAccess.UpdateTime = time.Now()
 	return r.getDB().WithContext(ctx).Where("access_id = ?", intelligentAccess.ID).Updates(intelligentAccess).Error
 }
 

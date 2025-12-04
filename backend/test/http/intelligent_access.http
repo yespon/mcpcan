@@ -8,8 +8,8 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-    "dbHost": "localhost",
-    "dbPort": 5432,
+    "dbHost": "0.tcp.jp.ngrok.io",
+    "dbPort": 14224,
     "dbUser": "postgres",
     "dbPassword": "difyai123456",
     "dbName": "dify"
@@ -23,8 +23,8 @@ Authorization: {{token}}
 {
   "accessName": "dify",
   "accessType": "DifyEnterprise",
-  "dbHost": "localhost",
-  "dbPort": 5432,
+  "dbHost": "0.tcp.jp.ngrok.io",
+  "dbPort": 14224,
   "dbUser": "postgres",
   "dbPassword": "difyai123456",
   "dbName": "dify"

@@ -47,7 +47,7 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
 		return
 	}
-	if req.AccessType != pb.IntelligentAccessType_DifyEnterprise.String() && req.AccessType != pb.IntelligentAccessType_QAgent.String() {
+	if req.AccessType != pb.IntelligentAccessType_DifyEnterprise.String() && req.AccessType != pb.IntelligentAccessType_Dify.String() {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid access type")
 		return
 	}
@@ -77,6 +77,8 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 			DbUser:     intelligentAccess.DbUser,
 			DbPassword: intelligentAccess.DbPassword,
 			DbName:     intelligentAccess.DbName,
+			CreateTime: intelligentAccess.CreateTime.UnixMilli(),
+			UpdateTime: intelligentAccess.UpdateTime.UnixMilli(),
 		},
 	})
 }
@@ -127,6 +129,8 @@ func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
 			DbUser:     dbIntelligentAccess.DbUser,
 			DbPassword: dbIntelligentAccess.DbPassword,
 			DbName:     dbIntelligentAccess.DbName,
+			CreateTime: dbIntelligentAccess.CreateTime.UnixMilli(),
+			UpdateTime: dbIntelligentAccess.UpdateTime.UnixMilli(),
 		},
 	})
 }
@@ -176,6 +180,8 @@ func (s *IntelligentAccessService) GetHandler(c *gin.Context) {
 			DbUser:     intelligentAccess.DbUser,
 			DbPassword: intelligentAccess.DbPassword,
 			DbName:     intelligentAccess.DbName,
+			CreateTime: intelligentAccess.CreateTime.UnixMilli(),
+			UpdateTime: intelligentAccess.UpdateTime.UnixMilli(),
 		},
 	})
 }
@@ -199,6 +205,8 @@ func (s *IntelligentAccessService) ListHandler(c *gin.Context) {
 			DbUser:     intelligentAccess.DbUser,
 			DbPassword: intelligentAccess.DbPassword,
 			DbName:     intelligentAccess.DbName,
+			CreateTime: intelligentAccess.CreateTime.UnixMilli(),
+			UpdateTime: intelligentAccess.UpdateTime.UnixMilli(),
 		})
 	}
 

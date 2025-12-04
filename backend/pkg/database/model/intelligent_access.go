@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // IntelligentAccess 接入信息
 type IntelligentAccess struct {
 	ID         int64  `gorm:"primaryKey;autoIncrement;column:access_id;comment:接入信息ID"`
@@ -10,6 +12,9 @@ type IntelligentAccess struct {
 	DbUser     string `gorm:"type:varchar(32);column:db_user;comment:dify数据库帐号"`
 	DbPassword string `gorm:"type:varchar(255);column:db_password;comment:dify数据库密码"`
 	DbName     string `gorm:"type:varchar(255);column:db_name;comment:dify数据库名"`
+
+	CreateTime time.Time `gorm:"type:datetime;column:create_time;comment:创建时间"`
+	UpdateTime time.Time `gorm:"type:datetime;column:update_time;comment:更新时间"`
 }
 
 var tableName string

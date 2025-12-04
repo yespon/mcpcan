@@ -6,7 +6,7 @@ Authorization: {{token}}
 {
   "desc": "同步到dify",
   "domain": "https://mcp-dev.itqm.com",
-  "intelligentAccessID": 1,
+  "intelligentAccessID": 2,
   "insertIntelligentInfos": [
     {
       "difyUserID": "967ecbcd-36c0-4996-8cd2-0ad35824fe9c",

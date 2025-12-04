@@ -9,7 +9,7 @@ option go_package = "github.com/kymo-mcp/mcpcan/api/market/intelligent_access";
 enum IntelligentAccessType {
   Unknown = 0;
   DifyEnterprise = 1;
-  QAgent = 2;
+  Dify = 2;
 }
 
 message IntelligentAccess {
@@ -21,6 +21,8 @@ message IntelligentAccess {
     string dbUser = 6;
     string dbPassword = 7;
     string dbName = 8;
+    int64 createTime = 9;
+    int64 updateTime = 10;
 }
 
 message CreateRequest {
