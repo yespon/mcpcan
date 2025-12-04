@@ -3,17 +3,43 @@
     "pageDesc": {
       "title": "智能体平台管理",
       "desc": "有效管理您的智能体平台;为MCP和智能体连接提供支持",
-      "total": "智能体平台总数"
+      "total": "智能体平台总数",
+      "formTitle": "智能体平台接入",
+      "connectionDesc": "正在尝试连接....",
+      "deleteDesc": "确定要删除该智能体平台吗？删除后将无法恢复。"
     },
     "columns": {
-      "accessName": "名称",
-      "accessType": "数据库类型",
+      "accessName": "平台名称",
+      "accessType": "平台类型",
       "dbHost": "数据库地址",
       "createdAt": "创建时间",
       "updatedAt": "更新时间"
     },
     "action": {
-      "create": "创建智能体平台"
+      "create": "创建智能体平台",
+      "community": "社区版",
+      "enterprise": "商业版",
+      "successConnection": "测试连接成功"
+    },
+    "formData": {
+      "accessName": "接入名称",
+      "accessType": "接入类型",
+      "dbHost": "数据库地址",
+      "dbPort": "端口",
+      "dbUser": "用户名",
+      "dbPassword": "密码",
+      "dbName": "数据库名称"
+    },
+    "placeholder": {
+      "accessName": "请输入接入名称",
+      "accessNameLength": "请输入接入名称，长度 2-64 个字符",
+      "accessType": "请选择接入类型",
+      "dbHost": "请输入数据库地址",
+      "dbPort": "请输入端口",
+      "dbPortLength": "端口范围 1-65535",
+      "dbUser": "请输入用户名",
+      "dbPassword": "请输入密码",
+      "dbName": "请输入数据库名称"
     }
   }
 }

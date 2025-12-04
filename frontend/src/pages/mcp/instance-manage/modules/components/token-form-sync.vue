@@ -92,26 +92,6 @@
         </el-row>
       </div>
     </el-form-item>
-    <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-      <el-input-tag
-        v-model="localFormData.usages"
-        collapse-tags
-        collapse-tags-tooltip
-        :max-collapse-tags="3"
-        clearable
-        draggable
-        tag-type="primary"
-        tag-effect="plain"
-        :placeholder="t('mcp.instance.token.placeholderTag')"
-        class="tag-input"
-      >
-        <template #tag="{ value }">
-          <div class="flex items-center">
-            <span>{{ value }}</span>
-          </div>
-        </template>
-      </el-input-tag>
-    </el-form-item>
   </el-form>
   <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
     <el-form :model="userDataKey" class="p-4" label-width="80px">
@@ -162,6 +142,9 @@ const tokenTypeOptions = [
   { label: 'X-API-key', value: 3 },
   { label: 'Authorization', value: 4 },
 ]
+onMounted(() => {
+  console.log(555, props.formData)
+})
 // 账号密码弹窗数据
 const userDataKey = ref({ visible: false, username: '', password: '' })
 
@@ -192,7 +175,7 @@ const handleGetTokenValue = () => {
       'Bearer ' +
       getToken(
         JSON.stringify({
-          expireAt: localFormData.value.expireAt,
+          expireAt: Date.now(),
           userId: userInfo.userId,
           username: userInfo.username,
         }),
@@ -200,7 +183,7 @@ const handleGetTokenValue = () => {
   } else if (Number(localFormData.value.tokenType) === 2) {
     localFormData.value.headers[0].value = getToken(
       JSON.stringify({
-        expireAt: localFormData.value.expireAt,
+        expireAt: Date.now(),
         userId: userInfo.userId,
         username: userInfo.username,
       }),
@@ -208,7 +191,7 @@ const handleGetTokenValue = () => {
   } else if (Number(localFormData.value.tokenType) === 3) {
     localFormData.value.headers[0].value = getToken(
       JSON.stringify({
-        expireAt: localFormData.value.expireAt,
+        expireAt: Date.now(),
         userId: userInfo.userId,
         username: userInfo.username,
       }),

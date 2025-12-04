@@ -6,61 +6,62 @@
     width="680px"
     top="10vh"
   >
-    <el-form ref="formRef" :model="formModel" :rules="rules" label-width="110px">
-      <el-form-item label="接入名称" prop="accessName">
-        <el-input
-          v-model="formModel.accessName"
-          placeholder="请输入接入名称"
-          maxlength="64"
-          show-word-limit
-        />
-      </el-form-item>
+    <template #header>
+      <div class="flex items-center w-full">
+        <span>{{ dialogInfo.title }}</span
+        >:
+        <McpImage :src="dify" fit="contain" width="80" height="20" />
+        <span class="text-purple">{{ formModel.accessType === 'Dify' ? '社区版' : '商业版' }}</span>
+      </div>
+    </template>
+    <div v-loading="dialogInfo.loading" element-loading-text="服务连接中...">
+      <el-form ref="formRef" :model="formModel" :rules="rules" label-width="110px">
+        <el-form-item :label="t('agent.formData.accessName')" prop="accessName">
+          <el-input
+            v-model="formModel.accessName"
+            :placeholder="t('agent.placeholder.accessName')"
+            maxlength="64"
+            show-word-limit
+          />
+        </el-form-item>
 
-      <el-form-item label="接入类型" prop="accessType">
-        <el-select v-model="formModel.accessType" placeholder="请选择接入类型">
-          <el-option label="MySQL" value="mysql" />
-          <el-option label="PostgreSQL" value="postgres" />
-          <el-option label="SQLServer" value="sqlserver" />
-          <el-option label="SQLite" value="sqlite" />
-        </el-select>
-      </el-form-item>
+        <el-form-item :label="t('agent.formData.dbHost')" prop="dbHost">
+          <el-input v-model="formModel.dbHost" :placeholder="t('agent.placeholder.dbHost')" />
+        </el-form-item>
 
-      <el-form-item label="数据库地址" prop="dbHost">
-        <el-input v-model="formModel.dbHost" placeholder="例如：127.0.0.1 或 dns" />
-      </el-form-item>
+        <el-form-item :label="t('agent.formData.dbPort')" prop="dbPort">
+          <el-input-number
+            v-model="formModel.dbPort"
+            :min="1"
+            :max="65535"
+            :controls="false"
+            :placeholder="t('agent.placeholder.dbPort')"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <el-form-item label="端口" prop="dbPort">
-        <el-input-number
-          v-model="formModel.dbPort"
-          :min="1"
-          :max="65535"
-          :controls="false"
-          placeholder="端口"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <el-form-item :label="t('agent.formData.dbUser')" prop="dbUser">
+          <el-input v-model="formModel.dbUser" :placeholder="t('agent.placeholder.dbUser')" />
+        </el-form-item>
 
-      <el-form-item label="用户名" prop="dbUser">
-        <el-input v-model="formModel.dbUser" placeholder="数据库用户名" />
-      </el-form-item>
+        <el-form-item :label="t('agent.formData.dbPassword')" prop="dbPassword">
+          <el-input
+            v-model="formModel.dbPassword"
+            type="password"
+            show-password
+            :placeholder="t('agent.placeholder.dbPassword')"
+          />
+        </el-form-item>
 
-      <el-form-item label="密码" prop="dbPassword">
-        <el-input
-          v-model="formModel.dbPassword"
-          type="password"
-          show-password
-          placeholder="数据库密码"
-        />
-      </el-form-item>
-
-      <el-form-item label="数据库名" prop="dbName">
-        <el-input v-model="formModel.dbName" placeholder="例如：mcp" />
-      </el-form-item>
-    </el-form>
+        <el-form-item :label="t('agent.formData.dbName')" prop="dbName">
+          <el-input v-model="formModel.dbName" :placeholder="t('agent.placeholder.dbName')" />
+        </el-form-item>
+      </el-form>
+    </div>
 
     <template #footer>
       <div class="center">
-        <el-button @click="handleCancel" class="mr-2">取消</el-button>
+        <el-button @click="handleCancel" class="mr-2">{{ t('common.cancel') }}</el-button>
         <mcp-button @click="handleSubmit" :loading="dialogInfo.loading">{{
           t('common.save')
         }}</mcp-button>
@@ -75,6 +76,8 @@ import type { FormInstance, FormRules } from 'element-plus'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AgentAPI } from '@/api/agent/index'
 import { ElMessage } from 'element-plus'
+import McpImage from '@/components/mcp-image/index.vue'
+import { dify } from '@/utils/logo.ts'
 
 const { t } = useI18n()
 const dialogInfo = ref<{
@@ -82,13 +85,14 @@ const dialogInfo = ref<{
   visible: boolean
   loading: boolean
 }>({
-  title: '智能体接入',
+  title: t('agent.pageDesc.formTitle'),
   visible: false,
   loading: false,
 })
 
 // 表单 model
 const formModel = ref<{
+  accessID: string
   accessName: string
   accessType: string
   dbHost: string
@@ -97,6 +101,7 @@ const formModel = ref<{
   dbPassword: string
   dbName: string
 }>({
+  accessID: '',
   accessName: '',
   accessType: '',
   dbHost: '',
@@ -108,27 +113,28 @@ const formModel = ref<{
 
 const formRef = ref<FormInstance>()
 
-// 校验规则
+// validation rules
 const rules: FormRules<typeof formModel.value> = {
   accessName: [
-    { required: true, message: '请输入接入名称', trigger: 'blur' },
-    { min: 2, max: 64, message: '长度 2-64 个字符', trigger: 'blur' },
+    { required: true, message: t('agent.formData.accessName'), trigger: 'blur' },
+    { min: 2, max: 64, message: t('agent.formData.accessName'), trigger: 'blur' },
   ],
-  accessType: [{ required: true, message: '请选择接入类型', trigger: 'change' }],
-  dbHost: [{ required: true, message: '请输入数据库地址', trigger: 'blur' }],
+  accessType: [{ required: true, message: t('agent.formData.accessType'), trigger: 'change' }],
+  dbHost: [{ required: true, message: t('agent.formData.dbHost'), trigger: 'blur' }],
   dbPort: [
     {
       required: true,
       validator: (_rule, value, callback) => {
-        if (!value || value < 1 || value > 65535) return callback(new Error('端口范围 1-65535'))
+        if (!value || value < 1 || value > 65535)
+          return callback(new Error(t('agent.formData.dbPortLength')))
         callback()
       },
       trigger: 'change',
     },
   ],
-  dbUser: [{ required: true, message: '请输入数据库用户名', trigger: 'blur' }],
-  dbPassword: [{ required: true, message: '请输入数据库密码', trigger: 'blur' }],
-  dbName: [{ required: true, message: '请输入数据库名', trigger: 'blur' }],
+  dbUser: [{ required: true, message: t('agent.formData.dbUser'), trigger: 'blur' }],
+  dbPassword: [{ required: true, message: t('agent.formData.dbPassword'), trigger: 'blur' }],
+  dbName: [{ required: true, message: t('agent.formData.dbName'), trigger: 'blur' }],
 }
 
 // 取消
@@ -139,17 +145,17 @@ const handleCancel = () => {
 // 提交
 const emit = defineEmits<{
   (e: 'submit', payload: typeof formModel.value): void
-  (e: 'success'): void
+  (e: 'on-refresh'): void
 }>()
 
+// handle form submit
 const handleSubmit = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
-
     try {
       dialogInfo.value.loading = true
-      await AgentAPI.create({
+      const params = {
         accessName: formModel.value.accessName,
         accessType: formModel.value.accessType,
         dbHost: formModel.value.dbHost,
@@ -157,27 +163,19 @@ const handleSubmit = async () => {
         dbUser: formModel.value.dbUser,
         dbPassword: formModel.value.dbPassword,
         dbName: formModel.value.dbName,
-      })
-
-      ElMessage.success(t('common.createSuccess') || '创建成功')
-      emit('submit', { ...formModel.value })
-      emit('success')
-      dialogInfo.value.visible = false
-
-      // 重置表单
-      formRef.value?.resetFields()
-      formModel.value = {
-        accessName: '',
-        accessType: '',
-        dbHost: '',
-        dbPort: 3306,
-        dbUser: '',
-        dbPassword: '',
-        dbName: '',
       }
+      await AgentAPI.connectionTest(params).then(async () => {
+        await (formModel.value.accessID
+          ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
+          : AgentAPI.create(params))
+        ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
+        emit('on-refresh')
+        dialogInfo.value.visible = false
+        // 重置表单
+        formRef.value?.resetFields()
+      })
     } catch (error: any) {
       console.error('Failed to create agent:', error)
-      ElMessage.error(error?.message || t('common.createFailed') || '创建失败')
     } finally {
       dialogInfo.value.loading = false
     }
@@ -187,18 +185,23 @@ const handleSubmit = async () => {
 /**
  * Init and open dialog
  */
-const init = () => {
+const init = (accessType: string, row: any) => {
   dialogInfo.value.visible = true
-  // 重置表单
-  formRef.value?.resetFields()
-  formModel.value = {
-    accessName: '',
-    accessType: '',
-    dbHost: '',
-    dbPort: 3306,
-    dbUser: '',
-    dbPassword: '',
-    dbName: '',
+  if (row) {
+    formModel.value = row
+  } else {
+    // 重置表单
+    formRef.value?.resetFields()
+    formModel.value = {
+      accessID: '',
+      accessName: '',
+      accessType,
+      dbHost: '',
+      dbPort: 3306,
+      dbUser: '',
+      dbPassword: '',
+      dbName: '',
+    }
   }
 }
 defineExpose({

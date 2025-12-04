@@ -64,6 +64,8 @@
     "agentManage": "Agent Platform"
   },
   "common": {
+    "edit": "Edit",
+    "connection": "Connection",
     "search": "Search",
     "reseat": "Reseat",
     "operation": "Operation",

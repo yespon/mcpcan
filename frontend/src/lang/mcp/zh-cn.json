@@ -257,6 +257,12 @@
       "market": "市场",
       "template": "模板",
       "custom": "自定义"
+    },
+    "token": {
+      "authentication": "网关认证",
+      "passthrough": "透传",
+      "account": "账号",
+      "isEnable": "是否启用"
     }
   }
 }

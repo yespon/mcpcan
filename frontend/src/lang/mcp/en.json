@@ -257,6 +257,12 @@
       "market": "Market",
       "template": "Template",
       "custom": "Custom"
+    },
+    "token": {
+      "authentication": "Gateway Authentication",
+      "passthrough": "Passthrough",
+      "account": "Account",
+      "isEnable": "Enable"
     }
   }
 }

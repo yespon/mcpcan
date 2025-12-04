@@ -132,7 +132,7 @@
                   </el-tag>
                 </div>
                 <div class="grid-cols-span-1">
-                  {{ '是否启用' }}:
+                  {{ t('mcp.token.isEnable') }}:
                   <el-switch
                     v-model="token.enabled"
                     style="--el-switch-on-color: #13ce66"
@@ -264,7 +264,7 @@
                 :disabled-date="(date: Date) => date.getTime() < Date.now()"
               ></el-date-picker>
             </el-form-item>
-            <el-form-item :label="'网关认证'" prop="tokenType">
+            <el-form-item :label="t('mcp.token.authentication')" prop="tokenType">
               <div class="w-full u-line-1" style="white-space: nowrap">
                 Authorization：{{ formData.token }}
               </div>
@@ -273,7 +273,7 @@
             <el-form-item prop="enabledTransport" class="enabledTransport">
               <template #label>
                 <div class="w-full flex justify-between items-center">
-                  <span class="mr-2"> 透传 {{ 'Headers' }} </span>
+                  <span class="mr-2"> {{ t('mcp.token.passthrough') }} {{ 'Headers' }} </span>
                   <div class="center">
                     <div
                       class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
@@ -344,7 +344,7 @@
                       class="text-purple cursor-pointer"
                       @click="handleChangeBasic"
                     >
-                      {{ Number(formData.tokenType) === 4 ? '账号' : '  ' }}
+                      {{ Number(formData.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
                     </div>
                     <div
                       v-else
@@ -398,11 +398,18 @@
   <!-- user accountPassword -->
   <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
     <el-form :model="userDataKey" class="p-4" label-width="80px">
-      <el-form-item label="用户名" prop="username">
-        <el-input v-model="userDataKey.username" placeholder="请输入用户名" />
+      <el-form-item :label="t('login.username')" prop="username">
+        <el-input
+          v-model="userDataKey.username"
+          :placeholder="t('login.message.username.required')"
+        />
       </el-form-item>
-      <el-form-item label="密码" prop="password">
-        <el-input v-model="userDataKey.password" type="password" placeholder="请输入密码" />
+      <el-form-item :label="t('login.password')" prop="password">
+        <el-input
+          v-model="userDataKey.password"
+          type="password"
+          :placeholder="t('login.message.password.required')"
+        />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -799,7 +806,7 @@ const handleTokenList = async () => {
     const { tokens } = await TokenAPI.list({
       instanceId: dialogInfo.value.instanceInfo.instanceId,
     })
-    // 翻转一次；使默认token 在最前面
+    // reverse the token list to show the latest created token on top
     tokenList.value = (tokens || [])
       .map((token: any) => ({
         ...token,
