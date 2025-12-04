@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -634,7 +633,6 @@ func (r *SysUserRepository) HealthCheck(ctx context.Context) error {
 
 // InitTable 初始化表结构
 func (r *SysUserRepository) InitTable() error {
-	// 创建表
 	mod := &model.SysUser{}
 	if err := r.getDB().AutoMigrate(mod); err != nil {
 		return fmt.Errorf("failed to migrate table: %v", err)
@@ -644,29 +642,29 @@ func (r *SysUserRepository) InitTable() error {
 	indexes := []struct {
 		name   string
 		column string
+		unique bool
 	}{
-		{"idx_dept_id", "dept_id"},
-		{"idx_enabled", "enabled"},
-		{"idx_nick_name", "nick_name"},
-		{"uniq_username", "username"},
-		{"uniq_email", "email"},
+		{"uniq_username", "username", true},
+		{"uniq_email", "email", true},
+		{"inx_enabled", "enabled", false},
+		{"idx_dept_id", "dept_id", false},
+		{"idx_nick_name", "nick_name", false},
 	}
 
 	for _, idx := range indexes {
 		var count int64
-		r.getDB().Raw("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?",
-			mod.TableName(), idx.name).Scan(&count)
+		sql := fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = '%v'", mod.TableName(), idx.name)
+		r.getDB().Raw(sql).Count(&count)
 
 		if count == 0 {
-			// 对于唯一索引，使用不同的创建语句
-			if strings.Contains(idx.name, "uniq") || strings.Contains(idx.name, "UK_") {
-				if err := r.getDB().Exec(fmt.Sprintf("CREATE UNIQUE INDEX %s ON %s (%s)", idx.name, mod.TableName(), idx.column)).Error; err != nil {
-					return fmt.Errorf("failed to create unique index %s: %v", idx.name, err)
-				}
+			var createSql string
+			if idx.unique {
+				createSql = fmt.Sprintf("CREATE UNIQUE INDEX %s ON %s(%s)", idx.name, mod.TableName(), idx.column)
 			} else {
-				if err := r.getDB().Exec(fmt.Sprintf("CREATE INDEX %s ON %s (%s)", idx.name, mod.TableName(), idx.column)).Error; err != nil {
-					return fmt.Errorf("failed to create index %s: %v", idx.name, err)
-				}
+				createSql = fmt.Sprintf("CREATE INDEX %s ON %s(%s)", idx.name, mod.TableName(), idx.column)
+			}
+			if err := r.getDB().Exec(createSql).Error; err != nil {
+				return fmt.Errorf("failed to create index %s: %v", idx.name, err)
 			}
 		}
 	}
