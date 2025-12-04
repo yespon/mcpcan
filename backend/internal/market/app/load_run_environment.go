@@ -131,6 +131,7 @@ func (a *App) createKubernetesEnv(ctx context.Context, cfg common.RunEnvironment
 		Config:      string(content),
 		CreatorID:   creatorID,
 		Namespace:   namespace,
+		Level:       model.McpEnvironmentLevelSystem,
 	}, nil
 }
 
@@ -165,5 +166,6 @@ func (a *App) createDockerEnv(ctx context.Context, cfg common.RunEnvironmentConf
 		Environment: model.McpEnvironmentDocker,
 		Config:      string(configBytes),
 		CreatorID:   creatorID,
+		Level:       model.McpEnvironmentLevelSystem,
 	}, nil
 }

@@ -13,7 +13,7 @@ const (
 	McpEnvironmentDocker     McpEnvironmentType = "docker"
 )
 
-// DockerEnvironmentConfig Docker 环境配置结构
+// DockerEnvironmentConfig Docker environment configuration structure
 type DockerEnvironmentConfig struct {
 	Host     string `json:"host"`     // Docker host (tcp://... or unix://...)
 	UseTLS   bool   `json:"useTLS"`   // Enable TLS
@@ -26,31 +26,31 @@ type DockerEnvironmentConfig struct {
 type McpEnvironmentLevel string
 
 const (
-	// McpEnvironmentLevelSystem 系统环境等级，不允许编辑删除
+	// McpEnvironmentLevelSystem System environment level, editing and deletion not allowed
 	McpEnvironmentLevelSystem McpEnvironmentLevel = "system"
-	// McpEnvironmentLevelUser 用户环境等级，允许自定义编辑
+	// McpEnvironmentLevelUser User environment level, allows custom editing
 	McpEnvironmentLevelUser McpEnvironmentLevel = "user"
 )
 
 type McpEnvironment struct {
-	ID          uint                `gorm:"primarykey;autoIncrement;comment:主键ID" json:"ID"`
-	Name        string              `gorm:"size:100;not null;comment:环境名称" json:"name"`
-	Environment McpEnvironmentType  `gorm:"size:20;not null;comment:运行环境 (kubernetes/docker)" json:"environment"`
-	Config      string              `gorm:"type:text;comment:连接配置" json:"config"`
-	Namespace   string              `gorm:"size:100;not null;comment:命名空间" json:"namespace"`
-	CreatorID   string              `gorm:"size:100;not null;comment:创建人ID" json:"creatorID"`
-	IsDeleted   bool                `gorm:"default:false;comment:是否删除" json:"isDeleted"`
-	Level       McpEnvironmentLevel `gorm:"size:20;not null;comment:环境等级: system 不允许编辑删除, user 允许自定义编辑" json:"level"`
-	CreatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
-	UpdatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
+	ID          uint                `gorm:"primarykey;autoIncrement;comment:Primary Key ID" json:"ID"`
+	Name        string              `gorm:"size:100;not null;comment:Environment Name" json:"name"`
+	Environment McpEnvironmentType  `gorm:"size:20;not null;comment:Runtime Environment (kubernetes/docker)" json:"environment"`
+	Config      string              `gorm:"type:text;comment:Connection Configuration" json:"config"`
+	Namespace   string              `gorm:"size:100;not null;comment:Namespace" json:"namespace"`
+	CreatorID   string              `gorm:"size:100;not null;comment:Creator ID" json:"creatorID"`
+	IsDeleted   bool                `gorm:"default:false;comment:Is Deleted" json:"isDeleted"`
+	Level       McpEnvironmentLevel `gorm:"size:20;not null;comment:Environment Level: system (no edit/delete), user (custom edit)" json:"level"`
+	CreatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:Created At" json:"createdAt"`
+	UpdatedAt   time.Time           `gorm:"type:timestamp(3);not null;comment:Updated At" json:"updatedAt"`
 }
 
-// TableName 指定表名
+// TableName specifies the table name
 func (McpEnvironment) TableName() string {
 	return "mcpcan_environment"
 }
 
-// GetConfig 解析配置字符串为JSON对象
+// GetConfig parses the configuration string into a JSON object
 func (m *McpEnvironment) GetConfig() (map[string]interface{}, error) {
 	if m.Config == "" {
 		return make(map[string]interface{}), nil
@@ -64,7 +64,7 @@ func (m *McpEnvironment) GetConfig() (map[string]interface{}, error) {
 	return config, nil
 }
 
-// SetConfig 设置配置对象为JSON字符串
+// SetConfig sets the configuration object as a JSON string
 func (m *McpEnvironment) SetConfig(config map[string]interface{}) error {
 	if config == nil {
 		m.Config = ""
@@ -80,34 +80,34 @@ func (m *McpEnvironment) SetConfig(config map[string]interface{}) error {
 	return nil
 }
 
-// IsDeleted 检查环境是否已被删除
+// IsDeletedRecord checks if the environment has been deleted
 func (m *McpEnvironment) IsDeletedRecord() bool {
 	return m.IsDeleted
 }
 
-// SetCreatedAt 设置创建时间为当前时间
+// SetCreatedAt sets the creation time to the current time
 func (m *McpEnvironment) SetCreatedAt() {
 	m.CreatedAt = time.Now()
 }
 
-// SetUpdatedAt 设置更新时间为当前时间
+// SetUpdatedAt sets the update time to the current time
 func (m *McpEnvironment) SetUpdatedAt() {
 	m.UpdatedAt = time.Now()
 }
 
-// SetDeleted 设置删除状态
+// SetDeleted sets the deleted status
 func (m *McpEnvironment) SetDeleted() {
 	m.IsDeleted = true
 	m.UpdatedAt = time.Now()
 }
 
-// ClearDeleted 清除删除状态（用于恢复）
+// ClearDeleted clears the deleted status (for restoration)
 func (m *McpEnvironment) ClearDeleted() {
 	m.IsDeleted = false
 	m.UpdatedAt = time.Now()
 }
 
-// PrepareForCreate 准备创建记录（设置创建和更新时间）
+// PrepareForCreate prepares the record for creation (sets created and updated times)
 func (m *McpEnvironment) PrepareForCreate() {
 	now := time.Now()
 	m.CreatedAt = now
@@ -115,17 +115,17 @@ func (m *McpEnvironment) PrepareForCreate() {
 	m.IsDeleted = false
 }
 
-// PrepareForUpdate 准备更新记录（设置更新时间）
+// PrepareForUpdate prepares the record for update (sets updated time)
 func (m *McpEnvironment) PrepareForUpdate() {
 	m.UpdatedAt = time.Now()
 }
 
-// PrepareForDelete 准备删除记录（设置删除状态）
+// PrepareForDelete prepares the record for deletion (sets deleted status)
 func (m *McpEnvironment) PrepareForDelete() {
 	m.SetDeleted()
 }
 
-// ValidateForCreate 验证创建环境的必要字段
+// ValidateForCreate validates required fields for creating an environment
 func (m *McpEnvironment) ValidateForCreate() error {
 	if m.Name == "" {
 		return fmt.Errorf("environment name is required")
@@ -133,12 +133,12 @@ func (m *McpEnvironment) ValidateForCreate() error {
 	if m.Environment == "" {
 		return fmt.Errorf("environment type is required")
 	}
-	// k8s环境需要校验namespace，docker环境不需要
+	// k8s environment requires namespace, docker environment does not
 	if m.Environment == McpEnvironmentKubernetes && m.Namespace == "" {
 		return fmt.Errorf("namespace is required for kubernetes environment")
 	}
 
-	// 验证环境类型
+	// Validate environment type
 	if m.Environment != McpEnvironmentKubernetes && m.Environment != McpEnvironmentDocker {
 		return fmt.Errorf("invalid environment type: %s", m.Environment)
 	}
@@ -146,7 +146,7 @@ func (m *McpEnvironment) ValidateForCreate() error {
 	return nil
 }
 
-// ValidateForUpdate 验证更新环境的必要字段
+// ValidateForUpdate validates required fields for updating an environment
 func (m *McpEnvironment) ValidateForUpdate() error {
 	if m.ID == 0 {
 		return fmt.Errorf("environment ID is required for update")
@@ -155,7 +155,7 @@ func (m *McpEnvironment) ValidateForUpdate() error {
 	return m.ValidateForCreate()
 }
 
-// GetConfigValue 获取配置中的特定值
+// GetConfigValue retrieves a specific value from the configuration
 func (m *McpEnvironment) GetConfigValue(key string) (interface{}, error) {
 	config, err := m.GetConfig()
 	if err != nil {
@@ -170,7 +170,7 @@ func (m *McpEnvironment) GetConfigValue(key string) (interface{}, error) {
 	return value, nil
 }
 
-// SetConfigValue 设置配置中的特定值
+// SetConfigValue sets a specific value in the configuration
 func (m *McpEnvironment) SetConfigValue(key string, value interface{}) error {
 	config, err := m.GetConfig()
 	if err != nil {
@@ -181,7 +181,7 @@ func (m *McpEnvironment) SetConfigValue(key string, value interface{}) error {
 	return m.SetConfig(config)
 }
 
-// GetKubernetesConfig 获取Kubernetes配置（如果环境类型是kubernetes）
+// GetKubernetesConfig retrieves Kubernetes configuration (if environment type is kubernetes)
 func (m *McpEnvironment) GetKubernetesConfig() (map[string]interface{}, error) {
 	if m.Environment != McpEnvironmentKubernetes {
 		return nil, fmt.Errorf("environment type is not kubernetes")
@@ -190,7 +190,7 @@ func (m *McpEnvironment) GetKubernetesConfig() (map[string]interface{}, error) {
 	return m.GetConfig()
 }
 
-// GetDockerConfig 获取Docker配置（如果环境类型是docker）
+// GetDockerConfig retrieves Docker configuration (if environment type is docker)
 func (m *McpEnvironment) GetDockerConfig() (*DockerEnvironmentConfig, error) {
 	if m.Environment != McpEnvironmentDocker {
 		return nil, fmt.Errorf("environment type is not docker")
@@ -208,7 +208,7 @@ func (m *McpEnvironment) GetDockerConfig() (*DockerEnvironmentConfig, error) {
 	return &config, nil
 }
 
-// SetDockerEnvConfig 设置Docker配置
+// SetDockerEnvConfig sets the Docker configuration
 func (m *McpEnvironment) SetDockerEnvConfig(config DockerEnvironmentConfig) error {
 	if m.Environment != McpEnvironmentDocker {
 		return fmt.Errorf("environment type is not docker")
@@ -223,10 +223,10 @@ func (m *McpEnvironment) SetDockerEnvConfig(config DockerEnvironmentConfig) erro
 	return nil
 }
 
-// Clone 创建环境的副本
+// Clone creates a copy of the environment
 func (m *McpEnvironment) Clone() *McpEnvironment {
 	return &McpEnvironment{
-		ID:          0, // 新副本不包含ID
+		ID:          0, // New copy does not contain ID
 		Name:        m.Name + "_copy",
 		Environment: m.Environment,
 		Config:      m.Config,
