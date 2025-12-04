@@ -168,16 +168,32 @@ type DockerContainerManager struct {
 	networkName string
 }
 
-// DockerContainerInfo Docker container information structure
+// DockerContainerInfo Docker container information structure (matching docker inspect output)
 type DockerContainerInfo struct {
-	ID      string            `json:"ID"`
-	Names   []string          `json:"names"`
-	Image   string            `json:"image"`
-	State   string            `json:"state"`
-	Status  string            `json:"status"`
-	Ports   []DockerPort      `json:"ports"`
-	Labels  map[string]string `json:"labels"`
-	Created int64             `json:"created"`
+	ID              string                `json:"Id"`
+	Name            string                `json:"Name"`
+	State           DockerState           `json:"State"`
+	NetworkSettings DockerNetworkSettings `json:"NetworkSettings"`
+	Config          DockerConfigInfo      `json:"Config"`
+	Created         string                `json:"Created"`
+}
+
+type DockerState struct {
+	Status string `json:"Status"`
+}
+
+type DockerNetworkSettings struct {
+	Ports    map[string][]interface{}     `json:"Ports"`
+	Networks map[string]DockerNetworkInfo `json:"Networks"`
+}
+
+type DockerNetworkInfo struct {
+	IPAddress string `json:"IPAddress"`
+}
+
+type DockerConfigInfo struct {
+	Labels map[string]string `json:"Labels"`
+	Image  string            `json:"Image"`
 }
 
 // DockerPort Docker port information
@@ -204,11 +220,24 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 
 	// Set restart policy
 	if options.RestartPolicy != "" {
+		// Convert to lowercase to support "Always" etc.
+		policy := strings.ToLower(options.RestartPolicy)
+
+		// Map K8s style policies to Docker style if needed
+		switch policy {
+		case "always":
+			policy = "always"
+		case "onfailure":
+			policy = "on-failure"
+		case "never":
+			policy = "no"
+		}
+
 		// Validate restart policy
 		validPolicies := []string{"no", "on-failure", "always", "unless-stopped"}
 		isValid := false
-		for _, policy := range validPolicies {
-			if options.RestartPolicy == policy {
+		for _, p := range validPolicies {
+			if policy == p {
 				isValid = true
 				break
 			}
@@ -216,7 +245,7 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		if !isValid {
 			return "", fmt.Errorf("invalid restart policy: %s", options.RestartPolicy)
 		}
-		args = append(args, "--restart", options.RestartPolicy)
+		args = append(args, "--restart", policy)
 	}
 
 	// Set working directory
@@ -228,9 +257,9 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		args = append(args, "-w", options.WorkingDir)
 	}
 
-	// Set port mapping
+	// Expose port (no host mapping)
 	if options.Port > 0 {
-		args = append(args, "-p", fmt.Sprintf("%d:%d", options.Port, options.Port))
+		args = append(args, "--expose", fmt.Sprintf("%d", options.Port))
 	}
 
 	// Set environment variables
@@ -287,7 +316,16 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		return "", fmt.Errorf("failed to create Docker container: %w", err)
 	}
 
-	return strings.TrimSpace(string(output)), nil
+	// Parse output to get container ID
+	// When image is not found locally, docker run outputs pull progress.
+	// The container ID is always the last line of the output.
+	outStr := strings.TrimSpace(string(output))
+	lines := strings.Split(outStr, "\n")
+	if len(lines) > 0 {
+		return strings.TrimSpace(lines[len(lines)-1]), nil
+	}
+
+	return outStr, nil
 }
 
 // Delete deletes container
@@ -341,31 +379,53 @@ func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName st
 		return nil, fmt.Errorf("failed to get Docker container information: %w", err)
 	}
 
-	var dockerInfo DockerContainerInfo
-	if err := json.Unmarshal(output, &dockerInfo); err != nil {
+	var dockerInfos []DockerContainerInfo
+	if err := json.Unmarshal(output, &dockerInfos); err != nil {
 		return nil, fmt.Errorf("failed to parse Docker container information: %w", err)
 	}
 
-	if dockerInfo.ID == "" {
+	if len(dockerInfos) == 0 {
 		return nil, fmt.Errorf("container does not exist: %s", containerName)
 	}
 
+	info := dockerInfos[0]
+
 	// Extract port information
 	var ports []int32
-	for _, port := range dockerInfo.Ports {
-		ports = append(ports, port.PrivatePort)
+	for k := range info.NetworkSettings.Ports {
+		// k is like "80/tcp"
+		parts := strings.Split(k, "/")
+		if len(parts) > 0 {
+			var p int
+			fmt.Sscanf(parts[0], "%d", &p)
+			if p > 0 {
+				ports = append(ports, int32(p))
+			}
+		}
 	}
 
 	// Get container IP
-	ip, _ := dcm.getContainerIP(ctx, containerName)
+	ip := ""
+	for _, net := range info.NetworkSettings.Networks {
+		if net.IPAddress != "" {
+			ip = net.IPAddress
+			break
+		}
+	}
+
+	// Parse created time
+	createdAt := info.Created
+	if t, err := time.Parse(time.RFC3339Nano, info.Created); err == nil {
+		createdAt = t.Format("2006-01-02 15:04:05")
+	}
 
 	return &ContainerInfo{
-		Name:      strings.TrimPrefix(dockerInfo.Names[0], "/"),
-		Status:    dockerInfo.State,
+		Name:      strings.TrimPrefix(info.Name, "/"),
+		Status:    info.State.Status,
 		IP:        ip,
 		Ports:     ports,
-		Labels:    dockerInfo.Labels,
-		CreatedAt: time.Unix(dockerInfo.Created, 0).Format("2006-01-02 15:04:05"),
+		Labels:    info.Config.Labels,
+		CreatedAt: createdAt,
 	}, nil
 }
 
@@ -484,19 +544,7 @@ type DockerServiceManager struct {
 
 // Create creates service (implemented through network aliases in Docker)
 func (dsm *DockerServiceManager) Create(ctx context.Context, serviceName string, port int32, selector map[string]string) (*ServiceInfo, error) {
-	// Docker doesn't have native service concept, here we create a custom network to simulate service discovery
-	// In actual use, it might need to be combined with Docker Compose or other service discovery mechanisms
-
-	// Check if network exists, create if not exists
-	cmd := exec.CommandContext(ctx, "docker", "network", "inspect", serviceName)
-	if err := cmd.Run(); err != nil {
-		// Network doesn't exist, create network
-		createCmd := exec.CommandContext(ctx, "docker", "network", "create", serviceName)
-		if err := createCmd.Run(); err != nil {
-			return nil, fmt.Errorf("failed to create Docker network: %w", err)
-		}
-	}
-
+	// Docker uses network alias for service discovery, so no extra resource creation needed
 	return &ServiceInfo{
 		Name:      serviceName,
 		ClusterIP: "docker-network", // Docker network identifier
@@ -507,26 +555,45 @@ func (dsm *DockerServiceManager) Create(ctx context.Context, serviceName string,
 
 // Delete deletes service
 func (dsm *DockerServiceManager) Delete(ctx context.Context, serviceName string) error {
-	cmd := exec.CommandContext(ctx, "docker", "network", "rm", serviceName)
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to delete Docker network: %w", err)
-	}
+	// Docker uses network alias, cleanup is handled when container is deleted
 	return nil
 }
 
 // Get gets service information
 func (dsm *DockerServiceManager) Get(ctx context.Context, serviceName string) (*ServiceInfo, error) {
-	cmd := exec.CommandContext(ctx, "docker", "network", "inspect", serviceName)
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("failed to get Docker network information: %w", err)
+	// Infer container name from service name (mcp-instance-xxx-service -> mcp-instance-xxx-container)
+	containerName := strings.Replace(serviceName, "-service", "-container", 1)
+
+	// Inspect container to verify existence and get ports
+	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", containerName)
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("service (container) not found: %w", err)
 	}
 
-	// Simple network information parsing
+	var portsMap map[string][]interface{}
+	if err := json.Unmarshal(output, &portsMap); err != nil {
+		return nil, fmt.Errorf("failed to parse container ports: %w", err)
+	}
+
+	var ports []int32
+	for k := range portsMap {
+		// k is like "80/tcp"
+		parts := strings.Split(k, "/")
+		if len(parts) > 0 {
+			var p int
+			fmt.Sscanf(parts[0], "%d", &p)
+			if p > 0 {
+				ports = append(ports, int32(p))
+			}
+		}
+	}
+
 	return &ServiceInfo{
 		Name:      serviceName,
 		ClusterIP: "docker-network",
-		Ports:     []int32{},               // Docker network itself doesn't contain port information
-		Labels:    make(map[string]string), // Empty labels for Docker network
+		Ports:     ports,
+		Labels:    make(map[string]string),
 	}, nil
 }
 
