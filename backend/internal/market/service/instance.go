@@ -501,19 +501,6 @@ func (s *InstanceService) getLogs(req *instancepb.LogsRequest) (*instancepb.Logs
 
 	response.IsManaged = true
 
-	// Get environment information
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, instance.EnvironmentID)
-	if err != nil {
-		response.Message = fmt.Sprintf("Failed to get environment information: %v", err)
-		return &response, nil
-	}
-
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		response.Message = "Environment type error, only Kubernetes environment is supported"
-		return &response, nil
-	}
-
 	// Get container logs
 	logs, err := biz.GContainerBiz.GetContainerLogs(biz.ContainerLogsParams{
 		InstanceID: req.InstanceId,
@@ -871,17 +858,6 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 	if req.ImgAddress == "" {
 		return nil, fmt.Errorf("missing required field: imgAddress")
 	}
-	// Query Kubernetes configuration and namespace based on environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get environment information: %w", err)
-	}
-
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		return nil, fmt.Errorf("environment type is not Kubernetes, cannot create container")
-	}
-
 	if mcpProtocol == model.McpProtocolStdio {
 		mcpServers := req.McpServers
 		if len(mcpServers) == 0 {
@@ -1130,18 +1106,6 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
 			return
 		}
-	}
-
-	// Query Kubernetes configuration and namespace based on environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get environment information: %w", err))
-		return
-	}
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("environment type is not Kubernetes, cannot create container"))
-		return
 	}
 
 	_, err = s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.OpenapiFileID)

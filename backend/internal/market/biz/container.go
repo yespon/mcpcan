@@ -921,8 +921,12 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 		// Create Kubernetes container runtime entry
 		return container.NewEntry(cfg)
 	case model.McpEnvironmentDocker:
-		// return ed.getDockerRuntimeConfig(ctx, environment)
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeDockerEnvironmentNotSupported))
+		// Create Docker container runtime entry
+		cfg, err := ed.getDockerRuntimeConfig(ctx, environment)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure)+": %w", err)
+		}
+		return container.NewEntry(cfg)
 	default:
 		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeUnsupportedEnvironmentType))
 	}
@@ -940,6 +944,21 @@ func (ed *ContainerBiz) getKubernetesRuntimeConfig(ctx context.Context, environm
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
 		Kubeconfig: cfg,
+	}, nil
+}
+
+// getDockerRuntimeConfig gets runtime configuration for Docker environment
+func (ed *ContainerBiz) getDockerRuntimeConfig(ctx context.Context, environment *model.McpEnvironment) (container.Config, error) {
+	return container.Config{
+		Runtime: container.RuntimeDocker,
+		Docker: container.DockerConfig{
+			DockerHost:     environment.DockerHost,
+			DockerUseTLS:   environment.DockerUseTLS,
+			DockerCAData:   environment.DockerCaData,
+			DockerCertData: environment.DockerCertData,
+			DockerKeyData:  environment.DockerKeyData,
+			Network:        environment.DockerNetwork,
+		},
 	}, nil
 }
 
