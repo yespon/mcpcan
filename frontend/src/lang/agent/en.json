@@ -5,6 +5,13 @@
       "desc": "Manage your agents effectively, with support for MCP and agent connections",
       "total": "Total Agents"
     },
+    "columns": {
+      "accessName": "Name",
+      "accessType": "Database Type",
+      "dbHost": "Database Host",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At"
+    },
     "action": {
       "create": "Create Agent"
     }

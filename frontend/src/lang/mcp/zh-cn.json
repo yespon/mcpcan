@@ -158,6 +158,7 @@
       },
       "rules": {
         "name": "请填写实例名称",
+        "nameMax40": "实例名称不能超过40个字符",
         "openapiBaseUrl": "请填写服务地址",
         "environmentId": "请选择容器环境"
       },
@@ -221,7 +222,7 @@
       "openApi": {
         "importTitle": "导入 OpenAPI 文档",
         "serviceUrl": "服务地址",
-        "tips": "注：通过OpenAPI文档导入的MCP服务将以STDIO协议访问",
+        "tips": "注：通过OpenAPI文档导入的MCP服务将以STEAMABLE_HTTP协议访问",
         "support": "支持导入 OpenAPI 3.0.0 以上版本数据格式的 JSON 或 YAML 文件。",
         "localFile": "本地上传",
         "selectDocs": "从文档库选择",

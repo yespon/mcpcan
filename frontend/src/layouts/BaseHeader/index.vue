@@ -8,12 +8,7 @@
         {{ t('common.back') }}
       </el-link>
     </div>
-    <el-alert
-      v-else-if="showNav"
-      title="Demo栈的数据为展示数据 将于24小时后重置 请注意你的数据保存"
-      type="warning"
-      :closable="false"
-    />
+    <el-alert v-else-if="showNav" :title="t('desc.demoTips')" type="warning" :closable="false" />
     <div class="flex align-center flex-1 justify-end">
       <el-icon
         class="cursor-pointer mr-6 link-hover"

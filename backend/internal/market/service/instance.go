@@ -740,11 +740,6 @@ func (s *InstanceService) createInstanceDirectMode(req *instancepb.CreateRequest
 		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
 		TemplateID:   uint(req.TemplateId), // Add templateId field handling
 	}
-	if len(req.Tokens) > 0 {
-		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
-			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
-		}
-	}
 
 	// Save instance to database
 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
@@ -813,6 +808,10 @@ func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest,
 	}
 
 	if len(req.Tokens) > 0 {
+		// add instance id to tokens
+		for _, token := range req.Tokens {
+			token.InstanceId = instanceID
+		}
 		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
 			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
 		}
@@ -948,6 +947,10 @@ func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, i
 		ProxyProtocol:          proxyProtocol,
 	}
 	if len(req.Tokens) > 0 {
+		// add instance id to tokens
+		for _, token := range req.Tokens {
+			token.InstanceId = instanceID
+		}
 		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
 			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
 		}
@@ -1178,6 +1181,10 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 	}
 
 	if len(req.Tokens) > 0 {
+		// add instance id to tokens
+		for _, token := range req.Tokens {
+			token.InstanceId = instanceID
+		}
 		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
 			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to save tokens for instance: %w", err))
 			return

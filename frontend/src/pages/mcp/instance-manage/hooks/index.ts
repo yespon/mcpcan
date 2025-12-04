@@ -12,6 +12,7 @@ export const useInstanceTableHooks = () => {
   const instanceDetail = ref()
   const probe = ref()
   const openAPIDialog = ref()
+  const agentSyncDialog = ref()
   const { query } = useRoute()
   const load = ref({
     status: false,
@@ -24,6 +25,11 @@ export const useInstanceTableHooks = () => {
   // const mcpHook = useMcpStoreHook()
   const { accessTypeOptions, mcpProtocolOptions } = useMcpStoreHook()
   const instanceCount = ref<any>({})
+  const selection = ref({
+    showSelect: true,
+    selectList: [] as InstanceResult[],
+    rowKey: 'instanceId',
+  })
   const dataCountList = computed(() => [
     {
       title: t('mcp.instance.count.total'),
@@ -256,5 +262,7 @@ export const useInstanceTableHooks = () => {
     selectVisible,
     templateList,
     timer,
+    selection,
+    agentSyncDialog,
   }
 }

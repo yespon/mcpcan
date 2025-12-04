@@ -129,6 +129,33 @@ export const InstanceAPI = {
   },
 }
 
+export const TokenAPI = {
+  // token list api
+  list(data: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/token/list`,
+      method: 'POST',
+      data,
+    })
+  },
+  // delete token api
+  delete(data: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/token/delete`,
+      method: 'POST',
+      data,
+    })
+  },
+  //edit token api
+  edit(data: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/instance/token/edit`,
+      method: 'PUT',
+      data,
+    })
+  },
+}
+
 // 列表请求
 export interface TableData {
   /** 页码 */
