@@ -94,6 +94,7 @@
               <span class="ml-4 cursor-pointer base-btn-link font-bold center" @click="handleSync">
                 <el-icon class="mr-1"><Share /></el-icon>
                 {{ '智能体平台同步' }}
+                <span v-if="selection.selectList.length">{{ selection.selectList.length }}条</span>
               </span>
             </div>
             <div id="instanceSearch"></div>

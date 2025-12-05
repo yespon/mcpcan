@@ -89,7 +89,12 @@
     :row-key="rowKey"
     @selection-change="handleSelectionChange"
   >
-    <el-table-column type="selection" width="55" v-if="props.multiple"></el-table-column>
+    <el-table-column
+      type="selection"
+      width="55"
+      v-if="props.multiple"
+      reserve-selection
+    ></el-table-column>
     <el-table-column
       v-for="(column, index) in props.columns"
       :key="index || column.dataIndex"
@@ -234,6 +239,10 @@ const props = withDefaults(
 const showMoreSearch = ref(false)
 const loading = ref(false)
 const list = ref<unknown[]>([])
+// 跨页选择：全局已选数据
+const selectedRows = ref<any[]>([])
+// 当前页码的选中
+const currentSelectedRows = ref<any[]>([])
 const dataTableRef =
   ref<InstanceType<(typeof import('element-plus/lib/components/table/src/table.vue'))['default']>>()
 const _pagerConfig = ref(Object.assign({}, props.pageConfig))
@@ -314,8 +323,8 @@ const changeViewMode = () => {
 }
 
 const handleSelectionChange = (selection: any[]) => {
-  console.log('selection changed:', selection)
-  emit('on-selection-change', selection)
+  selectedRows.value = selection
+  emit('on-selection-change', selectedRows.value)
 }
 
 //Init search data
@@ -359,10 +368,15 @@ onMounted(() => {
   searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
 
+// 提供方法：获取/设置已选项
 defineExpose({
   initData,
   resetFields,
   customize,
+  getSelectedRows: () => selectedRows.value,
+  setSelectedRows: (rows: any[]) => {
+    selectedRows.value = rows || []
+  },
 })
 </script>
 

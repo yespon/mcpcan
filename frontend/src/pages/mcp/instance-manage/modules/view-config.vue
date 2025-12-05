@@ -305,7 +305,7 @@
                   <el-col :span="7">
                     <div class="flex h-full items-center justify-end">
                       <el-dropdown
-                        v-if="index === 0"
+                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
                         trigger="click"
                         class="h-full w-full flex items-center justify-end"
                         :show-arrow="false"
@@ -316,16 +316,16 @@
                         </div>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item @click="handleTokenTypeChange(1)">
+                            <el-dropdown-item @click="handleTokenTypeChange(1, index)">
                               Authorization(Bearer)
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(2)">
+                            <el-dropdown-item @click="handleTokenTypeChange(2, index)">
                               Api-Key
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(3)">
+                            <el-dropdown-item @click="handleTokenTypeChange(3, index)">
                               X-API-key
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(4)">
+                            <el-dropdown-item @click="handleTokenTypeChange(4, index)">
                               Authorization(Basic)
                             </el-dropdown-item>
                           </el-dropdown-menu>
@@ -341,23 +341,24 @@
                       <span class="ml-2">:</span>
                     </div>
                   </el-col>
-                  <el-col :span="15" class="flex">
-                    <el-input
-                      v-model="item.value"
-                      :placeholder="t('mcp.instance.token.headersValue')"
-                      class="flex-sub"
-                    ></el-input>
+                  <el-col :span="15">
+                    <div class="flex">
+                      <el-input
+                        v-model="item.value"
+                        :placeholder="t('mcp.instance.token.headersValue')"
+                        class="flex-sub"
+                      ></el-input>
+                      <div
+                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
+                        class="text-purple cursor-pointer ml-2"
+                        @click="handleChangeBasic(index)"
+                      >
+                        {{ Number(item.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
+                      </div>
+                    </div>
                   </el-col>
                   <el-col :span="2">
                     <div
-                      v-if="index === 0"
-                      class="text-purple cursor-pointer"
-                      @click="handleChangeBasic"
-                    >
-                      {{ Number(formData.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
-                    </div>
-                    <div
-                      v-else
                       class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
                       @click="formData.headers.splice(index, 1)"
                     >
@@ -373,7 +374,6 @@
                 collapse-tags
                 collapse-tags-tooltip
                 :max-collapse-tags="8"
-                clearable
                 draggable
                 tag-type="primary"
                 tag-effect="plain"
@@ -398,9 +398,7 @@
     </el-row>
     <template #footer>
       <div class="center">
-        <el-button @click="formData.visible = false" class="mr-4 w-25">{{
-          t('common.cancel')
-        }}</el-button>
+        <el-button @click="handleCancelToken" class="mr-4 w-25">{{ t('common.cancel') }}</el-button>
         <mcp-button @click="handleConfirmToken" class="w-25">{{ t('common.ok') }}</mcp-button>
       </div>
     </template>
@@ -510,67 +508,11 @@ const tokenFormData = ref({
   value: '',
 })
 
-// 标志位，用于防止在恢复标签时触发 watch 循环
-const isRestoringTag = ref(false)
-// 拦截标签删除 - 使用 watch 监听数组变化
-watch(
-  () => formData.value.usages,
-  (newUsages, oldUsages) => {
-    // 如果正在恢复标签，跳过此次监听
-    if (isRestoringTag.value) {
-      return
-    }
-    // 如果旧数组为空或未定义，说明是初始化，不需要拦截
-    if (!oldUsages || oldUsages.length === 0) {
-      return
-    }
-    // 只有当数组长度减少时，才可能是删除操作
-    if (newUsages.length >= oldUsages.length) {
-      return
-    }
-    // 找出被删除的标签及其在原数组中的位置
-    const deletedTagsWithIndex: Array<{ tag: string; index: number }> = []
-    oldUsages.forEach((tag: string, index: number) => {
-      if (!newUsages.includes(tag)) {
-        deletedTagsWithIndex.push({ tag, index })
-      }
-    })
-
-    // 检查是否有被删除的标签包含受保护的关键字（模糊匹配）
-    for (const { tag: deletedTag, index: originalIndex } of deletedTagsWithIndex) {
-      if (
-        [
-          'dify_user_id',
-          'dify_user_name',
-          'dify_space_id',
-          'dify_space_name',
-          'intelligent_access_id',
-          'intelligent_access_name',
-          'intelligent_access_type',
-        ].some((keyword) => deletedTag.includes(keyword))
-      ) {
-        // 如果标签被删除且包含受保护的关键字，阻止删除操作
-        isRestoringTag.value = true
-        nextTick(() => {
-          // 重新添加被删除的受保护标签到原有位置
-          if (!formData.value.usages.includes(deletedTag)) {
-            // 计算应该插入的位置（考虑新数组可能比原数组短）
-            const insertIndex = Math.min(originalIndex, formData.value.usages.length)
-            formData.value.usages.splice(insertIndex, 0, deletedTag)
-          }
-          isRestoringTag.value = false
-        })
-        ElMessage.warning(t('mcp.instance.token.deleteProtected'))
-        break // 只处理第一个受保护的标签，避免多次提示
-      }
-    }
-  },
-  { deep: true },
-)
 const userDataKey = ref({
   visible: false,
   username: '',
   password: '',
+  index: 0,
 })
 const tokenTypeOptions = [
   { label: 'Authorization', value: 1 },
@@ -748,12 +690,13 @@ const handleEditToken = (index: number) => {
   formData.value.tokenType = token.tokenType
   formData.value.enabled = token.enabled
   if (formData.value.headers[0].value.startsWith('Basic')) {
-    handleTokenTypeChange(4)
+    handleTokenTypeChange(4, 0)
   }
 }
 
-const handleChangeBasic = () => {
+const handleChangeBasic = (index: number) => {
   userDataKey.value.visible = !userDataKey.value.visible
+  userDataKey.value.index = index
   // formData.value.token = ''
 }
 
@@ -791,9 +734,10 @@ const handleSelectedToken = (index: number) => {
 }
 
 // handle token type change and clear token value
-const handleTokenTypeChange = (tokenType: number) => {
+const handleTokenTypeChange = (tokenType: number, index: number) => {
   formData.value.tokenType = tokenType
-  formData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
+  formData.value.headers[index].tokenType = tokenType
+  formData.value.headers[index].key = tokenTypeOptions[tokenType - 1].label
   let roginData = null
   if (dialogInfo.value.currentEditIndex) {
     roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
@@ -803,18 +747,13 @@ const handleTokenTypeChange = (tokenType: number) => {
     }
     return
   }
-  handleRandomToken()
+  handleGetTokenValue(index)
 }
 
-// handle random token
-const handleRandomToken = () => {
-  handleGetTokenValue()
-}
-
-// handle get token value
-const handleGetTokenValue = () => {
+// handle get token value handle random token
+const handleGetTokenValue = (index: number) => {
   if (Number(formData.value.tokenType) === 1) {
-    formData.value.headers[0].value =
+    formData.value.headers[index].value =
       'Bearer ' +
       getToken(
         JSON.stringify({
@@ -824,7 +763,7 @@ const handleGetTokenValue = () => {
         }),
       )
   } else if (Number(formData.value.tokenType) === 2) {
-    formData.value.headers[0].value = getToken(
+    formData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -832,7 +771,7 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(formData.value.tokenType) === 3) {
-    formData.value.headers[0].value = getToken(
+    formData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -840,14 +779,14 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(formData.value.tokenType) === 4) {
-    formData.value.headers[0].value =
+    formData.value.headers[index].value =
       'Basic ' + btoa(`${userDataKey.value.username}:${userDataKey.value.password}`) // Base64 编码
   }
-  console.log(formData.value.token, formData.value.headers[0]?.value)
+  console.log(formData.value.token, formData.value.headers[index]?.value)
 }
 
 const handleConfirmAccount = () => {
-  handleGetTokenValue()
+  handleGetTokenValue(userDataKey.value.index)
   userDataKey.value.visible = false
 }
 // handle add expire at
@@ -893,6 +832,17 @@ const handleViewLog = (index: number) => {
       token: tokenList.value[index].token || '',
     },
   })
+}
+
+const handleCancelToken = () => {
+  formData.value = {
+    visible: false,
+    token: '',
+    headers: [],
+    enabled: true,
+    expireAt: null,
+    usages: [],
+  }
 }
 
 // handle confirm token

@@ -81,6 +81,7 @@ const props = defineProps<{
 const showMoreSearch = ref(false)
 const emit = defineEmits(['update:formData', 'reset-fields', 'handle-query'])
 const localFormData = ref<FormData>({ ...props.formData })
+const searchInputRef = ref()
 
 // 双向数据流：监听外部formData变化，更新本地localFormData
 watch(
@@ -113,4 +114,7 @@ const onQuery = () => {
   showMoreSearch.value = false
   emit('handle-query', localFormData.value)
 }
+onMounted(() => {
+  searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = onQuery
+})
 </script>

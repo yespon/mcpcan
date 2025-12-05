@@ -42,6 +42,7 @@ export const useInstanceFormHooks = () => {
       enabledToken: true,
       tokens: [
         {
+          enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
           headers: [],

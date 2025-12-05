@@ -36,7 +36,7 @@
           <el-col :span="7">
             <div class="flex h-full items-center justify-end">
               <el-dropdown
-                v-if="index === 0"
+                v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
                 trigger="click"
                 class="h-full w-full flex justify-end"
                 :show-arrow="false"
@@ -47,14 +47,16 @@
                 </div>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item @click="handleTokenTypeChange(1)">
+                    <el-dropdown-item @click="handleTokenTypeChange(1, index)">
                       Authorization(Bearer)
                     </el-dropdown-item>
-                    <el-dropdown-item @click="handleTokenTypeChange(2)"> Api-Key </el-dropdown-item>
-                    <el-dropdown-item @click="handleTokenTypeChange(3)">
+                    <el-dropdown-item @click="handleTokenTypeChange(2, index)">
+                      Api-Key
+                    </el-dropdown-item>
+                    <el-dropdown-item @click="handleTokenTypeChange(3, index)">
                       X-API-key
                     </el-dropdown-item>
-                    <el-dropdown-item @click="handleTokenTypeChange(4)">
+                    <el-dropdown-item @click="handleTokenTypeChange(4, index)">
                       Authorization(Basic)
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -71,18 +73,23 @@
             </div>
           </el-col>
           <el-col :span="15" class="flex">
-            <el-input
-              v-model="item.value"
-              :placeholder="t('mcp.instance.token.headersValue')"
-              class="flex-sub"
-            ></el-input>
+            <div class="flex">
+              <el-input
+                v-model="item.value"
+                :placeholder="t('mcp.instance.token.headersValue')"
+                class="flex-sub"
+              ></el-input>
+              <div
+                v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
+                class="text-purple cursor-pointer ml-2"
+                @click="handleChangeBasic(index)"
+              >
+                {{ Number(item.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
+              </div>
+            </div>
           </el-col>
           <el-col :span="2">
-            <div v-if="index === 0" class="text-purple cursor-pointer" @click="handleChangeBasic">
-              {{ Number(localFormData.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
-            </div>
             <div
-              v-else
               class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
               @click="handleDeleteHeader(index)"
             >
@@ -163,7 +170,12 @@ const tokenTypeOptions = [
   { label: 'Authorization', value: 4 },
 ]
 // 账号密码弹窗数据
-const userDataKey = ref({ visible: false, username: '', password: '' })
+const userDataKey = ref({
+  visible: false,
+  username: '',
+  password: '',
+  index: 0,
+})
 
 // handle add header
 const handleAddHeader = () => {
@@ -175,20 +187,18 @@ const handleDeleteHeader = (index: number) => {
   emit('update:formData', { ...localFormData.value })
 }
 // handle token type change and clear token value
-const handleTokenTypeChange = (tokenType: number) => {
+const handleTokenTypeChange = (tokenType: number, index: number) => {
   localFormData.value.tokenType = tokenType
-  localFormData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
-  if (localFormData.value.headers && localFormData.value.headers[0]) {
-    localFormData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
-  }
+  localFormData.value.headers[index].tokenType = tokenType
+  localFormData.value.headers[index].key = tokenTypeOptions[tokenType - 1].label
   emit('update:formData', { ...localFormData.value })
-  handleGetTokenValue()
+  handleGetTokenValue(index)
 }
 
 // handle get token value
-const handleGetTokenValue = () => {
+const handleGetTokenValue = (index: number) => {
   if (Number(localFormData.value.tokenType) === 1) {
-    localFormData.value.headers[0].value =
+    localFormData.value.headers[index].value =
       'Bearer ' +
       getToken(
         JSON.stringify({
@@ -198,7 +208,7 @@ const handleGetTokenValue = () => {
         }),
       )
   } else if (Number(localFormData.value.tokenType) === 2) {
-    localFormData.value.headers[0].value = getToken(
+    localFormData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: localFormData.value.expireAt,
         userId: userInfo.userId,
@@ -206,7 +216,7 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(localFormData.value.tokenType) === 3) {
-    localFormData.value.headers[0].value = getToken(
+    localFormData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: localFormData.value.expireAt,
         userId: userInfo.userId,
@@ -214,20 +224,21 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(localFormData.value.tokenType) === 4) {
-    localFormData.value.headers[0].value =
+    localFormData.value.headers[index].value =
       'Basic ' + btoa(`${userDataKey.value.username}:${userDataKey.value.password}`) // Base64 编码
   }
   emit('update:formData', { ...localFormData.value })
 }
 
 // handle show account dialog
-const handleChangeBasic = () => {
+const handleChangeBasic = (index: number) => {
   userDataKey.value.visible = !userDataKey.value.visible
+  userDataKey.value.index = index
 }
 
 // handle confirm account interchange token
 const handleConfirmAccount = () => {
-  handleGetTokenValue()
+  handleGetTokenValue(userDataKey.value.index)
   userDataKey.value.visible = false
 }
 // init header[0]
