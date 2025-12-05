@@ -80,6 +80,14 @@
       </div>
       <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
         <!-- Step 2: 选择空间 -->
+        <div class="flex items-center mb-2 px-3">
+          <el-checkbox
+            v-model="allNamespaceChecked"
+            :indeterminate="isNamespaceIndeterminate"
+            @change="handleCheckAllNamespace"
+            >全选</el-checkbox
+          >
+        </div>
         <div class="agent-grid grid grid-cols-12 gap-4 px-3">
           <div
             v-for="(namespace, index) in dialogInfo.namespaceList"
@@ -113,8 +121,15 @@
         <!-- Step 3: 鉴权设置 -->
         <el-splitter class="h-full" direction="horizontal" :gutter="8">
           <el-splitter-panel size="30%" class="px-2">
+            <el-input
+              v-model="namespaceSearch"
+              placeholder="搜索空间名称"
+              clearable
+              class="mb-2 mt-1"
+              size="small"
+            />
             <div
-              v-for="(namespace, index) in selectedNamespaceList"
+              v-for="(namespace, index) in filteredNamespaceList"
               :key="index"
               class="agent-card center py-3 px-4 mb-2"
               :class="{ active: dialogInfo.selectedNamespaceId === namespace.tenantID }"
@@ -258,10 +273,55 @@ const selectedNamespaceList = computed(() => {
   )
 })
 
+// 对选中的命名空间模糊搜索
+const namespaceSearch = ref('')
+const filteredNamespaceList = computed(() => {
+  if (!namespaceSearch.value) return selectedNamespaceList.value
+  return selectedNamespaceList.value.filter((ns: any) =>
+    ns.tenantName?.toLowerCase().includes(namespaceSearch.value.trim().toLowerCase()),
+  )
+})
+
+// 全选相关逻辑
+const allNamespaceChecked = computed({
+  get() {
+    return (
+      dialogInfo.namespaceList.length > 0 &&
+      dialogInfo.selectedNamespaces.length === dialogInfo.namespaceList.length
+    )
+  },
+  set(val: boolean) {
+    if (val) {
+      dialogInfo.selectedNamespaces = dialogInfo.namespaceList.map((ns: any) => ns.tenantID)
+    } else {
+      dialogInfo.selectedNamespaces = []
+    }
+  },
+})
+
+// 不确定状态；仅选中部分
+const isNamespaceIndeterminate = computed(() => {
+  return (
+    dialogInfo.selectedNamespaces.length > 0 &&
+    dialogInfo.selectedNamespaces.length < dialogInfo.namespaceList.length
+  )
+})
+
+// 全选或取消全选
+const handleCheckAllNamespace = (val: boolean) => {
+  allNamespaceChecked.value = val
+}
+
+// next step
 const handleNextStep = () => {
   dialogInfo.currentStep += 1
+  // 第二步请求空间列表
   if (dialogInfo.currentStep === 2) {
     handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+  }
+  // 第三步默认选中第一条
+  if (dialogInfo.currentStep === 3) {
+    dialogInfo.selectedNamespaceId = selectedNamespaceList.value[0]?.tenantID || ''
   }
 }
 
@@ -350,7 +410,7 @@ const handleConfirmSync = async () => {
         ),
       })),
       mcpInstanceIDs: dialogInfo.instanceList.map((item) => item.instanceId),
-      domain: 'https://mcp-dev.itqm.com/' || window.location.origin,
+      domain: window.location.origin,
     }
 
     await AgentAPI.createSyncTask(params)
@@ -511,6 +571,9 @@ defineExpose({
   align-items: center;
   justify-content: center;
   min-height: 400px;
+}
+:deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
+  color: var(--ep-purple-color);
 }
 </style>
 

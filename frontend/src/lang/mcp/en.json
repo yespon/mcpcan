@@ -217,7 +217,8 @@
         "passthrough": "Passthrough",
         "passthroughOff": "No Passthrough",
         "headersKey": "Header Key",
-        "headersValue": "Header Value"
+        "headersValue": "Header Value",
+        "deleteProtected": "This tag cannot be deleted"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",

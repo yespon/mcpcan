@@ -7,11 +7,17 @@ export const useBusinessStore = defineStore('business', () => {
     visible: false,
     list: [] as any[],
   })
+  const taskTimer = ref(0)
   watch(
     () => taskInfo.value.visible,
     (newVal) => {
+      // 当任务列表展开时开启定时任务请求
       if (newVal) {
-        handleGetTaskList()
+        taskTimer.value = setInterval(() => {
+          handleGetTaskList()
+        }, 30 * 1000)
+      } else {
+        clearInterval(taskTimer.value)
       }
     },
   )

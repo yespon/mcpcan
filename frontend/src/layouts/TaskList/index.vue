@@ -14,13 +14,21 @@
   <el-dialog
     v-model="taskInfo.visible"
     :close-on-click-modal="true"
-    :show-close="false"
     width="800px"
     footer-class="footer-border"
   >
     <template #title> 任务列表 </template>
     <div class="task-list-scroll hide-scrollbar">
       <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
+        <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
+          <el-progress
+            :percentage="task.progress"
+            :stroke-width="16"
+            :text-inside="true"
+            status="success"
+            style="margin-bottom: 8px"
+          />
+        </div>
         <div class="task-item-main" @click="toggleExpand(idx)">
           <span class="task-icon">
             <el-icon v-if="task.status === 1" color="#409EFF" size="22" class="icon-rotate">
@@ -182,6 +190,38 @@ const handleShowTaskList = () => {
 onMounted(() => {
   handleGetTaskList.value()
 })
+
+watch(
+  () => taskInfo.value.list.map((t) => t.status),
+  async (statuses, _, onCleanup) => {
+    let stop = false
+    onCleanup(() => {
+      stop = true
+    })
+    for (const task of taskInfo.value.list) {
+      if (task.status === 1) {
+        // 自动请求详情
+        try {
+          const { task: detail } = await AgentAPI.taskDetail(task.id)
+          // 进度计算
+          const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
+          let done = 0
+
+          if (Array.isArray(detail.installLogs)) {
+            for (const log of detail.installLogs) {
+              if (Array.isArray(log.insertIntelligentLogs)) {
+                done += log.insertIntelligentLogs.filter((l: any) => l.status === true).length
+              }
+            }
+          }
+          task.progress = total ? Math.round((done / total) * 100) : 0
+        } catch {}
+        if (stop) break
+      }
+    }
+  },
+  { immediate: true, deep: true },
+)
 </script>
 
 <style scoped lang="scss">

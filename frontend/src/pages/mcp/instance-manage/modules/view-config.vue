@@ -47,6 +47,14 @@
                   }}
                 </span>
               </div>
+              <div class="flex">
+                <SearchForm
+                  :formConfig="tokenFormConfig"
+                  :formData="tokenFormData"
+                  @handle-query="handleQueryToken"
+                  @reset-fields="handleQueryToken"
+                ></SearchForm>
+              </div>
             </div>
 
             <div
@@ -57,7 +65,7 @@
                   disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
                 },
               ]"
-              v-for="(token, index) in tokenList"
+              v-for="(token, index) in showTokenList"
               :key="index"
               @click="handleSelectedToken(index)"
             >
@@ -86,7 +94,7 @@
                         </el-button>
                       </el-dropdown-item>
                       <el-dropdown-item
-                        v-if="!token.usages.includes('default')"
+                        v-if="showDeleteBtn(token)"
                         @click="handleDeleteToken(index)"
                       >
                         <el-button type="danger" link>
@@ -121,14 +129,16 @@
                 </div>
               </div>
               <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1">
+                <div class="ellipsis-one grid-cols-span-1 w-full">
                   {{ t('mcp.instance.token.tag') }}：<el-tag
                     v-for="(tag, num) in token.usages"
                     :key="num"
                     effect="plain"
                     class="mr-2"
                   >
-                    {{ tag }}
+                    <div class="ellipsis-one max-w-25">
+                      {{ tag }}
+                    </div>
                   </el-tag>
                 </div>
                 <div class="grid-cols-span-1">
@@ -291,9 +301,9 @@
                 :key="index"
                 class="flex items-center my-2 pr-3"
               >
-                <el-row :gutter="12" class="flex-sub">
+                <el-row :gutter="12" class="flex-sub align-center">
                   <el-col :span="7">
-                    <div class="flex h-full">
+                    <div class="flex h-full items-center justify-end">
                       <el-dropdown
                         v-if="index === 0"
                         trigger="click"
@@ -362,7 +372,7 @@
                 v-model="formData.usages"
                 collapse-tags
                 collapse-tags-tooltip
-                :max-collapse-tags="3"
+                :max-collapse-tags="8"
                 clearable
                 draggable
                 tag-type="primary"
@@ -431,6 +441,7 @@ import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 import { JsonFormatter } from '@/utils/json'
 import { useRouterHooks } from '@/utils/url'
+import SearchForm from '@/components/SearchForm/index.vue'
 
 const { jumpToPage } = useRouterHooks()
 
@@ -449,6 +460,113 @@ const formData = ref<any>({
   expireAt: null as number | null,
   usages: [] as string[],
 })
+const tokenFormConfig = ref([
+  {
+    span: 5,
+    key: 'name',
+    component: 'el-input',
+    label: '标签全称',
+    labelWidth: '60px',
+    props: { placeholder: '请输入标签全称' },
+  },
+  {
+    span: 5,
+    key: 'type',
+    label: '标签类型',
+    component: 'el-select',
+    props: {
+      placeholder: '请选择类型',
+      options: [
+        { label: 'dify_user_id', value: 'dify_user_id' },
+        { label: 'dify_user_name', value: 'dify_user_name' },
+        { label: 'dify_space_id', value: 'dify_space_id' },
+        { label: 'dify_space_name', value: 'dify_space_name' },
+        { label: 'intelligent_access_id', value: 'intelligent_access_id' },
+        { label: 'intelligent_access_name', value: 'intelligent_access_name' },
+        { label: 'intelligent_access_type', value: 'intelligent_access_type' },
+        { label: 'default', value: 'default' },
+      ],
+    },
+  },
+  {
+    span: 5,
+    key: 'value',
+    label: '类型值',
+    component: 'el-input',
+    props: {
+      placeholder: '请输入类型值',
+    },
+  },
+  {
+    span: 5,
+    key: 'handler',
+    component: 'slot',
+    slotName: 'handler',
+  },
+])
+const tokenFormData = ref({
+  name: '',
+  type: '',
+  value: '',
+})
+
+// 标志位，用于防止在恢复标签时触发 watch 循环
+const isRestoringTag = ref(false)
+// 拦截标签删除 - 使用 watch 监听数组变化
+watch(
+  () => formData.value.usages,
+  (newUsages, oldUsages) => {
+    // 如果正在恢复标签，跳过此次监听
+    if (isRestoringTag.value) {
+      return
+    }
+    // 如果旧数组为空或未定义，说明是初始化，不需要拦截
+    if (!oldUsages || oldUsages.length === 0) {
+      return
+    }
+    // 只有当数组长度减少时，才可能是删除操作
+    if (newUsages.length >= oldUsages.length) {
+      return
+    }
+    // 找出被删除的标签及其在原数组中的位置
+    const deletedTagsWithIndex: Array<{ tag: string; index: number }> = []
+    oldUsages.forEach((tag: string, index: number) => {
+      if (!newUsages.includes(tag)) {
+        deletedTagsWithIndex.push({ tag, index })
+      }
+    })
+
+    // 检查是否有被删除的标签包含受保护的关键字（模糊匹配）
+    for (const { tag: deletedTag, index: originalIndex } of deletedTagsWithIndex) {
+      if (
+        [
+          'dify_user_id',
+          'dify_user_name',
+          'dify_space_id',
+          'dify_space_name',
+          'intelligent_access_id',
+          'intelligent_access_name',
+          'intelligent_access_type',
+        ].some((keyword) => deletedTag.includes(keyword))
+      ) {
+        // 如果标签被删除且包含受保护的关键字，阻止删除操作
+        isRestoringTag.value = true
+        nextTick(() => {
+          // 重新添加被删除的受保护标签到原有位置
+          if (!formData.value.usages.includes(deletedTag)) {
+            // 计算应该插入的位置（考虑新数组可能比原数组短）
+            const insertIndex = Math.min(originalIndex, formData.value.usages.length)
+            formData.value.usages.splice(insertIndex, 0, deletedTag)
+          }
+          isRestoringTag.value = false
+        })
+        ElMessage.warning(t('mcp.instance.token.deleteProtected'))
+        break // 只处理第一个受保护的标签，避免多次提示
+      }
+    }
+  },
+  { deep: true },
+)
 const userDataKey = ref({
   visible: false,
   username: '',
@@ -523,8 +641,57 @@ const config = computed(() => {
   )
 })
 
+const showDeleteBtn = computed(() => {
+  return (token: any) => {
+    if (
+      [
+        'dify_user_id',
+        'dify_user_name',
+        'dify_space_id',
+        'dify_space_name',
+        'intelligent_access_id',
+        'intelligent_access_name',
+        'intelligent_access_type',
+        'default',
+      ].some((keyword) => token.usages.some((usage: string) => usage.includes(keyword)))
+    ) {
+      return false
+    }
+    return true
+  }
+})
+
+const showTokenList = computed(() => {
+  // 筛选逻辑：根据tokenFormData的name/type/value
+  const list = tokenList.value || []
+  const { name, type, value } = tokenFormData.value || {}
+  // 如果都为空，直接返回全部
+  if (!name && !type && !value) return list
+
+  return list.filter((token) => {
+    // usages为标签数组
+    let match = true
+    // name精准匹配usages
+    if (name) {
+      match = token.usages?.includes(name)
+    }
+    // type模糊匹配usages
+    if (match && type && !value) {
+      match = token.usages?.some((u: any) => u.includes(type))
+    }
+    // type和value同时存在，精准匹配 type=value
+    if (match && type && value) {
+      match = token.usages?.includes(`${type}=${value}`)
+    }
+    return match
+  })
+})
 // token list
 const tokenList = ref<Array<any>>([])
+
+const handleQueryToken = (formData: any) => {
+  tokenFormData.value = formData
+}
 
 const handleChangeTransport = async (token: any, index: number) => {
   try {
@@ -794,6 +961,7 @@ const handleSaveTokens = async () => {
         instanceId: dialogInfo.value.instanceInfo.instanceId,
       })),
     })
+    handleTokenList()
     emit('on-refresh')
   } finally {
     dialogInfo.value.instanceInfo.loading = false
