@@ -111,266 +111,20 @@ type ContainerStatusResult struct {
 }
 
 // CreateContainer create container business logic
-func (cd *ContainerBiz) CreateHostingContainerForSSEAndSteamableHttp(req *instancepb.CreateRequest, instanceID string) (*ContainerCreateResult, error) {
-	var err error
-	shortInstanceId := instanceID[:8]
-
-	// 1. Generate container name
-	containerName := cd.generateContainerName(shortInstanceId)
-	serviceName := cd.generateServiceName(shortInstanceId)
-
-	// 2. Code package download link generation
-	packageId := req.PackageId
-	codepkgInstallScript := ""
-	if packageId != "" {
-		// Generate code package install script
-		codepkgInstallScript, err = cd.generateCodePkgInstallScript(packageId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate code package install script: %w", err)
-		}
-	}
-
-	// 4. Generate image configuration
-	imgPms, err := cd.getMcpHostingImageCfgForSSEAndSteamableHttp(req.ImgAddress, req.Port, req.InitScript, req.Command, codepkgInstallScript)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
-	}
-	image := imgPms.image
-	port := imgPms.port
-	command := imgPms.command
-	commandArgs := imgPms.commandArgs
-
-	// 5. Set environment variables
-	envVars := make(map[string]string)
-	envVars["MCP_INSTANCE_ID"] = instanceID
-	envVars["MCP_PORT"] = fmt.Sprintf("%d", imgPms.port)
-	envVars["NODE_ENV"] = "production"
-	for k, v := range req.EnvironmentVariables {
-		envVars[k] = v
-	}
-
-	// 6. Set volume mount configuration (affinity judgment logic moved to Create method)
-	mounts := []k8s.UnifiedMount{}
-	if len(req.VolumeMounts) > 0 {
-		for _, vm := range req.VolumeMounts {
-			mounts = append(mounts, cd.volumeMountFromPb(vm))
-		}
-	}
-
-	// 7. Set labels
-	labels := make(map[string]string)
-	labels["app"] = containerName
-	labels["instance"] = instanceID
-	labels["managed-by"] = common.SourceServerName
-	if req.StartupTimeout > 0 {
-		labels["mcp.startup.timeout"] = fmt.Sprintf("%d", req.StartupTimeout)
-	}
-	if req.RunningTimeout > 0 {
-		labels["mcp.running.timeout"] = fmt.Sprintf("%d", req.RunningTimeout)
-	}
-
-	// 8. Build container creation options
-	containerOptions := container.ContainerCreateOptions{
-		ImageName:     image,
-		ContainerName: containerName,
-		Port:          port,
-		Command:       command,
-		CommandArgs:   commandArgs,
-		RestartPolicy: "Always",
-		Labels:        labels,
-		EnvVars:       envVars,
-		Mounts:        mounts,
-		WorkingDir:    "/app",
-	}
-
+func (cd *ContainerBiz) CreateContainer(ctx context.Context, containerCreateOptions *container.ContainerCreateOptions, environmentId int32, startupTimeout int32) error {
 	// 9. Set timeout context
-	ctx := cd.ctx
-	if req.StartupTimeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(cd.ctx, time.Duration(req.StartupTimeout)*time.Second)
-		defer cancel()
-	}
-
-	entry, err := cd.GetRuntimeEntry(cd.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
-	}
-	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
-	}
-
-	// Use container manager to create uniformly (simplified judgment logic)
-	containerName, err = entry.GetContainerManager().Create(ctx, containerOptions)
-	if err != nil {
-		// Delete container (if container name is not empty)
-		if containerName != "" {
-			_ = entry.GetContainerManager().Delete(ctx, containerName)
-		}
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateFailure)+": %v", err)
-	}
-
-	// Create service
-	_, err = entry.GetServiceManager().Create(ctx, serviceName, port, labels)
-	if err != nil {
-		// Delete container (if container name is not empty)
-		if containerName != "" {
-			_ = entry.GetContainerManager().Delete(ctx, containerName)
-		}
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceCreateFailure)+": %w", err)
-	}
-
-	// 11. Return creation result, including data required for instance update
-	return &ContainerCreateResult{
-		ContainerName: containerName,
-		ServiceName:   serviceName,
-		ServicePort:   port,
-		Message:       i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateSuccess),
-	}, nil
-}
-
-// CreateContainer create container business logic
-func (cd *ContainerBiz) CreateHostingContainerForStdio(req *instancepb.CreateRequest, instanceID string) (*ContainerCreateResult, error) {
-	var err error
-	// 1. Generate container name
-	containerName := cd.generateContainerName(instanceID)
-	serviceName := cd.generateServiceName(instanceID)
-
-	// 2. Code package download link generation
-	packageId := req.PackageId
-	codepkgInstallScript := ""
-	if packageId != "" {
-		// Generate code package install script
-		codepkgInstallScript, err = cd.generateCodePkgInstallScript(packageId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate code package install script: %w", err)
-		}
-	}
-
-	// 3. Validate MCP configuration
-	validateInfo, err := utils.ValidateMcpConfig([]byte(req.McpServers))
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate mcp config: %w", err)
-	}
-	// Check if MCP configuration is valid: invalid or non-stdio protocol type
-	if validateInfo == nil {
-		return nil, fmt.Errorf("mcpServers config is invalid: %s", err)
-	}
-	if !validateInfo.IsValid || validateInfo.ProtocolType != model.McpProtocolStdio.String() {
-		return nil, fmt.Errorf("mcp config is invalid protocol type: %s", validateInfo.ProtocolType)
-	}
-
-	// 4. Generate image configuration
-	imgPms, err := cd.getMcpHostingImageCfg(req.ImgAddress, req.Port, req.InitScript, codepkgInstallScript, req.McpServers)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
-	}
-	image := imgPms.image
-	port := imgPms.port
-	command := imgPms.command
-	commandArgs := imgPms.commandArgs
-
-	// 5. Set environment variables
-	envVars := make(map[string]string)
-	envVars["MCP_INSTANCE_ID"] = instanceID
-	envVars["MCP_PORT"] = fmt.Sprintf("%d", imgPms.port)
-	envVars["NODE_ENV"] = "production"
-	for k, v := range req.EnvironmentVariables {
-		envVars[k] = v
-	}
-
-	// 6. Set volume mount configuration (affinity judgment logic moved to Create method)
-	mounts := []k8s.UnifiedMount{}
-	if len(req.VolumeMounts) > 0 {
-		for _, vm := range req.VolumeMounts {
-			mounts = append(mounts, cd.volumeMountFromPb(vm))
-		}
-	}
-
-	// 7. Set labels
-	labels := make(map[string]string)
-	labels["app"] = containerName
-	labels["instance"] = instanceID
-	labels["managed-by"] = common.SourceServerName
-	if req.StartupTimeout > 0 {
-		labels["mcp.startup.timeout"] = fmt.Sprintf("%d", req.StartupTimeout)
-	}
-	if req.RunningTimeout > 0 {
-		labels["mcp.running.timeout"] = fmt.Sprintf("%d", req.RunningTimeout)
-	}
-
-	// 8. Build container creation options
-	containerOptions := container.ContainerCreateOptions{
-		ImageName:     image,
-		ContainerName: containerName,
-		Port:          port,
-		Command:       command,
-		CommandArgs:   commandArgs,
-		RestartPolicy: "Always",
-		Labels:        labels,
-		EnvVars:       envVars,
-		Mounts:        mounts,
-		WorkingDir:    "/app",
-	}
-
-	// 9. Set timeout context
-	ctx := cd.ctx
-	if req.StartupTimeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(cd.ctx, time.Duration(req.StartupTimeout)*time.Second)
-		defer cancel()
-	}
-
-	entry, err := cd.GetRuntimeEntry(cd.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
-	}
-	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
-	}
-
-	// Use container manager to create uniformly (simplified judgment logic)
-	containerName, err = entry.GetContainerManager().Create(ctx, containerOptions)
-	if err != nil {
-		// Delete container (if container name is not empty)
-		if containerName != "" {
-			_ = entry.GetContainerManager().Delete(ctx, containerName)
-		}
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateFailure)+": %v", err)
-	}
-
-	// Create service
-	_, err = entry.GetServiceManager().Create(ctx, serviceName, port, labels)
-	if err != nil {
-		// Delete container
-		_ = entry.GetContainerManager().Delete(ctx, containerName)
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceCreateFailure)+": %w", err)
-	}
-
-	// 11. Return creation result, including data required for instance update
-	return &ContainerCreateResult{
-		ContainerName: containerName,
-		ServiceName:   serviceName,
-		ServicePort:   port,
-		Message:       i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateSuccess),
-	}, nil
-}
-
-// CreateContainer create container business logic
-func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.ContainerCreateOptions, environmentId int32, startupTimeout int32) error {
-	// 9. Set timeout context
-	ctx := cd.ctx
 	if startupTimeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(cd.ctx, time.Duration(startupTimeout)*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(startupTimeout)*time.Second)
 		defer cancel()
 	}
 
-	entry, err := cd.GetRuntimeEntry(cd.ctx, uint(environmentId))
+	entry, err := cd.GetRuntimeEntry(ctx, uint(environmentId))
 	if err != nil {
-		return fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
 	}
 	if entry == nil {
-		return fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized)+": %w", "entyr is nil")
 	}
 
 	// create container
@@ -380,7 +134,15 @@ func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.Contai
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
-		return fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerCreateFailure)+": %v", err)
+		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerCreateFailure)+": %v", err)
+	}
+
+	// Check runtime type
+	if entry.GetRuntimeType() == container.RuntimeDocker {
+		// For Docker, we don't create a separate service.
+		// The container name acts as the service name (hostname).
+		containerCreateOptions.ServiceName = containerCreateOptions.ContainerName
+		return nil
 	}
 
 	// create service
@@ -390,7 +152,7 @@ func (cd *ContainerBiz) CreateContainer(containerCreateOptions *container.Contai
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
-		return fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceCreateFailure)+": %w", err)
+		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeServiceCreateFailure)+": %w", err)
 	}
 
 	return nil
@@ -666,10 +428,6 @@ EOF
 	}
 
 	return imgPms, nil
-}
-
-func (cd *ContainerBiz) getSupergatewayImage() string {
-	return "ccr.ccs.tencentyun.com/itqm-private/supergateway:3.2.0-uvx"
 }
 
 // ContainerScaleParams container scaling parameters

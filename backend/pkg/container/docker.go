@@ -335,7 +335,7 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	_ = stopCmd.Run() // ignore stop error, container might already be stopped
 
 	// Delete container
-	deleteCmd := exec.CommandContext(ctx, "docker", "rm", containerName)
+	deleteCmd := exec.CommandContext(ctx, "docker", "rm", "-f", containerName)
 	if err := deleteCmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete Docker container: %w", err)
 	}
@@ -373,7 +373,7 @@ func (dcm *DockerContainerManager) Restart(ctx context.Context, options Containe
 
 // GetInfo gets container information
 func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName string) (*ContainerInfo, error) {
-	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .}}", containerName)
+	cmd := exec.CommandContext(ctx, "docker", "inspect", containerName)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Docker container information: %w", err)
@@ -501,7 +501,7 @@ func (dcm *DockerContainerManager) GetLogs(ctx context.Context, containerName st
 
 	// Execute command
 	cmd := exec.CommandContext(ctx, "docker", args...)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("failed to get Docker container logs: %w", err)
 	}
@@ -561,14 +561,27 @@ func (dsm *DockerServiceManager) Delete(ctx context.Context, serviceName string)
 
 // Get gets service information
 func (dsm *DockerServiceManager) Get(ctx context.Context, serviceName string) (*ServiceInfo, error) {
-	// Infer container name from service name (mcp-instance-xxx-service -> mcp-instance-xxx-container)
-	containerName := strings.Replace(serviceName, "-service", "-container", 1)
+	// Infer container name from service name
+	// 1. Try direct usage (new behavior: ServiceName == ContainerName)
+	containerName := serviceName
 
 	// Inspect container to verify existence and get ports
 	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", containerName)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("service (container) not found: %w", err)
+		// 2. If failed, try legacy conversion (mcp-instance-xxx-service -> mcp-instance-xxx-container)
+		if strings.HasSuffix(serviceName, "-service") {
+			legacyName := strings.Replace(serviceName, "-service", "-container", 1)
+			cmd = exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", legacyName)
+			output, err = cmd.Output()
+			if err == nil {
+				containerName = legacyName
+			} else {
+				return nil, fmt.Errorf("service (container) not found: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("service (container) not found: %w", err)
+		}
 	}
 
 	var portsMap map[string][]interface{}

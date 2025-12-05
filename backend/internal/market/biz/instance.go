@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
+	"github.com/kymo-mcp/mcpcan/pkg/container"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
@@ -164,7 +165,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
-	err = GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, 0)
+	err = GContainerBiz.CreateContainer(ctx, containerOptions, req.EnvironmentId, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %w", err)
 	}
@@ -357,7 +358,7 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
-	err = GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, req.StartupTimeout)
+	err = GContainerBiz.CreateContainer(ctx, containerOptions, req.EnvironmentId, req.StartupTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %w", err)
 	}
@@ -475,6 +476,143 @@ func (biz *InstanceBiz) validateTimeoutParams(startupTimeout, runningTimeout int
 	return nil
 }
 
+// GetStatus retrieves the status of an instance
+func (biz *InstanceBiz) GetStatus(ctx context.Context, req *instancepb.GetStatusRequest) (*instancepb.GetStatusResp, error) {
+	instance, err := biz.GetInstance(req.InstanceId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance information: %v", err)
+	}
+	if instance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	var response *instancepb.GetStatusResp
+
+	// Use different status query strategies based on access type
+	switch instance.AccessType {
+	case model.AccessTypeHosting:
+		// Hosting type: query container status
+		params := ContainerStatusParams{
+			InstanceID: req.InstanceId,
+		}
+		result, err := GContainerBiz.GetContainerStatus(params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get container status: %s", err.Error())
+		}
+
+		response = result
+	case model.AccessTypeProxy, model.AccessTypeDirect:
+		_, _, mcpConfig, err := instance.GetSourceConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get source config: %v", err)
+		}
+		// Use HTTP probe to check service availability
+		probeResult := utils.ProbePortFromURL(ctx, mcpConfig.URL, 5*time.Second)
+
+		// Build response
+		response = &instancepb.GetStatusResp{
+			InstanceId: req.InstanceId,
+			Status:     string(instance.Status),
+		}
+
+		// If probe fails, add error message
+		if !probeResult.Success {
+			response.ProbeHttp = false
+		} else {
+			response.ProbeHttp = true
+		}
+	default:
+		return nil, fmt.Errorf("unsupported access type")
+	}
+
+	return response, nil
+}
+
+// GetLogs get instance logs
+func (biz *InstanceBiz) GetLogs(ctx context.Context, req *instancepb.LogsRequest) (*instancepb.LogsResp, error) {
+	// Set default number of lines
+	lines := req.Lines
+	if lines <= 0 {
+		lines = 100
+	}
+
+	instance, err := biz.GetInstance(req.InstanceId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance information: %v", err)
+	}
+	if instance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	var response instancepb.LogsResp
+	response.InstanceId = req.InstanceId
+
+	// Check if it is a managed instance
+	if instance.AccessType != model.AccessTypeHosting {
+		response.IsManaged = false
+		response.Message = "Instance is not of managed type"
+		return &response, nil
+	}
+
+	response.IsManaged = true
+
+	// Get container logs
+	logs, err := GContainerBiz.GetContainerLogs(ContainerLogsParams{
+		InstanceID: req.InstanceId,
+		Lines:      int64(lines),
+	})
+	if err != nil {
+		response.Message = fmt.Sprintf("Failed to get container logs: %v", err)
+		return &response, nil
+	}
+
+	response.Logs = logs
+	response.Message = "Logs retrieved successfully"
+
+	return &response, nil
+}
+
+// RestartInstance restarts an instance
+func (biz *InstanceBiz) RestartInstance(ctx context.Context, req *instancepb.RestartRequest) (*instancepb.RestartResp, error) {
+	// 1. Query instance data by ID
+	instance, err := biz.GetInstance(req.InstanceId)
+	if err != nil {
+		return nil, err
+	}
+	if instance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	switch instance.AccessType {
+	case model.AccessTypeHosting:
+		_, err = GContainerBiz.RestartContainer(instance)
+		if err != nil {
+			return nil, fmt.Errorf("failed to restart container: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("this service does not need to be restarted")
+	}
+
+	// 3. Update container status to pending
+	if err = biz.UpdateInstanceStatusToPending(ctx, instance); err != nil {
+		return nil, err
+	}
+
+	pbAccessType, err := common.ConvertToProtoAccessType(instance.AccessType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert access type: %w", err)
+	}
+
+	// 4. Return restart result
+	return &instancepb.RestartResp{
+		InstanceId: instance.InstanceID,
+		Name:       instance.InstanceName,
+		Status:     string(instance.Status),
+		AccessType: pbAccessType,
+		Message:    "Instance restarted successfully",
+	}, nil
+}
+
 // GetInstance get instance information
 func (biz *InstanceBiz) GetInstance(instanceID string) (*model.McpInstance, error) {
 	return mysql.McpInstanceRepo.FindByInstanceID(biz.ctx, instanceID)
@@ -512,14 +650,36 @@ func (biz *InstanceBiz) UpdateInstance(instance *model.McpInstance) error {
 	return biz.UpdateInstanceCache(instance.InstanceID, instance)
 }
 
-// DeleteInstance delete instance
-func (biz *InstanceBiz) DeleteInstance(instanceID string) error {
-	// Get instance by access type
-	_, err := mysql.McpInstanceRepo.FindByInstanceID(biz.ctx, instanceID)
+// DeleteInstance deletes an instance
+func (biz *InstanceBiz) DeleteInstance(instanceID string) (*instancepb.DeleteResp, error) {
+	// Get instance information directly
+	instance, err := mysql.McpInstanceRepo.FindByInstanceID(biz.ctx, instanceID)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to get instance information: %w", err)
 	}
-	return mysql.McpInstanceRepo.Delete(biz.ctx, instanceID)
+	if instance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	switch instance.AccessType {
+	case model.AccessTypeHosting:
+		_, err = GContainerBiz.DeleteContainer(instance)
+		if err != nil {
+			return nil, fmt.Errorf("failed to delete container: %w", err)
+		}
+	}
+
+	// Disable the instance and set deletion time
+	err = mysql.McpInstanceRepo.Delete(biz.ctx, instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete instance: %w", err)
+	}
+
+	// Remove from cache
+	cache := redis.GetMcpInstanceCache()
+	cache.ClearCache(instanceID)
+
+	return &instancepb.DeleteResp{Message: "Instance deleted successfully"}, nil
 }
 
 // updateInstance updates instance cache in Redis using CacheInstanceInfo.
@@ -850,6 +1010,13 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
+
+	// Check runtime type and adjust service name for Docker
+	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
+	if err == nil && entry.GetRuntimeType() == container.RuntimeDocker {
+		containerOptions.ServiceName = containerOptions.ContainerName
+	}
+
 	// Create new instance record
 	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
 	if err != nil {
@@ -930,6 +1097,13 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
+
+	// Check runtime type and adjust service name for Docker
+	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
+	if err == nil && entry.GetRuntimeType() == container.RuntimeDocker {
+		newContainerCreateOptions.ServiceName = newContainerCreateOptions.ContainerName
+	}
+
 	containerCreateOptions, err := common.MarshalAndAssignConfig(newContainerCreateOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal container create containerCreateOptions: %w", err)

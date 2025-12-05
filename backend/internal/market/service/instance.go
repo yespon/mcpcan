@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"github.com/kymo-mcp/mcpcan/pkg/utils"
 )
 
 // InstanceService struct for instance service
@@ -225,7 +223,7 @@ func (s *InstanceService) RestartHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.restart(c.Request.Context(), &req)
+	result, err := biz.GInstanceBiz.RestartInstance(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -248,7 +246,7 @@ func (s *InstanceService) DeleteHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.delete(req.InstanceId)
+	result, err := biz.GInstanceBiz.DeleteInstance(req.InstanceId)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -271,7 +269,7 @@ func (s *InstanceService) StatusHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.getStatus(c.Request.Context(), &req)
+	result, err := biz.GInstanceBiz.GetStatus(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -294,7 +292,7 @@ func (s *InstanceService) LogsHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.getLogs(&req)
+	result, err := biz.GInstanceBiz.GetLogs(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -452,192 +450,6 @@ func (s *InstanceService) list(req *instancepb.ListRequest) (*instancepb.ListRes
 	return biz.GInstanceBiz.ListInstance(page, pageSize, filters, sortBy, sortOrder)
 }
 
-// GetLogs get instance logs
-func (s *InstanceService) getLogs(req *instancepb.LogsRequest) (*instancepb.LogsResp, error) {
-	// Set default number of lines
-	lines := req.Lines
-	if lines <= 0 {
-		lines = 100
-	}
-
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	var response instancepb.LogsResp
-	response.InstanceId = req.InstanceId
-
-	// Check if it is a managed instance
-	if instance.AccessType != model.AccessTypeHosting {
-		response.IsManaged = false
-		response.Message = "Instance is not of managed type"
-		return &response, nil
-	}
-
-	response.IsManaged = true
-
-	// Get container logs
-	logs, err := biz.GContainerBiz.GetContainerLogs(biz.ContainerLogsParams{
-		InstanceID: req.InstanceId,
-		Lines:      int64(lines),
-	})
-	if err != nil {
-		response.Message = fmt.Sprintf("Failed to get container logs: %v", err)
-		return &response, nil
-	}
-
-	response.Logs = logs
-	response.Message = "Logs retrieved successfully"
-
-	return &response, nil
-}
-
-// GetStatus retrieves the status of an instance
-func (s *InstanceService) getStatus(ctx context.Context, req *instancepb.GetStatusRequest) (*instancepb.GetStatusResp, error) {
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	var response *instancepb.GetStatusResp
-
-	// Use different status query strategies based on access type
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		// Hosting type: query container status
-		params := biz.ContainerStatusParams{
-			InstanceID: req.InstanceId,
-		}
-		result, err := biz.GContainerBiz.GetContainerStatus(params)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get container status: %s", err.Error())
-		}
-
-		response = result
-	case model.AccessTypeProxy:
-		_, _, mcpConfig, err := instance.GetSourceConfig()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get source config: %v", err)
-		}
-		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(ctx, mcpConfig.URL, 5*time.Second)
-
-		// Build response
-		response = &instancepb.GetStatusResp{
-			InstanceId: req.InstanceId,
-			Status:     string(instance.Status),
-		}
-
-		// If probe fails, add error message
-		if !probeResult.Success {
-			response.ProbeHttp = false
-		} else {
-			response.ProbeHttp = true
-		}
-	case model.AccessTypeDirect:
-		_, _, mcpConfig, err := instance.GetSourceConfig()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get source config: %v", err)
-		}
-		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(ctx, mcpConfig.URL, 5*time.Second)
-
-		// Build response
-		response = &instancepb.GetStatusResp{
-			InstanceId: req.InstanceId,
-			Status:     string(instance.Status),
-		}
-
-		// If probe fails, add error message
-		if !probeResult.Success {
-			response.ProbeHttp = false
-		} else {
-			response.ProbeHttp = true
-		}
-	default:
-		return nil, fmt.Errorf("unsupported access type")
-	}
-
-	return response, nil
-}
-
-// delete deletes an instance
-func (s *InstanceService) delete(instanceID string) (*instancepb.DeleteResp, error) {
-	req := &instancepb.DeleteRequest{
-		InstanceId: instanceID,
-	}
-
-	// Get instance information directly
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		_, err = biz.GContainerBiz.DeleteContainer(instance)
-		if err != nil {
-			return nil, fmt.Errorf("failed to delete container: %v", err)
-		}
-	}
-
-	// Disable the instance and set deletion time
-	err = biz.GInstanceBiz.DeleteInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to disable instance: %v", err)
-	}
-
-	return &instancepb.DeleteResp{Message: "Instance deleted successfully"}, nil
-}
-
-// restart restarts an instance
-func (s *InstanceService) restart(ctx context.Context, req *instancepb.RestartRequest) (*instancepb.RestartResp, error) {
-	// 1. Query instance data by ID
-	instance, err := s.getInstanceByID(req.InstanceId)
-	if err != nil {
-		return nil, err
-	}
-
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		_, err = biz.GContainerBiz.RestartContainer(instance)
-		if err != nil {
-			return nil, fmt.Errorf("failed to restart container: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("this service does not need to be restarted")
-	}
-
-	// 3. Update container status to pending
-	if err = s.UpdateInstanceStatusToPending(ctx, instance); err != nil {
-		return nil, err
-	}
-
-	pbAccessType, err := common.ConvertToProtoAccessType(instance.AccessType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert access type: %w", err)
-	}
-
-	// 4. Return restart result
-	return &instancepb.RestartResp{
-		InstanceId: instance.InstanceID,
-		Name:       instance.InstanceName,
-		Status:     string(instance.Status),
-		AccessType: pbAccessType,
-		Message:    "Instance restarted successfully",
-	}, nil
-}
-
 // disable disables an instance
 func (s *InstanceService) disable(ctx context.Context, req *instancepb.DisabledRequest) (*instancepb.DisabledResp, error) {
 	// Disable the instance and set deletion time
@@ -647,23 +459,6 @@ func (s *InstanceService) disable(ctx context.Context, req *instancepb.DisabledR
 	}
 
 	return &instancepb.DisabledResp{Message: msg}, nil
-}
-
-// getInstanceByID retrieves an instance by its ID
-func (s *InstanceService) getInstanceByID(instanceID string) (*model.McpInstance, error) {
-	instance, err := biz.GInstanceBiz.GetInstance(instanceID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-	return instance, nil
-}
-
-// UpdateInstanceStatusToPending updates instance status to pending
-func (s *InstanceService) UpdateInstanceStatusToPending(ctx context.Context, instance *model.McpInstance) error {
-	return biz.GInstanceBiz.UpdateInstanceStatusToPending(ctx, instance)
 }
 
 // createInstanceDirectMode direct connection mode handler function
