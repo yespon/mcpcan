@@ -240,7 +240,7 @@ func (a *App) setupHttpServer() {
 	routerPrefix = strings.Trim(routerPrefix, "/")
 
 	// Register instance management interface
-	instanceService := service.NewInstanceService(context.Background())
+	instanceService := service.NewInstanceService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/create", routerPrefix), instanceService.CreateHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/instance/:instanceId", routerPrefix), instanceService.DetailHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/edit", routerPrefix), instanceService.EditHandler)
