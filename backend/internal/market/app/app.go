@@ -22,7 +22,6 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/middleware"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/scheduler"
-	"github.com/kymo-mcp/mcpcan/pkg/services"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -99,11 +98,6 @@ func (a *App) Initialize() error {
 	// Use global database repository instance (already initialized in init)
 	if mysql.McpInstanceRepo == nil {
 		return fmt.Errorf("McpInstanceRepo not properly initialized, please check database initialization process")
-	}
-
-	// Load service configuration
-	if err := services.LoadServices(&a.config.Services); err != nil {
-		return fmt.Errorf("failed to load service configuration: %w", err)
 	}
 
 	// Start scheduler
