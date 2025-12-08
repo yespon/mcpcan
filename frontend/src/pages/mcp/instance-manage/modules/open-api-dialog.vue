@@ -628,7 +628,7 @@ const init = (id: string | null) => {
       sourceType: SourceType.OPENAPI,
       tokens: [
         {
-          enabledTransport: false,
+          enabled: false,
           expireAt: '',
           headers: [],
           publishAt: new Date().getTime(),
