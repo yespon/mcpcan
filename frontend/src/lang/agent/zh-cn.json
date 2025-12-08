@@ -40,6 +40,37 @@
       "dbUser": "请输入用户名",
       "dbPassword": "请输入密码",
       "dbName": "请输入数据库名称"
+    },
+    "sync": {
+      "platform": "平台：",
+      "selected": "已选择",
+      "selectSpace": "选择空间: ",
+      "unitMCP": "个MCP服务",
+      "unit": "个",
+      "stepOne": "智能体平台选择",
+      "stepTwo": "同步的命名空间",
+      "stepThree": "鉴权设置",
+      "descStepOne": "请选择一个你需要同步的智能体平台",
+      "descStepTwo": "请选择一个你需要同步的空间",
+      "descStepThree": "请给命名空间进行鉴权设置",
+      "taskName": "同步任务",
+      "taskNamePlaceholder": "请输入任务名称",
+      "noAccessName": "未命名智能体平台",
+      "type": "类型：",
+      "emptyDesc": "暂无可同步的智能体",
+      "selectAll": "全选",
+      "noNamespace": "未命名空间",
+      "noUserName": "暂无用户名",
+      "user": "用户",
+      "emptyNamespaceDesc": "暂无可同步的命名空间",
+      "searchPlaceholder": "搜索命名空间",
+      "MCPName": "MCP名称",
+      "stepUp": "上一步",
+      "stepNext": "下一步",
+      "confirmSync": "确认同步",
+      "dialogTitle": "智能体平台同步",
+      "loadingTextNamespace": "正在加载命名空间...",
+      "loadingTextTask": "正在创建同步任务..."
     }
   }
 }

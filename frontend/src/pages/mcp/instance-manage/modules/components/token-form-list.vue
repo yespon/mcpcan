@@ -177,7 +177,7 @@
                 @blur="handleTagConfirm"
               />
               <el-button v-else class="mx-2" size="small" @click="showTagInput = true">
-                + New Tag
+                + {{ t('mcp.instance.token.newTag') }}
               </el-button>
             </el-form-item>
           </el-form>

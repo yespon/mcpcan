@@ -40,6 +40,37 @@
       "dbUser": "Please enter database user",
       "dbPassword": "Please enter database password",
       "dbName": "Please enter database name"
+    },
+    "sync": {
+      "platform": "Platform: ",
+      "selected": "Selected",
+      "selectSpace": "Select Namespace: ",
+      "unitMCP": "MCP Services",
+      "unit": "items",
+      "stepOne": "Agent Platform Selection",
+      "stepTwo": "Namespaces to Sync",
+      "stepThree": "Authentication Settings",
+      "descStepOne": "Please select an agent platform to sync",
+      "descStepTwo": "Please select a namespace to sync",
+      "descStepThree": "Please set up authentication for the namespace",
+      "taskName": "Sync Task",
+      "taskNamePlaceholder": "Please enter task name",
+      "noAccessName": "Unnamed Agent Platform",
+      "type": "Type: ",
+      "emptyDesc": "No agents available for synchronization",
+      "selectAll": "All",
+      "noNamespace": "Unnamed Namespace",
+      "noUserName": "No Username",
+      "user": "User",
+      "emptyNamespaceDesc": "No namespaces available for synchronization",
+      "searchPlaceholder": "Namespaces",
+      "MCPName": "Name",
+      "stepUp": "Previous",
+      "stepNext": "Next",
+      "confirmSync": "Confirm",
+      "dialogTitle": "Agent Platform Sync",
+      "loadingTextNamespace": "Loading Namespaces...",
+      "loadingTextTask": "Creating Sync Task..."
     }
   }
 }

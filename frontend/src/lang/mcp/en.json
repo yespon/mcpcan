@@ -218,7 +218,14 @@
         "passthroughOff": "No Passthrough",
         "headersKey": "Header Key",
         "headersValue": "Header Value",
-        "deleteProtected": "This tag cannot be deleted"
+        "deleteProtected": "This tag cannot be deleted",
+        "newTag": "New Tag",
+        "tagName": "Tag Name",
+        "tagNamePlaceholder": "Please enter the tag name",
+        "tagType": "Tag Type",
+        "tagTypePlaceholder": "Please select a type",
+        "tagValue": "Value",
+        "tagValuePlaceholder": "Please enter the type value"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",

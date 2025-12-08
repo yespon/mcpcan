@@ -258,17 +258,17 @@ const tokenFormConfig = ref([
     span: 5,
     key: 'name',
     component: 'el-input',
-    label: '标签全称',
+    label: t('mcp.instance.token.tagName'),
     labelWidth: '60px',
-    props: { placeholder: '请输入标签全称' },
+    props: { placeholder: t('mcp.instance.token.tagNamePlaceholder') },
   },
   {
     span: 5,
     key: 'type',
-    label: '标签类型',
+    label: t('mcp.instance.token.tagType'),
     component: 'el-select',
     props: {
-      placeholder: '请选择类型',
+      placeholder: t('mcp.instance.token.tagTypePlaceholder'),
       options: [
         { label: 'dify_user_id', value: 'dify_user_id' },
         { label: 'dify_user_name', value: 'dify_user_name' },
@@ -284,10 +284,10 @@ const tokenFormConfig = ref([
   {
     span: 5,
     key: 'value',
-    label: '类型值',
+    label: t('mcp.instance.token.tagValue'),
     component: 'el-input',
     props: {
-      placeholder: '请输入类型值',
+      placeholder: t('mcp.instance.token.tagValuePlaceholder'),
     },
   },
   {

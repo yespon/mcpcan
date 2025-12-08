@@ -218,7 +218,14 @@
         "passthroughOff": "不透传",
         "headersKey": "请求头键名",
         "headersValue": "请求头键值",
-        "deleteProtected": "该标签不可删除"
+        "deleteProtected": "该标签不可删除",
+        "newTag": "新标签",
+        "tagName": "标签名称",
+        "tagNamePlaceholder": "请输入标签全称",
+        "tagType": "标签类型",
+        "tagTypePlaceholder": "请选择标签类型",
+        "tagValue": "类型值",
+        "tagValuePlaceholder": "请输入类型值"
       },
       "openApi": {
         "importTitle": "导入 OpenAPI 文档",

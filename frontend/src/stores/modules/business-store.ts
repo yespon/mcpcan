@@ -13,9 +13,10 @@ export const useBusinessStore = defineStore('business', () => {
     (newVal) => {
       // 当任务列表展开时开启定时任务请求
       if (newVal) {
+        handleGetTaskList()
         taskTimer.value = setInterval(() => {
           handleGetTaskList()
-        }, 30 * 1000)
+        }, 10 * 1000)
       } else {
         clearInterval(taskTimer.value)
       }

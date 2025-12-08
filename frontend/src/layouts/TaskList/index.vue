@@ -206,7 +206,6 @@ watch(
           // 进度计算
           const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
           let done = 0
-
           if (Array.isArray(detail.installLogs)) {
             for (const log of detail.installLogs) {
               if (Array.isArray(log.insertIntelligentLogs)) {

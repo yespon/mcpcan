@@ -122,7 +122,7 @@
         @blur="handleTagConfirm"
       />
       <el-button v-else class="mx-2" size="small" @click="showTagInput = true">
-        + New Tag
+        + {{ t('mcp.instance.token.newTag') }}
       </el-button>
     </el-form-item>
   </el-form>
@@ -176,7 +176,7 @@ const tokenTypeOptions = [
   { label: 'X-API-key', value: 3 },
   { label: 'Authorization', value: 4 },
 ]
-// 账号密码弹窗数据
+// account password dialog data
 const userDataKey = ref({
   visible: false,
   username: '',
