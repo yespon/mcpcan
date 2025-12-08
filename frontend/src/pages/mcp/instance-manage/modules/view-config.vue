@@ -213,224 +213,19 @@
       </div>
     </template>
   </el-dialog>
-  <!-- token config dialog -->
-  <el-dialog
-    v-model="formData.visible"
-    width="580px"
-    top="20vh"
-    :show-close="false"
-    @close="formRef?.resetFields()"
-    header-class="token-header-border"
-    footer-class="token-footer-border"
-  >
-    <template #header>
-      <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
-    </template>
-    <el-row v-loading="dialogInfo.instanceInfo.loading" class="mt-4">
-      <el-col :span="24" class="collapsed">
-        <el-scrollbar ref="scrollbarRef" height="50vh" always class="pr-4">
-          <el-form
-            ref="formRef"
-            :model="formData"
-            :rules="rules"
-            label-width="auto"
-            label-position="top"
-            class="mx-2"
-          >
-            <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
-              <template #label>
-                <div class="center">
-                  <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(7)"
-                    >7{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(15)"
-                    >15{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(30)"
-                    >30{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                </div>
-              </template>
-              <el-date-picker
-                ref="datePicker"
-                v-model="formData.expireAt"
-                type="datetime"
-                value-format="x"
-                :placeholder="t('mcp.instance.token.placeholderDate')"
-                style="width: 100%"
-                :disabled-date="(date: Date) => date.getTime() < Date.now()"
-              ></el-date-picker>
-            </el-form-item>
-            <el-form-item :label="t('mcp.token.authentication')" prop="tokenType">
-              <div class="w-full u-line-1" style="white-space: nowrap">
-                Authorization：{{ formData.token }}
-              </div>
-            </el-form-item>
-
-            <el-form-item prop="enabledTransport" class="enabledTransport">
-              <template #label>
-                <div class="w-full flex justify-between items-center">
-                  <span class="mr-2"> {{ t('mcp.token.passthrough') }} {{ 'Headers' }} </span>
-                  <div class="center">
-                    <div
-                      class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
-                      @click="handleAddHeader"
-                    >
-                      <el-icon>
-                        <Plus />
-                      </el-icon>
-                    </div>
-                  </div>
-                </div>
-              </template>
-              <div
-                v-for="(item, index) in formData.headers"
-                :key="index"
-                class="flex items-center my-2 pr-3"
-              >
-                <el-row :gutter="12" class="flex-sub align-center">
-                  <el-col :span="7">
-                    <div class="flex h-full items-center justify-end">
-                      <el-dropdown
-                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
-                        trigger="click"
-                        class="h-full w-full flex items-center justify-end"
-                        :show-arrow="false"
-                      >
-                        <div class="center cursor-pointer">
-                          {{ item.key }}
-                          <el-icon class="text-purple ml-1"><Sort /></el-icon>
-                        </div>
-                        <template #dropdown>
-                          <el-dropdown-menu>
-                            <el-dropdown-item @click="handleTokenTypeChange(1, index)">
-                              Authorization(Bearer)
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(2, index)">
-                              Api-Key
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(3, index)">
-                              X-API-key
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(4, index)">
-                              Authorization(Basic)
-                            </el-dropdown-item>
-                          </el-dropdown-menu>
-                        </template>
-                      </el-dropdown>
-                      <el-input
-                        v-else
-                        v-model="item.key"
-                        :placeholder="t('mcp.instance.token.headersKey')"
-                        class="flex-sub"
-                      >
-                      </el-input>
-                      <span class="ml-2">:</span>
-                    </div>
-                  </el-col>
-                  <el-col :span="15">
-                    <div class="flex">
-                      <el-input
-                        v-model="item.value"
-                        :placeholder="t('mcp.instance.token.headersValue')"
-                        class="flex-sub"
-                      ></el-input>
-                      <div
-                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
-                        class="text-purple cursor-pointer ml-2"
-                        @click="handleChangeBasic(index)"
-                      >
-                        {{ Number(item.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
-                      </div>
-                    </div>
-                  </el-col>
-                  <el-col :span="2">
-                    <div
-                      class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
-                      @click="formData.headers.splice(index, 1)"
-                    >
-                      <el-icon><Minus /></el-icon>
-                    </div>
-                  </el-col>
-                </el-row>
-              </div>
-            </el-form-item>
-            <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-              <el-input-tag
-                v-model="formData.usages"
-                collapse-tags
-                collapse-tags-tooltip
-                :max-collapse-tags="8"
-                draggable
-                tag-type="primary"
-                tag-effect="plain"
-                :placeholder="t('mcp.instance.token.placeholderTag')"
-                class="tag-input"
-              >
-                <template #tag="{ value }">
-                  <div class="flex items-center">
-                    <span>{{ value }}</span>
-                  </div>
-                </template>
-              </el-input-tag>
-            </el-form-item>
-          </el-form>
-        </el-scrollbar>
-      </el-col>
-      <!-- <el-col :span="12" class="expanded">
-        <el-scrollbar ref="scrollbarRef" height="50vh" always class="config-info">
-          <div class="py-5 px-5">{{ editConfig }}</div>
-        </el-scrollbar>
-      </el-col> -->
-    </el-row>
-    <template #footer>
-      <div class="center">
-        <el-button @click="handleCancelToken" class="mr-4 w-25">{{ t('common.cancel') }}</el-button>
-        <mcp-button @click="handleConfirmToken" class="w-25">{{ t('common.ok') }}</mcp-button>
-      </div>
-    </template>
-  </el-dialog>
-  <!-- user accountPassword -->
-  <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
-    <el-form :model="userDataKey" class="p-4" label-width="80px">
-      <el-form-item :label="t('login.username')" prop="username">
-        <el-input
-          v-model="userDataKey.username"
-          :placeholder="t('login.message.username.required')"
-        />
-      </el-form-item>
-      <el-form-item :label="t('login.password')" prop="password">
-        <el-input
-          v-model="userDataKey.password"
-          type="password"
-          :placeholder="t('login.message.password.required')"
-        />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="center">
-        <mcp-button @click="handleConfirmAccount" class="w-25">{{ t('common.ok') }}</mcp-button>
-      </div>
-    </template>
-  </el-dialog>
+  <TokenForm
+    v-model="formData"
+    :instance-info="dialogInfo.instanceInfo"
+    :token-list="tokenList"
+    :current-edit-index="dialogInfo.currentEditIndex"
+    @on-confirm="handleConfirmToken"
+    @on-cancel="handleTokenList"
+  ></TokenForm>
 </template>
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Operation, CopyDocument, Link, Key, Sort, Minus } from '@element-plus/icons-vue'
+import { Plus, Operation, CopyDocument, Link, Key } from '@element-plus/icons-vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
 import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
@@ -440,9 +235,9 @@ import { cloneDeep } from 'lodash-es'
 import { JsonFormatter } from '@/utils/json'
 import { useRouterHooks } from '@/utils/url'
 import SearchForm from '@/components/SearchForm/index.vue'
+import TokenForm from './components/token-form-list.vue'
 
 const { jumpToPage } = useRouterHooks()
-
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
@@ -514,13 +309,6 @@ const userDataKey = ref({
   password: '',
   index: 0,
 })
-const tokenTypeOptions = [
-  { label: 'Authorization', value: 1 },
-  { label: 'Api-Key', value: 2 },
-  { label: 'X-API-key', value: 3 },
-  { label: 'Authorization', value: 4 },
-]
-const rules = reactive({})
 const dialogInfo = ref({
   visible: false,
   title: t('mcp.instance.config'),
@@ -670,6 +458,7 @@ const handleAddToken = () => {
     visible: false,
     username: '',
     password: '',
+    index: 0,
   }
   dialogInfo.value.currentEditIndex = null
 }
@@ -689,20 +478,10 @@ const handleEditToken = (index: number) => {
   }))
   formData.value.tokenType = token.tokenType
   formData.value.enabled = token.enabled
-  if (formData.value.headers[0].value.startsWith('Basic')) {
-    handleTokenTypeChange(4, 0)
+  if (formData.value.headers[0]?.value?.startsWith('Basic')) {
+    formData.value.tokenType = 4
+    formData.value.headers[0].tokenType = 4
   }
-}
-
-const handleChangeBasic = (index: number) => {
-  userDataKey.value.visible = !userDataKey.value.visible
-  userDataKey.value.index = index
-  // formData.value.token = ''
-}
-
-// handle add header
-const handleAddHeader = () => {
-  formData.value.headers.push({ key: '', value: '' })
 }
 
 // handle enabled token switch
@@ -731,69 +510,6 @@ const handleSelectedToken = (index: number) => {
     return
   }
   dialogInfo.value.currentTokenIndex = index
-}
-
-// handle token type change and clear token value
-const handleTokenTypeChange = (tokenType: number, index: number) => {
-  formData.value.tokenType = tokenType
-  formData.value.headers[index].tokenType = tokenType
-  formData.value.headers[index].key = tokenTypeOptions[tokenType - 1].label
-  let roginData = null
-  if (dialogInfo.value.currentEditIndex) {
-    roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
-    if (tokenType === 4) {
-      userDataKey.value.username = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[0]
-      userDataKey.value.password = atob(roginData.headers.Authorization.split(' ')[1]).split(':')[1]
-    }
-    return
-  }
-  handleGetTokenValue(index)
-}
-
-// handle get token value handle random token
-const handleGetTokenValue = (index: number) => {
-  if (Number(formData.value.tokenType) === 1) {
-    formData.value.headers[index].value =
-      'Bearer ' +
-      getToken(
-        JSON.stringify({
-          expireAt: formData.value.expireAt,
-          userId: userInfo.userId,
-          username: userInfo.username,
-        }),
-      )
-  } else if (Number(formData.value.tokenType) === 2) {
-    formData.value.headers[index].value = getToken(
-      JSON.stringify({
-        expireAt: formData.value.expireAt,
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  } else if (Number(formData.value.tokenType) === 3) {
-    formData.value.headers[index].value = getToken(
-      JSON.stringify({
-        expireAt: formData.value.expireAt,
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  } else if (Number(formData.value.tokenType) === 4) {
-    formData.value.headers[index].value =
-      'Basic ' + btoa(`${userDataKey.value.username}:${userDataKey.value.password}`) // Base64 编码
-  }
-  console.log(formData.value.token, formData.value.headers[index]?.value)
-}
-
-const handleConfirmAccount = () => {
-  handleGetTokenValue(userDataKey.value.index)
-  userDataKey.value.visible = false
-}
-// handle add expire at
-const handleAddExpireAt = (days: number) => {
-  const expireDate = new Date()
-  expireDate.setDate(expireDate.getDate() + days)
-  formData.value.expireAt = expireDate.getTime()
 }
 
 // handle delete token
@@ -834,31 +550,22 @@ const handleViewLog = (index: number) => {
   })
 }
 
-const handleCancelToken = () => {
-  formData.value = {
-    visible: false,
-    token: '',
-    headers: [],
-    enabled: true,
-    expireAt: null,
-    usages: [],
-  }
-}
-
 // handle confirm token
-const handleConfirmToken = async () => {
-  const result = await formRef.value.validate()
-  if (!result) return
-  if (dialogInfo.value.currentEditIndex) {
-    tokenList.value[dialogInfo.value.currentEditIndex] = {
-      token: formData.value.token,
-      expireAt: formData.value.expireAt || 0,
-      publishAt: tokenList.value[dialogInfo.value.currentEditIndex].publishAt,
-      usages: formData.value.usages,
-      enabled: tokenList.value[dialogInfo.value.currentEditIndex].enabled,
-      headers: Object.fromEntries(
-        formData.value.headers.map((header: any) => [header.key, header.value]),
-      ),
+const handleConfirmToken = async (data: {
+  token: string
+  expireAt: number
+  usages: string[]
+  headers: Record<string, string>
+  currentEditIndex: number | null
+}) => {
+  if (data.currentEditIndex !== null) {
+    tokenList.value[data.currentEditIndex] = {
+      token: data.token,
+      expireAt: data.expireAt || 0,
+      publishAt: tokenList.value[data.currentEditIndex].publishAt,
+      usages: data.usages,
+      enabled: tokenList.value[data.currentEditIndex].enabled,
+      headers: data.headers,
     }
     dialogInfo.value.currentEditIndex = null
     await handleSaveTokens()
@@ -875,13 +582,11 @@ const handleConfirmToken = async () => {
   try {
     tokenList.value.push({
       enabled: true,
-      token: formData.value.token,
-      expireAt: formData.value.expireAt || 0,
+      token: data.token,
+      expireAt: data.expireAt || 0,
       publishAt: Date.now(),
-      usages: formData.value.usages,
-      headers: Object.fromEntries(
-        formData.value.headers.map((header: any) => [header.key, header.value]),
-      ),
+      usages: data.usages,
+      headers: data.headers,
     })
     await handleSaveTokens()
     formData.value = {
@@ -904,7 +609,6 @@ const handleSaveTokens = async () => {
   try {
     dialogInfo.value.instanceInfo.loading = true
     console.log('tokens', tokenList.value)
-
     await TokenAPI.edit({
       tokens: tokenList.value.map((token) => ({
         ...token,

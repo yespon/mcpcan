@@ -188,7 +188,7 @@ const formData = ref({
   sourceType: SourceType.OPENAPI,
   tokens: [
     {
-      enabled: false,
+      enabled: true,
       expireAt: '',
       headers: [],
       publishAt: new Date().getTime(),

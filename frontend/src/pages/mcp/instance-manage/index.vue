@@ -77,6 +77,8 @@
         :columns="columns"
         :multiple="selection.showSelect"
         :rowKey="selection.rowKey"
+        :row-class-name="tableRowClassName"
+        :cell-class-name="tableRowClassName"
         v-model:pageConfig="pageConfig"
         :handlerColumnConfig="{
           fixed: 'right',
@@ -620,6 +622,13 @@ const handleTableSelect = (selectionList: InstanceResult[]) => {
     timer.value = 0
   }
 }
+
+const tableRowClassName = ({ row }: { row: any }) => {
+  if (selection.value.selectList.find((item) => item.instanceId === row.instanceId)) {
+    return 'selected-row'
+  }
+  return ''
+}
 /**
  * Handle get count data
  */
@@ -692,5 +701,8 @@ onMounted(() => {
 }
 .title-instance {
   width: 300px;
+}
+:deep(.el-table) .selected-row {
+  --el-table-tr-bg-color: var(--ep-bg-purple-color-deep);
 }
 </style>

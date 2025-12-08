@@ -100,24 +100,30 @@
       </div>
     </el-form-item>
     <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-      <el-input-tag
-        v-model="localFormData.usages"
-        collapse-tags
-        collapse-tags-tooltip
-        :max-collapse-tags="3"
-        clearable
-        draggable
-        tag-type="primary"
-        tag-effect="plain"
-        :placeholder="t('mcp.instance.token.placeholderTag')"
-        class="tag-input"
+      <el-tag
+        v-for="(tag, num) in localFormData.usages"
+        :key="num"
+        :closable="showClosAble(tag)"
+        class="mx-2 my-1"
+        :disable-transitions="false"
+        @close="handleCloseTag(num)"
+        color="var(--ep-bg-purple-color)"
       >
-        <template #tag="{ value }">
-          <div class="flex items-center">
-            <span>{{ value }}</span>
-          </div>
-        </template>
-      </el-input-tag>
+        {{ tag }}
+      </el-tag>
+      <el-input
+        v-if="showTagInput"
+        ref="InputRef"
+        v-model="inputValue"
+        class="w-5 mx-2"
+        style="width: 100px"
+        size="small"
+        @keyup.enter="handleTagConfirm"
+        @blur="handleTagConfirm"
+      />
+      <el-button v-else class="mx-2" size="small" @click="showTagInput = true">
+        + New Tag
+      </el-button>
     </el-form-item>
   </el-form>
   <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
@@ -153,7 +159,8 @@ const props = defineProps<{ formData: any }>()
 const emit = defineEmits(['update:formData'])
 const { t } = useI18n()
 const { userInfo } = useUserStore()
-
+const showTagInput = ref(false)
+const inputValue = ref('')
 const localFormData = computed({
   get: () => {
     return props.formData
@@ -176,7 +183,22 @@ const userDataKey = ref({
   password: '',
   index: 0,
 })
-
+const showClosAble = computed(() => {
+  return (tag: string) => {
+    return [
+      'dify_user_id',
+      'dify_user_name',
+      'dify_space_id',
+      'dify_space_name',
+      'intelligent_access_id',
+      'intelligent_access_name',
+      'intelligent_access_type',
+      'default',
+    ].some((keyword) => tag.includes(keyword))
+      ? false
+      : true
+  }
+})
 // handle add header
 const handleAddHeader = () => {
   localFormData.value.headers.push({ key: '', value: '' })
@@ -185,6 +207,18 @@ const handleAddHeader = () => {
 const handleDeleteHeader = (index: number) => {
   localFormData.value.headers.splice(index, 1)
   emit('update:formData', { ...localFormData.value })
+}
+// handle tag delete
+const handleCloseTag = (num: number) => {
+  localFormData.value.usages.splice(num, 1)
+}
+const handleTagConfirm = () => {
+  const value = inputValue.value.trim()
+  if (value && !localFormData.value.usages.includes(value)) {
+    localFormData.value.usages.push(value)
+  }
+  inputValue.value = ''
+  showTagInput.value = false
 }
 // handle token type change and clear token value
 const handleTokenTypeChange = (tokenType: number, index: number) => {
@@ -257,15 +291,13 @@ onMounted(init)
   display: block;
   width: 100%;
 }
-.tag-input {
-  :deep(.el-tag) {
+:deep(.el-tag) {
+  color: var(--ep-purple-color);
+  border-color: var(--ep-border-color);
+  .el-tag__close {
     color: var(--ep-purple-color);
-    border-color: var(--ep-border-color);
-    .el-tag__close {
-      color: var(--ep-purple-color);
-      &:hover {
-        background-color: var(--ep-bg-purple-color-deep);
-      }
+    &:hover {
+      background-color: var(--ep-bg-purple-color-deep);
     }
   }
 }
