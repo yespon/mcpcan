@@ -16,7 +16,7 @@ FROM alpine:3.22
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # Install necessary runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata docker
 
 # Set timezone
 ENV TZ=Asia/Shanghai
