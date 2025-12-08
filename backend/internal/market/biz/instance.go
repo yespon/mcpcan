@@ -587,7 +587,7 @@ func (biz *InstanceBiz) RestartInstance(ctx context.Context, req *instancepb.Res
 	case model.AccessTypeHosting:
 		_, err = GContainerBiz.RestartContainer(instance)
 		if err != nil {
-			return nil, fmt.Errorf("failed to restart container: %w", err)
+			return nil, err
 		}
 	default:
 		return nil, fmt.Errorf("this service does not need to be restarted")

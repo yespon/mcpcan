@@ -586,10 +586,12 @@ func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*Containe
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
 	}
 
-	// Get service
-	err = entry.GetServiceManager().Restart(cd.ctx, containerOptions)
-	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+	if entry.GetRuntimeType() == container.RuntimeKubernetes {
+		// Get service
+		err = entry.GetServiceManager().Restart(cd.ctx, containerOptions)
+		if err != nil {
+			return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+		}
 	}
 
 	return &ContainerRestartResult{

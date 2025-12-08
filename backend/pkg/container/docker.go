@@ -1,6 +1,7 @@
 package container
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -359,7 +360,7 @@ func (dcm *DockerContainerManager) Restart(ctx context.Context, options Containe
 		if err := dcm.Delete(ctx, options.ContainerName); err != nil {
 			return fmt.Errorf("failed to delete existing container: %w", err)
 		}
-	} else if !strings.Contains(err.Error(), "not found") && !strings.Contains(err.Error(), "No such container") {
+	} else if !strings.Contains(err.Error(), "not found") && !strings.Contains(err.Error(), "No such container") && !strings.Contains(err.Error(), "No such object") {
 		return fmt.Errorf("failed to check container status: %w", err)
 	}
 
@@ -374,9 +375,11 @@ func (dcm *DockerContainerManager) Restart(ctx context.Context, options Containe
 // GetInfo gets container information
 func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName string) (*ContainerInfo, error) {
 	cmd := exec.CommandContext(ctx, "docker", "inspect", containerName)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Docker container information: %w", err)
+		return nil, fmt.Errorf("failed to get Docker container information: %w, stderr: %s", err, stderr.String())
 	}
 
 	var dockerInfos []DockerContainerInfo
