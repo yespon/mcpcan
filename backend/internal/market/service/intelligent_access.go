@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
@@ -222,7 +223,7 @@ func (s *IntelligentAccessService) TestConnectionHandler(c *gin.Context) {
 		return
 	}
 
-	db, err := BuildTemporaryPostgresConnection(req.DbHost, int(req.DbPort), req.DbUser, req.DbPassword, req.DbName)
+	db, err := BuildTemporaryPostgresConnection(req.DbHost, int(req.DbPort), req.DbUser, req.DbPassword, req.DbName, true)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to connect to database: %s", err.Error()))
 		return
@@ -240,7 +241,7 @@ func (s *IntelligentAccessService) TestConnectionHandler(c *gin.Context) {
 	})
 }
 
-func BuildTemporaryPostgresConnection(host string, port int, user string, password string, database string) (*sql.DB, error) {
+func BuildTemporaryPostgresConnection(host string, port int, user string, password string, database string, test bool) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 		host, port, user, password, database)
 
@@ -249,10 +250,16 @@ func BuildTemporaryPostgresConnection(host string, port int, user string, passwo
 		return nil, fmt.Errorf("failed to open database connection: %s", err)
 	}
 
-	// 完全禁用连接池，每次都是新连接
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(0)
-	db.SetConnMaxLifetime(0)
+	// 合理的连接池配置
+	if test {
+		db.SetMaxOpenConns(1) // 根据并发需求调整
+		db.SetMaxIdleConns(0)
+	} else {
+		db.SetMaxOpenConns(10) // 根据并发需求调整
+		db.SetMaxIdleConns(5)
+	}
+	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetConnMaxIdleTime(10 * time.Minute)
 
 	return db, nil
 }
@@ -270,7 +277,7 @@ func (s *IntelligentAccessService) ListDifyUserSpaceHandler(c *gin.Context) {
 	}
 
 	// 连接数据库
-	sqlDB, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, int(intelligentAccess.DbPort), intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName)
+	sqlDB, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, int(intelligentAccess.DbPort), intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName, false)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to connect to database: %s", err.Error()))
 		return
