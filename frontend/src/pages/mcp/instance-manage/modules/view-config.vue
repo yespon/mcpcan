@@ -47,6 +47,14 @@
                   }}
                 </span>
               </div>
+              <div class="flex">
+                <SearchForm
+                  :formConfig="tokenFormConfig"
+                  :formData="tokenFormData"
+                  @handle-query="handleQueryToken"
+                  @reset-fields="handleQueryToken"
+                ></SearchForm>
+              </div>
             </div>
 
             <div
@@ -57,7 +65,7 @@
                   disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
                 },
               ]"
-              v-for="(token, index) in tokenList"
+              v-for="(token, index) in showTokenList"
               :key="index"
               @click="handleSelectedToken(index)"
             >
@@ -86,7 +94,7 @@
                         </el-button>
                       </el-dropdown-item>
                       <el-dropdown-item
-                        v-if="!token.usages.includes('default')"
+                        v-if="showDeleteBtn(token)"
                         @click="handleDeleteToken(index)"
                       >
                         <el-button type="danger" link>
@@ -121,18 +129,20 @@
                 </div>
               </div>
               <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1">
+                <div class="ellipsis-one grid-cols-span-1 w-full">
                   {{ t('mcp.instance.token.tag') }}：<el-tag
                     v-for="(tag, num) in token.usages"
                     :key="num"
                     effect="plain"
                     class="mr-2"
                   >
-                    {{ tag }}
+                    <div class="ellipsis-one max-w-25">
+                      {{ tag }}
+                    </div>
                   </el-tag>
                 </div>
                 <div class="grid-cols-span-1">
-                  {{ '是否启用' }}:
+                  {{ t('mcp.token.isEnable') }}:
                   <el-switch
                     v-model="token.enabled"
                     style="--el-switch-on-color: #13ce66"
@@ -264,7 +274,7 @@
                 :disabled-date="(date: Date) => date.getTime() < Date.now()"
               ></el-date-picker>
             </el-form-item>
-            <el-form-item :label="'网关认证'" prop="tokenType">
+            <el-form-item :label="t('mcp.token.authentication')" prop="tokenType">
               <div class="w-full u-line-1" style="white-space: nowrap">
                 Authorization：{{ formData.token }}
               </div>
@@ -273,7 +283,7 @@
             <el-form-item prop="enabledTransport" class="enabledTransport">
               <template #label>
                 <div class="w-full flex justify-between items-center">
-                  <span class="mr-2"> 透传 {{ 'Headers' }} </span>
+                  <span class="mr-2"> {{ t('mcp.token.passthrough') }} {{ 'Headers' }} </span>
                   <div class="center">
                     <div
                       class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
@@ -291,11 +301,11 @@
                 :key="index"
                 class="flex items-center my-2 pr-3"
               >
-                <el-row :gutter="12" class="flex-sub">
+                <el-row :gutter="12" class="flex-sub align-center">
                   <el-col :span="7">
-                    <div class="flex h-full">
+                    <div class="flex h-full items-center justify-end">
                       <el-dropdown
-                        v-if="index === 0"
+                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
                         trigger="click"
                         class="h-full w-full flex items-center justify-end"
                         :show-arrow="false"
@@ -306,16 +316,16 @@
                         </div>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item @click="handleTokenTypeChange(1)">
+                            <el-dropdown-item @click="handleTokenTypeChange(1, index)">
                               Authorization(Bearer)
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(2)">
+                            <el-dropdown-item @click="handleTokenTypeChange(2, index)">
                               Api-Key
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(3)">
+                            <el-dropdown-item @click="handleTokenTypeChange(3, index)">
                               X-API-key
                             </el-dropdown-item>
-                            <el-dropdown-item @click="handleTokenTypeChange(4)">
+                            <el-dropdown-item @click="handleTokenTypeChange(4, index)">
                               Authorization(Basic)
                             </el-dropdown-item>
                           </el-dropdown-menu>
@@ -331,23 +341,24 @@
                       <span class="ml-2">:</span>
                     </div>
                   </el-col>
-                  <el-col :span="15" class="flex">
-                    <el-input
-                      v-model="item.value"
-                      :placeholder="t('mcp.instance.token.headersValue')"
-                      class="flex-sub"
-                    ></el-input>
+                  <el-col :span="15">
+                    <div class="flex">
+                      <el-input
+                        v-model="item.value"
+                        :placeholder="t('mcp.instance.token.headersValue')"
+                        class="flex-sub"
+                      ></el-input>
+                      <div
+                        v-if="tokenTypeOptions.some((tokenType) => item.key === tokenType.label)"
+                        class="text-purple cursor-pointer ml-2"
+                        @click="handleChangeBasic(index)"
+                      >
+                        {{ Number(item.tokenType) === 4 ? t('mcp.token.account') : '  ' }}
+                      </div>
+                    </div>
                   </el-col>
                   <el-col :span="2">
                     <div
-                      v-if="index === 0"
-                      class="text-purple cursor-pointer"
-                      @click="handleChangeBasic"
-                    >
-                      {{ Number(formData.tokenType) === 4 ? '账号' : '  ' }}
-                    </div>
-                    <div
-                      v-else
                       class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
                       @click="formData.headers.splice(index, 1)"
                     >
@@ -362,8 +373,7 @@
                 v-model="formData.usages"
                 collapse-tags
                 collapse-tags-tooltip
-                :max-collapse-tags="3"
-                clearable
+                :max-collapse-tags="8"
                 draggable
                 tag-type="primary"
                 tag-effect="plain"
@@ -388,9 +398,7 @@
     </el-row>
     <template #footer>
       <div class="center">
-        <el-button @click="formData.visible = false" class="mr-4 w-25">{{
-          t('common.cancel')
-        }}</el-button>
+        <el-button @click="handleCancelToken" class="mr-4 w-25">{{ t('common.cancel') }}</el-button>
         <mcp-button @click="handleConfirmToken" class="w-25">{{ t('common.ok') }}</mcp-button>
       </div>
     </template>
@@ -398,11 +406,18 @@
   <!-- user accountPassword -->
   <el-dialog v-model="userDataKey.visible" width="400px" top="30vh" :show-close="false">
     <el-form :model="userDataKey" class="p-4" label-width="80px">
-      <el-form-item label="用户名" prop="username">
-        <el-input v-model="userDataKey.username" placeholder="请输入用户名" />
+      <el-form-item :label="t('login.username')" prop="username">
+        <el-input
+          v-model="userDataKey.username"
+          :placeholder="t('login.message.username.required')"
+        />
       </el-form-item>
-      <el-form-item label="密码" prop="password">
-        <el-input v-model="userDataKey.password" type="password" placeholder="请输入密码" />
+      <el-form-item :label="t('login.password')" prop="password">
+        <el-input
+          v-model="userDataKey.password"
+          type="password"
+          :placeholder="t('login.message.password.required')"
+        />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -424,6 +439,7 @@ import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 import { JsonFormatter } from '@/utils/json'
 import { useRouterHooks } from '@/utils/url'
+import SearchForm from '@/components/SearchForm/index.vue'
 
 const { jumpToPage } = useRouterHooks()
 
@@ -442,10 +458,61 @@ const formData = ref<any>({
   expireAt: null as number | null,
   usages: [] as string[],
 })
+const tokenFormConfig = ref([
+  {
+    span: 5,
+    key: 'name',
+    component: 'el-input',
+    label: '标签全称',
+    labelWidth: '60px',
+    props: { placeholder: '请输入标签全称' },
+  },
+  {
+    span: 5,
+    key: 'type',
+    label: '标签类型',
+    component: 'el-select',
+    props: {
+      placeholder: '请选择类型',
+      options: [
+        { label: 'dify_user_id', value: 'dify_user_id' },
+        { label: 'dify_user_name', value: 'dify_user_name' },
+        { label: 'dify_space_id', value: 'dify_space_id' },
+        { label: 'dify_space_name', value: 'dify_space_name' },
+        { label: 'intelligent_access_id', value: 'intelligent_access_id' },
+        { label: 'intelligent_access_name', value: 'intelligent_access_name' },
+        { label: 'intelligent_access_type', value: 'intelligent_access_type' },
+        { label: 'default', value: 'default' },
+      ],
+    },
+  },
+  {
+    span: 5,
+    key: 'value',
+    label: '类型值',
+    component: 'el-input',
+    props: {
+      placeholder: '请输入类型值',
+    },
+  },
+  {
+    span: 5,
+    key: 'handler',
+    component: 'slot',
+    slotName: 'handler',
+  },
+])
+const tokenFormData = ref({
+  name: '',
+  type: '',
+  value: '',
+})
+
 const userDataKey = ref({
   visible: false,
   username: '',
   password: '',
+  index: 0,
 })
 const tokenTypeOptions = [
   { label: 'Authorization', value: 1 },
@@ -516,8 +583,57 @@ const config = computed(() => {
   )
 })
 
+const showDeleteBtn = computed(() => {
+  return (token: any) => {
+    if (
+      [
+        'dify_user_id',
+        'dify_user_name',
+        'dify_space_id',
+        'dify_space_name',
+        'intelligent_access_id',
+        'intelligent_access_name',
+        'intelligent_access_type',
+        'default',
+      ].some((keyword) => token.usages.some((usage: string) => usage.includes(keyword)))
+    ) {
+      return false
+    }
+    return true
+  }
+})
+
+const showTokenList = computed(() => {
+  // 筛选逻辑：根据tokenFormData的name/type/value
+  const list = tokenList.value || []
+  const { name, type, value } = tokenFormData.value || {}
+  // 如果都为空，直接返回全部
+  if (!name && !type && !value) return list
+
+  return list.filter((token) => {
+    // usages为标签数组
+    let match = true
+    // name精准匹配usages
+    if (name) {
+      match = token.usages?.includes(name)
+    }
+    // type模糊匹配usages
+    if (match && type && !value) {
+      match = token.usages?.some((u: any) => u.includes(type))
+    }
+    // type和value同时存在，精准匹配 type=value
+    if (match && type && value) {
+      match = token.usages?.includes(`${type}=${value}`)
+    }
+    return match
+  })
+})
 // token list
 const tokenList = ref<Array<any>>([])
+
+const handleQueryToken = (formData: any) => {
+  tokenFormData.value = formData
+}
 
 const handleChangeTransport = async (token: any, index: number) => {
   try {
@@ -574,12 +690,13 @@ const handleEditToken = (index: number) => {
   formData.value.tokenType = token.tokenType
   formData.value.enabled = token.enabled
   if (formData.value.headers[0].value.startsWith('Basic')) {
-    handleTokenTypeChange(4)
+    handleTokenTypeChange(4, 0)
   }
 }
 
-const handleChangeBasic = () => {
+const handleChangeBasic = (index: number) => {
   userDataKey.value.visible = !userDataKey.value.visible
+  userDataKey.value.index = index
   // formData.value.token = ''
 }
 
@@ -617,9 +734,10 @@ const handleSelectedToken = (index: number) => {
 }
 
 // handle token type change and clear token value
-const handleTokenTypeChange = (tokenType: number) => {
+const handleTokenTypeChange = (tokenType: number, index: number) => {
   formData.value.tokenType = tokenType
-  formData.value.headers[0].key = tokenTypeOptions[tokenType - 1].label
+  formData.value.headers[index].tokenType = tokenType
+  formData.value.headers[index].key = tokenTypeOptions[tokenType - 1].label
   let roginData = null
   if (dialogInfo.value.currentEditIndex) {
     roginData = tokenList.value[dialogInfo.value.currentEditIndex] as any
@@ -629,18 +747,13 @@ const handleTokenTypeChange = (tokenType: number) => {
     }
     return
   }
-  handleRandomToken()
+  handleGetTokenValue(index)
 }
 
-// handle random token
-const handleRandomToken = () => {
-  handleGetTokenValue()
-}
-
-// handle get token value
-const handleGetTokenValue = () => {
+// handle get token value handle random token
+const handleGetTokenValue = (index: number) => {
   if (Number(formData.value.tokenType) === 1) {
-    formData.value.headers[0].value =
+    formData.value.headers[index].value =
       'Bearer ' +
       getToken(
         JSON.stringify({
@@ -650,7 +763,7 @@ const handleGetTokenValue = () => {
         }),
       )
   } else if (Number(formData.value.tokenType) === 2) {
-    formData.value.headers[0].value = getToken(
+    formData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -658,7 +771,7 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(formData.value.tokenType) === 3) {
-    formData.value.headers[0].value = getToken(
+    formData.value.headers[index].value = getToken(
       JSON.stringify({
         expireAt: formData.value.expireAt,
         userId: userInfo.userId,
@@ -666,14 +779,14 @@ const handleGetTokenValue = () => {
       }),
     )
   } else if (Number(formData.value.tokenType) === 4) {
-    formData.value.headers[0].value =
+    formData.value.headers[index].value =
       'Basic ' + btoa(`${userDataKey.value.username}:${userDataKey.value.password}`) // Base64 编码
   }
-  console.log(formData.value.token, formData.value.headers[0]?.value)
+  console.log(formData.value.token, formData.value.headers[index]?.value)
 }
 
 const handleConfirmAccount = () => {
-  handleGetTokenValue()
+  handleGetTokenValue(userDataKey.value.index)
   userDataKey.value.visible = false
 }
 // handle add expire at
@@ -719,6 +832,17 @@ const handleViewLog = (index: number) => {
       token: tokenList.value[index].token || '',
     },
   })
+}
+
+const handleCancelToken = () => {
+  formData.value = {
+    visible: false,
+    token: '',
+    headers: [],
+    enabled: true,
+    expireAt: null,
+    usages: [],
+  }
 }
 
 // handle confirm token
@@ -787,6 +911,7 @@ const handleSaveTokens = async () => {
         instanceId: dialogInfo.value.instanceInfo.instanceId,
       })),
     })
+    handleTokenList()
     emit('on-refresh')
   } finally {
     dialogInfo.value.instanceInfo.loading = false
@@ -799,7 +924,7 @@ const handleTokenList = async () => {
     const { tokens } = await TokenAPI.list({
       instanceId: dialogInfo.value.instanceInfo.instanceId,
     })
-    // 翻转一次；使默认token 在最前面
+    // reverse the token list to show the latest created token on top
     tokenList.value = (tokens || [])
       .map((token: any) => ({
         ...token,

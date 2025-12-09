@@ -60,7 +60,7 @@
             ref="tokenForm"
             :formData="formData.tokens[0]"
           ></TokenForm>
-          <div class="mt-8 color-gray text-3">{{ t('mcp.instance.openApi.tips') }}</div>
+          <div class="mt-8 color-gray text-3 pb-4">{{ t('mcp.instance.openApi.tips') }}</div>
         </div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
@@ -188,7 +188,7 @@ const formData = ref({
   sourceType: SourceType.OPENAPI,
   tokens: [
     {
-      enabledTransport: false,
+      enabled: false,
       expireAt: '',
       headers: [],
       publishAt: new Date().getTime(),

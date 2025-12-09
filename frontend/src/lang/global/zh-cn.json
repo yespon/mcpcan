@@ -65,6 +65,8 @@
     "agentManage": "智能体平台"
   },
   "common": {
+    "edit": "编辑",
+    "connection": "连接测试",
     "search": "搜索",
     "reseat": "重置",
     "operation": "操作",

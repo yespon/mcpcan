@@ -1,42 +1,36 @@
 import { defineStore } from 'pinia'
 import { store } from '@/stores'
+import { AgentAPI } from '@/api/agent'
 
 export const useBusinessStore = defineStore('business', () => {
   const taskInfo = ref({
     visible: false,
-    list: [
-      {
-        id: 1,
-        title: '同步MCP服务_2025/11/14 14:30:22',
-        status: 'doing',
-        detail: '正在同步服务详细内容……',
-        expanded: false,
-      },
-      {
-        id: 2,
-        title: '同步MCP服务_2025/11/14 14:30:22',
-        status: 'done',
-        detail: '同步已完成，所有服务均已同步成功。',
-        expanded: false,
-      },
-      {
-        id: 3,
-        title: '同步MCP服务_2025/11/14 14:30:22',
-        status: 'done',
-        detail: '同步已完成，所有服务均已同步成功。',
-        expanded: false,
-      },
-      {
-        id: 4,
-        title: '同步MCP服务_2025/11/14 14:30:22',
-        status: 'error',
-        detail: '同步过程中发生异常，请检查网络或服务状态。',
-        expanded: false,
-      },
-    ],
+    list: [] as any[],
   })
+  const taskTimer = ref(0)
+  watch(
+    () => taskInfo.value.visible,
+    (newVal) => {
+      // 当任务列表展开时开启定时任务请求
+      if (newVal) {
+        taskTimer.value = setInterval(() => {
+          handleGetTaskList()
+        }, 30 * 1000)
+      } else {
+        clearInterval(taskTimer.value)
+      }
+    },
+  )
+  /**
+   * Handle get task list
+   */
+  const handleGetTaskList = async (keyword?: string) => {
+    const { list } = await AgentAPI.taskList({ keyword })
+    taskInfo.value.list = list
+  }
   return {
     taskInfo,
+    handleGetTaskList,
   }
 })
 export function useBusinessStoreHook() {

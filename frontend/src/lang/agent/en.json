@@ -3,7 +3,10 @@
     "pageDesc": {
       "title": "Agent Management",
       "desc": "Manage your agents effectively, with support for MCP and agent connections",
-      "total": "Total Agents"
+      "total": "Total Agents",
+      "formTitle": "Agent platform Access",
+      "connectionDesc": "Connection in progress....",
+      "deleteDesc": "Are you sure you want to delete this agent platform? This action cannot be undone."
     },
     "columns": {
       "accessName": "Name",
@@ -13,7 +16,30 @@
       "updatedAt": "Updated At"
     },
     "action": {
-      "create": "Create Agent"
+      "create": "Create Agent",
+      "community": "Community",
+      "enterprise": "Enterprise",
+      "successConnection": "Connection Test Successful"
+    },
+    "formData": {
+      "accessName": "Access Name",
+      "accessType": "Access Type",
+      "dbHost": "Database Host",
+      "dbPort": "Database Port",
+      "dbUser": "Database User",
+      "dbPassword": "Database Password",
+      "dbName": "Database Name"
+    },
+    "placeholder": {
+      "accessName": "Please enter access name",
+      "accessNameLength": "Please enter access name, length 2-64 characters",
+      "accessType": "Please select access type",
+      "dbHost": "Please enter database host",
+      "dbPort": "Please enter database port",
+      "dbPortLength": "Port range 1-65535",
+      "dbUser": "Please enter database user",
+      "dbPassword": "Please enter database password",
+      "dbName": "Please enter database name"
     }
   }
 }

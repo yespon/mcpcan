@@ -6,7 +6,7 @@ export const useAgentTableHooks = () => {
   const tablePlus = ref()
   const pageInfo = ref({
     loading: false,
-    loadingText: t('api.action.loadingText'),
+    loadingText: t('agent.pageDesc.connectionDesc'),
   })
   const columns = ref<any>([
     {
@@ -29,12 +29,15 @@ export const useAgentTableHooks = () => {
         props: {
           placeholder: t('agent.columns.accessType'),
           options: [
-            { label: 'MySQL', value: 'mysql' },
-            { label: 'PostgreSQL', value: 'postgres' },
-            { label: 'SQLServer', value: 'sqlserver' },
-            { label: 'SQLite', value: 'sqlite' },
+            { label: '社区版', value: 'Dify' },
+            { label: '商业版', value: 'DifyEnterprise' },
           ],
         },
+      },
+      customRender: ({ row }: { row: any }) => {
+        return row.accessType === 'Dify'
+          ? t('agent.action.community')
+          : t('agent.action.enterprise')
       },
     },
     {
@@ -42,17 +45,17 @@ export const useAgentTableHooks = () => {
       dataIndex: 'dbHost',
     },
     {
-      dataIndex: 'createdAt',
+      dataIndex: 'createTime',
       label: t('api.columns.createdAt'),
       customRender: ({ row }: { row: any }) => {
-        return timestampToDate(row.createdAt)
+        return timestampToDate(row.createTime)
       },
     },
     {
-      dataIndex: 'updatedAt',
+      dataIndex: 'updateTime',
       label: t('api.columns.updatedAt'),
       customRender: ({ row }: { row: any }) => {
-        return timestampToDate(row.updatedAt)
+        return timestampToDate(row.updateTime)
       },
     },
   ])
@@ -68,5 +71,5 @@ export const useAgentTableHooks = () => {
     pageSize: 10,
   })
 
-  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo }
+  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo, AgentAPI }
 }

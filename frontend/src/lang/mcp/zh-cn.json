@@ -217,7 +217,8 @@
         "passthrough": "透传",
         "passthroughOff": "不透传",
         "headersKey": "请求头键名",
-        "headersValue": "请求头键值"
+        "headersValue": "请求头键值",
+        "deleteProtected": "该标签不可删除"
       },
       "openApi": {
         "importTitle": "导入 OpenAPI 文档",
@@ -257,6 +258,12 @@
       "market": "市场",
       "template": "模板",
       "custom": "自定义"
+    },
+    "token": {
+      "authentication": "网关认证",
+      "passthrough": "透传",
+      "account": "账号",
+      "isEnable": "是否启用"
     }
   }
 }
