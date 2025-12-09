@@ -521,7 +521,7 @@ func createDifyTools(instanceID string, domain string, insertInfo *model.InsertI
 		return fmt.Errorf("encrypt token failed: %s", err.Error())
 	}
 	mcpServerUrlHash := computeSHA256Hash(mcpServerUrl)
-	provider, err := postgres.GetToolMcpProvider(difyConn, mcpServerUrlHash, insertInfo.DifySpaceID, insertInfo.DifyUserID)
+	provider, err := postgres.GetToolMcpProvider(difyConn, mcpServerUrlHash, insertInfo.DifySpaceID)
 	if err != nil {
 		return fmt.Errorf("get dify provider failed: %s", err.Error())
 	}
