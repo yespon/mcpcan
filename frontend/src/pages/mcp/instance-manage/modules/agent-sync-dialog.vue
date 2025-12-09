@@ -90,12 +90,19 @@
       <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
         <!-- Step 2: selection nameSpace -->
         <div class="flex items-center mb-2 px-3 justify-between">
-          <el-checkbox
-            v-model="allNamespaceChecked"
-            :indeterminate="isNamespaceIndeterminate"
-            @change="handleCheckAllNamespace"
-            >{{ t('agent.sync.selectAll') }}</el-checkbox
-          >
+          <div class="center">
+            <el-checkbox
+              v-model="allNamespaceChecked"
+              :indeterminate="isNamespaceIndeterminate"
+              @change="handleCheckAllNamespace"
+              >{{ t('agent.sync.selectAll') }}</el-checkbox
+            >
+            <span class="ml-2"
+              >{{ t('agent.sync.selected') }}{{ dialogInfo.selectedNamespaces.length
+              }}{{ t('agent.sync.unitSpace') }}</span
+            >
+          </div>
+
           <el-input
             v-model="namespaceStep2Search"
             :placeholder="t('agent.sync.searchPlaceholder')"
@@ -142,50 +149,63 @@
         <!-- Step 3 -->
         <el-splitter class="h-full" direction="horizontal" :gutter="8">
           <el-splitter-panel size="30%" class="px-2">
-            <el-input
-              v-model="namespaceSearch"
-              :placeholder="t('agent.sync.searchPlaceholder')"
-              clearable
-              class="mb-2 mt-1"
-              size="small"
-            />
+            <div class="center search-bar">
+              <el-input
+                v-model="namespaceSearch"
+                :placeholder="t('agent.sync.searchPlaceholder')"
+                clearable
+                class="mb-2 mt-1 flex-sub"
+                size="small"
+              />
+              <span class="ml-2"
+                >{{ t('agent.sync.selected') }}{{ dialogInfo.selectedNamespaces.length
+                }}{{ t('agent.sync.unitSpace') }}</span
+              >
+            </div>
             <div
               v-for="(namespace, index) in filteredNamespaceList"
               :key="index"
-              class="agent-card center py-3 px-4 mb-2"
-              :class="{ active: dialogInfo.selectedNamespaceId === namespace.tenantID }"
-              @click="dialogInfo.selectedNamespaceId = namespace.tenantID"
+              class="flex items-center"
             >
-              <div class="w-full flex">
-                <div
-                  v-if="dialogInfo.selectedNamespaceId === namespace.tenantID"
-                  class="selected-badge"
-                ></div>
-                <div class="agent-icon">
-                  <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
-                    ><i class="icon iconfont MCP-zhinengti"></i
-                  ></el-icon>
-                </div>
-                <div class="agent-info flex-sub u-line-1">
-                  <div class="agent-name">
-                    {{ namespace.tenantName }}
+              <el-checkbox :model-value="true" @click.stop disabled></el-checkbox>
+              <div
+                class="agent-card center py-3 px-4 mb-2 ml-2 flex-sub min-w-0"
+                :class="{ active: dialogInfo.selectedNamespaceId === namespace.tenantID }"
+                @click="dialogInfo.selectedNamespaceId = namespace.tenantID"
+              >
+                <div class="w-full flex">
+                  <div
+                    v-if="dialogInfo.selectedNamespaceId === namespace.tenantID"
+                    class="selected-badge"
+                  ></div>
+                  <div class="agent-icon">
+                    <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                      ><i class="icon iconfont MCP-zhinengti"></i
+                    ></el-icon>
                   </div>
-                  <div class="agent-desc">
-                    {{ namespace.userName }}
+                  <div class="agent-info flex-sub u-line-1 w-full">
+                    <div class="agent-name ellipsis-one w-full">
+                      {{ namespace.tenantName }}
+                    </div>
+                    <div class="agent-desc">
+                      {{ namespace.userName }}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </el-splitter-panel>
           <el-splitter-panel size="70%" class="px-2">
-            <el-input
-              v-model="instanceSearch"
-              :placeholder="t('agent.sync.instanceSearchPlaceholder')"
-              clearable
-              class="mb-2 mt-1"
-              size="small"
-              style="width: 50%"
-            />
+            <div class="search-bar">
+              <el-input
+                v-model="instanceSearch"
+                :placeholder="t('agent.sync.instanceSearchPlaceholder')"
+                clearable
+                class="mb-2 mt-1"
+                size="small"
+                style="width: 50%"
+              />
+            </div>
             <div v-for="(item, index) in filteredInstanceList" :key="index" class="py-3 px-4 mb-2">
               <div class="pl-2 mb-2">{{ t('agent.sync.MCPName') }}: {{ item?.instanceName }}</div>
               <TokenFormSync :formData="item.value"></TokenFormSync>
@@ -399,7 +419,7 @@ const handleConfirmSync = async () => {
     const params = {
       desc: dialogInfo.desc,
       intelligentAccessID: dialogInfo.selectedAgentPlatformId,
-      insertIntelligentInfos: dialogInfo.namespaceList.map((namespace: any) => ({
+      insertIntelligentInfos: filteredNamespaceList.value.map((namespace: any) => ({
         difySpaceID: namespace.tenantID,
         difyUserID: namespace.userID,
         difySpaceName: namespace.tenantName,
@@ -575,7 +595,12 @@ defineExpose({
     }
   }
 }
-
+.search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background-color: var(--el-bg-color);
+}
 .empty-state {
   display: flex;
   align-items: center;

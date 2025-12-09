@@ -39,7 +39,7 @@ export const AgentAPI = {
   update(data: CreateAgentRequest) {
     return request<any, any>({
       url: `${baseConfig.baseUrlVersion}/market/intelligent_access/edit`,
-      method: 'put',
+      method: 'PUT',
       data,
     })
   },
@@ -78,7 +78,7 @@ export const AgentAPI = {
   cancelTask(id: string) {
     return request<any, any>({
       url: `${baseConfig.baseUrlVersion}/market/mcp_to_intelligent_task/${id}/cancel`,
-      method: 'PUT',
+      method: 'POST',
     })
   },
 }

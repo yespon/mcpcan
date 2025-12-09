@@ -115,7 +115,7 @@
                       }}</span>
                       <el-tag
                         :type="item.status ? 'success' : 'danger'"
-                        size="mini"
+                        size="small"
                         effect="plain"
                         class="mx-2"
                         >{{ item.status ? t('status.success') : t('status.fail') }}</el-tag
@@ -204,13 +204,16 @@ onMounted(() => {
 
 watch(
   () => taskInfo.value.list.map((t) => t.status),
-  async (statuses, _, onCleanup) => {
+  async (newStatuses, oldStatuses = [], onCleanup) => {
     let stop = false
     onCleanup(() => {
       stop = true
     })
-    for (const task of taskInfo.value.list) {
-      if (task.status === 1) {
+    for (let i = 0; i < taskInfo.value.list.length; i++) {
+      const task = taskInfo.value.list[i]
+      const prev = oldStatuses[i]
+      const curr = newStatuses[i]
+      if (curr === 1) {
         // only update doing tasks
         try {
           const { task: detail } = await AgentAPI.taskDetail(task.id)
@@ -227,6 +230,25 @@ watch(
           task.progress = total ? Math.round((done / total) * 100) : 0
         } catch {}
         if (stop) break
+      } else if (prev === 1 && curr !== 1) {
+        // 从进行中变为其他状态：再请求一次详情
+        try {
+          const { task: detail } = await AgentAPI.taskDetail(task.id)
+          task.logs = detail.installLogs
+          const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
+          let done = 0
+          if (Array.isArray(detail.installLogs)) {
+            for (const log of detail.installLogs) {
+              if (Array.isArray(log.insertIntelligentLogs)) {
+                done += log.insertIntelligentLogs.filter((l: any) => l.status === true).length
+              }
+            }
+          }
+          task.progress = total ? Math.round((done / total) * 100) : 0
+          setTimeout(() => {
+            task.progress = undefined
+          }, 500)
+        } catch {}
       }
     }
   },
