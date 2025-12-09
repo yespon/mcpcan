@@ -11,10 +11,14 @@
         <span>{{ dialogInfo.title }}</span
         >:
         <McpImage :src="dify" fit="contain" width="80" height="20" />
-        <span class="text-purple">{{ formModel.accessType === 'Dify' ? '社区版' : '商业版' }}</span>
+        <span class="text-purple">{{
+          formModel.accessType === 'Dify'
+            ? t('agent.action.community')
+            : t('agent.action.enterprise')
+        }}</span>
       </div>
     </template>
-    <div v-loading="dialogInfo.loading" element-loading-text="服务连接中...">
+    <div v-loading="dialogInfo.loading" :element-loading-text="t('agent.formData.loadingText')">
       <el-form ref="formRef" :model="formModel" :rules="rules" label-width="110px">
         <el-form-item :label="t('agent.formData.accessName')" prop="accessName">
           <el-input
@@ -90,7 +94,7 @@ const dialogInfo = ref<{
   loading: false,
 })
 
-// 表单 model
+// formData model
 const formModel = ref<{
   accessID: string
   accessName: string
@@ -105,7 +109,7 @@ const formModel = ref<{
   accessName: '',
   accessType: '',
   dbHost: '',
-  dbPort: 3306,
+  dbPort: 5432,
   dbUser: '',
   dbPassword: '',
   dbName: '',
@@ -137,12 +141,12 @@ const rules: FormRules<typeof formModel.value> = {
   dbName: [{ required: true, message: t('agent.formData.dbName'), trigger: 'blur' }],
 }
 
-// 取消
+// cancel dialog
 const handleCancel = () => {
   dialogInfo.value.visible = false
 }
 
-// 提交
+// submit
 const emit = defineEmits<{
   (e: 'submit', payload: typeof formModel.value): void
   (e: 'on-refresh'): void
@@ -171,7 +175,6 @@ const handleSubmit = async () => {
         ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
         emit('on-refresh')
         dialogInfo.value.visible = false
-        // 重置表单
         formRef.value?.resetFields()
       })
     } catch (error: any) {
@@ -190,7 +193,6 @@ const init = (accessType: string, row: any) => {
   if (row) {
     formModel.value = row
   } else {
-    // 重置表单
     formRef.value?.resetFields()
     formModel.value = {
       accessID: '',

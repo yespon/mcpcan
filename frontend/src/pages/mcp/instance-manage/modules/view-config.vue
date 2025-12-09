@@ -31,11 +31,17 @@
         ]"
       >
         <el-scrollbar ref="scrollbarRef" max-height="75vh" always>
-          <div class="token-list">
+          <div class="token-list w-full">
             <div class="font-bold flex justify-between items-center">
-              <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
+              <!-- <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
                 t('mcp.instance.formData.addToken')
-              }}</mcp-button>
+              }}</mcp-button> -->
+              <el-checkbox
+                v-model="allTokenChecked"
+                :indeterminate="isTokenIndeterminate"
+                @change="handleCheckAllToken"
+                >{{ t('agent.sync.selectAll') }}</el-checkbox
+              >
               <div>
                 <span class="mr-4 color-green">
                   {{ t('mcp.instance.token.active') }}:
@@ -53,105 +59,138 @@
                   :formData="tokenFormData"
                   @handle-query="handleQueryToken"
                   @reset-fields="handleQueryToken"
-                ></SearchForm>
+                  @on-refresh="handleTokenList"
+                >
+                  <template #operation>
+                    <el-dropdown trigger="click" class="ml-3" :show-arrow="false">
+                      <el-button style="width: 32px">
+                        <el-icon><Operation /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="handleAddInstance" @click="handleAddToken">
+                            <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
+                            {{ t('mcp.instance.formData.addToken') }}
+                          </el-dropdown-item>
+                          <el-dropdown-item
+                            command="handleAddInstance"
+                            @click="handleBatchChangeHeader"
+                          >
+                            <el-icon><Edit /></el-icon>
+                            {{ '批量修改' }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </template>
+                </SearchForm>
               </div>
             </div>
 
-            <div
-              class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-6"
-              :class="[
-                {
-                  active: dialogInfo.currentTokenIndex === index,
-                  disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
-                },
-              ]"
-              v-for="(token, index) in showTokenList"
-              :key="index"
-              @click="handleSelectedToken(index)"
-            >
-              <div class="flex">
-                <div class="ellipsis-one flex-sub">
-                  {{ token.token }}
+            <div v-for="(token, index) in showTokenList" :key="index" class="w-full">
+              <div class="flex items-center w-full">
+                <div class="mr-2 flex-shrink-0">
+                  <el-checkbox
+                    :model-value="selectedTokens.includes(token.id)"
+                    @change="toggleTokenSelection(token.id)"
+                    @click.stop
+                  ></el-checkbox>
                 </div>
-                <el-dropdown
-                  trigger="click"
-                  class="ml-2"
-                  style="cursor: pointer !important"
-                  @click.stop
-                  :show-arrow="false"
+                <div
+                  class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-6 flex-1 min-w-0"
+                  :class="[
+                    {
+                      active: dialogInfo.currentTokenIndex === index,
+                      disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
+                    },
+                  ]"
+                  @click="handleSelectedToken(index)"
                 >
-                  <el-icon size="18"><Operation /></el-icon>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item @click="handleEditToken(index)">
-                        <el-button link>
-                          {{ t('env.run.action.edit') }}
-                        </el-button>
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="handleViewLog(index)">
-                        <el-button link>
-                          {{ t('mcp.instance.action.accessLogs') }}
-                        </el-button>
-                      </el-dropdown-item>
-                      <el-dropdown-item
-                        v-if="showDeleteBtn(token)"
-                        @click="handleDeleteToken(index)"
-                      >
-                        <el-button type="danger" link>
-                          {{ t('mcp.instance.action.delete') }}
-                        </el-button>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-              <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1">
-                  {{ t('mcp.instance.token.expireAt') }}：<span
-                    :class="
-                      !token.expireAt
-                        ? 'color-green'
-                        : token.expireAt < Date.now()
-                          ? 'color-red'
-                          : ''
-                    "
-                  >
-                    {{
-                      !token.expireAt
-                        ? t('mcp.instance.token.placeholderAlways')
-                        : timestampToDate(token.expireAt) +
-                          (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
-                    }}
-                  </span>
-                </div>
-                <div class="ellipsis-one grid-cols-span-1">
-                  {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
-                </div>
-              </div>
-              <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1 w-full">
-                  {{ t('mcp.instance.token.tag') }}：<el-tag
-                    v-for="(tag, num) in token.usages"
-                    :key="num"
-                    effect="plain"
-                    class="mr-2"
-                  >
-                    <div class="ellipsis-one max-w-25">
-                      {{ tag }}
+                  <div class="flex">
+                    <div class="ellipsis-one flex-sub">
+                      {{ token.token }}
                     </div>
-                  </el-tag>
-                </div>
-                <div class="grid-cols-span-1">
-                  {{ t('mcp.token.isEnable') }}:
-                  <el-switch
-                    v-model="token.enabled"
-                    style="--el-switch-on-color: #13ce66"
-                    inline-prompt
-                    :loading="dialogInfo.instanceInfo.loading"
-                    :active-text="t('status.active')"
-                    :inactive-text="t('status.inactive')"
-                    @change="handleChangeTransport(token, index)"
-                  ></el-switch>
+                    <el-dropdown
+                      trigger="click"
+                      class="ml-2"
+                      style="cursor: pointer !important"
+                      @click.stop
+                      :show-arrow="false"
+                    >
+                      <el-icon size="18"><Operation /></el-icon>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item @click="handleEditToken(index)">
+                            <el-button link>
+                              {{ t('env.run.action.edit') }}
+                            </el-button>
+                          </el-dropdown-item>
+                          <el-dropdown-item @click="handleViewLog(index)">
+                            <el-button link>
+                              {{ t('mcp.instance.action.accessLogs') }}
+                            </el-button>
+                          </el-dropdown-item>
+                          <el-dropdown-item
+                            v-if="showDeleteBtn(token)"
+                            @click="handleDeleteToken(index)"
+                          >
+                            <el-button type="danger" link>
+                              {{ t('mcp.instance.action.delete') }}
+                            </el-button>
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
+                  <div class="grid grid-cols-2 mt-2">
+                    <div class="ellipsis-one grid-cols-span-1">
+                      {{ t('mcp.instance.token.expireAt') }}：<span
+                        :class="
+                          !token.expireAt
+                            ? 'color-green'
+                            : token.expireAt < Date.now()
+                              ? 'color-red'
+                              : ''
+                        "
+                      >
+                        {{
+                          !token.expireAt
+                            ? t('mcp.instance.token.placeholderAlways')
+                            : timestampToDate(token.expireAt) +
+                              (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
+                        }}
+                      </span>
+                    </div>
+                    <div class="ellipsis-one grid-cols-span-1">
+                      {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 mt-2">
+                    <div class="ellipsis-one grid-cols-span-1 w-full">
+                      {{ t('mcp.instance.token.tag') }}：<el-tag
+                        v-for="(tag, num) in token.usages"
+                        :key="num"
+                        effect="plain"
+                        class="mr-2"
+                      >
+                        <div class="ellipsis-one max-w-25">
+                          {{ tag }}
+                        </div>
+                      </el-tag>
+                    </div>
+                    <div class="grid-cols-span-1">
+                      {{ t('mcp.token.isEnable') }}:
+                      <el-switch
+                        v-model="token.enabled"
+                        style="--el-switch-on-color: #13ce66"
+                        inline-prompt
+                        :loading="dialogInfo.instanceInfo.loading"
+                        :active-text="t('status.active')"
+                        :inactive-text="t('status.inactive')"
+                        @change="handleChangeTransport(token, index)"
+                      ></el-switch>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,6 +252,7 @@
       </div>
     </template>
   </el-dialog>
+
   <TokenForm
     v-model="formData"
     :instance-info="dialogInfo.instanceInfo"
@@ -221,12 +261,17 @@
     @on-confirm="handleConfirmToken"
     @on-cancel="handleTokenList"
   ></TokenForm>
+
+  <BatchChangeHeader
+    ref="batchChangeHeaderRef"
+    @on-confirm="handleCommitHeader"
+  ></BatchChangeHeader>
 </template>
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Operation, CopyDocument, Link, Key } from '@element-plus/icons-vue'
-import McpButton from '@/components/mcp-button/index.vue'
+import { Operation, CopyDocument, Link, Key, Edit } from '@element-plus/icons-vue'
+// import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
 import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
@@ -236,6 +281,7 @@ import { JsonFormatter } from '@/utils/json'
 import { useRouterHooks } from '@/utils/url'
 import SearchForm from '@/components/SearchForm/index.vue'
 import TokenForm from './components/token-form-list.vue'
+import BatchChangeHeader from './components/batch-change-header.vue'
 
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
@@ -243,6 +289,7 @@ const { userInfo } = useUserStore()
 const emit = defineEmits<{
   (e: 'on-refresh'): void
 }>()
+const batchChangeHeaderRef = ref()
 const formRef = ref()
 const formData = ref<any>({
   visible: false,
@@ -316,6 +363,45 @@ const dialogInfo = ref({
   currentTokenIndex: null as number | null,
   currentEditIndex: null as number | null,
 })
+
+// token selection
+const selectedTokens = ref<number[]>([])
+
+// select all tokens
+const allTokenChecked = computed({
+  get() {
+    return (
+      showTokenList.value.length > 0 && selectedTokens.value.length === showTokenList.value.length
+    )
+  },
+  set(val: boolean) {
+    if (val) {
+      selectedTokens.value = showTokenList.value.map((token) => token.id)
+    } else {
+      selectedTokens.value = []
+    }
+  },
+})
+
+// select all status
+const isTokenIndeterminate = computed(() => {
+  return selectedTokens.value.length > 0 && selectedTokens.value.length < showTokenList.value.length
+})
+
+// select all or cancel all
+const handleCheckAllToken = (val: boolean) => {
+  allTokenChecked.value = val
+}
+
+// toggle token selection
+const toggleTokenSelection = (id: number) => {
+  const idx = selectedTokens.value.findIndex((tokenId) => tokenId === id)
+  if (idx > -1) {
+    selectedTokens.value.splice(idx, 1)
+  } else {
+    selectedTokens.value.push(id)
+  }
+}
 
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -421,6 +507,8 @@ const tokenList = ref<Array<any>>([])
 
 const handleQueryToken = (formData: any) => {
   tokenFormData.value = formData
+  // 清空选择，避免筛选后索引不匹配
+  selectedTokens.value = []
 }
 
 const handleChangeTransport = async (token: any, index: number) => {
@@ -434,6 +522,32 @@ const handleChangeTransport = async (token: any, index: number) => {
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
+}
+
+const handleBatchChangeHeader = () => {
+  if (selectedTokens.value.length === 0) {
+    ElMessage.warning('请选择需要修改的 Token 令牌')
+    return
+  }
+  batchChangeHeaderRef.value.init()
+}
+
+// confirm change headers
+const handleCommitHeader = async (formData: any) => {
+  await TokenAPI.edit({
+    tokens: tokenList.value
+      .filter((token) => selectedTokens.value.includes(token.id))
+      .map((token) => ({
+        ...token,
+        headers: {
+          ...token.headers,
+          ...Object.fromEntries(formData.headers.map((header: any) => [header.key, header.value])),
+        },
+        usages: [...token.usages, ...formData.usages],
+      })),
+  })
+  handleTokenList()
+  batchChangeHeaderRef.value.finish()
 }
 
 // handle add token
@@ -661,6 +775,7 @@ const handleCopy = async (type: string) => {
 const init = (instanceInfo: InstanceResult) => {
   dialogInfo.value.visible = true
   dialogInfo.value.instanceInfo = cloneDeep(instanceInfo)
+  selectedTokens.value = []
   if (instanceInfo.enabledToken) {
     dialogInfo.value.currentTokenIndex = 0
     handleTokenList()
@@ -683,6 +798,8 @@ defineExpose({
   background: var(--ep-bg-color-deep);
   padding: 24px;
   .token-card {
+    flex: 1;
+    min-width: 0;
     border: 1px solid var(--ep-border-color);
     &.active {
       border-color: var(--ep-purple-color);

@@ -28,7 +28,8 @@
       "dbPort": "端口",
       "dbUser": "用户名",
       "dbPassword": "密码",
-      "dbName": "数据库名称"
+      "dbName": "数据库名称",
+      "loadingText": "服务连接中..."
     },
     "placeholder": {
       "accessName": "请输入接入名称",
@@ -71,6 +72,20 @@
       "dialogTitle": "智能体平台同步",
       "loadingTextNamespace": "正在加载命名空间...",
       "loadingTextTask": "正在创建同步任务..."
+    },
+    "task": {
+      "title": "任务列表",
+      "cancel": "取消任务",
+      "status": {
+        "doing": "进行中",
+        "done": "已完成",
+        "cancel": "已取消",
+        "error": "异常"
+      },
+      "details": "任务详情",
+      "createTime": "任务创建时间",
+      "platformName": "智能体平台名称",
+      "syncSpaceName": "已同步到的命名空间"
     }
   }
 }

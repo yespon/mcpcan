@@ -99,6 +99,7 @@
     "noData": "No Data",
     "delete": "Delete",
     "success": "Success",
+    "fail": "Failed",
     "loading": "Loading"
   },
   "action": {

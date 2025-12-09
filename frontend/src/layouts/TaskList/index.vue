@@ -17,7 +17,7 @@
     width="800px"
     footer-class="footer-border"
   >
-    <template #title> 任务列表 </template>
+    <template #title> {{ t('agent.task.title') }} </template>
     <div class="task-list-scroll hide-scrollbar">
       <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
         <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
@@ -54,11 +54,18 @@
               round
               @click.stop="handleCancelTask(task)"
             >
-              取消任务
+              {{ t('agent.task.cancel') }}
             </el-button>
           </span>
           <span class="task-status" :class="['doing', 'done', 'danger', 'error'][task.status - 1]">
-            {{ ['进行中', '已完成', '异常', '已取消'][task.status - 1] }}
+            {{
+              [
+                t('agent.task.status.doing'),
+                t('agent.task.status.done'),
+                t('agent.task.status.error'),
+                t('agent.task.status.cancel'),
+              ][task.status - 1]
+            }}
           </span>
           <span class="task-expand-icon">
             <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
@@ -68,24 +75,25 @@
         <transition name="fade">
           <div v-if="task.expanded" v-loading="task.loading" class="task-detail">
             <div class="task-detail-title flex items-center justify-between">
-              <span>任务详情</span>
+              <span>{{ t('agent.task.details') }}</span>
               <el-icon
                 class="cursor-pointer hover:rotate-90 transition-all"
                 size="20"
-                title="刷新"
                 @click.stop="handleGetTaskDetail(task)"
               >
                 <Refresh />
               </el-icon>
             </div>
-            <div class="my-2">任务创建时间：{{ task.createdAt }}</div>
-            <div class="my-2">智能平台名称：{{ task.intelligentAccessName }}</div>
+            <div class="my-2">{{ t('agent.task.createTime') }}：{{ task.createdAt }}</div>
+            <div class="my-2">
+              {{ t('agent.task.platformName') }}：{{ task.intelligentAccessName }}
+            </div>
             <div v-if="Array.isArray(task.logs)">
               <div v-for="log in task.logs" :key="log.mcpInstanceID" class="task-mcp-card mb-4">
                 <div class="flex items-center justify-between mb-1">
                   <div class="font-bold text-lg">{{ log.mcpInstanceName }}</div>
                   <el-tag :type="log.status ? 'success' : 'danger'" size="small" effect="dark">
-                    {{ log.status ? '成功' : '失败' }}
+                    {{ log.status ? t('status.success') : t('status.fail') }}
                   </el-tag>
                 </div>
                 <div
@@ -93,7 +101,9 @@
                     Array.isArray(log.insertIntelligentLogs) && log.insertIntelligentLogs.length
                   "
                 >
-                  <div class="text-sm text-gray-400 mb-1">已同步到的命名空间：</div>
+                  <div class="text-sm text-gray-400 mb-1">
+                    {{ t('agent.task.syncSpaceName') }}：
+                  </div>
                   <div class="sync-space-list">
                     <div
                       v-for="(item, idx) in log.insertIntelligentLogs"
@@ -108,7 +118,7 @@
                         size="mini"
                         effect="plain"
                         class="mx-2"
-                        >{{ item.status ? '成功' : '失败' }}</el-tag
+                        >{{ item.status ? t('status.success') : t('status.fail') }}</el-tag
                       >
                       <div
                         v-if="!item.status && item.errorLog"
@@ -156,19 +166,20 @@ import {
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { AgentAPI } from '@/api/agent'
 
+const { t } = useI18n()
 const { taskInfo, handleGetTaskList } = toRefs(useBusinessStoreHook())
 const toggleExpand = (idx: number) => {
   taskInfo.value.list[idx].expanded = !taskInfo.value.list[idx].expanded
   handleGetTaskDetail(taskInfo.value.list[idx])
 }
 
-// 取消任务（需补充具体API逻辑）
+// cancel task
 const handleCancelTask = async (task: any) => {
   await AgentAPI.cancelTask(task.id)
   task.status = 4
 }
 
-// 获取任务详情信息
+// handle get task detail
 const handleGetTaskDetail = async (baseTask: any) => {
   try {
     baseTask.loading = true
@@ -183,7 +194,7 @@ const handleGetTaskDetail = async (baseTask: any) => {
   }
 }
 
-// 显示任务列表
+// show task list
 const handleShowTaskList = () => {
   taskInfo.value.visible = true
 }
@@ -200,10 +211,10 @@ watch(
     })
     for (const task of taskInfo.value.list) {
       if (task.status === 1) {
-        // 自动请求详情
+        // only update doing tasks
         try {
           const { task: detail } = await AgentAPI.taskDetail(task.id)
-          // 进度计算
+          // calculate progress
           const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
           let done = 0
           if (Array.isArray(detail.installLogs)) {

@@ -28,7 +28,8 @@
       "dbPort": "Database Port",
       "dbUser": "Database User",
       "dbPassword": "Database Password",
-      "dbName": "Database Name"
+      "dbName": "Database Name",
+      "loadingText": "Connecting to service..."
     },
     "placeholder": {
       "accessName": "Please enter access name",
@@ -71,6 +72,20 @@
       "dialogTitle": "Agent Platform Sync",
       "loadingTextNamespace": "Loading Namespaces...",
       "loadingTextTask": "Creating Sync Task..."
+    },
+    "task": {
+      "title": "Task List",
+      "cancel": "Cancel Task",
+      "status": {
+        "doing": "In Progress",
+        "done": "Completed",
+        "cancel": "Cancelled",
+        "error": "Error"
+      },
+      "details": "Details",
+      "createTime": "Task Creation Time",
+      "platformName": "Agent Platform Name",
+      "syncSpaceName": "Synchronized Namespace"
     }
   }
 }

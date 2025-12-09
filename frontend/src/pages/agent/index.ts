@@ -29,8 +29,8 @@ export const useAgentTableHooks = () => {
         props: {
           placeholder: t('agent.columns.accessType'),
           options: [
-            { label: '社区版', value: 'Dify' },
-            { label: '商业版', value: 'DifyEnterprise' },
+            { label: t('agent.action.community'), value: 'Dify' },
+            { label: t('agent.action.enterprise'), value: 'DifyEnterprise' },
           ],
         },
       },
