@@ -227,7 +227,8 @@
         "tagTypePlaceholder": "Please select a type",
         "tagValue": "Value",
         "tagValuePlaceholder": "Please enter the type value",
-        "batchChangeTitle": "Batch Add Request Headers"
+        "batchChangeTitle": "Batch Add Request Headers",
+        "mustSelectToken": "Please select the Token(s) to be modified"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",

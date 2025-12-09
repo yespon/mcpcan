@@ -6,7 +6,9 @@
       "total": "智能体平台总数",
       "formTitle": "智能体平台接入",
       "connectionDesc": "正在尝试连接....",
-      "deleteDesc": "确定要删除该智能体平台吗？删除后将无法恢复。"
+      "deleteDesc": "确定要删除该智能体平台吗？删除后将无法恢复。",
+      "platFormSync": "智能体平台同步",
+      "mustSelectMCP": "请选择需要同步的实例"
     },
     "columns": {
       "accessName": "平台名称",
@@ -48,6 +50,7 @@
       "selectSpace": "选择空间: ",
       "unitMCP": "个MCP服务",
       "unit": "个",
+      "unit2": "条",
       "stepOne": "智能体平台选择",
       "stepTwo": "同步的命名空间",
       "stepThree": "鉴权设置",
@@ -65,6 +68,7 @@
       "user": "用户",
       "emptyNamespaceDesc": "暂无可同步的命名空间",
       "searchPlaceholder": "搜索命名空间",
+      "instanceSearchPlaceholder": "搜索MCP实例",
       "MCPName": "MCP名称",
       "stepUp": "上一步",
       "stepNext": "下一步",

@@ -95,8 +95,12 @@
               >
               <span class="ml-4 cursor-pointer base-btn-link font-bold center" @click="handleSync">
                 <el-icon class="mr-1"><Share /></el-icon>
-                {{ '智能体平台同步' }}
-                <span v-if="selection.selectList.length">{{ selection.selectList.length }}条</span>
+                {{ t('agent.pageDesc.platFormSync') }}
+
+                <span v-if="selection.selectList.length" class="ml-1">
+                  {{ t('agent.sync.selected') }} {{ selection.selectList.length }}
+                  {{ t('agent.sync.unit2') }}
+                </span>
               </span>
             </div>
             <div id="instanceSearch"></div>
@@ -602,7 +606,7 @@ const handleCommand = (callback: string, row: InstanceResult) => {
  */
 const handleSync = () => {
   if (!selection.value.selectList.length) {
-    ElMessage.warning('请选择需要同步的实例')
+    ElMessage.warning(t('agent.pageDesc.mustSelectMCP'))
     return
   }
   agentSyncDialog.value.init(selection.value.selectList)

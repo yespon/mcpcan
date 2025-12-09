@@ -227,7 +227,8 @@
         "tagTypePlaceholder": "请选择标签类型",
         "tagValue": "类型值",
         "tagValuePlaceholder": "请输入类型值",
-        "batchChangeTitle": "批量添加请求头"
+        "batchChangeTitle": "批量添加请求头",
+        "mustSelectToken": "请选择需要修改的 Token 令牌"
       },
       "openApi": {
         "importTitle": "导入 OpenAPI 文档",

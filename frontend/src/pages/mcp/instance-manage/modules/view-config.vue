@@ -527,7 +527,7 @@ const handleChangeTransport = async (token: any, index: number) => {
 
 const handleBatchChangeHeader = () => {
   if (selectedTokens.value.length === 0) {
-    ElMessage.warning('请选择需要修改的 Token 令牌')
+    ElMessage.warning(t('mcp.instance.token.mustSelectToken'))
     return
   }
   batchChangeHeaderRef.value.init()

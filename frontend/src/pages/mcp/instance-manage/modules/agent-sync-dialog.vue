@@ -180,7 +180,7 @@
           <el-splitter-panel size="70%" class="px-2">
             <el-input
               v-model="instanceSearch"
-              :placeholder="'搜索MCP实例'"
+              :placeholder="t('agent.sync.instanceSearchPlaceholder')"
               clearable
               class="mb-2 mt-1"
               size="small"
