@@ -10,51 +10,58 @@
     <template #title>{{ dialogInfo.title }}</template>
     <el-splitter v-loading="dialogInfo.loading">
       <el-splitter-panel size="50%" class="p-4">
-        <el-form
-          ref="baseInfo"
-          :model="formData"
-          :rules="rules"
-          label-width="auto"
-          label-position="top"
-        >
-          <el-form-item :label="t('mcp.instance.formData.instanceName')" prop="name">
-            <el-input
-              v-model="formData.name"
-              :placeholder="t('mcp.instance.formData.instanceName')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
-            <el-select
-              v-model="formData.environmentId"
-              :placeholder="t('mcp.instance.formData.environmentId')"
-            >
-              <el-option
-                v-for="(env, index) in envList"
-                :key="index"
-                :label="env.name"
-                :value="env.id"
+        <div style="height: 75vh">
+          <el-form
+            ref="baseInfo"
+            :model="formData"
+            :rules="rules"
+            label-width="auto"
+            label-position="top"
+          >
+            <el-form-item :label="t('mcp.instance.formData.instanceName')" prop="name">
+              <el-input
+                v-model="formData.name"
+                :placeholder="t('mcp.instance.formData.instanceName')"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="t('mcp.instance.openApi.serviceUrl')" prop="openapiBaseUrl">
-            <el-input
-              v-model="formData.openapiBaseUrl"
-              :placeholder="t('mcp.instance.openApi.serviceUrl')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
-            <el-input
-              v-model="formData.notes"
-              :rows="4"
-              type="textarea"
-              :placeholder="t('mcp.template.formData.notes')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
-            <Upload v-model="formData.iconPath"></Upload>
-          </el-form-item>
-        </el-form>
-        <div class="mt-8 color-gray text-3">{{ t('mcp.instance.openApi.tips') }}</div>
+            </el-form-item>
+            <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
+              <el-select
+                v-model="formData.environmentId"
+                :placeholder="t('mcp.instance.formData.environmentId')"
+              >
+                <el-option
+                  v-for="(env, index) in envList"
+                  :key="index"
+                  :label="env.name"
+                  :value="env.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('mcp.instance.openApi.serviceUrl')" prop="openapiBaseUrl">
+              <el-input
+                v-model="formData.openapiBaseUrl"
+                :placeholder="t('mcp.instance.openApi.serviceUrl')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
+              <el-input
+                v-model="formData.notes"
+                :rows="4"
+                type="textarea"
+                :placeholder="t('mcp.template.formData.notes')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
+              <Upload v-model="formData.iconPath"></Upload>
+            </el-form-item>
+          </el-form>
+          <TokenForm
+            v-if="!formData.instanceId"
+            ref="tokenForm"
+            :formData="formData.tokens[0]"
+          ></TokenForm>
+          <div class="mt-8 color-gray text-3 pb-4">{{ t('mcp.instance.openApi.tips') }}</div>
+        </div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
         <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
@@ -155,6 +162,7 @@ import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { SourceType, TokenType } from '@/types'
 import { ElTooltip } from 'element-plus'
+import TokenForm from './components/token-form.vue'
 
 const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
@@ -180,7 +188,7 @@ const formData = ref({
   sourceType: SourceType.OPENAPI,
   tokens: [
     {
-      enabledTransport: false,
+      enabled: false,
       expireAt: '',
       headers: [],
       publishAt: new Date().getTime(),
@@ -544,6 +552,11 @@ const handleConfirm = async () => {
         return
       }
       if (valid) {
+        if (!formData.value.instanceId) {
+          formData.value.tokens[0].headers = Object.fromEntries(
+            formData.value.tokens[0].headers.map((header: any) => [header.key, header.value]),
+          )
+        }
         // 提交数据
         await (formData.value.instanceId
           ? InstanceAPI.editByOpenAPI(formData.value)

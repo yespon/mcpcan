@@ -42,8 +42,10 @@ export const useInstanceFormHooks = () => {
       enabledToken: true,
       tokens: [
         {
+          enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
+          headers: [],
           token:
             'Bearer ' +
             getToken(
@@ -58,7 +60,10 @@ export const useInstanceFormHooks = () => {
       ],
     },
     rules: {
-      name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+      name: [
+        { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
+        { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+      ],
       accessType: [
         { required: true, message: t('mcp.template.rules.deployType'), trigger: 'change' },
       ],
@@ -76,7 +81,7 @@ export const useInstanceFormHooks = () => {
             if (!value) return callback(new Error(t('mcp.template.rules.mcpServers.must')))
             try {
               parsed = JSON.parse(value)
-            } catch (error) {
+            } catch {
               // Capture JSON parsing errors and return custom prompts
               return callback(new Error(t('mcp.template.rules.mcpServers.format')))
             }

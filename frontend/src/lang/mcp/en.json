@@ -71,7 +71,7 @@
         "total": "Total",
         "running": "Running",
         "stoped": "Stoped",
-        "connecting": "Connecting"
+        "connecting": "Hosting"
       },
       "form": {
         "placeholderName": "Name and ID",
@@ -115,7 +115,7 @@
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
         "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing.",
-        "noToken": "No authentication required",
+        "noToken": "Not certified",
         "apiSelectTitle": "Select OpenAPI Document"
       },
       "tableHeadDesc": {
@@ -158,6 +158,7 @@
       },
       "rules": {
         "name": "Please enter the instance name",
+        "nameMax40": "The instance name cannot exceed 40 characters",
         "openapiBaseUrl": "Please enter the service address",
         "environmentId": "Please select the container environment"
       },
@@ -216,12 +217,13 @@
         "passthrough": "Passthrough",
         "passthroughOff": "No Passthrough",
         "headersKey": "Header Key",
-        "headersValue": "Header Value"
+        "headersValue": "Header Value",
+        "deleteProtected": "This tag cannot be deleted"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",
         "serviceUrl": "Service Url",
-        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STDIO protocol",
+        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STEAMABLE_HTTP protocol",
         "support": "Supports importing JSON or YAML files in OpenAPI 3.0.0 or higher version data format.",
         "localFile": "Local Upload",
         "selectDocs": "Select from Document Library",
@@ -256,6 +258,12 @@
       "market": "Market",
       "template": "Template",
       "custom": "Custom"
+    },
+    "token": {
+      "authentication": "Gateway Authentication",
+      "passthrough": "Passthrough",
+      "account": "Account",
+      "isEnable": "Enable"
     }
   }
 }

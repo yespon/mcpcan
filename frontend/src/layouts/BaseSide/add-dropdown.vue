@@ -53,10 +53,10 @@
             </template>
           </el-dropdown>
         </el-dropdown-item>
-        <el-dropdown-item command="env">
+        <!-- <el-dropdown-item command="env">
           <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
           {{ t('env.run.formData.title') }}
-        </el-dropdown-item>
+        </el-dropdown-item> -->
         <el-dropdown-item command="/update-code-package">
           <el-icon><i class="icon iconfont MCP-shangchuan"></i></el-icon>
           {{ t('code.action.upload') }}

@@ -1,71 +1,66 @@
-import { DocsAPI } from '@/api/api-docs/index'
-import type { Code } from '@/types'
-import { timestampToDate, formatFileSize } from '@/utils/system'
+import { AgentAPI } from '@/api/agent/index'
+import { timestampToDate } from '@/utils/system'
 
 export const useAgentTableHooks = () => {
   const { t } = useI18n()
   const tablePlus = ref()
   const pageInfo = ref({
     loading: false,
-    loadingText: t('api.action.loadingText'),
+    loadingText: t('agent.pageDesc.connectionDesc'),
   })
   const columns = ref<any>([
     {
-      label: t('api.columns.name'),
-      dataIndex: 'name',
+      label: t('agent.columns.accessName'),
+      dataIndex: 'accessName',
       searchConfig: {
         component: 'el-input',
-        label: t('api.columns.name'),
+        label: t('agent.columns.accessName'),
         props: {
-          placeholder: t('api.columns.name'),
+          placeholder: t('agent.columns.accessName'),
         },
       },
     },
     {
-      label: t('api.columns.size'),
-      dataIndex: 'size',
-      customRender: ({ row }: { row: Code }) => {
-        return formatFileSize(row.size)
-      },
-    },
-    {
-      label: t('api.columns.type'),
-      dataIndex: 'types',
+      label: t('agent.columns.accessType'),
+      dataIndex: 'accessType',
       searchConfig: {
         component: 'el-select',
-        label: t('api.columns.type'),
+        label: t('agent.columns.accessType'),
         props: {
-          placeholder: t('api.columns.type'),
-          multiple: true,
+          placeholder: t('agent.columns.accessType'),
           options: [
-            { label: t('api.columns.json'), value: 1 },
-            { label: t('api.columns.yaml'), value: 2 },
+            { label: '社区版', value: 'Dify' },
+            { label: '商业版', value: 'DifyEnterprise' },
           ],
         },
       },
-      customRender: ({ row }: { row: Code }) => {
-        return [t('api.columns.unspecified'), t('api.columns.json'), t('api.columns.yaml')][
-          row.type
-        ]
+      customRender: ({ row }: { row: any }) => {
+        return row.accessType === 'Dify'
+          ? t('agent.action.community')
+          : t('agent.action.enterprise')
       },
     },
     {
-      dataIndex: 'createdAt',
+      label: t('agent.columns.dbHost'),
+      dataIndex: 'dbHost',
+    },
+    {
+      dataIndex: 'createTime',
       label: t('api.columns.createdAt'),
-      customRender: ({ row }: { row: Code }) => {
-        return timestampToDate(row.createdAt)
+      customRender: ({ row }: { row: any }) => {
+        return timestampToDate(row.createTime)
       },
     },
     {
-      dataIndex: 'updatedAt',
+      dataIndex: 'updateTime',
       label: t('api.columns.updatedAt'),
-      customRender: ({ row }: { row: Code }) => {
-        return timestampToDate(row.updatedAt)
+      customRender: ({ row }: { row: any }) => {
+        return timestampToDate(row.updateTime)
       },
     },
   ])
   const requestConfig = {
-    api: DocsAPI.list,
+    api: AgentAPI.list,
     searchQuery: {
       model: {},
     },
@@ -76,5 +71,5 @@ export const useAgentTableHooks = () => {
     pageSize: 10,
   })
 
-  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo }
+  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo, AgentAPI }
 }

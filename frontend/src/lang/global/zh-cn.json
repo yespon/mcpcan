@@ -62,9 +62,11 @@
     "updateCodePackage": "上传代码包",
     "viewCodePackage": "代码包详情",
     "apiDocsList": "API 文档",
-    "agentManage": "智能体管理"
+    "agentManage": "智能体平台"
   },
   "common": {
+    "edit": "编辑",
+    "connection": "连接测试",
     "search": "搜索",
     "reseat": "重置",
     "operation": "操作",
@@ -118,7 +120,8 @@
     "imgAddressTip3": "默认启动命令： mcp-hosting ，启动后将 MCP STDIO 协议转为 STEAMABLE_HTTP 协议运行。",
     "env": "环境",
     "tools": "配套工具",
-    "baseCommand": "系统基础命令"
+    "baseCommand": "系统基础命令",
+    "demoTips": "Demo站的数据为展示数据 将于24小时后重置 请注意你的数据保存"
   },
   "request": {
     "error": "请求失败",

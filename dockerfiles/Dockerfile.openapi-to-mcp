@@ -20,6 +20,9 @@ RUN make
 # 创建最终运行镜像
 FROM alpine:3.22
 
+# Set apk aliyun mirror
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装必要的运行时依赖
 RUN apk add --no-cache ca-certificates curl
 

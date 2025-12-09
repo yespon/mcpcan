@@ -89,7 +89,7 @@ onMounted(init)
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  background-color: #000;
+  background-color: var(--ep-bg-color-deep);
   padding: 10px;
   border-radius: 8px;
 }

@@ -186,7 +186,40 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		if publishAt == 0 {
 			publishAt = nowMs
 		}
-		if t.Id == 0 {
+
+		var existing *model.McpToken
+		var err error
+
+		// 1. Try to find by ID if provided
+		if t.Id > 0 {
+			existing, err = mysql.McpTokenRepo.FindByID(ctx, uint(t.Id))
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("failed to find token by id: %v", err)
+			}
+		}
+
+		// 2. If not found by ID (or ID is 0), try to find by Token value
+		if existing == nil {
+			existing, err = mysql.McpTokenRepo.FindByToken(ctx, t.InstanceId, t.Token)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("failed to find token by value: %v", err)
+			}
+		}
+
+		// 3. Update if found, otherwise prepare for creation
+		if existing != nil {
+			existing.InstanceID = t.InstanceId
+			existing.Token = t.Token
+			existing.Enabled = t.Enabled
+			existing.Headers = json.RawMessage(headersBytes)
+			existing.Usages = json.RawMessage(usagesBytes)
+			existing.ExpireAt = t.ExpireAt
+			existing.PublishAt = publishAt
+			if err := mysql.McpTokenRepo.Update(ctx, existing); err != nil {
+				return fmt.Errorf("failed to update token: %v", err)
+			}
+			redis.GetMcpTokenCache().Clear(existing.InstanceID, existing.Token)
+		} else {
 			rows = append(rows, model.McpToken{
 				InstanceID: t.InstanceId,
 				Token:      t.Token,
@@ -197,23 +230,7 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 				PublishAt:  publishAt,
 			})
 			redis.GetMcpTokenCache().Clear(t.InstanceId, t.Token)
-			continue
 		}
-		existing, err := mysql.McpTokenRepo.FindByID(ctx, uint(t.Id))
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			return fmt.Errorf("failed to find token by id: %v", err)
-		}
-		existing.InstanceID = t.InstanceId
-		existing.Token = t.Token
-		existing.Enabled = t.Enabled
-		existing.Headers = json.RawMessage(headersBytes)
-		existing.Usages = json.RawMessage(usagesBytes)
-		existing.ExpireAt = t.ExpireAt
-		existing.PublishAt = publishAt
-		if err := mysql.McpTokenRepo.Update(ctx, existing); err != nil {
-			return fmt.Errorf("failed to update token: %v", err)
-		}
-		redis.GetMcpTokenCache().Clear(existing.InstanceID, existing.Token)
 	}
 	if len(rows) > 0 {
 		return mysql.McpTokenRepo.CreateBatch(ctx, rows)

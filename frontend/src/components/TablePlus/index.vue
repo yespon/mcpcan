@@ -75,6 +75,7 @@
 
   <slot name="action"></slot>
   <el-table
+    v-bind="$attrs"
     v-if="viewMode === 'table'"
     ref="dataTableRef"
     v-loading="loading"
@@ -85,7 +86,15 @@
       'background-color': 'var(--ep-bg-grey)',
     }"
     class="data-table__content"
+    :row-key="rowKey"
+    @selection-change="handleSelectionChange"
   >
+    <el-table-column
+      type="selection"
+      width="55"
+      v-if="props.multiple"
+      reserve-selection
+    ></el-table-column>
     <el-table-column
       v-for="(column, index) in props.columns"
       :key="index || column.dataIndex"
@@ -216,16 +225,24 @@ const props = withDefaults(
     queryFormatter?: Function
     showPage?: boolean
     showViewMode?: boolean
+    multiple?: boolean
+    rowKey?: string
   }>(),
   {
     showPage: () => true,
     showViewMode: () => false,
+    multiple: () => false,
+    rowKey: () => 'id',
   },
 )
 
 const showMoreSearch = ref(false)
 const loading = ref(false)
 const list = ref<unknown[]>([])
+// 跨页选择：全局已选数据
+const selectedRows = ref<any[]>([])
+// 当前页码的选中
+const currentSelectedRows = ref<any[]>([])
 const dataTableRef =
   ref<InstanceType<(typeof import('element-plus/lib/components/table/src/table.vue'))['default']>>()
 const _pagerConfig = ref(Object.assign({}, props.pageConfig))
@@ -234,7 +251,11 @@ const emit = defineEmits<{
   (e: 'update:pageConfig', value: PageConfig): void
   (e: 'resetFields', value: any): void
   (e: 'update:viewMode', value: 'card' | 'table'): void
+  (e: 'on-selection-change', value: any[]): void
 }>()
+/**
+ * Handle page change event
+ */
 const handlePageChange = (newPage: number) => {
   _pagerConfig.value.page = newPage
   initData()
@@ -282,14 +303,6 @@ const handleQuery = () => {
 }
 
 /**
- * Handle change view mode
- */
-const changeViewMode = () => {
-  viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
-  emit('update:viewMode', viewMode.value)
-}
-
-/**
  * reset form data
  */
 const searchFromRef = ref()
@@ -299,6 +312,19 @@ const resetFields = () => {
   searchFromRef.value?.resetFields()
   emit('resetFields', null)
   initData()
+}
+
+/**
+ * Handle change view mode
+ */
+const changeViewMode = () => {
+  viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
+  emit('update:viewMode', viewMode.value)
+}
+
+const handleSelectionChange = (selection: any[]) => {
+  selectedRows.value = selection
+  emit('on-selection-change', selectedRows.value)
 }
 
 //Init search data
@@ -342,10 +368,15 @@ onMounted(() => {
   searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
 
+// 提供方法：获取/设置已选项
 defineExpose({
   initData,
   resetFields,
   customize,
+  getSelectedRows: () => selectedRows.value,
+  setSelectedRows: (rows: any[]) => {
+    selectedRows.value = rows || []
+  },
 })
 </script>
 
@@ -361,5 +392,16 @@ defineExpose({
 }
 .el-input__suffix {
   cursor: pointer;
+}
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--ep-purple-color);
+  border-color: var(--ep-pager-border);
+}
+.el-checkbox__input.is-indeterminate .el-checkbox__inner {
+  background-color: var(--ep-purple-color);
+  border-color: var(--ep-pager-border);
+}
+.el-checkbox__inner:hover {
+  border-color: var(--ep-pager-border);
 }
 </style>

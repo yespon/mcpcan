@@ -15,13 +15,13 @@ import (
 	"github.com/kymo-mcp/mcpcan/internal/market/task"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database"
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/middleware"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/scheduler"
-	"github.com/kymo-mcp/mcpcan/pkg/services"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -78,6 +78,13 @@ func New() (*App, error) {
 
 // Initialize initialize all application components
 func (a *App) Initialize() error {
+	// Set table name based on RunKimo flag
+	if a.config.RunKimo {
+		model.SetIntelligentAccessTableName("intelligent_access")
+	} else {
+		model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
+	}
+
 	// Initialize database
 	if err := database.Init(&a.config.Database.MySQL); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
@@ -91,11 +98,6 @@ func (a *App) Initialize() error {
 	// Use global database repository instance (already initialized in init)
 	if mysql.McpInstanceRepo == nil {
 		return fmt.Errorf("McpInstanceRepo not properly initialized, please check database initialization process")
-	}
-
-	// Load service configuration
-	if err := services.LoadServices(&a.config.Services); err != nil {
-		return fmt.Errorf("failed to load service configuration: %w", err)
 	}
 
 	// Start scheduler
@@ -309,6 +311,22 @@ func (a *App) setupHttpServer() {
 	dashboardService := service.NewDashboardService(context.Background())
 	a.ginEngine.GET(fmt.Sprintf("/%s/dashboard/statistical", routerPrefix), dashboardService.StatisticalHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/dashboard/available-cases", routerPrefix), dashboardService.AvailableCasesHandler)
+
+	// Register intelligent access management interface
+	intelligentAccessService := service.NewIntelligentAccessService(context.Background())
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access", routerPrefix), intelligentAccessService.CreateHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/intelligent_access/list", routerPrefix), intelligentAccessService.ListHandler)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/intelligent_access/delete", routerPrefix), intelligentAccessService.DeleteHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/intelligent_access/edit", routerPrefix), intelligentAccessService.UpdateHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/test-connection", routerPrefix), intelligentAccessService.TestConnectionHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-dify-user-space", routerPrefix), intelligentAccessService.ListDifyUserSpaceHandler)
+
+	mcpToIntelligentTaskService := service.NewMcpToIntelligentTaskService(context.Background())
+	// Register mcp to intelligent task management interface
+	a.ginEngine.POST(fmt.Sprintf("/%s/mcp_to_intelligent_task", routerPrefix), mcpToIntelligentTaskService.CreateHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/mcp_to_intelligent_task/:id", routerPrefix), mcpToIntelligentTaskService.GetHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/mcp_to_intelligent_task/list", routerPrefix), mcpToIntelligentTaskService.ListHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/mcp_to_intelligent_task/:id/cancel", routerPrefix), mcpToIntelligentTaskService.CancelHandler)
 
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {
