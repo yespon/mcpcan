@@ -153,6 +153,7 @@
         "initScript": "InitScript",
         "command": "Command",
         "addToken": " Add",
+        "batchChangeHeader": "Batch Modify",
         "initScriptTips": "The initialization script needs to ensure that it can eventually exit after execution and cannot be blocked, otherwise it cannot be started",
         "servicePathTips": "MCP Service access path"
       },
@@ -225,7 +226,8 @@
         "tagType": "Tag Type",
         "tagTypePlaceholder": "Please select a type",
         "tagValue": "Value",
-        "tagValuePlaceholder": "Please enter the type value"
+        "tagValuePlaceholder": "Please enter the type value",
+        "batchChangeTitle": "Batch Add Request Headers"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",

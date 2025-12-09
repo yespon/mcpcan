@@ -40,8 +40,9 @@
                 v-model="allTokenChecked"
                 :indeterminate="isTokenIndeterminate"
                 @change="handleCheckAllToken"
-                >{{ t('agent.sync.selectAll') }}</el-checkbox
               >
+                <span style="color: var(--ep-purple-color)">{{ t('agent.sync.selectAll') }}</span>
+              </el-checkbox>
               <div>
                 <span class="mr-4 color-green">
                   {{ t('mcp.instance.token.active') }}:
@@ -77,7 +78,7 @@
                             @click="handleBatchChangeHeader"
                           >
                             <el-icon><Edit /></el-icon>
-                            {{ '批量修改' }}
+                            {{ t('mcp.instance.formData.batchChangeHeader') }}
                           </el-dropdown-item>
                         </el-dropdown-menu>
                       </template>

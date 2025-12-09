@@ -153,6 +153,7 @@
         "initScript": "初始化脚本",
         "command": "启动命令",
         "addToken": " 添加令牌",
+        "batchChangeHeader": "批量修改",
         "initScriptTips": "初始化脚本需要保证执行完后最终能够退出，不能设置阻塞，否则无法启动",
         "servicePathTips": "MCP 服务访问路径"
       },
@@ -225,7 +226,8 @@
         "tagType": "标签类型",
         "tagTypePlaceholder": "请选择标签类型",
         "tagValue": "类型值",
-        "tagValuePlaceholder": "请输入类型值"
+        "tagValuePlaceholder": "请输入类型值",
+        "batchChangeTitle": "批量添加请求头"
       },
       "openApi": {
         "importTitle": "导入 OpenAPI 文档",

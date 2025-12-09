@@ -199,7 +199,7 @@ const init = (accessType: string, row: any) => {
       accessName: '',
       accessType,
       dbHost: '',
-      dbPort: 3306,
+      dbPort: 5432,
       dbUser: '',
       dbPassword: '',
       dbName: '',

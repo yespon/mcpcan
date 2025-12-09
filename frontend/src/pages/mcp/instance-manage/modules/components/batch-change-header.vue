@@ -9,7 +9,7 @@
     footer-class="token-footer-border"
   >
     <template #header>
-      <div class="center mb-4">{{ '批量添加请求头' }}</div>
+      <div class="center mb-4">{{ t('mcp.instance.token.batchChangeTitle') }}</div>
     </template>
     <el-scrollbar
       v-loading="dialogData.loading"
