@@ -557,7 +557,7 @@ func (biz *InstanceBiz) GetLogs(ctx context.Context, req *instancepb.LogsRequest
 	response.IsManaged = true
 
 	// Get container logs
-	logs, err := GContainerBiz.GetContainerLogs(ContainerLogsParams{
+	logs, err := GContainerBiz.GetContainerLogs(ctx, ContainerLogsParams{
 		InstanceID: req.InstanceId,
 		Lines:      int64(lines),
 	})
@@ -585,7 +585,7 @@ func (biz *InstanceBiz) RestartInstance(ctx context.Context, req *instancepb.Res
 
 	switch instance.AccessType {
 	case model.AccessTypeHosting:
-		_, err = GContainerBiz.RestartContainer(instance)
+		_, err = GContainerBiz.RestartContainer(ctx, instance)
 		if err != nil {
 			return nil, err
 		}

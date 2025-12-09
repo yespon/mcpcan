@@ -22,6 +22,7 @@ import (
 type DockerRuntime struct {
 	networkName string         // Docker network name
 	client      *client.Client // Docker client
+	config      DockerConfig   // Docker configuration
 }
 
 // NewDockerRuntime creates Docker runtime
@@ -41,6 +42,7 @@ func NewDockerRuntime(config DockerConfig) *DockerRuntime {
 	return &DockerRuntime{
 		networkName: networkName,
 		client:      cli,
+		config:      config,
 	}
 }
 
@@ -93,8 +95,6 @@ func initDockerClient(config DockerConfig) (*client.Client, error) {
 		httpClient = &http.Client{
 			Transport: &http.Transport{TLSClientConfig: &options},
 		}
-	} else if hostURL != "" {
-		httpClient = &http.Client{}
 	}
 
 	// Build client options
@@ -149,7 +149,10 @@ func (dr *DockerRuntime) GetClient() *client.Client {
 
 // GetContainerManager gets container manager
 func (dr *DockerRuntime) GetContainerManager() ContainerManager {
-	return &DockerContainerManager{networkName: dr.networkName}
+	return &DockerContainerManager{
+		networkName: dr.networkName,
+		config:      dr.config,
+	}
 }
 
 // GetServiceManager gets service manager
@@ -167,6 +170,7 @@ func (dr *DockerRuntime) GetRuntimeType() ContainerRuntime {
 // DockerContainerManager Docker container manager implementation
 type DockerContainerManager struct {
 	networkName string
+	config      DockerConfig
 }
 
 // DockerContainerInfo Docker container information structure (matching docker inspect output)
@@ -312,6 +316,10 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 
 	// Execute docker run command
 	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to create Docker container: %w", err)
@@ -333,10 +341,18 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName string) error {
 	// Stop container
 	stopCmd := exec.CommandContext(ctx, "docker", "stop", containerName)
+	stopCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	_ = stopCmd.Run() // ignore stop error, container might already be stopped
 
 	// Delete container
 	deleteCmd := exec.CommandContext(ctx, "docker", "rm", "-f", containerName)
+	deleteCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		deleteCmd.Env = append(deleteCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	if err := deleteCmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete Docker container: %w", err)
 	}
@@ -375,6 +391,10 @@ func (dcm *DockerContainerManager) Restart(ctx context.Context, options Containe
 // GetInfo gets container information
 func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName string) (*ContainerInfo, error) {
 	cmd := exec.CommandContext(ctx, "docker", "inspect", containerName)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	output, err := cmd.Output()
@@ -450,6 +470,10 @@ func (dcm *DockerContainerManager) IsReady(ctx context.Context, containerName st
 
 	// Check health status (if health check is configured)
 	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{.State.Health.Status}}", containerName)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	output, err := cmd.Output()
 	if err == nil {
 		healthStatus := strings.TrimSpace(string(output))
@@ -504,9 +528,13 @@ func (dcm *DockerContainerManager) GetLogs(ctx context.Context, containerName st
 
 	// Execute command
 	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to get Docker container logs: %w", err)
+		return "", fmt.Errorf("failed to get Docker container logs: %w, output: %s", err, string(output))
 	}
 
 	return string(output), nil

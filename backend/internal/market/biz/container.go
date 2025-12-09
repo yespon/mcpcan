@@ -515,30 +515,31 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 	return &ContainerScaleResult{Message: i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)}, nil
 }
 
-// GetContainerLogs gets container logs
-func (cd *ContainerBiz) GetContainerLogs(params ContainerLogsParams) (string, error) {
-	// 1. Get instance configuration based on instanceID
-	instance, err := mysql.McpInstanceRepo.FindByInstanceIDAndAccessType(
-		context.Background(),
-		params.InstanceID,
-		model.AccessTypeHosting, // Only hosting mode needs to get container logs
-	)
+// GetContainerLogs get container logs
+func (cd *ContainerBiz) GetContainerLogs(ctx context.Context, params ContainerLogsParams) (string, error) {
+	instance, err := mysql.McpInstanceRepo.FindByInstanceID(ctx, params.InstanceID)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceQueryFailure)+": %w", err)
+	}
+	if instance == nil {
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceNotExists))
+	}
+	if instance.AccessType != model.AccessTypeHosting {
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceNotHostingMode))
 	}
 	if len(instance.ContainerName) <= 0 {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
 	}
 	if instance.EnvironmentID <= 0 {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceEnvironmentIDNotExists))
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceEnvironmentIDNotExists))
 	}
 
-	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
+	entry, err := cd.GetRuntimeEntry(ctx, instance.EnvironmentID)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
 	}
 	if entry == nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	// Set default number of lines
@@ -548,55 +549,58 @@ func (cd *ContainerBiz) GetContainerLogs(params ContainerLogsParams) (string, er
 	}
 
 	// Get container logs
-	logs, err := entry.GetContainerManager().GetLogs(cd.ctx, instance.ContainerName, lines)
+	logs, err := entry.GetContainerManager().GetLogs(ctx, instance.ContainerName, lines)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetContainerLogsFailure)+": %w", err)
+		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetContainerLogsFailure)+": %w", err)
 	}
 
 	return logs, nil
 }
 
 // RestartContainer container restart business logic
-func (cd *ContainerBiz) RestartContainer(instance *model.McpInstance) (*ContainerRestartResult, error) {
-	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
+func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.McpInstance) (*ContainerRestartResult, error) {
+	entry, err := cd.GetRuntimeEntry(ctx, instance.EnvironmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
 	}
 	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	if len(instance.ContainerName) <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
+		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
 	}
 
 	// Parse container creation options
 	var containerOptions container.ContainerCreateOptions
 	if len(instance.ContainerCreateOptions) > 0 {
 		if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeParseContainerOptionsFailure)+": %w", e2)
+			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure)+": %w", e2)
 		}
 	} else {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeMissingContainerOptions))
+		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
 	}
 
+	// Ensure container name is consistent with instance
+	containerOptions.ContainerName = instance.ContainerName
+
 	// Call container manager's restart method
-	err = entry.GetContainerManager().Restart(cd.ctx, containerOptions)
+	err = entry.GetContainerManager().Restart(ctx, containerOptions)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure)+": %w", err)
 	}
 
 	if entry.GetRuntimeType() == container.RuntimeKubernetes {
 		// Get service
-		err = entry.GetServiceManager().Restart(cd.ctx, containerOptions)
+		err = entry.GetServiceManager().Restart(ctx, containerOptions)
 		if err != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure)+": %w", err)
 		}
 	}
 
 	return &ContainerRestartResult{
 		ContainerName: instance.ContainerName,
-		Message:       i18n.FormatWithContext(cd.ctx, i18n.CodeRestartContainerSuccess),
+		Message:       i18n.FormatWithContext(ctx, i18n.CodeRestartContainerSuccess),
 	}, nil
 }
 
