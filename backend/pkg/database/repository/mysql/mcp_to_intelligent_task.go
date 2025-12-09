@@ -74,7 +74,7 @@ func (r *McpToIntelligentTaskRepository) FindWithPagination(ctx context.Context,
 	var tasks []*model.McpToIntelligentTask
 	var total int64
 
-	query := r.getDB().WithContext(ctx).Omit("install_logs")
+	query := r.getDB().WithContext(ctx).Select("id", "desc", "intelligent_access_id", "intelligent_access_name", "mcp_instance_ids", "status", "domain", "created_at", "updated_at").Omit("install_logs")
 
 	if keyword != "" {
 		query = query.Where("`desc` LIKE ?", "%"+keyword+"%")
