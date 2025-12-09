@@ -277,7 +277,7 @@ func (s *IntelligentAccessService) ListDifyUserSpaceHandler(c *gin.Context) {
 	}
 
 	// 连接数据库
-	sqlDB, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, int(intelligentAccess.DbPort), intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName, false)
+	sqlDB, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, int(intelligentAccess.DbPort), intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName, true)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to connect to database: %s", err.Error()))
 		return

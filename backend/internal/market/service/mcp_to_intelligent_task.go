@@ -303,7 +303,7 @@ func ProcessMcpToIntelligentTask(id int64) {
 		logger.Error(fmt.Sprintf("failed to find intelligent access: %s", err.Error()), zap.Int64("IntelligentAccessID", task.IntelligentAccessID))
 		return
 	}
-	conn, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, intelligentAccess.DbPort, intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName)
+	conn, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, intelligentAccess.DbPort, intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName, false)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to build temporary postgres connection: %s", err.Error()), zap.Int64("IntelligentAccessID", task.IntelligentAccessID))
 		return
