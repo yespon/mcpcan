@@ -99,7 +99,7 @@ func (r *McpInstanceRepository) FindByStatus(ctx context.Context, status model.I
 // FindByInstanceID 根据实例ID查找实例列表（不限制访问类型）
 func (r *McpInstanceRepository) FindByInstanceIDs(ctx context.Context, instanceIDs []string) ([]*model.McpInstance, error) {
 	var instances []*model.McpInstance
-	if err := r.getDB().WithContext(ctx).Where("instance_id in ?", instanceIDs).First(&instances).Error; err != nil {
+	if err := r.getDB().WithContext(ctx).Where("instance_id in ?", instanceIDs).Find(&instances).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("instance not found: %s", instanceIDs)
 		}

@@ -7,43 +7,47 @@
   >
     <template #title>
       <div class="mb-4">
-        {{ dialogInfo.title }} : 已选择
-        <span class="count-highlight">{{ dialogInfo.instanceList.length }}</span> 个MCP服务
+        {{ dialogInfo.title }} : {{ t('agent.sync.selected') }}
+        <span class="count-highlight">{{ dialogInfo.instanceList.length }}</span>
+        {{ t('agent.sync.unitMCP') }}
       </div>
     </template>
     <div v-loading="dialogInfo.loading" :element-loading-text="dialogInfo.loadingText">
       <el-steps :active="dialogInfo.currentStep" align-center class="mb-6">
         <el-step
-          title="智能体平台选择"
+          :title="t('agent.sync.stepOne')"
           :description="
             dialogInfo.selectedAgentPlatformId
-              ? '平台：' +
+              ? t('agent.sync.platform') +
                   dialogInfo.platformList.find(
                     (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
                   )?.accessName || dialogInfo.selectedAgentPlatformId
-              : '请选择一个你需要同步的智能体平台'
+              : t('agent.sync.descStepOne')
           "
         />
         <el-step
-          title="同步的命名空间"
+          :title="t('agent.sync.stepTwo')"
           :description="
             dialogInfo.selectedNamespaces.length
-              ? '已选择空间：' + (dialogInfo.selectedNamespaces.length || 0) + '个'
-              : '请选择一个你需要同步的空间'
+              ? t('agent.sync.selectSpace') +
+                (dialogInfo.selectedNamespaces.length || 0) +
+                t('agent.sync.unit')
+              : t('agent.sync.descStepTwo')
           "
         />
-        <el-step title="鉴权设置" :description="'请给命名空间进行鉴权设置'"> </el-step>
+        <el-step :title="t('agent.sync.stepThree')" :description="t('agent.sync.descStepThree')">
+        </el-step>
       </el-steps>
 
       <div v-if="dialogInfo.currentStep === 1" class="step-content">
-        <!-- Step 1: 智能体平台选择 -->
+        <!-- Step 1: platform selection -->
         <div class="mb-6 flex items-center gap-2 mx-4">
           <div class="flex items-center w-full">
             <span class="color-red mr-1">*</span>
-            同步任务：<el-input
+            {{ t('agent.sync.taskName') }}：<el-input
               v-model="dialogInfo.desc"
               style="width: 300px"
-              placeholder="请输入同步任务名称"
+              :placeholder="t('agent.sync.taskNamePlaceholder')"
             ></el-input>
           </div>
         </div>
@@ -66,31 +70,51 @@
                 ></el-icon>
               </div>
               <div class="agent-info flex-sub u-line-1">
-                <div class="agent-name">{{ agent.accessName || '未命名智能体' }}</div>
+                <div class="agent-name">{{ agent.accessName || t('agent.sync.noAccessName') }}</div>
                 <div class="agent-desc my-1">
-                  类型：{{ agent.accessType === 'Dify' ? '社区版' : '商业版' }}
+                  {{ t('agent.sync.type')
+                  }}{{
+                    agent.accessType === 'Dify'
+                      ? t('agent.action.community')
+                      : t('agent.action.enterprise')
+                  }}
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div v-if="!dialogInfo.instanceList.length" class="empty-state">
-          <el-empty description="暂无可同步的智能体" />
+          <el-empty :description="t('agent.sync.emptyDesc')" />
         </div>
       </div>
       <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
-        <!-- Step 2: 选择空间 -->
-        <div class="flex items-center mb-2 px-3">
-          <el-checkbox
-            v-model="allNamespaceChecked"
-            :indeterminate="isNamespaceIndeterminate"
-            @change="handleCheckAllNamespace"
-            >全选</el-checkbox
-          >
+        <!-- Step 2: selection nameSpace -->
+        <div class="flex items-center mb-2 px-3 justify-between">
+          <div class="center">
+            <el-checkbox
+              v-model="allNamespaceChecked"
+              :indeterminate="isNamespaceIndeterminate"
+              @change="handleCheckAllNamespace"
+              >{{ t('agent.sync.selectAll') }}</el-checkbox
+            >
+            <span class="ml-2"
+              >{{ t('agent.sync.selected') }}{{ dialogInfo.selectedNamespaces.length
+              }}{{ t('agent.sync.unitSpace') }}</span
+            >
+          </div>
+
+          <el-input
+            v-model="namespaceStep2Search"
+            :placeholder="t('agent.sync.searchPlaceholder')"
+            clearable
+            class="ml-4"
+            size="small"
+            style="width: 260px"
+          />
         </div>
         <div class="agent-grid grid grid-cols-12 gap-4 px-3">
           <div
-            v-for="(namespace, index) in dialogInfo.namespaceList"
+            v-for="(namespace, index) in filteredNamespaceStep2List"
             :key="index"
             class="agent-card col-span-3 center py-3 px-4"
             :class="{ active: dialogInfo.selectedNamespaces.includes(namespace.tenantID) }"
@@ -107,102 +131,85 @@
                 ></el-icon>
               </div>
               <div class="agent-info flex-sub u-line-1">
-                <div class="agent-name">{{ namespace.tenantName || '未命名空间' }}</div>
-                <div class="agent-desc my-1">用户：{{ namespace.userName || '暂无描述' }}</div>
+                <div class="agent-name">
+                  {{ namespace.tenantName || t('agent.sync.noNamespace') }}
+                </div>
+                <div class="agent-desc my-1">
+                  {{ t('agent.sync.user') }}：{{ namespace.userName || t('agent.sync.noUserName') }}
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-if="!dialogInfo.namespaceList.length" class="empty-state">
-          <el-empty description="暂无可同步的空间" />
+        <div v-if="!filteredNamespaceStep2List.length" class="empty-state">
+          <el-empty :description="t('agent.sync.emptyNamespaceDesc')" />
         </div>
       </div>
       <div v-else-if="dialogInfo.currentStep === 3" class="step-content">
-        <!-- Step 3: 鉴权设置 -->
+        <!-- Step 3 -->
         <el-splitter class="h-full" direction="horizontal" :gutter="8">
           <el-splitter-panel size="30%" class="px-2">
-            <el-input
-              v-model="namespaceSearch"
-              placeholder="搜索空间名称"
-              clearable
-              class="mb-2 mt-1"
-              size="small"
-            />
+            <div class="center search-bar">
+              <el-input
+                v-model="namespaceSearch"
+                :placeholder="t('agent.sync.searchPlaceholder')"
+                clearable
+                class="mb-2 mt-1 flex-sub"
+                size="small"
+              />
+              <span class="ml-2"
+                >{{ t('agent.sync.selected') }}{{ dialogInfo.selectedNamespaces.length
+                }}{{ t('agent.sync.unitSpace') }}</span
+              >
+            </div>
             <div
               v-for="(namespace, index) in filteredNamespaceList"
               :key="index"
-              class="agent-card center py-3 px-4 mb-2"
-              :class="{ active: dialogInfo.selectedNamespaceId === namespace.tenantID }"
-              @click="dialogInfo.selectedNamespaceId = namespace.tenantID"
+              class="flex items-center"
             >
-              <div class="w-full flex">
-                <div
-                  v-if="dialogInfo.selectedNamespaceId === namespace.tenantID"
-                  class="selected-badge"
-                ></div>
-                <div class="agent-icon">
-                  <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
-                    ><i class="icon iconfont MCP-zhinengti"></i
-                  ></el-icon>
-                </div>
-                <div class="agent-info flex-sub u-line-1">
-                  <div class="agent-name">
-                    {{ namespace.tenantName }}
+              <el-checkbox :model-value="true" @click.stop disabled></el-checkbox>
+              <div
+                class="agent-card center py-3 px-4 mb-2 ml-2 flex-sub min-w-0"
+                :class="{ active: dialogInfo.selectedNamespaceId === namespace.tenantID }"
+                @click="dialogInfo.selectedNamespaceId = namespace.tenantID"
+              >
+                <div class="w-full flex">
+                  <div
+                    v-if="dialogInfo.selectedNamespaceId === namespace.tenantID"
+                    class="selected-badge"
+                  ></div>
+                  <div class="agent-icon">
+                    <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                      ><i class="icon iconfont MCP-zhinengti"></i
+                    ></el-icon>
                   </div>
-                  <div class="agent-desc">
-                    {{ namespace.userName }}
+                  <div class="agent-info flex-sub u-line-1 w-full">
+                    <div class="agent-name ellipsis-one w-full">
+                      {{ namespace.tenantName }}
+                    </div>
+                    <div class="agent-desc">
+                      {{ namespace.userName }}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </el-splitter-panel>
           <el-splitter-panel size="70%" class="px-2">
-            <div
-              v-for="(item, index) in selectedNamespaceList.find(
-                (ns) => ns.tenantID === dialogInfo.selectedNamespaceId,
-              )?.headers || []"
-              :key="index"
-              class="py-3 px-4 mb-2"
-            >
-              <div class="pl-2 mb-2">MCP名称: {{ item?.instanceName }}</div>
+            <div class="search-bar">
+              <el-input
+                v-model="instanceSearch"
+                :placeholder="t('agent.sync.instanceSearchPlaceholder')"
+                clearable
+                class="mb-2 mt-1"
+                size="small"
+                style="width: 50%"
+              />
+            </div>
+            <div v-for="(item, index) in filteredInstanceList" :key="index" class="py-3 px-4 mb-2">
+              <div class="pl-2 mb-2">{{ t('agent.sync.MCPName') }}: {{ item?.instanceName }}</div>
               <TokenFormSync :formData="item.value"></TokenFormSync>
-
-              <!-- <div class="pl-2">
-                <div class="w-full u-line-1 pl-2 py-2" style="white-space: nowrap">
-                  Authorization：{{ (instance as { Token: string }).Token }}
-                </div>
-                <div class="flex justify-between items-center">
-                  Header 请求头
-                  <div
-                    class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
-                  >
-                    <el-icon>
-                      <Plus />
-                    </el-icon>
-                  </div>
-                </div>
-                <div v-for="head in (instance as { headers?: any[] }).headers" :key="head.id">
-                  <el-row>
-                    <el-col :span="8">
-                      <el-input
-                        v-model="head.key"
-                        :placeholder="t('mcp.instance.token.headersKey')"
-                        class="flex-sub"
-                      />
-                    </el-col>
-                    <el-col :span="14">
-                      <el-input
-                        v-model="head.value"
-                        :placeholder="t('mcp.instance.token.headersValue')"
-                        class="flex-sub"
-                      ></el-input>
-                    </el-col>
-                    <el-col :span="2">
-                      <el-icon><Minus /></el-icon>
-                    </el-col>
-                  </el-row>
-                </div>
-              </div> -->
+              <el-divider />
             </div>
           </el-splitter-panel>
         </el-splitter>
@@ -216,7 +223,7 @@
           class="base-btn"
           v-if="dialogInfo.currentStep > 1"
           @click="dialogInfo.currentStep -= 1"
-          >上一步</el-button
+          >{{ t('agent.sync.stepUp') }}</el-button
         >
         <el-button
           type="primary"
@@ -227,7 +234,7 @@
             (dialogInfo.currentStep === 2 && dialogInfo.selectedNamespaces.length === 0)
           "
           @click="handleNextStep"
-          >下一步</el-button
+          >{{ t('agent.sync.stepNext') }}</el-button
         >
         <el-button
           type="primary"
@@ -236,7 +243,7 @@
           :disabled="dialogInfo.selectedNamespaces.length === 0"
           @click="handleConfirmSync"
         >
-          完 成
+          {{ t('agent.sync.confirmSync') }}
         </el-button>
       </div>
     </template>
@@ -251,7 +258,7 @@ import { useBusinessStoreHook } from '@/stores/modules/business-store'
 const { t } = useI18n()
 const { taskInfo } = toRefs(useBusinessStoreHook())
 const dialogInfo = reactive({
-  title: '智能体平台同步',
+  title: t('agent.sync.dialogTitle'),
   visible: false,
   loading: false,
   loadingText: 'Loading...',
@@ -266,14 +273,14 @@ const dialogInfo = reactive({
   selectedNamespaceId: '',
 })
 
-// 选中的命名空间列表
+// selected namespace list based on selectedNamespaces ids
 const selectedNamespaceList = computed(() => {
   return dialogInfo.namespaceList.filter((namespace: any) =>
     dialogInfo.selectedNamespaces.some((id) => namespace.tenantID === id),
   )
 })
 
-// 对选中的命名空间模糊搜索
+// search nameSpace list by name
 const namespaceSearch = ref('')
 const filteredNamespaceList = computed(() => {
   if (!namespaceSearch.value) return selectedNamespaceList.value
@@ -282,7 +289,29 @@ const filteredNamespaceList = computed(() => {
   )
 })
 
-// 全选相关逻辑
+// step 2 namespace search
+const namespaceStep2Search = ref('')
+const filteredNamespaceStep2List = computed(() => {
+  if (!namespaceStep2Search.value) return dialogInfo.namespaceList
+  return dialogInfo.namespaceList.filter((ns: any) =>
+    ns.tenantName?.toLowerCase().includes(namespaceStep2Search.value.trim().toLowerCase()),
+  )
+})
+
+// search MCP实例 by name（右侧）
+const instanceSearch = ref('')
+const filteredInstanceList = computed(() => {
+  const ns = selectedNamespaceList.value.find(
+    (ns) => ns.tenantID === dialogInfo.selectedNamespaceId,
+  )
+  if (!ns) return []
+  if (!instanceSearch.value) return ns.headers || []
+  return (ns.headers || []).filter((item: any) =>
+    item.instanceName?.toLowerCase().includes(instanceSearch.value.trim().toLowerCase()),
+  )
+})
+
+// select all namespaces
 const allNamespaceChecked = computed({
   get() {
     return (
@@ -299,7 +328,7 @@ const allNamespaceChecked = computed({
   },
 })
 
-// 不确定状态；仅选中部分
+// select all status
 const isNamespaceIndeterminate = computed(() => {
   return (
     dialogInfo.selectedNamespaces.length > 0 &&
@@ -307,7 +336,7 @@ const isNamespaceIndeterminate = computed(() => {
   )
 })
 
-// 全选或取消全选
+// select all or cancel all
 const handleCheckAllNamespace = (val: boolean) => {
   allNamespaceChecked.value = val
 }
@@ -315,27 +344,28 @@ const handleCheckAllNamespace = (val: boolean) => {
 // next step
 const handleNextStep = () => {
   dialogInfo.currentStep += 1
-  // 第二步请求空间列表
+  //  step two request space list
   if (dialogInfo.currentStep === 2) {
     handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
   }
-  // 第三步默认选中第一条
+  // step three default select first namespace
   if (dialogInfo.currentStep === 3) {
     dialogInfo.selectedNamespaceId = selectedNamespaceList.value[0]?.tenantID || ''
   }
 }
 
-// 选择智能体平台
+// select agent platformshuaxin
 const toggleAgentSelection = (accessID: string) => {
   dialogInfo.selectedAgentPlatformId =
     dialogInfo.selectedAgentPlatformId === accessID ? '' : accessID
   dialogInfo.desc =
-    '同步任务-' +
+    t('agent.sync.taskName') +
+      '-' +
       dialogInfo.platformList.find((agent) => agent.accessID === dialogInfo.selectedAgentPlatformId)
         ?.accessName || accessID
 }
 
-// 选择命名空间
+// select namespace
 const toggleNamespaceSelection = (namespaceId: string) => {
   const index = dialogInfo.selectedNamespaces.indexOf(namespaceId)
   if (index > -1) {
@@ -355,13 +385,13 @@ const handleGetAgentPlatform = async () => {
 const handleGetNamespaceList = async (accessID: string) => {
   try {
     dialogInfo.loading = true
-    dialogInfo.loadingText = '获取命名空间中...'
+    dialogInfo.loadingText = t('agent.sync.loadingTextNamespace')
     const { userSpaces } = await AgentAPI.getNamespaces({
       accessID,
       instancesIDs: dialogInfo.instanceList.map((item) => item.instanceId),
     })
 
-    // 处理数据结构以渲染
+    // handle data structure to render
     userSpaces.forEach((space: any) => {
       space.headers = Object.entries(space.headers).map(([key, value]: [string, any]) => ({
         instanceId: key,
@@ -385,11 +415,11 @@ const handleGetNamespaceList = async (accessID: string) => {
 const handleConfirmSync = async () => {
   try {
     dialogInfo.loading = true
-    dialogInfo.loadingText = '正在创建同步任务中...'
+    dialogInfo.loadingText = t('agent.sync.loadingTextTask')
     const params = {
       desc: dialogInfo.desc,
       intelligentAccessID: dialogInfo.selectedAgentPlatformId,
-      insertIntelligentInfos: dialogInfo.namespaceList.map((namespace: any) => ({
+      insertIntelligentInfos: filteredNamespaceList.value.map((namespace: any) => ({
         difySpaceID: namespace.tenantID,
         difyUserID: namespace.userID,
         difySpaceName: namespace.tenantName,
@@ -417,13 +447,13 @@ const handleConfirmSync = async () => {
     dialogInfo.visible = false
     taskInfo.value.visible = true
   } catch (error) {
-    console.error('同步失败:', error)
+    console.error('sync error:', error)
   } finally {
     dialogInfo.loading = false
   }
 }
 
-// 数据初始化
+// init dialog data
 const init = (list: any[]) => {
   dialogInfo.visible = true
   dialogInfo.instanceList = list
@@ -565,7 +595,12 @@ defineExpose({
     }
   }
 }
-
+.search-bar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background-color: var(--el-bg-color);
+}
 .empty-state {
   display: flex;
   align-items: center;

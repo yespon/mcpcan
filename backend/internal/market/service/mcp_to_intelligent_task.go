@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -104,8 +105,9 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find mcp instances: %s", err.Error()))
 		return
 	}
-	if len(instances) != len(req.InsertIntelligentInfos) {
+	if len(instances) != len(req.McpInstanceIDs) {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
+		return
 	}
 
 	// 获取智能体平台名称
@@ -303,7 +305,7 @@ func ProcessMcpToIntelligentTask(id int64) {
 		logger.Error(fmt.Sprintf("failed to find intelligent access: %s", err.Error()), zap.Int64("IntelligentAccessID", task.IntelligentAccessID))
 		return
 	}
-	conn, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, intelligentAccess.DbPort, intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName)
+	conn, err := BuildTemporaryPostgresConnection(intelligentAccess.DbHost, intelligentAccess.DbPort, intelligentAccess.DbUser, intelligentAccess.DbPassword, intelligentAccess.DbName, false)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to build temporary postgres connection: %s", err.Error()), zap.Int64("IntelligentAccessID", task.IntelligentAccessID))
 		return
@@ -317,113 +319,115 @@ func ProcessMcpToIntelligentTask(id int64) {
 
 	var logs = []*model.InstallLog{}
 	var lastStatus = pb.McpToIntelligentTaskStatus_Success.String()
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	concurrency := 10
+	sem := make(chan struct{}, concurrency)
+
 	for _, instanceID := range task.McpInstanceIDs {
-		// 获取实例信息
-		mcpInstance, err := mysql.McpInstanceRepo.FindByInstanceID(context.Background(), instanceID)
-		if err != nil {
-			logs = append(logs, &model.InstallLog{
-				McpInstanceID:   instanceID,
-				McpInstanceName: "",
-				Status:          false,
-				ErrorLog:        fmt.Sprintf("failed to find mcpInstance: %s", err.Error()),
-			})
-			lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
-			if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
-				logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
-			}
-			continue
-		}
-
-		// 获取实例令牌
-		tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
-		if err != nil {
-			logs = append(logs, &model.InstallLog{
-				McpInstanceID:   instanceID,
-				McpInstanceName: "",
-				Status:          false,
-				ErrorLog:        fmt.Sprintf("failed to find mcpInstance: %s", err.Error()),
-			})
-			lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
-			if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
-				logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
-			}
-			continue
-		}
-
-		log := &model.InstallLog{
-			McpInstanceID:         instanceID,
-			McpInstanceName:       mcpInstance.InstanceName,
-			Status:                true,
-			ErrorLog:              "",
-			InsertIntelligentLogs: nil,
-		}
-		logs = append(logs, log)
-		// 记录每条 space 的插入日志
-		var insertIntelligentLogs []*model.InsertIntelligentLog
-		// 遍历插入信息列表
-		for _, insertInfo := range task.InsertIntelligentInfos {
-			searchTask, err := mysql.McpToIntelligentTaskRepo.FindByID(context.Background(), id)
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(instanceID string) {
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
+			// 获取实例信息
+			mcpInstance, err := mysql.McpInstanceRepo.FindByInstanceID(context.Background(), instanceID)
 			if err != nil {
-				logger.Error(fmt.Sprintf("failed to find mcp to intelligent task: %s", err.Error()), zap.Int64("taskId", id))
-			} else {
-				// 监控任务是否取消，如果取消则直接跳出循环
-				if searchTask.Status == pb.McpToIntelligentTaskStatus_Cancel.String() {
-					return
-				}
-			}
-
-			// 执行创建 dify tools
-			err = createDifyTools(instanceID, task.Domain, insertInfo, mcpInstance, userSpaces, conn)
-			if err != nil {
-				insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
-					InsertIntelligentInfo: insertInfo,
-					Status:                false,
-					ErrorLog:              err.Error(),
+				mu.Lock()
+				logs = append(logs, &model.InstallLog{
+					McpInstanceID:   instanceID,
+					McpInstanceName: "",
+					Status:          false,
+					ErrorLog:        fmt.Sprintf("failed to find mcpInstance: %s", err.Error()),
 				})
-
-				log.Status = false
-				log.ErrorLog = err.Error()
-				log.InsertIntelligentLogs = insertIntelligentLogs
-
 				lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
 				if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
 					logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
 				}
-				continue
+				mu.Unlock()
+				return
 			}
 
-			if insertInfo.Headers[instanceID] != nil {
-				err = createOrUpdateInstanceToken(instanceID, insertInfo, task, intelligentAccess, tokens)
+			// 获取实例令牌
+			_, err = mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
+			if err != nil {
+				mu.Lock()
+				logs = append(logs, &model.InstallLog{
+					McpInstanceID:   instanceID,
+					McpInstanceName: "",
+					Status:          false,
+					ErrorLog:        fmt.Sprintf("failed to find mcpInstance: %s", err.Error()),
+				})
+				lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
+				if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
+					logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
+				}
+				mu.Unlock()
+				return
+			}
+
+			log := &model.InstallLog{
+				McpInstanceID:         instanceID,
+				McpInstanceName:       mcpInstance.InstanceName,
+				Status:                true,
+				ErrorLog:              "",
+				InsertIntelligentLogs: nil,
+			}
+			mu.Lock()
+			logs = append(logs, log)
+			mu.Unlock()
+			// 记录每条 space 的插入日志
+			var insertIntelligentLogs []*model.InsertIntelligentLog
+			// 遍历插入信息列表
+			for _, insertInfo := range task.InsertIntelligentInfos {
+				searchTask, err := mysql.McpToIntelligentTaskRepo.FindByID(context.Background(), id)
+				if err != nil {
+					logger.Error(fmt.Sprintf("failed to find mcp to intelligent task: %s", err.Error()), zap.Int64("taskId", id))
+				} else {
+					// 监控任务是否取消，如果取消则直接跳出循环
+					if searchTask.Status == pb.McpToIntelligentTaskStatus_Cancel.String() {
+						return
+					}
+				}
+
+				// 执行创建 dify tools
+				err = createDifyTools(instanceID, task.Domain, insertInfo, mcpInstance, userSpaces, conn)
 				if err != nil {
 					insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
 						InsertIntelligentInfo: insertInfo,
 						Status:                false,
 						ErrorLog:              err.Error(),
 					})
+
 					log.Status = false
 					log.ErrorLog = err.Error()
 					log.InsertIntelligentLogs = insertIntelligentLogs
-
+					mu.Lock()
 					lastStatus = pb.McpToIntelligentTaskStatus_Failed.String()
 					if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
 						logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
 					}
-					continue
+					mu.Unlock()
+				} else {
+					insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
+						InsertIntelligentInfo: insertInfo,
+						Status:                true,
+						ErrorLog:              "",
+					})
+					log.InsertIntelligentLogs = insertIntelligentLogs
+					mu.Lock()
+					if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
+						logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
+					}
+					mu.Unlock()
 				}
 			}
-
-			insertIntelligentLogs = append(insertIntelligentLogs, &model.InsertIntelligentLog{
-				InsertIntelligentInfo: insertInfo,
-				Status:                true,
-				ErrorLog:              "",
-			})
-			log.InsertIntelligentLogs = insertIntelligentLogs
-			if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, pb.McpToIntelligentTaskStatus_Running.String()); err != nil {
-				logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
-			}
-		}
+		}(instanceID)
 	}
-	// 最后更新整个任务的状态
+	wg.Wait()
+
 	if err = mysql.McpToIntelligentTaskRepo.UpdateLogs(context.Background(), id, logs, lastStatus); err != nil {
 		logger.Error(fmt.Sprintf("failed to update mcp to intelligent task logs: %s", err.Error()), zap.Int64("taskId", id))
 	}
@@ -520,7 +524,7 @@ func createDifyTools(instanceID string, domain string, insertInfo *model.InsertI
 		return fmt.Errorf("encrypt token failed: %s", err.Error())
 	}
 	mcpServerUrlHash := computeSHA256Hash(mcpServerUrl)
-	provider, err := postgres.GetToolMcpProvider(difyConn, mcpServerUrlHash, insertInfo.DifySpaceID, insertInfo.DifyUserID)
+	provider, err := postgres.GetToolMcpProvider(difyConn, mcpServerUrlHash, insertInfo.DifySpaceID)
 	if err != nil {
 		return fmt.Errorf("get dify provider failed: %s", err.Error())
 	}

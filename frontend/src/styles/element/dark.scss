@@ -50,6 +50,11 @@ $--colors: (
     color: var(--ep-purple-color);
   }
 }
+.el-dialog__headerbtn:hover {
+  .el-dialog__close {
+    color: var(--ep-purple-color);
+  }
+}
 
 .el-dropdown-menu__item:not(.is-disabled):focus,
 .el-dropdown-menu__item:not(.is-disabled):hover {

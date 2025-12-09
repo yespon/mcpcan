@@ -6,7 +6,9 @@
       "total": "Total Agents",
       "formTitle": "Agent platform Access",
       "connectionDesc": "Connection in progress....",
-      "deleteDesc": "Are you sure you want to delete this agent platform? This action cannot be undone."
+      "deleteDesc": "Are you sure you want to delete this agent platform? This action cannot be undone.",
+      "platFormSync": "Agent Platform Sync",
+      "mustSelectMCP": "Please select the instances to sync"
     },
     "columns": {
       "accessName": "Name",
@@ -28,7 +30,8 @@
       "dbPort": "Database Port",
       "dbUser": "Database User",
       "dbPassword": "Database Password",
-      "dbName": "Database Name"
+      "dbName": "Database Name",
+      "loadingText": "Connecting to service..."
     },
     "placeholder": {
       "accessName": "Please enter access name",
@@ -40,6 +43,54 @@
       "dbUser": "Please enter database user",
       "dbPassword": "Please enter database password",
       "dbName": "Please enter database name"
+    },
+    "sync": {
+      "platform": "Platform: ",
+      "selected": "Selected",
+      "selectSpace": "Select Namespace: ",
+      "unitMCP": "MCP Services",
+      "unitSpace": "Namespaces",
+      "unit": "items",
+      "unit2": "items",
+      "stepOne": "Agent Platform Selection",
+      "stepTwo": "Namespaces to Sync",
+      "stepThree": "Authentication Settings",
+      "descStepOne": "Please select an agent platform to sync",
+      "descStepTwo": "Please select a namespace to sync",
+      "descStepThree": "Please set up authentication for the namespace",
+      "taskName": "Sync Task",
+      "taskNamePlaceholder": "Please enter task name",
+      "noAccessName": "Unnamed Agent Platform",
+      "type": "Type: ",
+      "emptyDesc": "No agents available for synchronization",
+      "selectAll": "All",
+      "noNamespace": "Unnamed Namespace",
+      "noUserName": "No Username",
+      "user": "User",
+      "emptyNamespaceDesc": "No namespaces available for synchronization",
+      "searchPlaceholder": "Namespaces",
+      "instanceSearchPlaceholder": "Search MCP Instances",
+      "MCPName": "Name",
+      "stepUp": "Previous",
+      "stepNext": "Next",
+      "confirmSync": "Confirm",
+      "dialogTitle": "Agent Platform Sync",
+      "loadingTextNamespace": "Loading Namespaces...",
+      "loadingTextTask": "Creating Sync Task..."
+    },
+    "task": {
+      "title": "Task List",
+      "cancel": "Cancel Task",
+      "status": {
+        "doing": "In Progress",
+        "done": "Completed",
+        "cancel": "Cancelled",
+        "error": "Error"
+      },
+      "details": "Details",
+      "createTime": "Task Creation Time",
+      "platformName": "Agent Platform Name",
+      "syncSpaceName": "Synchronized Namespace"
     }
   }
 }
