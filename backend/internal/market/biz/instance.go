@@ -334,9 +334,6 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	if req.EnvironmentId == 0 {
 		return nil, fmt.Errorf("hosting type instance requires environment ID")
 	}
-	if req.ImgAddress == "" {
-		return nil, fmt.Errorf("missing required field: imgAddress")
-	}
 	if mcpProtocol == model.McpProtocolStdio {
 		mcpServers := req.McpServers
 		if len(mcpServers) == 0 {
@@ -353,8 +350,10 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 			return nil, fmt.Errorf("mcp servers config is invalid: command is required")
 		}
 	}
-	containerOptions, err := GContainerBiz.BuildContainerOptions(ctx, instanceID, mcpProtocol, req.McpServers, req.PackageId, req.Port,
-		req.InitScript, req.Command, req.ImgAddress, req.EnvironmentVariables, req.VolumeMounts, int32(req.StartupTimeout), int32(req.RunningTimeout))
+	imageAddress := common.GetMcpHostingImage()
+	containerOptions, err := GContainerBiz.BuildContainerOptions(ctx, instanceID, mcpProtocol,
+		req.McpServers, req.PackageId, req.Port, req.InitScript, req.Command, imageAddress,
+		req.EnvironmentVariables, req.VolumeMounts, int32(req.StartupTimeout), int32(req.RunningTimeout))
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
