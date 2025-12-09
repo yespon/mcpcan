@@ -370,11 +370,12 @@ func ProcessMcpToIntelligentTask(id int64) {
 		var insertIntelligentLogs []*model.InsertIntelligentLog
 		// 遍历插入信息列表
 		for _, insertInfo := range task.InsertIntelligentInfos {
+			wg.Add(1)
+			sem <- struct{}{}
 			go func(insertInfo *model.InsertIntelligentInfo) {
-				defer wg.Done()
-				sem <- struct{}{}
 				defer func() {
 					<-sem
+					wg.Done()
 				}()
 
 				searchTask, err := mysql.McpToIntelligentTaskRepo.FindByID(context.Background(), id)
