@@ -104,8 +104,9 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find mcp instances: %s", err.Error()))
 		return
 	}
-	if len(instances) != len(req.InsertIntelligentInfos) {
+	if len(instances) != len(req.McpInstanceIDs) {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
+		return
 	}
 
 	// 获取智能体平台名称
