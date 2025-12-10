@@ -143,6 +143,8 @@ func initConnection(config *Config) error {
 	// Set pool parameters.
 	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Hour * 1)
+	sqlDB.SetConnMaxIdleTime(time.Minute * 5)
 
 	// Persist config for future reconnect attempts.
 	mu.Lock()
