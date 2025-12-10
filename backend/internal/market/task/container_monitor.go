@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -130,33 +131,21 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 		return err
 	}
 
-	// Query Kubernetes configuration and namespace by environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(ctx, instance.EnvironmentID)
+	// Get runtime entry
+	entry, err := biz.GContainerBiz.GetRuntimeEntry(ctx, instance.EnvironmentID)
 	if err != nil {
-		cm.logger.Error("Failed to get environment information",
-			zap.String("instance_id", instance.InstanceID),
-			zap.Error(err))
 		return err
 	}
 
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		cm.logger.Error("Environment type error, only Kubernetes environment is supported",
-			zap.String("instance_id", instance.InstanceID))
-		return nil
-	}
+	return cm.checkContainerStatus(ctx, instance, entry, containerCreateOptions)
+}
+
+// checkContainerStatus checks container status (supports both K8s and Docker)
+func (cm *ContainerMonitorImpl) checkContainerStatus(ctx context.Context, instance *model.McpInstance,
+	entry container.Runtime, containerCreateOptions *container.ContainerCreateOptions) error {
 
 	// Get current timestamp (milliseconds)
 	currentTime := time.Now().UnixMilli()
-
-	// Get container manager
-	entry, err := biz.GContainerBiz.GetRuntimeEntry(ctx, instance.EnvironmentID)
-	if err != nil {
-		cm.logger.Error("Failed to get container runtime",
-			zap.String("instance_id", instance.InstanceID),
-			zap.Error(err))
-		return err
-	}
 
 	containerManager := entry.GetContainerManager()
 	// Get container detailed information
@@ -171,19 +160,24 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 		return cm.recreateContainerWithStatus(ctx, instance, containerCreateOptions, model.ContainerStatusPending, "Container does not exist, recreating")
 	}
 
-	// Parse container creation time (RFC3339 format)
+	// Parse container creation time (RFC3339 format or Docker format)
 	containerCreatedAt, err := time.Parse(time.RFC3339, containerInfo.CreatedAt)
 	if err != nil {
-		cm.logger.Warn("Failed to parse container creation time",
-			zap.String("instance_id", instance.InstanceID),
-			zap.String("created_at", containerInfo.CreatedAt),
-			zap.Error(err))
-		return err
+		// Try parsing with Docker default format if RFC3339 fails
+		containerCreatedAt, err = time.Parse("2006-01-02 15:04:05", containerInfo.CreatedAt)
+		if err != nil {
+			cm.logger.Warn("Failed to parse container creation time",
+				zap.String("instance_id", instance.InstanceID),
+				zap.String("created_at", containerInfo.CreatedAt),
+				zap.Error(err))
+			return err
+		}
 	}
 	containerCreatedAtMs := containerCreatedAt.UnixMilli()
 
 	// Not equal to running, check startup timeout, if startup timeout then cleanup container
-	if containerInfo.Status != "Running" {
+	// Normalize status to lowercase for comparison (Docker uses "running", K8s uses "Running")
+	if strings.ToLower(containerInfo.Status) != "running" {
 		// Check startup timeout
 		if instance.StartupTimeout > 0 {
 			if (currentTime - containerCreatedAtMs) > instance.StartupTimeout {
@@ -232,7 +226,7 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 		}
 
 		// Check running timeout (container started but not ready)
-		if containerInfo.Status == "Running" {
+		if strings.ToLower(containerInfo.Status) == "running" {
 			if instance.RunningTimeout > 0 && (currentTime-containerCreatedAtMs) > instance.RunningTimeout {
 				// Running timeout but not ready, update instance status
 				runningDuration := currentTime - containerCreatedAtMs
@@ -314,54 +308,13 @@ func (cm *ContainerMonitorImpl) CheckContainer(ctx context.Context, instance *mo
 
 // cleanupAndUpdateStatus cleans up container and service, and updates status to startup timeout stop
 func (cm *ContainerMonitorImpl) cleanupAndUpdateStatus(ctx context.Context, instance *model.McpInstance, message string) error {
-	// Query Kubernetes configuration and namespace by environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(ctx, instance.EnvironmentID)
+	// Use Biz layer to delete container and service
+	_, err := biz.GContainerBiz.DeleteContainer(instance)
 	if err != nil {
-		cm.logger.Error("Failed to get environment information",
+		cm.logger.Warn("Failed to cleanup container resources",
 			zap.String("instance_id", instance.InstanceID),
 			zap.Error(err))
-		return err
-	}
-
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		cm.logger.Error("Environment type error, only Kubernetes environment is supported",
-			zap.String("instance_id", instance.InstanceID))
-		return nil
-	}
-
-	// Get container manager
-	entry, err := biz.GContainerBiz.GetRuntimeEntry(ctx, instance.EnvironmentID)
-	if err != nil {
-		cm.logger.Error("Failed to get container runtime",
-			zap.String("instance_id", instance.InstanceID),
-			zap.Error(err))
-		return err
-	}
-
-	containerManager := entry.GetContainerManager()
-	serviceManager := entry.GetServiceManager()
-
-	// Delete container
-	if instance.ContainerName != "" {
-		err := containerManager.Delete(ctx, instance.ContainerName)
-		if err != nil {
-			cm.logger.Warn("Failed to delete container",
-				zap.String("instance_id", instance.InstanceID),
-				zap.String("container_name", instance.ContainerName),
-				zap.Error(err))
-		}
-	}
-
-	// Delete service
-	if instance.ContainerServiceName != "" {
-		err := serviceManager.Delete(ctx, instance.ContainerServiceName)
-		if err != nil {
-			cm.logger.Warn("Failed to delete service",
-				zap.String("instance_id", instance.InstanceID),
-				zap.String("service_name", instance.ContainerServiceName),
-				zap.Error(err))
-		}
+		// Continue to update status even if cleanup failed
 	}
 
 	instance.ContainerIsReady = false
@@ -377,58 +330,19 @@ func (cm *ContainerMonitorImpl) cleanupAndUpdateStatus(ctx context.Context, inst
 // recreateContainerWithStatus recreates container and sets specified status
 func (cm *ContainerMonitorImpl) recreateContainerWithStatus(ctx context.Context, instance *model.McpInstance,
 	options *container.ContainerCreateOptions, containerStatus model.ContainerStatus, message string) error {
-	// Query Kubernetes configuration and namespace by environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(ctx, instance.EnvironmentID)
+
+	// 1. Delete old resources (using Biz layer)
+	_, err := biz.GContainerBiz.DeleteContainer(instance)
 	if err != nil {
-		cm.logger.Error("Failed to get environment information",
+		cm.logger.Warn("Failed to delete old container resources during recreation",
 			zap.String("instance_id", instance.InstanceID),
 			zap.Error(err))
-		return err
+		// Continue to create new container
 	}
 
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		cm.logger.Error("Environment type error, only Kubernetes environment is supported",
-			zap.String("instance_id", instance.InstanceID))
-		return nil
-	}
-
-	// hosting type: query container status
-	entry, err := biz.GContainerBiz.GetRuntimeEntry(ctx, instance.EnvironmentID)
-	if err != nil {
-		cm.logger.Error("Failed to get container runtime",
-			zap.String("instance_id", instance.InstanceID),
-			zap.Error(err))
-		return err
-	}
-
-	containerManager := entry.GetContainerManager()
-	serviceManager := entry.GetServiceManager()
-
-	// Delete old container first (if exists)
-	if instance.ContainerName != "" {
-		err = containerManager.Delete(ctx, instance.ContainerName)
-		if err != nil {
-			cm.logger.Warn("Failed to delete old container, continue creating new container",
-				zap.String("instance_id", instance.InstanceID),
-				zap.String("container_name", instance.ContainerName),
-				zap.Error(err))
-		}
-	}
-
-	// Delete old service (if exists)
-	if instance.ContainerServiceName != "" {
-		err = serviceManager.Delete(ctx, instance.ContainerServiceName)
-		if err != nil {
-			cm.logger.Warn("Failed to delete old service, continue creating new service",
-				zap.String("instance_id", instance.InstanceID),
-				zap.String("service_name", instance.ContainerServiceName),
-				zap.Error(err))
-		}
-	}
-
-	// Create new container
-	newContainerName, err := containerManager.Create(ctx, *options)
+	// 2. Create new resources (using Biz layer)
+	// Pass 0 for startupTimeout to disable context timeout for the creation call itself
+	err = biz.GContainerBiz.CreateContainer(ctx, options, int32(instance.EnvironmentID), 0)
 	if err != nil {
 		cm.logger.Error("Failed to create new container",
 			zap.String("instance_id", instance.InstanceID),
@@ -436,42 +350,24 @@ func (cm *ContainerMonitorImpl) recreateContainerWithStatus(ctx context.Context,
 		return fmt.Errorf("failed to create new container: %w", err)
 	}
 
-	// Create new service
-	serviceName := instance.ContainerServiceName
-	_, err = serviceManager.Create(ctx, serviceName, options.Port, options.Labels)
-	if err != nil {
-		cm.logger.Error("Failed to create new service",
-			zap.String("instance_id", instance.InstanceID),
-			zap.String("service_name", serviceName),
-			zap.Error(err))
-
-		// Delete created container
-		if deleteErr := containerManager.Delete(ctx, newContainerName); deleteErr != nil {
-			cm.logger.Error("Failed to delete container",
-				zap.String("container_name", newContainerName),
-				zap.Error(deleteErr))
-		}
-		return fmt.Errorf("failed to create new service: %w", err)
-	}
-
-	// Update instance information
-	instance.ContainerName = newContainerName
-	instance.ContainerServiceName = serviceName
+	// 3. Update instance information
+	instance.ContainerName = options.ContainerName
+	instance.ContainerServiceName = options.ServiceName
 	instance.ContainerStatus = containerStatus
 	instance.ContainerLastMessage = message
 	err = cm.instanceRepo.Update(ctx, instance)
 	if err != nil {
 		cm.logger.Error("Failed to update instance container information",
 			zap.String("instance_id", instance.InstanceID),
-			zap.String("new_container_name", newContainerName),
+			zap.String("new_container_name", options.ContainerName),
 			zap.Error(err))
 		return fmt.Errorf("failed to update instance container information: %w", err)
 	}
 
 	cm.logger.Info("Container recreated successfully",
 		zap.String("instance_id", instance.InstanceID),
-		zap.String("new_container_name", newContainerName),
-		zap.String("new_service_name", serviceName))
+		zap.String("new_container_name", options.ContainerName),
+		zap.String("new_service_name", options.ServiceName))
 
 	return nil
 }

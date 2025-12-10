@@ -27,6 +27,8 @@ type Config struct {
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
 	Storage     common.StorageConfig  `mapstructure:"storage"`
+	// RunEnvironment configuration
+	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
 	// RunMode indicates current running mode, e.g., "demo" or "prod"
 	RunMode string `mapstructure:"runMode"`
 	RunKimo bool   `mapstructure:"runKimo"`

@@ -39,10 +39,31 @@ type DatabaseConfig struct {
 	Redis RedisConfig `mapstructure:"redis"`
 }
 
-// InitKubernetesConfig initialize Kubernetes configuration
 type InitKubernetesConfig struct {
 	Namespace             string `mapstructure:"namespace"`
 	DefaultConfigFilePath string `mapstructure:"defaultConfigFilePath"`
+}
+
+type RunEnvironmentConfig struct {
+	Enabled    bool                `mapstructure:"enabled"`
+	Name       string              `mapstructure:"name"`
+	Type       string              `mapstructure:"type"`
+	Kubernetes RunKubernetesConfig `mapstructure:"kubernetes"`
+	Docker     RunDockerConfig     `mapstructure:"docker"`
+}
+
+type RunKubernetesConfig struct {
+	ConfigPath string `mapstructure:"configPath"`
+	Namespace  string `mapstructure:"namespace"`
+}
+
+type RunDockerConfig struct {
+	Host     string `mapstructure:"host"`
+	UseTLS   bool   `mapstructure:"useTLS"`
+	CAPath   string `mapstructure:"caPath"`
+	CertPath string `mapstructure:"certPath"`
+	KeyPath  string `mapstructure:"keyPath"`
+	Network  string `mapstructure:"network"`
 }
 
 type MySQLConfig struct {
@@ -78,6 +99,7 @@ type LogConfig struct {
 
 type Services struct {
 	McpMarket *Service `mapstructure:"mcpMarket"`
+	McpAuthz  *Service `mapstructure:"mcpAuthz"`
 }
 
 type Service struct {

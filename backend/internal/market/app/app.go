@@ -95,6 +95,11 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to initialize Redis: %w", err)
 	}
 
+	// load run environment
+	if err := a.initRunEnvironment(context.Background()); err != nil {
+		return fmt.Errorf("failed to init run environment: %w", err)
+	}
+
 	// Use global database repository instance (already initialized in init)
 	if mysql.McpInstanceRepo == nil {
 		return fmt.Errorf("McpInstanceRepo not properly initialized, please check database initialization process")
@@ -229,7 +234,7 @@ func (a *App) setupHttpServer() {
 	routerPrefix = strings.Trim(routerPrefix, "/")
 
 	// Register instance management interface
-	instanceService := service.NewInstanceService(context.Background())
+	instanceService := service.NewInstanceService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/create", routerPrefix), instanceService.CreateHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/instance/:instanceId", routerPrefix), instanceService.DetailHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/edit", routerPrefix), instanceService.EditHandler)
@@ -254,10 +259,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/storage-classes", routerPrefix), resourceService.ListStorageClassesHandler)
 
 	// Create environment management service instance
-	environmentService := service.NewEnvironmentService(context.Background())
-	a.ginEngine.POST(fmt.Sprintf("/%s/environments", routerPrefix), environmentService.CreateEnvironmentHandler)
-	a.ginEngine.PUT(fmt.Sprintf("/%s/environments/:id", routerPrefix), environmentService.UpdateEnvironmentHandler)
-	a.ginEngine.DELETE(fmt.Sprintf("/%s/environments/:id", routerPrefix), environmentService.DeleteEnvironmentHandler)
+	environmentService := service.NewEnvironmentService()
 	a.ginEngine.GET(fmt.Sprintf("/%s/environments", routerPrefix), environmentService.ListEnvironmentsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/environments/namespaces", routerPrefix), environmentService.ListNamespacesHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/environments/:id/test", routerPrefix), environmentService.TestConnectivityHandler)

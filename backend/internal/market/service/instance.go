@@ -5,28 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
-	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"github.com/kymo-mcp/mcpcan/pkg/utils"
 )
 
 // InstanceService struct for instance service
 type InstanceService struct {
-	ctx context.Context
-
-	openapiPackageRepo *mysql.McpOpenapiPackageRepository
-	openapiFileManager *openapifile.OpenapiFileManager
 }
 
 // ContainerInstanceUpdateParams parameters for container instance update
@@ -44,12 +35,8 @@ type ContainerInstanceUpdateParams struct {
 }
 
 // NewInstanceService creates a new instance service
-func NewInstanceService(ctx context.Context) *InstanceService {
-	return &InstanceService{
-		ctx:                ctx,
-		openapiPackageRepo: mysql.McpOpenapiPackageRepo,
-		openapiFileManager: openapifile.NewOpenapiFileManager(&config.GlobalConfig.Code, config.GlobalConfig.Storage.OpenapiFilePath),
-	}
+func NewInstanceService() *InstanceService {
+	return &InstanceService{}
 }
 
 // CreateHandler creates instance HTTP handler function
@@ -59,27 +46,17 @@ func (s *InstanceService) CreateHandler(c *gin.Context) {
 		return
 	}
 
-	// Validate required fields
-	if req.Name == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: name")
-		return
-	}
-	// Demo mode guard: enforce instance limit
-	if config.IsDemoMode() {
-		instances, err := mysql.McpInstanceRepo.FindByStatus(s.ctx, model.InstanceStatusActive)
-		if err != nil {
-			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to count active instances: %s", err.Error()))
-			return
-		}
-		if len(instances) >= config.GetDemoMaxInstances() {
-			common.GinError(c, i18nresp.CodeForbidden, fmt.Sprintf("operation forbidden in demo mode: instance limit reached, max: %d", config.GetDemoMaxInstances()))
-			return
-		}
-	}
-	// Call write instance handler function
-	result, err := s.create(&req)
+	result, err := biz.GInstanceBiz.CreateInstance(c.Request.Context(), &req)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
+		// Assuming biz layer returns errors that can be mapped to status codes, or default to 500
+		// For now, based on original code, most errors were 500 or 403
+		if strings.Contains(err.Error(), "forbidden") {
+			common.GinError(c, i18nresp.CodeForbidden, err.Error())
+		} else if strings.Contains(err.Error(), "missing required field") {
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		} else {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
+		}
 		return
 	}
 
@@ -224,7 +201,7 @@ func (s *InstanceService) DisabledHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.disable(&req)
+	result, err := s.disable(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -246,7 +223,7 @@ func (s *InstanceService) RestartHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.restart(&req)
+	result, err := biz.GInstanceBiz.RestartInstance(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -269,7 +246,7 @@ func (s *InstanceService) DeleteHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.delete(req.InstanceId)
+	result, err := biz.GInstanceBiz.DeleteInstance(req.InstanceId)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -292,7 +269,7 @@ func (s *InstanceService) StatusHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.getStatus(&req)
+	result, err := biz.GInstanceBiz.GetStatus(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -315,7 +292,7 @@ func (s *InstanceService) LogsHandler(c *gin.Context) {
 	}
 
 	// Use InstanceService to handle request
-	result, err := s.getLogs(&req)
+	result, err := biz.GInstanceBiz.GetLogs(c.Request.Context(), &req)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -325,23 +302,23 @@ func (s *InstanceService) LogsHandler(c *gin.Context) {
 }
 
 // create writes instance method
-func (s *InstanceService) create(req *instancepb.CreateRequest) (*instancepb.CreateResp, error) {
-
-	// Generate instance ID (UUID)
-	instanceID := uuid.New().String()
-
-	// Hosting mode, Stdio protocol
-	switch req.AccessType {
-	case instancepb.AccessType_DIRECT:
-		return s.createInstanceDirectMode(req, instanceID)
-	case instancepb.AccessType_PROXY:
-		return s.createInstanceProxyMode(req, instanceID)
-	case instancepb.AccessType_HOSTING:
-		return s.createInstanceHosting(req, instanceID)
-	default:
-		return nil, fmt.Errorf("unsupported access type: %v", req.AccessType)
-	}
-}
+// func (s *InstanceService) create(req *instancepb.CreateRequest) (*instancepb.CreateResp, error) {
+//
+// 	// Generate instance ID (UUID)
+// 	instanceID := uuid.New().String()
+//
+// 	// Hosting mode, Stdio protocol
+// 	switch req.AccessType {
+// 	case instancepb.AccessType_DIRECT:
+// 		return s.createInstanceDirectMode(req, instanceID)
+// 	case instancepb.AccessType_PROXY:
+// 		return s.createInstanceProxyMode(req, instanceID)
+// 	case instancepb.AccessType_HOSTING:
+// 		return s.createInstanceHosting(req, instanceID)
+// 	default:
+// 		return nil, fmt.Errorf("unsupported access type: %v", req.AccessType)
+// 	}
+// }
 
 // detail gets instance details
 func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.DetailResp, error) {
@@ -473,209 +450,10 @@ func (s *InstanceService) list(req *instancepb.ListRequest) (*instancepb.ListRes
 	return biz.GInstanceBiz.ListInstance(page, pageSize, filters, sortBy, sortOrder)
 }
 
-// GetLogs get instance logs
-func (s *InstanceService) getLogs(req *instancepb.LogsRequest) (*instancepb.LogsResp, error) {
-	// Set default number of lines
-	lines := req.Lines
-	if lines <= 0 {
-		lines = 100
-	}
-
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	var response instancepb.LogsResp
-	response.InstanceId = req.InstanceId
-
-	// Check if it is a managed instance
-	if instance.AccessType != model.AccessTypeHosting {
-		response.IsManaged = false
-		response.Message = "Instance is not of managed type"
-		return &response, nil
-	}
-
-	response.IsManaged = true
-
-	// Get environment information
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, instance.EnvironmentID)
-	if err != nil {
-		response.Message = fmt.Sprintf("Failed to get environment information: %v", err)
-		return &response, nil
-	}
-
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		response.Message = "Environment type error, only Kubernetes environment is supported"
-		return &response, nil
-	}
-
-	// Get container logs
-	logs, err := biz.GContainerBiz.GetContainerLogs(biz.ContainerLogsParams{
-		InstanceID: req.InstanceId,
-		Lines:      int64(lines),
-	})
-	if err != nil {
-		response.Message = fmt.Sprintf("Failed to get container logs: %v", err)
-		return &response, nil
-	}
-
-	response.Logs = logs
-	response.Message = "Logs retrieved successfully"
-
-	return &response, nil
-}
-
-// GetStatus retrieves the status of an instance
-func (s *InstanceService) getStatus(req *instancepb.GetStatusRequest) (*instancepb.GetStatusResp, error) {
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	var response *instancepb.GetStatusResp
-
-	// Use different status query strategies based on access type
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		// Hosting type: query container status
-		params := biz.ContainerStatusParams{
-			InstanceID: req.InstanceId,
-		}
-		result, err := biz.GContainerBiz.GetContainerStatus(params)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get container status: %s", err.Error())
-		}
-
-		response = result
-	case model.AccessTypeProxy:
-		_, _, mcpConfig, err := instance.GetSourceConfig()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get source config: %v", err)
-		}
-		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(s.ctx, mcpConfig.URL, 5*time.Second)
-
-		// Build response
-		response = &instancepb.GetStatusResp{
-			InstanceId: req.InstanceId,
-			Status:     string(instance.Status),
-		}
-
-		// If probe fails, add error message
-		if !probeResult.Success {
-			response.ProbeHttp = false
-		} else {
-			response.ProbeHttp = true
-		}
-	case model.AccessTypeDirect:
-		_, _, mcpConfig, err := instance.GetSourceConfig()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get source config: %v", err)
-		}
-		// Use HTTP probe to check service availability
-		probeResult := utils.ProbePortFromURL(s.ctx, mcpConfig.URL, 5*time.Second)
-
-		// Build response
-		response = &instancepb.GetStatusResp{
-			InstanceId: req.InstanceId,
-			Status:     string(instance.Status),
-		}
-
-		// If probe fails, add error message
-		if !probeResult.Success {
-			response.ProbeHttp = false
-		} else {
-			response.ProbeHttp = true
-		}
-	default:
-		return nil, fmt.Errorf("unsupported access type")
-	}
-
-	return response, nil
-}
-
-// delete deletes an instance
-func (s *InstanceService) delete(instanceID string) (*instancepb.DeleteResp, error) {
-	req := &instancepb.DeleteRequest{
-		InstanceId: instanceID,
-	}
-
-	// Get instance information directly
-	instance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		_, err = biz.GContainerBiz.DeleteContainer(instance)
-		if err != nil {
-			return nil, fmt.Errorf("failed to delete container: %v", err)
-		}
-	}
-
-	// Disable the instance and set deletion time
-	err = biz.GInstanceBiz.DeleteInstance(req.InstanceId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to disable instance: %v", err)
-	}
-
-	return &instancepb.DeleteResp{Message: "Instance deleted successfully"}, nil
-}
-
-// restart restarts an instance
-func (s *InstanceService) restart(req *instancepb.RestartRequest) (*instancepb.RestartResp, error) {
-	// 1. Query instance data by ID
-	instance, err := s.getInstanceByID(req.InstanceId)
-	if err != nil {
-		return nil, err
-	}
-
-	switch instance.AccessType {
-	case model.AccessTypeHosting:
-		_, err = biz.GContainerBiz.RestartContainer(instance)
-		if err != nil {
-			return nil, fmt.Errorf("failed to restart container: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("this service does not need to be restarted")
-	}
-
-	// 3. Update container status to pending
-	if err = s.updateInstanceStatusToPending(instance); err != nil {
-		return nil, err
-	}
-
-	pbAccessType, err := common.ConvertToProtoAccessType(instance.AccessType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert access type: %w", err)
-	}
-
-	// 4. Return restart result
-	return &instancepb.RestartResp{
-		InstanceId: instance.InstanceID,
-		Name:       instance.InstanceName,
-		Status:     string(instance.Status),
-		AccessType: pbAccessType,
-		Message:    "Instance restarted successfully",
-	}, nil
-}
-
 // disable disables an instance
-func (s *InstanceService) disable(req *instancepb.DisabledRequest) (*instancepb.DisabledResp, error) {
+func (s *InstanceService) disable(ctx context.Context, req *instancepb.DisabledRequest) (*instancepb.DisabledResp, error) {
 	// Disable the instance and set deletion time
-	msg, err := biz.GInstanceBiz.DisableInstance(req.InstanceId)
+	msg, err := biz.GInstanceBiz.DisableInstance(ctx, req.InstanceId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to disable instance: %v", err)
 	}
@@ -683,342 +461,307 @@ func (s *InstanceService) disable(req *instancepb.DisabledRequest) (*instancepb.
 	return &instancepb.DisabledResp{Message: msg}, nil
 }
 
-// getInstanceByID retrieves an instance by its ID
-func (s *InstanceService) getInstanceByID(instanceID string) (*model.McpInstance, error) {
-	instance, err := biz.GInstanceBiz.GetInstance(instanceID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get instance information: %v", err)
-	}
-	if instance == nil {
-		return nil, fmt.Errorf("instance does not exist")
-	}
-	return instance, nil
-}
-
-// updateInstanceStatusToPending updates instance status to pending
-func (s *InstanceService) updateInstanceStatusToPending(instance *model.McpInstance) error {
-	instance.Status = model.InstanceStatusActive
-	instance.ContainerStatus = model.ContainerStatusPending
-	instance.ContainerLastMessage = "Instance is restarting"
-	if err := mysql.McpInstanceRepo.Update(s.ctx, instance); err != nil {
-		return fmt.Errorf("failed to update instance status: %v", err)
-	}
-	return nil
-}
-
 // createInstanceDirectMode direct connection mode handler function
-func (s *InstanceService) createInstanceDirectMode(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
-	accessType, err := common.ConvertToModelAccessType(req.AccessType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert access type: %w", err)
-	}
-	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
-	}
-	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert source type: %w", err)
-	}
-	if len(req.McpServers) == 0 {
-		return nil, fmt.Errorf("missing required field: mcpServers")
-	}
-	// Validate MCP configuration format
-	validationResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate mcp servers: %w", err)
-	}
-	if !validationResult.IsValid {
-		return nil, fmt.Errorf("mcp servers config is invalid: %s", validationResult.ErrorMessage)
-	}
-	if validationResult.Url == "" {
-		return nil, fmt.Errorf("mcp servers config is invalid: url is empty")
-	}
-	if validationResult.ProtocolType != string(mcpProtocol) {
-		return nil, fmt.Errorf("mcp servers config is invalid: protocol type is %s, expected %s", validationResult.ProtocolType, mcpProtocol)
-	}
-
-	sourceConfig := json.RawMessage([]byte(req.McpServers))
-	// Create new instance record
-	instance := &model.McpInstance{
-		InstanceID:   instanceID,
-		InstanceName: req.Name,
-		AccessType:   accessType,
-		McpProtocol:  mcpProtocol,
-		SourceType:   sourceType,
-		SourceConfig: sourceConfig,
-		Status:       model.InstanceStatusActive,
-		IconPath:     req.IconPath,         // Add iconPath field handling
-		Notes:        req.Notes,            // Add notes field handling
-		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:   uint(req.TemplateId), // Add templateId field handling
-	}
-
-	// Save instance to database
-	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
-		return nil, fmt.Errorf("failed to create instance: %w", err)
-	}
-
-	return &instancepb.CreateResp{
-		InstanceId:  instanceID,
-		Name:        req.Name,
-		Status:      string(model.InstanceStatusActive),
-		AccessType:  req.AccessType,
-		McpProtocol: req.McpProtocol,
-	}, nil
-}
+// func (s *InstanceService) createInstanceDirectMode(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
+// 	accessType, err := common.ConvertToModelAccessType(req.AccessType)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert access type: %w", err)
+// 	}
+// 	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
+// 	}
+// 	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert source type: %w", err)
+// 	}
+// 	if len(req.McpServers) == 0 {
+// 		return nil, fmt.Errorf("missing required field: mcpServers")
+// 	}
+// 	// Validate MCP configuration format
+// 	validationResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to validate mcp servers: %w", err)
+// 	}
+// 	if !validationResult.IsValid {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: %s", validationResult.ErrorMessage)
+// 	}
+// 	if validationResult.Url == "" {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: url is empty")
+// 	}
+// 	if validationResult.ProtocolType != string(mcpProtocol) {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: protocol type is %s, expected %s", validationResult.ProtocolType, mcpProtocol)
+// 	}
+//
+// 	sourceConfig := json.RawMessage([]byte(req.McpServers))
+// 	// Create new instance record
+// 	instance := &model.McpInstance{
+// 		InstanceID:   instanceID,
+// 		InstanceName: req.Name,
+// 		AccessType:   accessType,
+// 		McpProtocol:  mcpProtocol,
+// 		SourceType:   sourceType,
+// 		SourceConfig: sourceConfig,
+// 		Status:       model.InstanceStatusActive,
+// 		IconPath:     req.IconPath,         // Add iconPath field handling
+// 		Notes:        req.Notes,            // Add notes field handling
+// 		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
+// 		TemplateID:   uint(req.TemplateId), // Add templateId field handling
+// 	}
+//
+// 	// Save instance to database
+// 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
+// 		return nil, fmt.Errorf("failed to create instance: %w", err)
+// 	}
+//
+// 	return &instancepb.CreateResp{
+// 		InstanceId:  instanceID,
+// 		Name:        req.Name,
+// 		Status:      string(model.InstanceStatusActive),
+// 		AccessType:  req.AccessType,
+// 		McpProtocol: req.McpProtocol,
+// 	}, nil
+// }
 
 // createInstanceProxyMode proxy mode handler function
-func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
-	accessType, err := common.ConvertToModelAccessType(req.AccessType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert access type: %w", err)
-	}
-	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
-	}
-	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert source type: %w", err)
-	}
-	if len(req.McpServers) == 0 {
-		return nil, fmt.Errorf("missing required field: mcpServers")
-	}
-	// Validate MCP configuration format
-	validationResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate mcp servers: %w", err)
-	}
-	if !validationResult.IsValid {
-		return nil, fmt.Errorf("mcp servers config is invalid: %s", validationResult.ErrorMessage)
-	}
-	if validationResult.Url == "" {
-		return nil, fmt.Errorf("mcp servers config is invalid: url is empty")
-	}
-	if validationResult.ProtocolType != string(mcpProtocol) {
-		return nil, fmt.Errorf("mcp servers config is invalid: protocol type is %s, expected %s", validationResult.ProtocolType, mcpProtocol)
-	}
-	proxyProtocol := mcpProtocol
-	publicProxyPath := biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
-
-	// Create new instance record
-	instance := &model.McpInstance{
-		InstanceID:      instanceID,
-		InstanceName:    req.Name,
-		AccessType:      accessType,
-		McpProtocol:     mcpProtocol,
-		SourceType:      sourceType,
-		SourceConfig:    json.RawMessage([]byte(req.McpServers)),
-		Status:          model.InstanceStatusActive,
-		IconPath:        req.IconPath,         // Add iconPath field handling
-		Notes:           req.Notes,            // Add notes field handling
-		McpServerID:     req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:      uint(req.TemplateId), // Add templateId field handling
-		EnabledToken:    req.EnabledToken,
-		PublicProxyPath: publicProxyPath,
-		ProxyProtocol:   proxyProtocol,
-	}
-
-	if len(req.Tokens) > 0 {
-		// add instance id to tokens
-		for _, token := range req.Tokens {
-			token.InstanceId = instanceID
-		}
-		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
-			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
-		}
-	}
-
-	// Save instance to database
-	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
-		return nil, fmt.Errorf("failed to create instance: %w", err)
-	}
-
-	return &instancepb.CreateResp{
-		InstanceId:  instanceID,
-		Name:        req.Name,
-		Status:      string(model.InstanceStatusActive),
-		AccessType:  req.AccessType,
-		McpProtocol: req.McpProtocol,
-	}, nil
-}
+// func (s *InstanceService) createInstanceProxyMode(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
+// 	accessType, err := common.ConvertToModelAccessType(req.AccessType)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert access type: %w", err)
+// 	}
+// 	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
+// 	}
+// 	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert source type: %w", err)
+// 	}
+// 	if len(req.McpServers) == 0 {
+// 		return nil, fmt.Errorf("missing required field: mcpServers")
+// 	}
+// 	// Validate MCP configuration format
+// 	validationResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to validate mcp servers: %w", err)
+// 	}
+// 	if !validationResult.IsValid {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: %s", validationResult.ErrorMessage)
+// 	}
+// 	if validationResult.Url == "" {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: url is empty")
+// 	}
+// 	if validationResult.ProtocolType != string(mcpProtocol) {
+// 		return nil, fmt.Errorf("mcp servers config is invalid: protocol type is %s, expected %s", validationResult.ProtocolType, mcpProtocol)
+// 	}
+// 	proxyProtocol := mcpProtocol
+// 	publicProxyPath := biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
+//
+// 	// Create new instance record
+// 	instance := &model.McpInstance{
+// 		InstanceID:      instanceID,
+// 		InstanceName:    req.Name,
+// 		AccessType:      accessType,
+// 		McpProtocol:     mcpProtocol,
+// 		SourceType:      sourceType,
+// 		SourceConfig:    json.RawMessage([]byte(req.McpServers)),
+// 		Status:          model.InstanceStatusActive,
+// 		IconPath:        req.IconPath,         // Add iconPath field handling
+// 		Notes:           req.Notes,            // Add notes field handling
+// 		McpServerID:     req.McpServerId,      // Add mcpServerId field handling
+// 		TemplateID:      uint(req.TemplateId), // Add templateId field handling
+// 		EnabledToken:    req.EnabledToken,
+// 		PublicProxyPath: publicProxyPath,
+// 		ProxyProtocol:   proxyProtocol,
+// 	}
+//
+// 	if len(req.Tokens) > 0 {
+// 		// add instance id to tokens
+// 		for _, token := range req.Tokens {
+// 			token.InstanceId = instanceID
+// 		}
+// 		if err := biz.GInstanceBiz.SaveTokensForInstance(c.Request.Context(), req.Tokens); err != nil {
+// 			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
+// 		}
+// 	}
+//
+// 	// Save instance to database
+// 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
+// 		return nil, fmt.Errorf("failed to create instance: %w", err)
+// 	}
+//
+// 	return &instancepb.CreateResp{
+// 		InstanceId:  instanceID,
+// 		Name:        req.Name,
+// 		Status:      string(model.InstanceStatusActive),
+// 		AccessType:  req.AccessType,
+// 		McpProtocol: req.McpProtocol,
+// 	}, nil
+// }
 
 // createInstanceHosting Hosting mode handler function
-func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
-
-	// Validate timeout parameters
-	if err := s.validateTimeoutParams(int(req.StartupTimeout), int(req.RunningTimeout)); err != nil {
-		return nil, fmt.Errorf("parameter validation failed: %w", err)
-	}
-	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
-	}
-	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert source type: %w", err)
-	}
-
-	if req.Port <= 0 {
-		return nil, fmt.Errorf("missing required field: port")
-	}
-	// Validate environment ID
-	if req.EnvironmentId == 0 {
-		return nil, fmt.Errorf("hosting type instance requires environment ID")
-	}
-	if req.ImgAddress == "" {
-		return nil, fmt.Errorf("missing required field: imgAddress")
-	}
-	// Query Kubernetes configuration and namespace based on environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get environment information: %w", err)
-	}
-
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		return nil, fmt.Errorf("environment type is not Kubernetes, cannot create container")
-	}
-
-	if mcpProtocol == model.McpProtocolStdio {
-		mcpServers := req.McpServers
-		if len(mcpServers) == 0 {
-			return nil, fmt.Errorf("mcp servers config is empty")
-		}
-		reqMcpResult, err2 := utils.ValidateMcpConfig([]byte(mcpServers))
-		if err2 != nil {
-			return nil, fmt.Errorf("failed to validate mcp servers: %w", err2)
-		}
-		if !reqMcpResult.IsValid {
-			return nil, fmt.Errorf("mcp servers config is invalid: %s", reqMcpResult.ErrorMessage)
-		}
-		if !reqMcpResult.HasCommand {
-			return nil, fmt.Errorf("mcp servers config is invalid: command is required")
-		}
-	}
-	containerOptions, err := biz.GContainerBiz.BuildContainerOptions(s.ctx, instanceID, mcpProtocol, req.McpServers, req.PackageId, req.Port,
-		req.InitScript, req.Command, req.ImgAddress, req.EnvironmentVariables, req.VolumeMounts, int32(req.StartupTimeout), int32(req.RunningTimeout))
-	if err != nil {
-		return nil, fmt.Errorf("failed to build container options: %w", err)
-	}
-	err = biz.GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, req.StartupTimeout)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create container: %w", err)
-	}
-
-	// Create new instance record
-	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal container create options: %w", err)
-	}
-	evs, err := common.MarshalAndAssignConfig(req.EnvironmentVariables)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal environment variables: %w", err)
-	}
-	vms, err := common.MarshalAndAssignConfig(req.VolumeMounts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal volume mounts: %w", err)
-	}
-	// Create target configuration
-	proxyProtocol := mcpProtocol
-	publicProxyPath := ""
-	containerServiceURL := ""
-	switch mcpProtocol {
-	case model.McpProtocolStdio:
-		proxyProtocol = model.McpProtocolStreamableHttp
-		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp")
-	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
-		proxyProtocol = mcpProtocol
-		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
-	default:
-		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
-	}
-	instance := &model.McpInstance{
-		InstanceID:             instanceID,
-		InstanceName:           req.Name,
-		AccessType:             model.AccessTypeHosting,
-		McpProtocol:            mcpProtocol,
-		Status:                 model.InstanceStatusActive,
-		PackageID:              req.PackageId,
-		ContainerStatus:        model.ContainerStatusPending,
-		EnvironmentID:          uint(req.EnvironmentId),
-		SourceType:             sourceType,
-		McpServerID:            req.McpServerId,
-		TemplateID:             uint(req.TemplateId),
-		EnabledToken:           req.EnabledToken,
-		ImgAddr:                req.ImgAddress,
-		Port:                   req.Port,
-		InitScript:             req.InitScript,
-		Command:                req.Command,
-		EnvironmentVariables:   evs,
-		VolumeMounts:           vms,
-		ContainerName:          containerOptions.ContainerName,
-		ContainerServiceName:   containerOptions.ServiceName,
-		ContainerIsReady:       false,
-		ContainerCreateOptions: containerCreateOptions,
-		ContainerLastMessage:   "container is pending",
-		ContainerServiceURL:    containerServiceURL,
-		StartupTimeout:         int64(req.StartupTimeout),
-		RunningTimeout:         int64(req.RunningTimeout),
-		SourceConfig:           json.RawMessage(req.McpServers),
-		ServicePath:            req.ServicePath,
-		Notes:                  req.Notes,
-		IconPath:               req.IconPath,
-		PublicProxyPath:        publicProxyPath,
-		ProxyProtocol:          proxyProtocol,
-	}
-	if len(req.Tokens) > 0 {
-		// add instance id to tokens
-		for _, token := range req.Tokens {
-			token.InstanceId = instanceID
-		}
-		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
-			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
-		}
-	}
-	// Save instance to database
-	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
-		return nil, fmt.Errorf("failed to create instance: %w", err)
-	}
-
-	return &instancepb.CreateResp{
-		InstanceId:  instanceID,
-		Name:        req.Name,
-		Status:      string(model.InstanceStatusActive),
-		AccessType:  req.AccessType,
-		McpProtocol: req.McpProtocol,
-	}, nil
-}
+// func (s *InstanceService) createInstanceHosting(req *instancepb.CreateRequest, instanceID string) (*instancepb.CreateResp, error) {
+// 	// Validate timeout parameters
+// 	if err := s.validateTimeoutParams(int(req.StartupTimeout), int(req.RunningTimeout)); err != nil {
+// 		return nil, fmt.Errorf("parameter validation failed: %w", err)
+// 	}
+// 	mcpProtocol, err := common.ConvertToModelMcpProtocol(req.McpProtocol)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert mcp protocol: %w", err)
+// 	}
+// 	sourceType, err := common.ConvertToModelSourceType(req.SourceType)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to convert source type: %w", err)
+// 	}
+//
+// 	if req.Port <= 0 {
+// 		return nil, fmt.Errorf("missing required field: port")
+// 	}
+// 	// Validate environment ID
+// 	if req.EnvironmentId == 0 {
+// 		return nil, fmt.Errorf("hosting type instance requires environment ID")
+// 	}
+// 	if req.ImgAddress == "" {
+// 		return nil, fmt.Errorf("missing required field: imgAddress")
+// 	}
+// 	if mcpProtocol == model.McpProtocolStdio {
+// 		mcpServers := req.McpServers
+// 		if len(mcpServers) == 0 {
+// 			return nil, fmt.Errorf("mcp servers config is empty")
+// 		}
+// 		reqMcpResult, err2 := utils.ValidateMcpConfig([]byte(mcpServers))
+// 		if err2 != nil {
+// 			return nil, fmt.Errorf("failed to validate mcp servers: %w", err2)
+// 		}
+// 		if !reqMcpResult.IsValid {
+// 			return nil, fmt.Errorf("mcp servers config is invalid: %s", reqMcpResult.ErrorMessage)
+// 		}
+// 		if !reqMcpResult.HasCommand {
+// 			return nil, fmt.Errorf("mcp servers config is invalid: command is required")
+// 		}
+// 	}
+// 	containerOptions, err := biz.GContainerBiz.BuildContainerOptions(c.Request.Context(), instanceID, mcpProtocol, req.McpServers, req.PackageId, req.Port,
+// 		req.InitScript, req.Command, req.ImgAddress, req.EnvironmentVariables, req.VolumeMounts, int32(req.StartupTimeout), int32(req.RunningTimeout))
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to build container options: %w", err)
+// 	}
+// 	err = biz.GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, req.StartupTimeout)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create container: %w", err)
+// 	}
+//
+// 	// Create new instance record
+// 	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to marshal container create options: %w", err)
+// 	}
+// 	evs, err := common.MarshalAndAssignConfig(req.EnvironmentVariables)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to marshal environment variables: %w", err)
+// 	}
+// 	vms, err := common.MarshalAndAssignConfig(req.VolumeMounts)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to marshal volume mounts: %w", err)
+// 	}
+// 	// Create target configuration
+// 	proxyProtocol := mcpProtocol
+// 	publicProxyPath := ""
+// 	containerServiceURL := ""
+// 	switch mcpProtocol {
+// 	case model.McpProtocolStdio:
+// 		proxyProtocol = model.McpProtocolStreamableHttp
+// 		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
+// 		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp")
+// 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
+// 		proxyProtocol = mcpProtocol
+// 		publicProxyPath = biz.GInstanceBiz.CreatePublicProxyPath(instanceID, proxyProtocol)
+// 		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
+// 	default:
+// 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
+// 	}
+// 	instance := &model.McpInstance{
+// 		InstanceID:             instanceID,
+// 		InstanceName:           req.Name,
+// 		AccessType:             model.AccessTypeHosting,
+// 		McpProtocol:            mcpProtocol,
+// 		Status:                 model.InstanceStatusActive,
+// 		PackageID:              req.PackageId,
+// 		ContainerStatus:        model.ContainerStatusPending,
+// 		EnvironmentID:          uint(req.EnvironmentId),
+// 		SourceType:             sourceType,
+// 		McpServerID:            req.McpServerId,
+// 		TemplateID:             uint(req.TemplateId),
+// 		EnabledToken:           req.EnabledToken,
+// 		ImgAddr:                req.ImgAddress,
+// 		Port:                   req.Port,
+// 		InitScript:             req.InitScript,
+// 		Command:                req.Command,
+// 		EnvironmentVariables:   evs,
+// 		VolumeMounts:           vms,
+// 		ContainerName:          containerOptions.ContainerName,
+// 		ContainerServiceName:   containerOptions.ServiceName,
+// 		ContainerIsReady:       false,
+// 		ContainerCreateOptions: containerCreateOptions,
+// 		ContainerLastMessage:   "container is pending",
+// 		ContainerServiceURL:    containerServiceURL,
+// 		StartupTimeout:         int64(req.StartupTimeout),
+// 		RunningTimeout:         int64(req.RunningTimeout),
+// 		SourceConfig:           json.RawMessage(req.McpServers),
+// 		ServicePath:            req.ServicePath,
+// 		Notes:                  req.Notes,
+// 		IconPath:               req.IconPath,
+// 		PublicProxyPath:        publicProxyPath,
+// 		ProxyProtocol:          proxyProtocol,
+// 	}
+// 	if len(req.Tokens) > 0 {
+// 		// add instance id to tokens
+// 		for _, token := range req.Tokens {
+// 			token.InstanceId = instanceID
+// 		}
+// 		if err := biz.GInstanceBiz.SaveTokensForInstance(c.Request.Context(), req.Tokens); err != nil {
+// 			return nil, fmt.Errorf("failed to save tokens for instance: %w", err)
+// 		}
+// 	}
+// 	// Save instance to database
+// 	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
+// 		return nil, fmt.Errorf("failed to create instance: %w", err)
+// 	}
+//
+// 	return &instancepb.CreateResp{
+// 		InstanceId:  instanceID,
+// 		Name:        req.Name,
+// 		Status:      string(model.InstanceStatusActive),
+// 		AccessType:  req.AccessType,
+// 		McpProtocol: req.McpProtocol,
+// 	}, nil
+// }
 
 // validateTimeoutParams validates timeout parameters
-func (s *InstanceService) validateTimeoutParams(startupTimeout, runningTimeout int) error {
-	// Startup timeout validation
-	if startupTimeout < 0 {
-		return fmt.Errorf("startup timeout cannot be negative")
-	}
-	if startupTimeout > 0 && startupTimeout < 30 {
-		return fmt.Errorf("startup timeout cannot be less than 30 seconds")
-	}
-	if startupTimeout > 3600 {
-		return fmt.Errorf("startup timeout cannot exceed 3600 seconds")
-	}
-
-	// Running timeout validation
-	if runningTimeout < 0 {
-		return fmt.Errorf("running timeout cannot be negative")
-	}
-	if runningTimeout > 0 && runningTimeout < 60 {
-		return fmt.Errorf("running timeout cannot be less than 60 seconds")
-	}
-	if runningTimeout > 86400 {
-		return fmt.Errorf("running timeout cannot exceed 86400 seconds")
-	}
-
-	return nil
-}
+// func (s *InstanceService) validateTimeoutParams(startupTimeout, runningTimeout int) error {
+// 	// Startup timeout validation
+// 	if startupTimeout < 0 {
+// 		return fmt.Errorf("startup timeout cannot be negative")
+// 	}
+// 	if startupTimeout > 0 && startupTimeout < 30 {
+// 		return fmt.Errorf("startup timeout cannot be less than 30 seconds")
+// 	}
+// 	if startupTimeout > 3600 {
+// 		return fmt.Errorf("startup timeout cannot exceed 3600 seconds")
+// 	}
+//
+// 	// Running timeout validation
+// 	if runningTimeout < 0 {
+// 		return fmt.Errorf("running timeout cannot be negative")
+// 	}
+// 	if runningTimeout > 0 && runningTimeout < 60 {
+// 		return fmt.Errorf("running timeout cannot be less than 60 seconds")
+// 	}
+// 	if runningTimeout > 86400 {
+// 		return fmt.Errorf("running timeout cannot exceed 86400 seconds")
+// 	}
+//
+// 	return nil
+// }
 
 // TokenControlHandler controls token enable/disable status
 func (s *InstanceService) TokenControlHandler(c *gin.Context) {
@@ -1046,7 +789,7 @@ func (s *InstanceService) TokenControlHandler(c *gin.Context) {
 
 	// Update enabledToken field
 	instance.EnabledToken = req.EnabledToken
-	if err := mysql.McpInstanceRepo.Update(s.ctx, instance); err != nil {
+	if err := mysql.McpInstanceRepo.Update(c.Request.Context(), instance); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance token status: %s", err.Error()))
 		return
 	}
@@ -1067,7 +810,7 @@ func (s *InstanceService) TokenEditHandler(c *gin.Context) {
 	}
 
 	// Delegate to biz for upsert logic
-	if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
+	if err := biz.GInstanceBiz.SaveTokensForInstance(c.Request.Context(), req.Tokens); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update instance tokens: %s", err.Error()))
 		return
 	}
@@ -1122,125 +865,18 @@ func (s *InstanceService) CreateOpenapiHandler(c *gin.Context) {
 		return
 	}
 
-	// Demo mode guard: enforce instance limit
-	if config.IsDemoMode() {
-		instances, err := mysql.McpInstanceRepo.FindByStatus(s.ctx, model.InstanceStatusActive)
-		if err != nil {
-			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to count active instances: %s", err.Error()))
-			return
+	result, err := biz.GInstanceBiz.CreateOpenapiInstance(c.Request.Context(), &req)
+	if err != nil {
+		if strings.Contains(err.Error(), "forbidden") {
+			common.GinError(c, i18nresp.CodeForbidden, err.Error())
+		} else {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
 		}
-		if len(instances) >= config.GetDemoMaxInstances() {
-			common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode: instance limit reached")
-			return
-		}
-	}
-
-	// Query Kubernetes configuration and namespace based on environment ID
-	environment, err := biz.GEnvironmentBiz.GetEnvironment(s.ctx, uint(req.EnvironmentId))
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get environment information: %w", err))
-		return
-	}
-	// Validate environment type
-	if environment.Environment != model.McpEnvironmentKubernetes {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("environment type is not Kubernetes, cannot create container"))
-		return
-	}
-
-	_, err = s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.OpenapiFileID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information: %s", err))
-		return
-	}
-	chooseOpenapiFileInfo, err := s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.ChooseOpenapiFileID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get choose openapi file information: %s", err))
-		return
-	}
-	if chooseOpenapiFileInfo.BaseOpenapiFileID != req.OpenapiFileID {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information"))
-		return
-	}
-
-	instanceID := uuid.New().String()
-	containerOptions, err := biz.GContainerBiz.BuildOpenapiContainerOptions(s.ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0, req.OpenapiBaseUrl)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to build container options: %w", err))
-		return
-	}
-	err = biz.GContainerBiz.CreateContainer(containerOptions, req.EnvironmentId, 0)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create container: %w", err))
-		return
-	}
-	// Create new instance record
-	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to marshal container create options: %w", err))
-		return
-	}
-
-	instance := &model.McpInstance{
-		InstanceID:             instanceID,
-		InstanceName:           req.Name,
-		AccessType:             model.AccessTypeHosting,
-		McpProtocol:            model.McpProtocolStreamableHttp,
-		Status:                 model.InstanceStatusActive,
-		PackageID:              chooseOpenapiFileInfo.OpenapiFileID,
-		ContainerStatus:        model.ContainerStatusPending,
-		EnvironmentID:          uint(req.EnvironmentId),
-		SourceType:             model.OpenapiTypeCustom,
-		McpServerID:            "",
-		TemplateID:             0,
-		EnabledToken:           req.EnableToken,
-		ImgAddr:                containerOptions.ImageName,
-		Port:                   8080,
-		InitScript:             "",
-		Command:                containerOptions.CommandArgs[0],
-		EnvironmentVariables:   nil,
-		VolumeMounts:           nil,
-		ContainerName:          containerOptions.ContainerName,
-		ContainerServiceName:   containerOptions.ServiceName,
-		ContainerIsReady:       false,
-		ContainerCreateOptions: containerCreateOptions,
-		ContainerLastMessage:   "container is pending",
-		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp"),
-		StartupTimeout:         int64(0),
-		RunningTimeout:         int64(0),
-		SourceConfig:           nil,
-		ServicePath:            "/mcp",
-		Notes:                  req.Notes,
-		IconPath:               req.IconPath,
-		PublicProxyPath:        biz.GInstanceBiz.CreatePublicProxyPath(instanceID, model.McpProtocolStreamableHttp),
-		ProxyProtocol:          model.McpProtocolStreamableHttp,
-		OpenapiBaseUrl:         req.OpenapiBaseUrl,
-	}
-
-	if len(req.Tokens) > 0 {
-		// add instance id to tokens
-		for _, token := range req.Tokens {
-			token.InstanceId = instanceID
-		}
-		if err := biz.GInstanceBiz.SaveTokensForInstance(s.ctx, req.Tokens); err != nil {
-			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to save tokens for instance: %w", err))
-			return
-		}
-	}
-
-	// Save instance to database
-	if err := biz.GInstanceBiz.CreateInstance(instance); err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create instance: %w", err))
 		return
 	}
 
 	// Return success response
-	common.GinSuccess(c, &instancepb.CreateResp{
-		InstanceId:  instanceID,
-		Name:        req.Name,
-		Status:      string(model.InstanceStatusActive),
-		AccessType:  instancepb.AccessType_HOSTING,
-		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
-	})
+	common.GinSuccess(c, result)
 }
 
 // UpdateOpenapiHandler update openapi instance HTTP handler function
@@ -1270,21 +906,6 @@ func (s *InstanceService) UpdateOpenapiHandler(c *gin.Context) {
 	err = s.checkSaveOpenapiInstanceRequest(req.Name, req.OpenapiFileID, req.ChooseOpenapiFileID, nil)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to write instance: %s", err.Error()))
-		return
-	}
-
-	_, err = s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.OpenapiFileID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information: %s", err))
-		return
-	}
-	chooseOpenapiFileInfo, err := s.openapiPackageRepo.FindByOpenapiFileID(s.ctx, req.ChooseOpenapiFileID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get choose openapi file information: %s", err))
-		return
-	}
-	if chooseOpenapiFileInfo.BaseOpenapiFileID != req.OpenapiFileID {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get openapi file information"))
 		return
 	}
 
