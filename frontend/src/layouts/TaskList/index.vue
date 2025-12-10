@@ -19,136 +19,142 @@
   >
     <template #title> {{ t('agent.task.title') }} </template>
     <div class="task-list-scroll hide-scrollbar">
-      <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
-        <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
-          <el-progress
-            :percentage="task.progress"
-            :stroke-width="16"
-            :text-inside="true"
-            status="success"
-            style="margin-bottom: 8px"
-          />
-        </div>
-        <div class="task-item-main" @click="toggleExpand(idx)">
-          <span class="task-icon">
-            <el-icon v-if="task.status === 1" color="#409EFF" size="22" class="icon-rotate">
-              <Refresh />
-            </el-icon>
-            <el-icon v-else-if="task.status === 2" color="#67C23A" size="22">
-              <CircleCheckFilled />
-            </el-icon>
-            <el-icon v-else-if="task.status === 3" color="#F56C6C" size="22">
-              <WarningFilled />
-            </el-icon>
-            <el-icon v-else-if="task.status === 4" color="#E6A23C" size="22">
-              <CircleCloseFilled />
-            </el-icon>
-          </span>
-          <span class="task-title">
-            {{ task.desc }}
-            <el-button
-              v-if="task.status === 1"
-              type="danger"
-              size="small"
-              class="mx-2"
-              round
-              @click.stop="handleCancelTask(task)"
-            >
-              {{ t('agent.task.cancel') }}
-            </el-button>
-          </span>
-          <span class="task-status" :class="['doing', 'done', 'danger', 'error'][task.status - 1]">
-            {{
-              [
-                t('agent.task.status.doing'),
-                t('agent.task.status.done'),
-                t('agent.task.status.error'),
-                t('agent.task.status.cancel'),
-              ][task.status - 1]
-            }}
-          </span>
-          <span class="task-expand-icon">
-            <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
-            <el-icon size="18" color="#fff" v-else><ArrowDown /></el-icon>
-          </span>
-        </div>
-        <transition name="fade">
-          <div v-if="task.expanded" v-loading="task.loading" class="task-detail">
-            <div class="task-detail-title flex items-center justify-between">
-              <span>{{ t('agent.task.details') }}</span>
-              <el-icon
-                class="cursor-pointer hover:rotate-90 transition-all"
-                size="20"
-                @click.stop="handleGetTaskDetail(task)"
-              >
+      <template v-if="taskInfo.list?.length">
+        <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
+          <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
+            <el-progress
+              :percentage="task.progress"
+              :stroke-width="16"
+              :text-inside="true"
+              status="success"
+              style="margin-bottom: 8px"
+            />
+          </div>
+          <div class="task-item-main" @click="toggleExpand(idx)">
+            <span class="task-icon">
+              <el-icon v-if="task.status === 1" color="#409EFF" size="22" class="icon-rotate">
                 <Refresh />
               </el-icon>
-            </div>
-            <div class="my-2">{{ t('agent.task.createTime') }}：{{ task.createdAt }}</div>
-            <div class="my-2">
-              {{ t('agent.task.platformName') }}：{{ task.intelligentAccessName }}
-            </div>
-            <div v-if="Array.isArray(task.logs)">
-              <div v-for="log in task.logs" :key="log.mcpInstanceID" class="task-mcp-card mb-4">
-                <div class="flex items-center justify-between mb-1">
-                  <div class="font-bold text-lg">{{ log.mcpInstanceName }}</div>
-                  <el-tag :type="log.status ? 'success' : 'danger'" size="small" effect="dark">
-                    {{ log.status ? t('status.success') : t('status.fail') }}
-                  </el-tag>
-                </div>
-                <div
-                  v-if="
-                    Array.isArray(log.insertIntelligentLogs) && log.insertIntelligentLogs.length
-                  "
+              <el-icon v-else-if="task.status === 2" color="#67C23A" size="22">
+                <CircleCheckFilled />
+              </el-icon>
+              <el-icon v-else-if="task.status === 3" color="#F56C6C" size="22">
+                <WarningFilled />
+              </el-icon>
+              <el-icon v-else-if="task.status === 4" color="#E6A23C" size="22">
+                <CircleCloseFilled />
+              </el-icon>
+            </span>
+            <span class="task-title">
+              {{ task.desc }}
+              <el-button
+                v-if="task.status === 1"
+                type="danger"
+                size="small"
+                class="mx-2"
+                round
+                @click.stop="handleCancelTask(task)"
+              >
+                {{ t('agent.task.cancel') }}
+              </el-button>
+            </span>
+            <span
+              class="task-status"
+              :class="['doing', 'done', 'danger', 'error'][task.status - 1]"
+            >
+              {{
+                [
+                  t('agent.task.status.doing'),
+                  t('agent.task.status.done'),
+                  t('agent.task.status.error'),
+                  t('agent.task.status.cancel'),
+                ][task.status - 1]
+              }}
+            </span>
+            <span class="task-expand-icon">
+              <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
+              <el-icon size="18" color="#fff" v-else><ArrowDown /></el-icon>
+            </span>
+          </div>
+          <transition name="fade">
+            <div v-if="task.expanded" v-loading="task.loading" class="task-detail">
+              <div class="task-detail-title flex items-center justify-between">
+                <span>{{ t('agent.task.details') }}</span>
+                <el-icon
+                  class="cursor-pointer hover:rotate-90 transition-all"
+                  size="20"
+                  @click.stop="handleGetTaskDetail(task)"
                 >
-                  <div class="text-sm text-gray-400 mb-1">
-                    {{ t('agent.task.syncSpaceName') }}：
+                  <Refresh />
+                </el-icon>
+              </div>
+              <div class="my-2">{{ t('agent.task.createTime') }}：{{ task.createdAt }}</div>
+              <div class="my-2">
+                {{ t('agent.task.platformName') }}：{{ task.intelligentAccessName }}
+              </div>
+              <div v-if="Array.isArray(task.logs)">
+                <div v-for="log in task.logs" :key="log.mcpInstanceID" class="task-mcp-card mb-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <div class="font-bold text-lg">{{ log.mcpInstanceName }}</div>
+                    <el-tag :type="log.status ? 'success' : 'danger'" size="small" effect="dark">
+                      {{ log.status ? t('status.success') : t('status.fail') }}
+                    </el-tag>
                   </div>
-                  <div class="sync-space-list">
-                    <div
-                      v-for="(item, idx) in log.insertIntelligentLogs"
-                      :key="idx"
-                      class="sync-space-item"
-                    >
-                      <span class="font-bold">{{
-                        item.insertIntelligentInfo?.difySpaceName || '-'
-                      }}</span>
-                      <el-tag
-                        :type="item.status ? 'success' : 'danger'"
-                        size="small"
-                        effect="plain"
-                        class="mx-2"
-                        >{{ item.status ? t('status.success') : t('status.fail') }}</el-tag
-                      >
+                  <div
+                    v-if="
+                      Array.isArray(log.insertIntelligentLogs) && log.insertIntelligentLogs.length
+                    "
+                  >
+                    <div class="text-sm text-gray-400 mb-1">
+                      {{ t('agent.task.syncSpaceName') }}：
+                    </div>
+                    <div class="sync-space-list">
                       <div
-                        v-if="!item.status && item.errorLog"
-                        class="sync-error-subcard my-1 mx-2"
+                        v-for="(item, idx) in log.insertIntelligentLogs"
+                        :key="idx"
+                        class="sync-space-item"
                       >
-                        <el-icon
-                          color="#F56C6C"
-                          class="mr-1"
-                          style="vertical-align: middle"
-                          size="16"
+                        <span class="font-bold">{{
+                          item.insertIntelligentInfo?.difySpaceName || '-'
+                        }}</span>
+                        <el-tag
+                          :type="item.status ? 'success' : 'danger'"
+                          size="small"
+                          effect="plain"
+                          class="mx-2"
+                          >{{ item.status ? t('status.success') : t('status.fail') }}</el-tag
                         >
-                          <WarningFilled />
-                        </el-icon>
-                        <span class="sync-error-text">{{ item.errorLog }}</span>
+                        <div
+                          v-if="!item.status && item.errorLog"
+                          class="sync-error-subcard my-1 mx-2"
+                        >
+                          <el-icon
+                            color="#F56C6C"
+                            class="mr-1"
+                            style="vertical-align: middle"
+                            size="16"
+                          >
+                            <WarningFilled />
+                          </el-icon>
+                          <span class="sync-error-text">{{ item.errorLog }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div v-if="!log.status && log.errorLog" class="sync-error-maincard mt-3">
-                  <el-icon color="#F56C6C" class="mr-1" style="vertical-align: middle" size="18"
-                    ><WarningFilled
-                  /></el-icon>
-                  <span class="sync-error-text">{{ log.errorLog }}</span>
+                  <div v-if="!log.status && log.errorLog" class="sync-error-maincard mt-3">
+                    <el-icon color="#F56C6C" class="mr-1" style="vertical-align: middle" size="18"
+                      ><WarningFilled
+                    /></el-icon>
+                    <span class="sync-error-text">{{ log.errorLog }}</span>
+                  </div>
                 </div>
               </div>
+              <div v-else>{{ task.logs }}</div>
             </div>
-            <div v-else>{{ task.logs }}</div>
-          </div>
-        </transition>
-      </div>
+          </transition>
+        </div>
+      </template>
+      <el-empty v-else class="mt-20" :image-size="200" :description="t('status.noData')"></el-empty>
     </div>
   </el-dialog>
 </template>
