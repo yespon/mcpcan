@@ -110,7 +110,7 @@ service McpToIntelligentTaskService {
   }
   rpc Cancel(CancelRequest) returns (CancelResponse) {
     option (google.api.http) = {
-      put: "/mcp_to_intelligent_task/{id}/cancel"
+      post: "/mcp_to_intelligent_task/{id}/cancel"
       body: "*"
     };
   }

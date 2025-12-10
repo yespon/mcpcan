@@ -7,7 +7,7 @@
       @keyup.enter="onQuery"
       :suffix-icon="Search"
     ></el-input>
-    <el-button style="width: 32px" class="ml-3" @click="onQuery">
+    <el-button style="width: 32px" class="ml-3" @click="handleRefresh">
       <el-icon><Refresh /></el-icon>
     </el-button>
     <el-popover
@@ -58,6 +58,7 @@
         </template>
       </FormPlus>
     </el-popover>
+    <slot name="operation"></slot>
   </div>
 </template>
 
@@ -79,7 +80,7 @@ const props = defineProps<{
   formData: FormData
 }>()
 const showMoreSearch = ref(false)
-const emit = defineEmits(['update:formData', 'reset-fields', 'handle-query'])
+const emit = defineEmits(['update:formData', 'reset-fields', 'handle-query', 'on-refresh'])
 const localFormData = ref<FormData>({ ...props.formData })
 const searchInputRef = ref()
 
@@ -104,6 +105,9 @@ const onFormDataUpdate = (newVal: FormData) => {
   localFormData.value = { ...newVal }
 }
 const searchFromRef = ref()
+const handleRefresh = () => {
+  emit('on-refresh')
+}
 const onReset = () => {
   showMoreSearch.value = false
   localFormData.value = { ...props.formData }

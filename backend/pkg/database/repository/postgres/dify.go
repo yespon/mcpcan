@@ -119,14 +119,14 @@ type ToolMcpProvider struct {
 	UpdatedAt            time.Time `json:"updatedAt,omitempty"`
 }
 
-func GetToolMcpProvider(db *sql.DB, serverURL string, tenantId string, userId string) (*ToolMcpProvider, error) {
+func GetToolMcpProvider(db *sql.DB, serverURL string, tenantId string) (*ToolMcpProvider, error) {
 	query := `SELECT id, name, server_identifier, server_url, server_url_hash, icon, tenant_id, user_id, 
 		encrypted_credentials, authed, tools, created_at, updated_at 
 		FROM tool_mcp_providers 
-		WHERE tenant_id = $1 AND user_id = $2 AND server_url_hash = $3`
+		WHERE tenant_id = $1 AND server_url_hash = $2`
 
 	toolMcpProvider := &ToolMcpProvider{}
-	err := db.QueryRow(query, tenantId, userId, serverURL).Scan(
+	err := db.QueryRow(query, tenantId, serverURL).Scan(
 		&toolMcpProvider.ID,
 		&toolMcpProvider.Name,
 		&toolMcpProvider.ServerIdentifier,

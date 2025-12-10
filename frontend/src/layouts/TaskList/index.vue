@@ -17,128 +17,144 @@
     width="800px"
     footer-class="footer-border"
   >
-    <template #title> 任务列表 </template>
+    <template #title> {{ t('agent.task.title') }} </template>
     <div class="task-list-scroll hide-scrollbar">
-      <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
-        <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
-          <el-progress
-            :percentage="task.progress"
-            :stroke-width="16"
-            :text-inside="true"
-            status="success"
-            style="margin-bottom: 8px"
-          />
-        </div>
-        <div class="task-item-main" @click="toggleExpand(idx)">
-          <span class="task-icon">
-            <el-icon v-if="task.status === 1" color="#409EFF" size="22" class="icon-rotate">
-              <Refresh />
-            </el-icon>
-            <el-icon v-else-if="task.status === 2" color="#67C23A" size="22">
-              <CircleCheckFilled />
-            </el-icon>
-            <el-icon v-else-if="task.status === 3" color="#F56C6C" size="22">
-              <WarningFilled />
-            </el-icon>
-            <el-icon v-else-if="task.status === 4" color="#E6A23C" size="22">
-              <CircleCloseFilled />
-            </el-icon>
-          </span>
-          <span class="task-title">
-            {{ task.desc }}
-            <el-button
-              v-if="task.status === 1"
-              type="danger"
-              size="small"
-              class="mx-2"
-              round
-              @click.stop="handleCancelTask(task)"
-            >
-              取消任务
-            </el-button>
-          </span>
-          <span class="task-status" :class="['doing', 'done', 'danger', 'error'][task.status - 1]">
-            {{ ['进行中', '已完成', '异常', '已取消'][task.status - 1] }}
-          </span>
-          <span class="task-expand-icon">
-            <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
-            <el-icon size="18" color="#fff" v-else><ArrowDown /></el-icon>
-          </span>
-        </div>
-        <transition name="fade">
-          <div v-if="task.expanded" v-loading="task.loading" class="task-detail">
-            <div class="task-detail-title flex items-center justify-between">
-              <span>任务详情</span>
-              <el-icon
-                class="cursor-pointer hover:rotate-90 transition-all"
-                size="20"
-                title="刷新"
-                @click.stop="handleGetTaskDetail(task)"
-              >
+      <template v-if="taskInfo.list?.length">
+        <div v-for="(task, idx) in taskInfo.list" :key="task.id" class="task-item">
+          <div class="task-progress-bar" v-if="typeof task.progress === 'number'">
+            <el-progress
+              :percentage="task.progress"
+              :stroke-width="16"
+              :text-inside="true"
+              status="success"
+              style="margin-bottom: 8px"
+            />
+          </div>
+          <div class="task-item-main" @click="toggleExpand(idx)">
+            <span class="task-icon">
+              <el-icon v-if="task.status === 1" color="#409EFF" size="22" class="icon-rotate">
                 <Refresh />
               </el-icon>
-            </div>
-            <div class="my-2">任务创建时间：{{ task.createdAt }}</div>
-            <div class="my-2">智能平台名称：{{ task.intelligentAccessName }}</div>
-            <div v-if="Array.isArray(task.logs)">
-              <div v-for="log in task.logs" :key="log.mcpInstanceID" class="task-mcp-card mb-4">
-                <div class="flex items-center justify-between mb-1">
-                  <div class="font-bold text-lg">{{ log.mcpInstanceName }}</div>
-                  <el-tag :type="log.status ? 'success' : 'danger'" size="small" effect="dark">
-                    {{ log.status ? '成功' : '失败' }}
-                  </el-tag>
-                </div>
-                <div
-                  v-if="
-                    Array.isArray(log.insertIntelligentLogs) && log.insertIntelligentLogs.length
-                  "
+              <el-icon v-else-if="task.status === 2" color="#67C23A" size="22">
+                <CircleCheckFilled />
+              </el-icon>
+              <el-icon v-else-if="task.status === 3" color="#F56C6C" size="22">
+                <WarningFilled />
+              </el-icon>
+              <el-icon v-else-if="task.status === 4" color="#E6A23C" size="22">
+                <CircleCloseFilled />
+              </el-icon>
+            </span>
+            <span class="task-title">
+              {{ task.desc }}
+              <el-button
+                v-if="task.status === 1"
+                type="danger"
+                size="small"
+                class="mx-2"
+                round
+                @click.stop="handleCancelTask(task)"
+              >
+                {{ t('agent.task.cancel') }}
+              </el-button>
+            </span>
+            <span
+              class="task-status"
+              :class="['doing', 'done', 'danger', 'error'][task.status - 1]"
+            >
+              {{
+                [
+                  t('agent.task.status.doing'),
+                  t('agent.task.status.done'),
+                  t('agent.task.status.error'),
+                  t('agent.task.status.cancel'),
+                ][task.status - 1]
+              }}
+            </span>
+            <span class="task-expand-icon">
+              <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
+              <el-icon size="18" color="#fff" v-else><ArrowDown /></el-icon>
+            </span>
+          </div>
+          <transition name="fade">
+            <div v-if="task.expanded" v-loading="task.loading" class="task-detail">
+              <div class="task-detail-title flex items-center justify-between">
+                <span>{{ t('agent.task.details') }}</span>
+                <el-icon
+                  class="cursor-pointer hover:rotate-90 transition-all"
+                  size="20"
+                  @click.stop="handleGetTaskDetail(task)"
                 >
-                  <div class="text-sm text-gray-400 mb-1">已同步到的命名空间：</div>
-                  <div class="sync-space-list">
-                    <div
-                      v-for="(item, idx) in log.insertIntelligentLogs"
-                      :key="idx"
-                      class="sync-space-item"
-                    >
-                      <span class="font-bold">{{
-                        item.insertIntelligentInfo?.difySpaceName || '-'
-                      }}</span>
-                      <el-tag
-                        :type="item.status ? 'success' : 'danger'"
-                        size="mini"
-                        effect="plain"
-                        class="mx-2"
-                        >{{ item.status ? '成功' : '失败' }}</el-tag
-                      >
+                  <Refresh />
+                </el-icon>
+              </div>
+              <div class="my-2">{{ t('agent.task.createTime') }}：{{ task.createdAt }}</div>
+              <div class="my-2">
+                {{ t('agent.task.platformName') }}：{{ task.intelligentAccessName }}
+              </div>
+              <div v-if="Array.isArray(task.logs)">
+                <div v-for="log in task.logs" :key="log.mcpInstanceID" class="task-mcp-card mb-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <div class="font-bold text-lg">{{ log.mcpInstanceName }}</div>
+                    <el-tag :type="log.status ? 'success' : 'danger'" size="small" effect="dark">
+                      {{ log.status ? t('status.success') : t('status.fail') }}
+                    </el-tag>
+                  </div>
+                  <div
+                    v-if="
+                      Array.isArray(log.insertIntelligentLogs) && log.insertIntelligentLogs.length
+                    "
+                  >
+                    <div class="text-sm text-gray-400 mb-1">
+                      {{ t('agent.task.syncSpaceName') }}：
+                    </div>
+                    <div class="sync-space-list">
                       <div
-                        v-if="!item.status && item.errorLog"
-                        class="sync-error-subcard my-1 mx-2"
+                        v-for="(item, idx) in log.insertIntelligentLogs"
+                        :key="idx"
+                        class="sync-space-item"
                       >
-                        <el-icon
-                          color="#F56C6C"
-                          class="mr-1"
-                          style="vertical-align: middle"
-                          size="16"
+                        <span class="font-bold">{{
+                          item.insertIntelligentInfo?.difySpaceName || '-'
+                        }}</span>
+                        <el-tag
+                          :type="item.status ? 'success' : 'danger'"
+                          size="small"
+                          effect="plain"
+                          class="mx-2"
+                          >{{ item.status ? t('status.success') : t('status.fail') }}</el-tag
                         >
-                          <WarningFilled />
-                        </el-icon>
-                        <span class="sync-error-text">{{ item.errorLog }}</span>
+                        <div
+                          v-if="!item.status && item.errorLog"
+                          class="sync-error-subcard my-1 mx-2"
+                        >
+                          <el-icon
+                            color="#F56C6C"
+                            class="mr-1"
+                            style="vertical-align: middle"
+                            size="16"
+                          >
+                            <WarningFilled />
+                          </el-icon>
+                          <span class="sync-error-text">{{ item.errorLog }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div v-if="!log.status && log.errorLog" class="sync-error-maincard mt-3">
-                  <el-icon color="#F56C6C" class="mr-1" style="vertical-align: middle" size="18"
-                    ><WarningFilled
-                  /></el-icon>
-                  <span class="sync-error-text">{{ log.errorLog }}</span>
+                  <div v-if="!log.status && log.errorLog" class="sync-error-maincard mt-3">
+                    <el-icon color="#F56C6C" class="mr-1" style="vertical-align: middle" size="18"
+                      ><WarningFilled
+                    /></el-icon>
+                    <span class="sync-error-text">{{ log.errorLog }}</span>
+                  </div>
                 </div>
               </div>
+              <div v-else>{{ task.logs }}</div>
             </div>
-            <div v-else>{{ task.logs }}</div>
-          </div>
-        </transition>
-      </div>
+          </transition>
+        </div>
+      </template>
+      <el-empty v-else class="mt-20" :image-size="200" :description="t('status.noData')"></el-empty>
     </div>
   </el-dialog>
 </template>
@@ -156,19 +172,20 @@ import {
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { AgentAPI } from '@/api/agent'
 
+const { t } = useI18n()
 const { taskInfo, handleGetTaskList } = toRefs(useBusinessStoreHook())
 const toggleExpand = (idx: number) => {
   taskInfo.value.list[idx].expanded = !taskInfo.value.list[idx].expanded
   handleGetTaskDetail(taskInfo.value.list[idx])
 }
 
-// 取消任务（需补充具体API逻辑）
+// cancel task
 const handleCancelTask = async (task: any) => {
   await AgentAPI.cancelTask(task.id)
   task.status = 4
 }
 
-// 获取任务详情信息
+// handle get task detail
 const handleGetTaskDetail = async (baseTask: any) => {
   try {
     baseTask.loading = true
@@ -183,7 +200,7 @@ const handleGetTaskDetail = async (baseTask: any) => {
   }
 }
 
-// 显示任务列表
+// show task list
 const handleShowTaskList = () => {
   taskInfo.value.visible = true
 }
@@ -193,20 +210,22 @@ onMounted(() => {
 
 watch(
   () => taskInfo.value.list.map((t) => t.status),
-  async (statuses, _, onCleanup) => {
+  async (newStatuses, oldStatuses = [], onCleanup) => {
     let stop = false
     onCleanup(() => {
       stop = true
     })
-    for (const task of taskInfo.value.list) {
-      if (task.status === 1) {
-        // 自动请求详情
+    for (let i = 0; i < taskInfo.value.list.length; i++) {
+      const task = taskInfo.value.list[i]
+      const prev = oldStatuses[i]
+      const curr = newStatuses[i]
+      if (curr === 1) {
+        // only update doing tasks
         try {
           const { task: detail } = await AgentAPI.taskDetail(task.id)
-          // 进度计算
+          // calculate progress
           const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
           let done = 0
-
           if (Array.isArray(detail.installLogs)) {
             for (const log of detail.installLogs) {
               if (Array.isArray(log.insertIntelligentLogs)) {
@@ -217,6 +236,25 @@ watch(
           task.progress = total ? Math.round((done / total) * 100) : 0
         } catch {}
         if (stop) break
+      } else if (prev === 1 && curr !== 1) {
+        // 从进行中变为其他状态：再请求一次详情
+        try {
+          const { task: detail } = await AgentAPI.taskDetail(task.id)
+          task.logs = detail.installLogs
+          const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
+          let done = 0
+          if (Array.isArray(detail.installLogs)) {
+            for (const log of detail.installLogs) {
+              if (Array.isArray(log.insertIntelligentLogs)) {
+                done += log.insertIntelligentLogs.filter((l: any) => l.status === true).length
+              }
+            }
+          }
+          task.progress = total ? Math.round((done / total) * 100) : 0
+          setTimeout(() => {
+            task.progress = undefined
+          }, 500)
+        } catch {}
       }
     }
   },

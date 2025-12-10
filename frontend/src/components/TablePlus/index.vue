@@ -80,8 +80,6 @@
     ref="dataTableRef"
     v-loading="loading"
     :data="list"
-    highlight-current-row
-    stripe
     :header-cell-style="{
       'background-color': 'var(--ep-bg-grey)',
     }"
@@ -241,8 +239,6 @@ const loading = ref(false)
 const list = ref<unknown[]>([])
 // 跨页选择：全局已选数据
 const selectedRows = ref<any[]>([])
-// 当前页码的选中
-const currentSelectedRows = ref<any[]>([])
 const dataTableRef =
   ref<InstanceType<(typeof import('element-plus/lib/components/table/src/table.vue'))['default']>>()
 const _pagerConfig = ref(Object.assign({}, props.pageConfig))

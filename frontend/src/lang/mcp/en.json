@@ -153,6 +153,7 @@
         "initScript": "InitScript",
         "command": "Command",
         "addToken": " Add",
+        "batchChangeHeader": "Batch Modify",
         "initScriptTips": "The initialization script needs to ensure that it can eventually exit after execution and cannot be blocked, otherwise it cannot be started",
         "servicePathTips": "MCP Service access path"
       },
@@ -218,7 +219,16 @@
         "passthroughOff": "No Passthrough",
         "headersKey": "Header Key",
         "headersValue": "Header Value",
-        "deleteProtected": "This tag cannot be deleted"
+        "deleteProtected": "This tag cannot be deleted",
+        "newTag": "New Tag",
+        "tagName": "Tag Name",
+        "tagNamePlaceholder": "Please enter the tag name",
+        "tagType": "Tag Type",
+        "tagTypePlaceholder": "Please select a type",
+        "tagValue": "Value",
+        "tagValuePlaceholder": "Please enter the type value",
+        "batchChangeTitle": "Batch Add Request Headers",
+        "mustSelectToken": "Please select the Token(s) to be modified"
       },
       "openApi": {
         "importTitle": "Import OpenAPI Document",

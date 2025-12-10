@@ -763,6 +763,7 @@ const handleGetTemplateDetail = async () => {
     {
       expireAt: '',
       publishAt: new Date().getTime(),
+      headers: [{ key: 'Authorization', value: '' }],
       token:
         'Bearer ' +
         getToken(

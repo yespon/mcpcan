@@ -145,7 +145,7 @@ const tokenTypeOptions = [
 onMounted(() => {
   console.log(555, props.formData)
 })
-// 账号密码弹窗数据
+// account password dialog data
 const userDataKey = ref({ visible: false, username: '', password: '' })
 
 // handle add header

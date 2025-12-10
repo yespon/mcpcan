@@ -64,11 +64,12 @@ request.interceptors.response.use(
     const { code, data, message } = response.data
 
     // 请求成功
-
     if (code === 0) {
       return data
-    } else {
+    } else if (code === 1001 || code === 403) {
+      // 认证错误
       handleErrorStatus(code, response.config)
+      return Promise.reject(new Error(message || 'Authentication Error'))
     }
     // 业务错误
     ElMessage.error(message || (t('request.system') as string))
