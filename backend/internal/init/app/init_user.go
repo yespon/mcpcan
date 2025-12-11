@@ -3,11 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
 	"github.com/kymo-mcp/mcpcan/internal/init/config"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"time"
 )
 
 func (a *App) createAdminUser() (*model.SysUser, error) {

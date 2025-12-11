@@ -10,7 +10,7 @@ const (
 	AccessTokenExpireTime  = 60 * 60 * 24     // 1 day
 	RefreshTokenExpireTime = 60 * 60 * 24 * 7 // 7 days
 
-	DefaultLanguage    = "zh-CN"
+	DefaultLanguage    = "en-US"
 	DefaultTheme       = "light"
 	AutoLogoutTime     = 30 * 60 // 30 minutes
 	EnableNotification = true

@@ -462,6 +462,11 @@
         </el-row>
       </el-form>
     </div>
+    <el-row v-if="!pageInfo.formData.instanceId">
+      <el-col :span="12">
+        <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
+      </el-col>
+    </el-row>
     <div class="action-footer mt-4 flex">
       <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
       <mcp-button @click="handleConfirm">{{
@@ -487,6 +492,7 @@ import { TemplateAPI } from '@/api/mcp/template'
 import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
 import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts'
 import { cloneDeep } from 'lodash-es'
+import TokenForm from './modules/components/token-form.vue'
 
 const { t } = useI18n()
 const {
@@ -683,6 +689,16 @@ const handleConfirm = async () => {
   if (isBaseValid && isConfigValid) {
     try {
       pageInfo.value.loading = true
+      if (!pageInfo.value.formData.instanceId) {
+        if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
+          pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
+            pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
+              header.key,
+              header.value,
+            ]),
+          )
+        }
+      }
       await (query.instanceId ? InstanceAPI.edit : InstanceAPI.create)({
         ...pageInfo.value.formData,
         environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
@@ -704,7 +720,8 @@ const handleConfirm = async () => {
 /**
  * Handle change environment event
  */
-const handleChangeEnvironmentId = async () => {
+const handleChangeEnvironmentId = async (e: number | undefined) => {
+  pageInfo.value.formData.environmentId = e
   handleGetNodeList(pageInfo.value.formData.environmentId)
   handleGetPvcList(pageInfo.value.formData.environmentId)
 }
@@ -748,7 +765,9 @@ const handleGetTemplateDetail = async () => {
   pageInfo.value.formData.tokens = [
     {
       expireAt: '',
+      enabled: true,
       publishAt: new Date().getTime(),
+      headers: [{ key: 'Authorization', value: '' }],
       token:
         'Bearer ' +
         getToken(
@@ -767,17 +786,20 @@ const handleGetTemplateDetail = async () => {
  * init data
  * @param form - instance form data
  */
-const init = () => {
+const init = async () => {
   let loadingInstance
   try {
     loadingInstance = ElLoading.service({ fullscreen: true, text: t('status.loading') + '...' })
-    handleGetEnvList()
+    await handleGetEnvList()
     handleGetPackageList()
+    if (query.templateId) {
+      await handleGetTemplateDetail()
+    }
     if (query.instanceId) {
       handleGetDetail()
-    }
-    if (query.templateId) {
-      handleGetTemplateDetail()
+    } else {
+      // 默认选中第一个环境变量
+      handleChangeEnvironmentId(envList.value[0]?.id)
     }
   } finally {
     loadingInstance?.close()

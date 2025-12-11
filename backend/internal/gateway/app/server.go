@@ -120,22 +120,18 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 
 		// Extract token from headers based on priority
 		var token string
-		var tokenHeader string
 		if authToken := c.GetHeader("Authorization"); authToken != "" {
-			tokenHeader = "Authorization"
 			token = authToken
 		} else if authToken := c.GetHeader("API-Key"); authToken != "" {
-			tokenHeader = "API-Key"
 			token = authToken
 		} else if authToken := c.GetHeader("X-API-Key"); authToken != "" {
-			tokenHeader = "X-API-Key"
 			token = authToken
 		}
 
 		// Log the request with all collected fields, including the masked token
 		logger.Info("Request", logFields...)
 
-		proxy.WriteMCPLog(traceID, instanceID, tokenHeader, token, golibLog.InfoLevel, model.EventRequest, nil, string(reqMsg))
+		proxy.WriteMCPLog(traceID, instanceID, token, golibLog.InfoLevel, model.EventRequest, nil, string(reqMsg))
 
 		c.Next()
 
@@ -164,7 +160,7 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			"latency":         latency,
 			"responseHeaders": respHeaders,
 		})
-		proxy.WriteMCPLog(traceID, instanceID, tokenHeader, token, golibLog.InfoLevel, model.EventResponse, nil, string(respMsg))
+		proxy.WriteMCPLog(traceID, instanceID, token, golibLog.InfoLevel, model.EventResponse, nil, string(respMsg))
 	}
 }
 

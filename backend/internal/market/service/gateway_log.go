@@ -44,9 +44,6 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	if strings.TrimSpace(req.InstanceId) != "" {
 		filters["instanceId"] = strings.TrimSpace(req.InstanceId)
 	}
-	if strings.TrimSpace(req.TokenHeader) != "" {
-		filters["tokenHeader"] = strings.TrimSpace(req.TokenHeader)
-	}
 	if strings.TrimSpace(req.Token) != "" {
 		filters["token"] = strings.TrimSpace(req.Token)
 	}
@@ -74,16 +71,15 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	result := make([]*gatewaylogpb.GatewayLog, 0, len(logs))
 	for _, g := range logs {
 		result = append(result, &gatewaylogpb.GatewayLog{
-			Id:          uint32(g.ID),
-			InstanceId:  g.InstanceID,
-			TokenHeader: g.TokenHeader,
-			Token:       g.Token,
-			Usages:      splitUsages(g.Usages),
-			Level:       intToProtoLevel(int(g.Level)),
-			Event:       string(g.Event),
-			CreatedAt:   g.CreatedAt.Format(time.RFC3339Nano),
-			Log:         string(g.Log),
-			TraceId:     g.TraceID,
+			Id:         uint32(g.ID),
+			InstanceId: g.InstanceID,
+			Token:      g.Token,
+			Usages:     splitUsages(g.Usages),
+			Level:      intToProtoLevel(int(g.Level)),
+			Event:      string(g.Event),
+			CreatedAt:  g.CreatedAt.Format(time.RFC3339Nano),
+			Log:        string(g.Log),
+			TraceId:    g.TraceID,
 		})
 	}
 

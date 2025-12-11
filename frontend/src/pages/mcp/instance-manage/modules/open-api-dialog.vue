@@ -10,51 +10,58 @@
     <template #title>{{ dialogInfo.title }}</template>
     <el-splitter v-loading="dialogInfo.loading">
       <el-splitter-panel size="50%" class="p-4">
-        <el-form
-          ref="baseInfo"
-          :model="formData"
-          :rules="rules"
-          label-width="auto"
-          label-position="top"
-        >
-          <el-form-item :label="t('mcp.instance.formData.instanceName')" prop="name">
-            <el-input
-              v-model="formData.name"
-              :placeholder="t('mcp.instance.formData.instanceName')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
-            <el-select
-              v-model="formData.environmentId"
-              :placeholder="t('mcp.instance.formData.environmentId')"
-            >
-              <el-option
-                v-for="(env, index) in envList"
-                :key="index"
-                :label="env.name"
-                :value="env.id"
+        <div style="height: 75vh">
+          <el-form
+            ref="baseInfo"
+            :model="formData"
+            :rules="rules"
+            label-width="auto"
+            label-position="top"
+          >
+            <el-form-item :label="t('mcp.instance.formData.instanceName')" prop="name">
+              <el-input
+                v-model="formData.name"
+                :placeholder="t('mcp.instance.formData.instanceName')"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="t('mcp.instance.openApi.serviceUrl')" prop="openapiBaseUrl">
-            <el-input
-              v-model="formData.openapiBaseUrl"
-              :placeholder="t('mcp.instance.openApi.serviceUrl')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
-            <el-input
-              v-model="formData.notes"
-              :rows="4"
-              type="textarea"
-              :placeholder="t('mcp.template.formData.notes')"
-            />
-          </el-form-item>
-          <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
-            <Upload v-model="formData.iconPath"></Upload>
-          </el-form-item>
-        </el-form>
-        <div class="mt-8 color-gray text-3">{{ t('mcp.instance.openApi.tips') }}</div>
+            </el-form-item>
+            <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
+              <el-select
+                v-model="formData.environmentId"
+                :placeholder="t('mcp.instance.formData.environmentId')"
+              >
+                <el-option
+                  v-for="(env, index) in envList"
+                  :key="index"
+                  :label="env.name"
+                  :value="env.id"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('mcp.instance.openApi.serviceUrl')" prop="openapiBaseUrl">
+              <el-input
+                v-model="formData.openapiBaseUrl"
+                :placeholder="t('mcp.instance.openApi.serviceUrl')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
+              <el-input
+                v-model="formData.notes"
+                :rows="4"
+                type="textarea"
+                :placeholder="t('mcp.template.formData.notes')"
+              />
+            </el-form-item>
+            <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
+              <Upload v-model="formData.iconPath"></Upload>
+            </el-form-item>
+          </el-form>
+          <TokenForm
+            v-if="!formData.instanceId"
+            ref="tokenForm"
+            :formData="formData.tokens[0]"
+          ></TokenForm>
+          <div class="mt-8 color-gray text-3 pb-4">{{ t('mcp.instance.openApi.tips') }}</div>
+        </div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
         <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
@@ -155,6 +162,7 @@ import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { SourceType, TokenType } from '@/types'
 import { ElTooltip } from 'element-plus'
+import TokenForm from './components/token-form.vue'
 
 const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
@@ -173,14 +181,15 @@ const formData = ref({
   name: '',
   notes: '',
   iconPath: '',
-  environmentId: '',
+  environmentId: envList.value[0]?.id,
   openapiBaseUrl: '',
   openapiFileID: '',
   chooseOpenapiFileID: '', // 选择的文档库文件ID
+  enabledToken: true,
   sourceType: SourceType.OPENAPI,
   tokens: [
     {
-      enabledTransport: false,
+      enabled: true,
       expireAt: '',
       headers: [],
       publishAt: new Date().getTime(),
@@ -199,7 +208,10 @@ const formData = ref({
   ],
 })
 const rules = ref({
-  name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  name: [
+    { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
+    { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+  ],
   openapiBaseUrl: [
     { required: true, message: t('mcp.instance.rules.openapiBaseUrl'), trigger: 'blur' },
   ],
@@ -335,7 +347,7 @@ const handleValidFile = (rawText: string) => {
         ElMessage.error(t('mcp.instance.openApi.support3'))
         reject(false)
       }
-    } catch (e) {
+    } catch {
       try {
         docObject.value = yaml.load(rawText)
         if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
@@ -359,9 +371,9 @@ const handleDefaultCheckedKeys = (rawText: string) => {
     // try to parse as JSON/YAML (fault tolerance)
     try {
       docObject.value = JSON.parse(rawText)
-      formData.value.openapiBaseUrl = docObject.value.servers?.length
-        ? docObject.value.servers[0]?.url
-        : ''
+      formData.value.openapiBaseUrl =
+        formData.value.openapiBaseUrl ||
+        (docObject.value.servers?.length ? docObject.value.servers[0]?.url : '')
       defaultCheckedKeys.value = []
       const collectIds = (nodes: any[]) => {
         nodes.forEach((n) => {
@@ -370,12 +382,12 @@ const handleDefaultCheckedKeys = (rawText: string) => {
         })
       }
       collectIds(buildApiTree(docObject.value))
-    } catch (e) {
+    } catch {
       try {
         docObject.value = yaml.load(rawText)
-        formData.value.openapiBaseUrl = docObject.value.servers?.length
-          ? docObject.value.servers[0]?.url
-          : ''
+        formData.value.openapiBaseUrl =
+          formData.value.openapiBaseUrl ||
+          (docObject.value.servers?.length ? docObject.value.servers[0]?.url : '')
         defaultCheckedKeys.value = []
         const collectIds = (nodes: any[]) => {
           nodes.forEach((n) => {
@@ -415,7 +427,7 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
         })
       }
       collectIds(apiNodeList.value)
-    } catch (e) {
+    } catch {
       // Not JSON, try to parse as YAML
       try {
         docObject.value = yaml.load(rawText)
@@ -544,6 +556,11 @@ const handleConfirm = async () => {
         return
       }
       if (valid) {
+        if (!formData.value.instanceId) {
+          formData.value.tokens[0].headers = Object.fromEntries(
+            formData.value.tokens[0].headers.map((header: any) => [header.key, header.value]),
+          )
+        }
         // 提交数据
         await (formData.value.instanceId
           ? InstanceAPI.editByOpenAPI(formData.value)
@@ -571,6 +588,7 @@ const handleGetDetail = async (id: string) => {
       chooseOpenapiFileID: data.packageId,
       openapiFileID: '',
     }
+    console.log('instance detail data1', data)
 
     // get openapi file content
     const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
@@ -586,6 +604,7 @@ const handleGetDetail = async (id: string) => {
       openapiFileId: baseOpenapiFileID,
     })
     handleDefaultNodeAPIlist(res.content)
+    console.log('instance detail data2', formData.value)
   } finally {
     dialogInfo.value.loading = false
   }
@@ -594,9 +613,11 @@ const handleGetDetail = async (id: string) => {
 /**
  * Init dialog data
  */
-const init = (id: string | null) => {
+const init = async (id: string | null) => {
   dialogInfo.value.visible = true
   baseInfo.value?.resetFields()
+  handleGetAPIlist()
+  await handleGetEnvList()
   if (id) {
     // get detail
     handleGetDetail(id)
@@ -607,13 +628,14 @@ const init = (id: string | null) => {
       notes: '',
       iconPath: '',
       openapiBaseUrl: '',
-      environmentId: '',
+      environmentId: envList.value[0]?.id,
+      enabledToken: true,
       openapiFileID: '',
       chooseOpenapiFileID: '',
       sourceType: SourceType.OPENAPI,
       tokens: [
         {
-          enabledTransport: false,
+          enabled: true,
           expireAt: '',
           headers: [],
           publishAt: new Date().getTime(),
@@ -632,9 +654,6 @@ const init = (id: string | null) => {
       ],
     }
   }
-
-  handleGetAPIlist()
-  handleGetEnvList()
 }
 
 defineExpose({

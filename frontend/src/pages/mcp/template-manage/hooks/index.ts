@@ -56,13 +56,13 @@ export const useTemplateTableHooks = () => {
         return mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
       },
     },
-    {
-      dataIndex: 'environmentName',
-      label: t('mcp.template.env'),
-      customRender: ({ row }: { row: TemplateResult }) => {
-        return row.accessType === AccessType.HOSTING ? row.environmentName : '--'
-      },
-    },
+    // {
+    //   dataIndex: 'environmentName',
+    //   label: t('mcp.template.env'),
+    //   customRender: ({ row }: { row: TemplateResult }) => {
+    //     return row.accessType === AccessType.HOSTING ? row.environmentName : '--'
+    //   },
+    // },
     {
       dataIndex: 'notes',
       label: t('mcp.template.notes'),

@@ -12,5 +12,6 @@ export * from './modules/system-store'
 export * from './modules/user-store'
 export * from './modules/tags-view-store'
 export * from './modules/mcp-store'
+export * from './modules/business-store'
 
 export { store }

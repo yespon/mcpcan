@@ -9,6 +9,8 @@ import higress from '@/assets/logo/higress-color.svg'
 import mcpso from '@/assets/logo/mcpso-color.svg'
 import smithery from '@/assets/logo/smithery-color.svg'
 import openapi from '@/assets/logo/openapi.png'
+import kymo from '@/assets/logo/kymo.png'
+import dify from '@/assets/logo/dify-logo.png'
 
 export {
   instanceTotal,
@@ -21,4 +23,6 @@ export {
   mcpso,
   smithery,
   openapi,
+  kymo,
+  dify,
 }
