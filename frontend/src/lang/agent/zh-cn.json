@@ -21,7 +21,8 @@
       "create": "创建智能体平台",
       "community": "社区版",
       "enterprise": "商业版",
-      "successConnection": "测试连接成功"
+      "successConnection": "测试连接成功",
+      "failConnectionTips": "平台链接失败；是否任然保存？"
     },
     "formData": {
       "accessName": "接入名称",
@@ -48,6 +49,7 @@
       "platform": "平台：",
       "selected": "已选择",
       "selectSpace": "选择空间: ",
+      "executed": "已同步空间数：",
       "unitMCP": "个MCP服务",
       "unitSpace": "个空间",
       "unit": "个",

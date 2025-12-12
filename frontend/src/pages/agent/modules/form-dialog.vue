@@ -3,8 +3,9 @@
     v-model="dialogInfo.visible"
     :title="dialogInfo.title"
     :show-close="false"
+    :close-on-click-modal="false"
     width="680px"
-    top="10vh"
+    top="20vh"
   >
     <template #header>
       <div class="flex items-center w-full">
@@ -79,7 +80,7 @@ import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AgentAPI } from '@/api/agent/index'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import McpImage from '@/components/mcp-image/index.vue'
 import { dify } from '@/utils/logo.ts'
 
@@ -168,17 +169,45 @@ const handleSubmit = async () => {
         dbPassword: formModel.value.dbPassword,
         dbName: formModel.value.dbName,
       }
-      await AgentAPI.connectionTest(params).then(async () => {
-        await (formModel.value.accessID
-          ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
-          : AgentAPI.create(params))
-        ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
-        emit('on-refresh')
-        dialogInfo.value.visible = false
-        formRef.value?.resetFields()
-      })
-    } catch (error: any) {
-      console.error('Failed to create agent:', error)
+      await AgentAPI.connectionTest(params)
+        .then(async () => {
+          await (formModel.value.accessID
+            ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
+            : AgentAPI.create(params))
+          ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
+          emit('on-refresh')
+          dialogInfo.value.visible = false
+          formRef.value?.resetFields()
+        })
+        .catch(async () => {
+          const result = await ElMessageBox.confirm(
+            t('agent.action.failConnectionTips'),
+            t('common.warn'),
+            {
+              confirmButtonText: t('common.ok'),
+              cancelButtonText: t('common.cancel'),
+              type: 'warning',
+              customClass: 'tips-box',
+              center: true,
+              showClose: false,
+              confirmButtonClass: 'is-plain el-button--danger danger-btn',
+              customStyle: {
+                width: '517px',
+                height: '247px',
+              },
+            },
+          )
+          if (result === 'confirm') {
+            await (formModel.value.accessID
+              ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
+              : AgentAPI.create(params))
+            ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
+            emit('on-refresh')
+            dialogInfo.value.visible = false
+            formRef.value?.resetFields()
+          }
+        })
+    } catch {
     } finally {
       dialogInfo.value.loading = false
     }

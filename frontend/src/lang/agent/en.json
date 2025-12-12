@@ -21,7 +21,8 @@
       "create": "Create Agent",
       "community": "Community",
       "enterprise": "Enterprise",
-      "successConnection": "Connection Test Successful"
+      "successConnection": "Connection Test Successful",
+      "failConnectionTips": "Platform connection failed; do you still want to save?"
     },
     "formData": {
       "accessName": "Access Name",
@@ -48,6 +49,7 @@
       "platform": "Platform: ",
       "selected": "Selected",
       "selectSpace": "Select Namespace: ",
+      "executed": "Synchronized Namespaces: ",
       "unitMCP": "MCP Services",
       "unitSpace": "Namespaces",
       "unit": "items",

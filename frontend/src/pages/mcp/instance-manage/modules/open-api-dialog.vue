@@ -181,10 +181,11 @@ const formData = ref({
   name: '',
   notes: '',
   iconPath: '',
-  environmentId: '',
+  environmentId: envList.value[0]?.id,
   openapiBaseUrl: '',
   openapiFileID: '',
   chooseOpenapiFileID: '', // 选择的文档库文件ID
+  enabledToken: true,
   sourceType: SourceType.OPENAPI,
   tokens: [
     {
@@ -207,7 +208,10 @@ const formData = ref({
   ],
 })
 const rules = ref({
-  name: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  name: [
+    { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
+    { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+  ],
   openapiBaseUrl: [
     { required: true, message: t('mcp.instance.rules.openapiBaseUrl'), trigger: 'blur' },
   ],
@@ -343,7 +347,7 @@ const handleValidFile = (rawText: string) => {
         ElMessage.error(t('mcp.instance.openApi.support3'))
         reject(false)
       }
-    } catch (e) {
+    } catch {
       try {
         docObject.value = yaml.load(rawText)
         if (!docObject.value.openapi || docObject.value.openapi < '3.0.0') {
@@ -378,7 +382,7 @@ const handleDefaultCheckedKeys = (rawText: string) => {
         })
       }
       collectIds(buildApiTree(docObject.value))
-    } catch (e) {
+    } catch {
       try {
         docObject.value = yaml.load(rawText)
         formData.value.openapiBaseUrl =
@@ -423,7 +427,7 @@ const handleDefaultNodeAPIlist = (rawText: string) => {
         })
       }
       collectIds(apiNodeList.value)
-    } catch (e) {
+    } catch {
       // Not JSON, try to parse as YAML
       try {
         docObject.value = yaml.load(rawText)
@@ -609,9 +613,11 @@ const handleGetDetail = async (id: string) => {
 /**
  * Init dialog data
  */
-const init = (id: string | null) => {
+const init = async (id: string | null) => {
   dialogInfo.value.visible = true
   baseInfo.value?.resetFields()
+  handleGetAPIlist()
+  await handleGetEnvList()
   if (id) {
     // get detail
     handleGetDetail(id)
@@ -622,13 +628,14 @@ const init = (id: string | null) => {
       notes: '',
       iconPath: '',
       openapiBaseUrl: '',
-      environmentId: '',
+      environmentId: envList.value[0]?.id,
+      enabledToken: true,
       openapiFileID: '',
       chooseOpenapiFileID: '',
       sourceType: SourceType.OPENAPI,
       tokens: [
         {
-          enabled: false,
+          enabled: true,
           expireAt: '',
           headers: [],
           publishAt: new Date().getTime(),
@@ -647,9 +654,6 @@ const init = (id: string | null) => {
       ],
     }
   }
-
-  handleGetAPIlist()
-  handleGetEnvList()
 }
 
 defineExpose({

@@ -742,8 +742,8 @@ message CreateOpenapiRequest {
   string notes = 3;
   // @inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"Selected OpenAPI document ID"
   string chooseOpenapiFileID = 4;
-  // @inject_tag: json:"enableToken" form:"enableToken" desc:"Enable tokens"
-  bool enableToken = 5;
+  // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"Enable tokens"
+  bool enabledToken = 5;
   // @inject_tag: json:"tokens" form:"tokens" desc:"Token list"
   repeated McpToken tokens = 6;
   // @inject_tag: json:"environmentId" form:"environmentId" desc:"Environment ID"

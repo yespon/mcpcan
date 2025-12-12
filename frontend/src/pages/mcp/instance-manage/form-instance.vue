@@ -690,12 +690,14 @@ const handleConfirm = async () => {
     try {
       pageInfo.value.loading = true
       if (!pageInfo.value.formData.instanceId) {
-        pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
-          pageInfo.value.formData.tokens[0].headers.map((header: any) => [
-            header.key,
-            header.value,
-          ]),
-        )
+        if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
+          pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
+            pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
+              header.key,
+              header.value,
+            ]),
+          )
+        }
       }
       await (query.instanceId ? InstanceAPI.edit : InstanceAPI.create)({
         ...pageInfo.value.formData,
@@ -718,7 +720,8 @@ const handleConfirm = async () => {
 /**
  * Handle change environment event
  */
-const handleChangeEnvironmentId = async () => {
+const handleChangeEnvironmentId = async (e: number | undefined) => {
+  pageInfo.value.formData.environmentId = e
   handleGetNodeList(pageInfo.value.formData.environmentId)
   handleGetPvcList(pageInfo.value.formData.environmentId)
 }
@@ -762,6 +765,7 @@ const handleGetTemplateDetail = async () => {
   pageInfo.value.formData.tokens = [
     {
       expireAt: '',
+      enabled: true,
       publishAt: new Date().getTime(),
       headers: [{ key: 'Authorization', value: '' }],
       token:
@@ -782,17 +786,20 @@ const handleGetTemplateDetail = async () => {
  * init data
  * @param form - instance form data
  */
-const init = () => {
+const init = async () => {
   let loadingInstance
   try {
     loadingInstance = ElLoading.service({ fullscreen: true, text: t('status.loading') + '...' })
-    handleGetEnvList()
+    await handleGetEnvList()
     handleGetPackageList()
+    if (query.templateId) {
+      await handleGetTemplateDetail()
+    }
     if (query.instanceId) {
       handleGetDetail()
-    }
-    if (query.templateId) {
-      handleGetTemplateDetail()
+    } else {
+      // 默认选中第一个环境变量
+      handleChangeEnvironmentId(envList.value[0]?.id)
     }
   } finally {
     loadingInstance?.close()

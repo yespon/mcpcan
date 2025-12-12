@@ -293,6 +293,7 @@
     <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
     <!-- select agent with nameSpace  -->
     <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
+    <TaskList ref="taskList"></TaskList>
   </div>
 </template>
 
@@ -315,6 +316,7 @@ import McpImage from '@/components/mcp-image/index.vue'
 import { AccessType, InstanceStatus, SourceType } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
 import AgentSyncDialog from './modules/agent-sync-dialog.vue'
+import TaskList from './modules/task-list.vue'
 
 const { t } = useI18n()
 const {

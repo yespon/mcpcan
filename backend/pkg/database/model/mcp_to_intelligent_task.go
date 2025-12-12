@@ -23,22 +23,6 @@ type InsertIntelligentInfo struct {
 
 type InsertIntelligentInfos []*InsertIntelligentInfo
 
-type InstallLog struct {
-	McpInstanceID         string                  `gorm:"type:varchar(255);not null;column:mcp_instance_id;comment:MCP实例ID"`
-	McpInstanceName       string                  `gorm:"type:varchar(255);not null;column:mcp_instance_id;comment:MCP实例名称"`
-	InsertIntelligentLogs []*InsertIntelligentLog `gorm:"type:json;not null;column:insert_intelligent_info;comment:智能体平台插入日志"`
-	Status                bool                    `gorm:"type:bool;not null;column:status;comment:任务状态"`
-	ErrorLog              string                  `gorm:"type:text;not null;column:error_log;comment:安装错误日志"`
-}
-
-type InsertIntelligentLog struct {
-	InsertIntelligentInfo *InsertIntelligentInfo `gorm:"type:json;not null;column:insert_intelligent_info;comment:智能体平台插入信息"`
-	ErrorLog              string                 `gorm:"type:text;not null;column:error_log;comment:安装错误日志"`
-	Status                bool                   `gorm:"type:bool;not null;column:status;comment:任务状态"`
-}
-
-type InstallLogs []*InstallLog
-
 type StringSlice []string
 
 // McpToIntelligentTask mcp到智能体平台任务
@@ -50,7 +34,6 @@ type McpToIntelligentTask struct {
 	InsertIntelligentInfos InsertIntelligentInfos `gorm:"type:json;not null;column:insert_intelligent_info;comment:智能体平台插入信息"`
 	McpInstanceIDs         StringSlice            `gorm:"type:json;not null;column:mcp_instance_ids;comment:MCP实例ID列表"`
 	Status                 string                 `gorm:"type:varchar(255);not null;column:status;comment:任务状态"`
-	InstallLogs            InstallLogs            `gorm:"type:json;not null;column:install_logs;comment:安装日志"`
 	Domain                 string                 `gorm:"type:varchar(255);not null;column:domain;comment:mcp访问域名"`
 	CreatedAt              time.Time              `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt              time.Time              `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
@@ -91,66 +74,6 @@ func (i InsertIntelligentInfos) Value() (driver.Value, error) {
 	if i == nil {
 		return nil, nil
 	}
-	return json.Marshal(i)
-}
-
-// InstallLogs 实现 GORM 接口
-func (i *InstallLogs) Scan(value interface{}) error {
-	if value == nil {
-		*i = nil
-		return nil
-	}
-
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(bytes, i)
-}
-
-func (i InstallLogs) Value() (driver.Value, error) {
-	if i == nil {
-		return nil, nil
-	}
-	return json.Marshal(i)
-}
-
-// InstallLog 实现 GORM 接口
-func (i *InstallLog) Scan(value interface{}) error {
-	if value == nil {
-		*i = InstallLog{}
-		return nil
-	}
-
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(bytes, i)
-}
-
-func (i InstallLog) Value() (driver.Value, error) {
-	return json.Marshal(i)
-}
-
-// InsertIntelligentLog 实现 GORM 接口
-func (i *InsertIntelligentLog) Scan(value interface{}) error {
-	if value == nil {
-		*i = InsertIntelligentLog{}
-		return nil
-	}
-
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(bytes, i)
-}
-
-func (i InsertIntelligentLog) Value() (driver.Value, error) {
 	return json.Marshal(i)
 }
 

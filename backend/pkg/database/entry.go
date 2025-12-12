@@ -18,7 +18,7 @@ func Init(config *common.MySQLConfig) error {
 		Database:            config.Database,
 		ConnectTimeout:      20 * time.Second,
 		MaxIdleConns:        50,
-		MaxOpenConns:        250,
+		MaxOpenConns:        300,
 		HealthCheckInterval: 30 * time.Second,
 		MaxRetries:          12,
 		RetryInterval:       5 * time.Second,

@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
@@ -46,11 +45,9 @@ func (r *McpToIntelligentTaskRepository) Update(ctx context.Context, task *model
 }
 
 // Update log 更新日志
-func (r *McpToIntelligentTaskRepository) UpdateLogs(ctx context.Context, id int64, logs []*model.InstallLog, status string) error {
-	logJson, _ := json.Marshal(logs)
+func (r *McpToIntelligentTaskRepository) UpdateLogs(ctx context.Context, id int64, status string) error {
 	return r.getDB().WithContext(ctx).Where("id = ?", id).Where("status != ?", pb.McpToIntelligentTaskStatus_Cancel.String()).Updates(map[string]interface{}{
-		"install_logs": logJson,
-		"status":       status,
+		"status": status,
 	}).Error
 }
 

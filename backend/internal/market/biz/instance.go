@@ -187,7 +187,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		SourceType:             model.OpenapiTypeCustom,
 		McpServerID:            "",
 		TemplateID:             0,
-		EnabledToken:           req.EnableToken,
+		EnabledToken:           req.EnabledToken,
 		ImgAddr:                containerOptions.ImageName,
 		Port:                   8080,
 		InitScript:             "",

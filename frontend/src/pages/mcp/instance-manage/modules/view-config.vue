@@ -87,114 +87,121 @@
                 </SearchForm>
               </div>
             </div>
-
-            <div v-for="(token, index) in showTokenList" :key="index" class="w-full">
-              <div class="flex items-center w-full">
-                <div class="mr-2 flex-shrink-0">
-                  <el-checkbox
-                    :model-value="selectedTokens.includes(token.id)"
-                    @change="toggleTokenSelection(token.id)"
-                    @click.stop
-                  ></el-checkbox>
-                </div>
-                <div
-                  class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-6 flex-1 min-w-0"
-                  :class="[
-                    {
-                      active: dialogInfo.currentTokenIndex === index,
-                      disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
-                    },
-                  ]"
-                  @click="handleSelectedToken(index)"
-                >
-                  <div class="flex">
-                    <div class="ellipsis-one flex-sub">
-                      {{ token.token }}
-                    </div>
-                    <el-dropdown
-                      trigger="click"
-                      class="ml-2"
-                      style="cursor: pointer !important"
+            <RecycleScroller
+              class="scroller hide-scrollbar mt-4"
+              :items="showTokenList"
+              :item-size="140"
+              key-field="id"
+              v-slot="{ item: token, index }"
+            >
+              <div class="w-full">
+                <div class="flex items-center w-full">
+                  <div class="mr-2 flex-shrink-0">
+                    <el-checkbox
+                      :model-value="selectedTokens.includes(token.id)"
+                      @change="toggleTokenSelection(token.id)"
                       @click.stop
-                      :show-arrow="false"
-                    >
-                      <el-icon size="18"><Operation /></el-icon>
-                      <template #dropdown>
-                        <el-dropdown-menu>
-                          <el-dropdown-item @click="handleEditToken(index)">
-                            <el-button link>
-                              {{ t('env.run.action.edit') }}
-                            </el-button>
-                          </el-dropdown-item>
-                          <el-dropdown-item @click="handleViewLog(index)">
-                            <el-button link>
-                              {{ t('mcp.instance.action.accessLogs') }}
-                            </el-button>
-                          </el-dropdown-item>
-                          <el-dropdown-item
-                            v-if="showDeleteBtn(token)"
-                            @click="handleDeleteToken(index)"
-                          >
-                            <el-button type="danger" link>
-                              {{ t('mcp.instance.action.delete') }}
-                            </el-button>
-                          </el-dropdown-item>
-                        </el-dropdown-menu>
-                      </template>
-                    </el-dropdown>
+                    ></el-checkbox>
                   </div>
-                  <div class="grid grid-cols-2 mt-2">
-                    <div class="ellipsis-one grid-cols-span-1">
-                      {{ t('mcp.instance.token.expireAt') }}：<span
-                        :class="
-                          !token.expireAt
-                            ? 'color-green'
-                            : token.expireAt < Date.now()
-                              ? 'color-red'
-                              : ''
-                        "
+                  <div
+                    class="token-card border-rounded-2 p-4 cursor-pointer line-height-6 flex-1 min-w-0"
+                    :class="[
+                      {
+                        active: dialogInfo.currentTokenIndex === index,
+                        disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
+                      },
+                    ]"
+                    @click="handleSelectedToken(index)"
+                  >
+                    <div class="flex">
+                      <div class="ellipsis-one flex-sub">
+                        {{ token.token }}
+                      </div>
+                      <el-dropdown
+                        trigger="click"
+                        class="ml-2"
+                        style="cursor: pointer !important"
+                        @click.stop
+                        :show-arrow="false"
                       >
-                        {{
-                          !token.expireAt
-                            ? t('mcp.instance.token.placeholderAlways')
-                            : timestampToDate(token.expireAt) +
-                              (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
-                        }}
-                      </span>
+                        <el-icon size="18"><Operation /></el-icon>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item @click="handleEditToken(index)">
+                              <el-button link>
+                                {{ t('env.run.action.edit') }}
+                              </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleViewLog(index)">
+                              <el-button link>
+                                {{ t('mcp.instance.action.accessLogs') }}
+                              </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                              v-if="showDeleteBtn(token)"
+                              @click="handleDeleteToken(index)"
+                            >
+                              <el-button type="danger" link>
+                                {{ t('mcp.instance.action.delete') }}
+                              </el-button>
+                            </el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
                     </div>
-                    <div class="ellipsis-one grid-cols-span-1">
-                      {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+                    <div class="grid grid-cols-2 mt-2">
+                      <div class="ellipsis-one grid-cols-span-1">
+                        {{ t('mcp.instance.token.expireAt') }}：<span
+                          :class="
+                            !token.expireAt
+                              ? 'color-green'
+                              : token.expireAt < Date.now()
+                                ? 'color-red'
+                                : ''
+                          "
+                        >
+                          {{
+                            !token.expireAt
+                              ? t('mcp.instance.token.placeholderAlways')
+                              : timestampToDate(token.expireAt) +
+                                (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
+                          }}
+                        </span>
+                      </div>
+                      <div class="ellipsis-one grid-cols-span-1">
+                        {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+                      </div>
                     </div>
-                  </div>
-                  <div class="grid grid-cols-2 mt-2">
-                    <div class="ellipsis-one grid-cols-span-1 w-full">
-                      {{ t('mcp.instance.token.tag') }}：<el-tag
-                        v-for="(tag, num) in token.usages"
-                        :key="num"
-                        effect="plain"
-                        class="mr-2"
-                      >
-                        <div class="ellipsis-one max-w-25">
-                          {{ tag }}
-                        </div>
-                      </el-tag>
-                    </div>
-                    <div class="grid-cols-span-1">
-                      {{ t('mcp.token.isEnable') }}:
-                      <el-switch
-                        v-model="token.enabled"
-                        style="--el-switch-on-color: #13ce66"
-                        inline-prompt
-                        :loading="dialogInfo.instanceInfo.loading"
-                        :active-text="t('status.active')"
-                        :inactive-text="t('status.inactive')"
-                        @change="handleChangeTransport(token, index)"
-                      ></el-switch>
+                    <div class="grid grid-cols-2 mt-2">
+                      <div class="ellipsis-one grid-cols-span-1 w-full">
+                        {{ t('mcp.instance.token.tag') }}：<el-tag
+                          v-for="(tag, num) in token.usages"
+                          :key="num"
+                          effect="plain"
+                          class="mr-2"
+                        >
+                          <div class="ellipsis-one max-w-25">
+                            {{ tag }}
+                          </div>
+                        </el-tag>
+                      </div>
+                      <div class="grid-cols-span-1">
+                        {{ t('mcp.token.isEnable') }}:
+                        <el-switch
+                          v-model="token.enabled"
+                          style="--el-switch-on-color: #13ce66"
+                          inline-prompt
+                          :loading="dialogInfo.instanceInfo.loading"
+                          :active-text="t('status.active')"
+                          :inactive-text="t('status.inactive')"
+                          @change="handleChangeTransport(token, index)"
+                        ></el-switch>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </RecycleScroller>
           </div>
         </el-scrollbar>
       </el-col>
@@ -283,6 +290,9 @@ import { useRouterHooks } from '@/utils/url'
 import SearchForm from '@/components/SearchForm/index.vue'
 import TokenForm from './components/token-form-list.vue'
 import BatchChangeHeader from './components/batch-change-header.vue'
+// @ts-expect-error - vue-virtual-scroller 缺少类型定义
+import { RecycleScroller } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
@@ -608,6 +618,7 @@ const handleEabledToken = async () => {
       enabledToken: dialogInfo.value.instanceInfo.enabledToken,
     })
     // dialogInfo.value.currentTokenIndex = 0
+    handleTokenList()
     emit('on-refresh')
   } catch {
     dialogInfo.value.instanceInfo.enabledToken = !dialogInfo.value.instanceInfo.enabledToken
@@ -798,6 +809,10 @@ defineExpose({
   border-radius: 8px;
   background: var(--ep-bg-color-deep);
   padding: 24px;
+  .scroller {
+    height: calc(75vh - 100px);
+    overflow: auto;
+  }
   .token-card {
     flex: 1;
     min-width: 0;

@@ -11,8 +11,8 @@ replace (
 )
 
 require (
+	github.com/docker/docker v0.0.0-00010101000000-000000000000
 	github.com/enceve/crypto v0.0.0-20160707101852-34d48bb93815
-	github.com/docker/docker v24.0.7+incompatible
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
@@ -34,9 +34,9 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
