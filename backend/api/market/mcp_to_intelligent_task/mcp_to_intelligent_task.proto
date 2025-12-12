@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package mcp_to_intelligent_task;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task";
+
+
+enum McpToIntelligentTaskStatus {
+  Unknown = 0;
+  Running            = 1;
+  Success            = 2;
+  Failed             = 3;
+  Cancel             = 4;
+}
+
+message HeaderInfo {
+   // 平台的网关 token
+    string token = 1;
+    // 透传的 headers
+    map<string, string> headers = 2;
+}
+
+message InsertIntelligentInfo {
+  string difySpaceID = 1;
+  string difyUserID = 2;
+  string difySpaceName = 3;
+  string difyUserName = 4;
+  // key 为 实例ID, value 为每个实例需要创建的 header 内容
+  map<string, HeaderInfo> headers = 5;
+}
+
+message InstallLog {
+  string mcpInstanceID = 1;
+  string mcpInstanceName = 2;
+  repeated InsertIntelligentLog insertIntelligentLogs = 3;
+  string errorLog = 4;
+  bool status = 5;
+}
+
+message InsertIntelligentLog {
+  InsertIntelligentInfo insertIntelligentInfo = 1;
+  string errorLog = 2;
+  bool status = 3;
+}
+
+message McpToIntelligentTask {
+  int64 id = 1;
+  string desc = 2;
+  int64 intelligentAccessID = 3;
+  string intelligentAccessName = 4;
+  repeated InsertIntelligentInfo insertIntelligentInfos = 5;
+  repeated string mcpInstanceIDs = 6;
+  McpToIntelligentTaskStatus status = 7;
+  repeated InstallLog installLogs = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message CreateRequest {
+  // 任务描述
+  string desc = 1;
+  // 智能体平台 id
+  int64 intelligentAccessID = 2;
+  // 插入信息列表
+  repeated InsertIntelligentInfo insertIntelligentInfos = 3;
+  // mcp 实例id 列表
+  repeated string mcpInstanceIDs = 4;
+  // 访问域名
+  string domain = 5;
+}
+
+message CreateResponse {
+  McpToIntelligentTask task = 1;
+}
+
+message CancelRequest {
+  int64 id = 1;
+}
+
+message CancelResponse {
+}
+
+message GetRequest {
+  int64 id = 1;
+}
+
+message GetResponse {
+  McpToIntelligentTask task = 1;
+}
+
+message ListRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string keyword = 3;
+}
+
+message ListResponse {
+  repeated McpToIntelligentTask list = 1;
+  int64 total = 2;
+}
+
+service McpToIntelligentTaskService {
+  rpc Create(CreateRequest) returns (CreateResponse) {
+    option (google.api.http) = {
+      post: "/mcp_to_intelligent_task"
+      body: "*"
+    };
+  }
+  rpc Cancel(CancelRequest) returns (CancelResponse) {
+    option (google.api.http) = {
+      post: "/mcp_to_intelligent_task/{id}/cancel"
+      body: "*"
+    };
+  }
+  rpc Get(GetRequest) returns (GetResponse) {
+    option (google.api.http) = {
+      get: "/mcp_to_intelligent_task/{id}"
+    };
+  }
+  rpc List(ListRequest) returns (ListResponse) {
+    option (google.api.http) = {
+      get: "/mcp_to_intelligent_task/list"
+    };
+  }
+}

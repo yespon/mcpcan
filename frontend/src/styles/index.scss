@@ -210,6 +210,7 @@ code {
 .text-bold {
   font-weight: 600;
 }
+
 /* ==================
       省略号
  ==================== */
@@ -251,6 +252,12 @@ code {
   border: none;
   &:hover {
     background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+  }
+  &.is-disabled {
+    background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+    &:hover {
+      background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+    }
   }
 }
 .link-hover:hover {

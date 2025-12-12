@@ -60,9 +60,12 @@
     "codeList": "Code-List",
     "updateCodePackage": "UpdateCodePackage",
     "viewCodePackage": "PackageDetails",
-    "apiDocsList": "API Docs"
+    "apiDocsList": "API Docs",
+    "agentManage": "Agent Platform"
   },
   "common": {
+    "edit": "Edit",
+    "connection": "Connection",
     "search": "Search",
     "reseat": "Reseat",
     "operation": "Operation",
@@ -96,6 +99,7 @@
     "noData": "No Data",
     "delete": "Delete",
     "success": "Success",
+    "fail": "Failed",
     "loading": "Loading"
   },
   "action": {
@@ -116,7 +120,8 @@
     "imgAddressTip3": "Command: mcp hosting. After startup, convert MCP STDIO protocol to STEAMABLE-HTTP protocol to run.",
     "env": "Environment",
     "tools": "Support tools",
-    "baseCommand": "Basic commands"
+    "baseCommand": "Basic commands",
+    "demoTips": "The data of the Demo site is for display purposes and will be reset after 24 hours. Please pay attention to saving your data"
   },
   "request": {
     "error": "error",

@@ -140,6 +140,15 @@ const router = createRouter({
           component: () => import('../pages/api-docs/view/index.vue'),
         },
         {
+          path: '/agent-manage',
+          name: 'agentManage',
+          meta: {
+            title: 'agentManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/agent/index.vue'),
+        },
+        {
           path: '/debug-tools',
           name: 'debugTools',
           meta: {

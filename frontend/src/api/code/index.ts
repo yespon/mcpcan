@@ -42,6 +42,15 @@ export const CodeAPI = {
       params,
     })
   },
+  // get file content as blob (for binary files like images)
+  fileContentBlob(params: any) {
+    return request<any, any>({
+      url: `${baseConfig.baseUrlVersion}/market/code/get`,
+      method: 'GET',
+      params,
+      responseType: 'blob',
+    })
+  },
 }
 
 // list params

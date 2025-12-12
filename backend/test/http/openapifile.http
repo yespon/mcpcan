@@ -1,8 +1,7 @@
 ### OpenAPI 文件管理接口测试
 
-@routerPrefix = market
 @contentType = application/json
-@openapiFileId = cf8307eb-2793-40be-b37c-9aa5db2d9b64
+@openapiFileId = d808cf91-b592-49e7-bba6-dd6dcbe953bc
 
 ### 1. 上传 OpenAPI 文档 - JSON 格式
 POST {{baseUrl}}/{{routerPrefix}}/openapi/upload

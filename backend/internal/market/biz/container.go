@@ -931,10 +931,15 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 // getKubernetesRuntimeConfig gets runtime configuration for Kubernetes environment
 func (ed *ContainerBiz) getKubernetesRuntimeConfig(ctx context.Context, environment *model.McpEnvironment) (container.Config, error) {
 	// Create Kubernetes container runtime configuration
+	cfg := common.SetKubeConfig([]byte(environment.Config))
+	if cfg == nil {
+		return container.Config{}, fmt.Errorf("kubeconfig is empty")
+	}
+
 	return container.Config{
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
-		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
+		Kubeconfig: cfg,
 	}, nil
 }
 

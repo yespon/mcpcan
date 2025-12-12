@@ -2,10 +2,10 @@ package app
 
 import (
 	"fmt"
+	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"io"
 	"os"
 	"path/filepath"
-	"github.com/kymo-mcp/mcpcan/pkg/logger"
 
 	"go.uber.org/zap"
 )

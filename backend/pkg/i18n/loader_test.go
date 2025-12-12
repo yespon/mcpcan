@@ -1,8 +1,9 @@
 package i18n_test
 
 import (
-	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"testing"
+
+	"github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
 func TestNewMessageLoader(t *testing.T) {

@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -158,6 +159,11 @@ func (r *McpCodePackageRepository) InitTable() error {
 		// 创建包ID索引
 		sql2 := fmt.Sprintf("CREATE UNIQUE INDEX idx_code_package_package_id ON %v(package_id)", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
+			// 忽略索引已存在错误 (Error 1061: Duplicate key name)
+			// 多实例启动时可能发生竞争条件
+			if strings.Contains(err.Error(), "1061") || strings.Contains(err.Error(), "Duplicate key name") {
+				return nil
+			}
 			return fmt.Errorf("failed to create package_id index: %v", err)
 		}
 	}

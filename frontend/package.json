@@ -1,6 +1,6 @@
 {
   "name": "qm_mcp_market_admin",
-  "version": "v1.3.3",
+  "version": "v1.4.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -32,9 +32,11 @@
     "path-browserify": "^1.0.1",
     "pinia": "^3.0.3",
     "qs": "^6.14.0",
+    "v-drag": "^3.0.9",
     "vue": "^3.5.18",
     "vue-i18n": "^11.1.12",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue-virtual-scroller": "2.0.0-beta.8"
   },
   "devDependencies": {
     "@element-plus/theme-chalk": "^2.2.16",

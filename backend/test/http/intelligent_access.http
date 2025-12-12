@@ -1,0 +1,70 @@
+### OpenAPI 文件管理接口测试
+
+@openapiFileId = d808cf91-b592-49e7-bba6-dd6dcbe953bc
+
+### 1. 智能体平台连接测试
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/test-connection
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "dbHost": "0.tcp.jp.ngrok.io",
+    "dbPort": 14224,
+    "dbUser": "postgres",
+    "dbPassword": "difyai123456",
+    "dbName": "dify"
+}
+
+### 1. 创建智能体平台信息
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessName": "dify",
+  "accessType": "DifyEnterprise",
+  "dbHost": "0.tcp.jp.ngrok.io",
+  "dbPort": 14224,
+  "dbUser": "postgres",
+  "dbPassword": "difyai123456",
+  "dbName": "dify"
+}
+
+### 2. 更新智能体平台信息
+PUT {{baseUrl}}/{{routerPrefix}}/intelligent_access/edit
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 2,
+  "accessName": "dify1",
+  "dbHost": "localhost",
+  "dbPort": 5432,
+  "dbUser": "postgres",
+  "dbPassword": "difyai123456",
+  "dbName": "dify"
+}
+
+### 3. 查询智能体平台列表
+GET {{baseUrl}}/{{routerPrefix}}/intelligent_access/list
+Authorization: {{token}}
+
+### 4. 删除智能体平台列表
+DELETE {{baseUrl}}/{{routerPrefix}}/intelligent_access/delete
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 2
+}
+
+
+### 5. 查询 Dify 用户空间列表
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/list-dify-user-space
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 1,
+  "instancesIDs": ["4a10d139-56d3-417f-918e-9a1827eec30f"]
+}

@@ -15,7 +15,6 @@
         :active-text="t('common.on')"
         :inactive-text="t('common.off')"
         @change="handleEabledToken()"
-        :disabled="disabledTokenStatus"
       ></el-switch>
       <span class="ml-2">{{ t('mcp.instance.tableHeadDesc.token') }}</span>
     </div>
@@ -32,11 +31,18 @@
         ]"
       >
         <el-scrollbar ref="scrollbarRef" max-height="75vh" always>
-          <div class="token-list">
+          <div class="token-list w-full">
             <div class="font-bold flex justify-between items-center">
-              <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
+              <!-- <mcp-button :icon="Plus" size="small" @click="handleAddToken">{{
                 t('mcp.instance.formData.addToken')
-              }}</mcp-button>
+              }}</mcp-button> -->
+              <el-checkbox
+                v-model="allTokenChecked"
+                :indeterminate="isTokenIndeterminate"
+                @change="handleCheckAllToken"
+              >
+                <span style="color: var(--ep-purple-color)">{{ t('agent.sync.selectAll') }}</span>
+              </el-checkbox>
               <div>
                 <span class="mr-4 color-green">
                   {{ t('mcp.instance.token.active') }}:
@@ -48,101 +54,154 @@
                   }}
                 </span>
               </div>
-            </div>
-
-            <div
-              class="token-card border-rounded-2 mt-4 p-4 cursor-pointer line-height-6"
-              :class="[
-                {
-                  active: dialogInfo.currentTokenIndex === index,
-                  disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
-                },
-              ]"
-              v-for="(token, index) in tokenList"
-              :key="index"
-              @click="handleSelectedToken(index)"
-            >
               <div class="flex">
-                <div class="ellipsis-one flex-sub">
-                  {{ token.token }}
-                </div>
-                <el-dropdown
-                  trigger="click"
-                  class="ml-2"
-                  style="cursor: pointer !important"
-                  @click.stop
-                  :show-arrow="false"
+                <SearchForm
+                  :formConfig="tokenFormConfig"
+                  :formData="tokenFormData"
+                  @handle-query="handleQueryToken"
+                  @reset-fields="handleQueryToken"
+                  @on-refresh="handleTokenList"
                 >
-                  <el-icon size="18"><Operation /></el-icon>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item v-if="index !== 0" @click="handleEditToken(index)">
-                        <el-button link>
-                          {{ t('env.run.action.edit') }}
-                        </el-button>
-                      </el-dropdown-item>
-                      <el-dropdown-item @click="handleViewLog(index)">
-                        <el-button link>
-                          {{ t('mcp.instance.action.accessLogs') }}
-                        </el-button>
-                      </el-dropdown-item>
-                      <el-dropdown-item v-if="index !== 0" @click="handleDeleteToken(index)">
-                        <el-button type="danger" link>
-                          {{ t('mcp.instance.action.delete') }}
-                        </el-button>
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
+                  <template #operation>
+                    <el-dropdown trigger="click" class="ml-3" :show-arrow="false">
+                      <el-button style="width: 32px">
+                        <el-icon><Operation /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="handleAddInstance" @click="handleAddToken">
+                            <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
+                            {{ t('mcp.instance.formData.addToken') }}
+                          </el-dropdown-item>
+                          <el-dropdown-item
+                            command="handleAddInstance"
+                            @click="handleBatchChangeHeader"
+                          >
+                            <el-icon><Edit /></el-icon>
+                            {{ t('mcp.instance.formData.batchChangeHeader') }}
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
                   </template>
-                </el-dropdown>
-              </div>
-              <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1">
-                  {{ t('mcp.instance.token.expireAt') }}：<span
-                    :class="
-                      !token.expireAt
-                        ? 'color-green'
-                        : token.expireAt < Date.now()
-                          ? 'color-red'
-                          : ''
-                    "
-                  >
-                    {{
-                      !token.expireAt
-                        ? t('mcp.instance.token.placeholderAlways')
-                        : timestampToDate(token.expireAt) +
-                          (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
-                    }}
-                  </span>
-                </div>
-                <div class="ellipsis-one grid-cols-span-1">
-                  {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
-                </div>
-              </div>
-              <div class="grid grid-cols-2 mt-2">
-                <div class="ellipsis-one grid-cols-span-1">
-                  {{ t('mcp.instance.token.tag') }}：<el-tag
-                    v-for="(tag, num) in token.usages"
-                    :key="num"
-                    effect="plain"
-                    class="mr-2"
-                  >
-                    {{ tag }}
-                  </el-tag>
-                </div>
-                <div class="grid-cols-span-1" v-if="dialogInfo.instanceInfo.sourceType === 4">
-                  {{ t('mcp.instance.token.passthrough') }}:
-                  <el-switch
-                    v-model="token.enabledTransport"
-                    style="--el-switch-on-color: #13ce66"
-                    inline-prompt
-                    :loading="dialogInfo.instanceInfo.loading"
-                    :active-text="t('common.on')"
-                    :inactive-text="t('common.off')"
-                    @change="handleChangeTransport(token, index)"
-                  ></el-switch>
-                </div>
+                </SearchForm>
               </div>
             </div>
+            <RecycleScroller
+              class="scroller hide-scrollbar mt-4"
+              :items="showTokenList"
+              :item-size="140"
+              key-field="id"
+              v-slot="{ item: token, index }"
+            >
+              <div class="w-full">
+                <div class="flex items-center w-full">
+                  <div class="mr-2 flex-shrink-0">
+                    <el-checkbox
+                      :model-value="selectedTokens.includes(token.id)"
+                      @change="toggleTokenSelection(token.id)"
+                      @click.stop
+                    ></el-checkbox>
+                  </div>
+                  <div
+                    class="token-card border-rounded-2 p-4 cursor-pointer line-height-6 flex-1 min-w-0"
+                    :class="[
+                      {
+                        active: dialogInfo.currentTokenIndex === index,
+                        disabled: token.expireAt !== 0 && token.expireAt < Date.now(),
+                      },
+                    ]"
+                    @click="handleSelectedToken(index)"
+                  >
+                    <div class="flex">
+                      <div class="ellipsis-one flex-sub">
+                        {{ token.token }}
+                      </div>
+                      <el-dropdown
+                        trigger="click"
+                        class="ml-2"
+                        style="cursor: pointer !important"
+                        @click.stop
+                        :show-arrow="false"
+                      >
+                        <el-icon size="18"><Operation /></el-icon>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item @click="handleEditToken(index)">
+                              <el-button link>
+                                {{ t('env.run.action.edit') }}
+                              </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item @click="handleViewLog(index)">
+                              <el-button link>
+                                {{ t('mcp.instance.action.accessLogs') }}
+                              </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item
+                              v-if="showDeleteBtn(token)"
+                              @click="handleDeleteToken(index)"
+                            >
+                              <el-button type="danger" link>
+                                {{ t('mcp.instance.action.delete') }}
+                              </el-button>
+                            </el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                    </div>
+                    <div class="grid grid-cols-2 mt-2">
+                      <div class="ellipsis-one grid-cols-span-1">
+                        {{ t('mcp.instance.token.expireAt') }}：<span
+                          :class="
+                            !token.expireAt
+                              ? 'color-green'
+                              : token.expireAt < Date.now()
+                                ? 'color-red'
+                                : ''
+                          "
+                        >
+                          {{
+                            !token.expireAt
+                              ? t('mcp.instance.token.placeholderAlways')
+                              : timestampToDate(token.expireAt) +
+                                (token.expireAt < Date.now() ? t('mcp.instance.token.expired') : '')
+                          }}
+                        </span>
+                      </div>
+                      <div class="ellipsis-one grid-cols-span-1">
+                        {{ t('mcp.instance.createTime') }}：{{ timestampToDate(token.publishAt) }}
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 mt-2">
+                      <div class="ellipsis-one grid-cols-span-1 w-full">
+                        {{ t('mcp.instance.token.tag') }}：<el-tag
+                          v-for="(tag, num) in token.usages"
+                          :key="num"
+                          effect="plain"
+                          class="mr-2"
+                        >
+                          <div class="ellipsis-one max-w-25">
+                            {{ tag }}
+                          </div>
+                        </el-tag>
+                      </div>
+                      <div class="grid-cols-span-1">
+                        {{ t('mcp.token.isEnable') }}:
+                        <el-switch
+                          v-model="token.enabled"
+                          style="--el-switch-on-color: #13ce66"
+                          inline-prompt
+                          :loading="dialogInfo.instanceInfo.loading"
+                          :active-text="t('status.active')"
+                          :inactive-text="t('status.inactive')"
+                          @change="handleChangeTransport(token, index)"
+                        ></el-switch>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </RecycleScroller>
           </div>
         </el-scrollbar>
       </el-col>
@@ -201,340 +260,112 @@
       </div>
     </template>
   </el-dialog>
-  <el-dialog
-    v-model="formData.visible"
-    width="60%"
-    top="20vh"
-    :show-close="false"
-    @close="formRef?.resetFields()"
-    header-class="token-header-border"
-    footer-class="token-footer-border"
-  >
-    <template #header>
-      <div class="center mb-4">{{ t('mcp.instance.token.title') }}</div>
-    </template>
-    <el-row :gutter="12" v-loading="dialogInfo.instanceInfo.loading" class="mt-4">
-      <el-col :span="12" class="collapsed">
-        <el-scrollbar ref="scrollbarRef" height="50vh" always class="pr-4">
-          <el-form
-            ref="formRef"
-            :model="formData"
-            :rules="rules"
-            label-width="auto"
-            label-position="top"
-            class="mx-2"
-          >
-            <el-form-item :label="t('mcp.instance.token.lifespan')" prop="expireAt">
-              <template #label>
-                <div class="center">
-                  <span class="mr-2">{{ t('mcp.instance.token.lifespan') }}</span>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(7)"
-                    >7{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(15)"
-                    >15{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                  <el-button
-                    class="base-btn"
-                    type="primary"
-                    size="small"
-                    @click.stop="handleAddExpireAt(30)"
-                    >30{{ t('mcp.instance.token.day') }}
-                  </el-button>
-                </div>
-              </template>
-              <el-date-picker
-                ref="datePicker"
-                v-model="formData.expireAt"
-                type="datetime"
-                value-format="x"
-                :placeholder="t('mcp.instance.token.placeholderDate')"
-                style="width: 100%"
-                :disabled-date="(date: Date) => date.getTime() < Date.now()"
-              ></el-date-picker>
-            </el-form-item>
-            <el-form-item prop="tokenType">
-              <template #label>
-                API {{ t('mcp.instance.token.auth') }}
-                <el-popover placement="top" width="250">
-                  <div>{{ t('mcp.instance.token.Bearer') }}</div>
-                  <div>{{ t('mcp.instance.token.Api-Key') }}</div>
-                  <div>{{ t('mcp.instance.token.X-API-key') }}</div>
-                  <div>{{ t('mcp.instance.token.Basic') }}</div>
-                  <template #reference>
-                    <el-icon class="cursor-pointer"><Warning /></el-icon>
-                  </template>
-                </el-popover>
-              </template>
-              <el-select
-                v-model="formData.tokenType"
-                :placeholder="t('mcp.instance.token.placeholderTokenType')"
-                clearable
-                @change="handleTokenTypeChange"
-              >
-                <el-option label="Bearer" :value="1" />
-                <el-option label="Api-Key" :value="2" />
-                <el-option label="X-API-key" :value="3" />
-                <el-option label="Basic" :value="4" />
-              </el-select>
 
-              <div v-if="Number(formData.tokenType) === 1" class="center my-2 w-full">
-                Authorization：<el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 2" class="center my-2 w-full">
-                Api-Key：
-                <el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 3" class="center my-2 w-full">
-                X-API-Key：
-                <el-input
-                  v-model="formData.token"
-                  :placeholder="t('mcp.instance.token.placeholderToken')"
-                  class="flex-sub"
-                  clearable
-                />
-                <el-tag
-                  class="ml-2 base-btn cursor-pointer"
-                  effect="dark"
-                  @click="handleRandomToken"
-                  >{{ t('mcp.instance.token.random') }}
-                </el-tag>
-              </div>
-              <div v-if="Number(formData.tokenType) === 4" class="center my-2 w-full">
-                <template v-if="userDataKey.visible">
-                  <el-input
-                    v-model="userDataKey.username"
-                    placeholder="username"
-                    class="flex-sub mr-2"
-                    clearable
-                  />
-                  <el-input
-                    v-model="userDataKey.password"
-                    placeholder="password"
-                    type="password"
-                    show-password
-                    class="flex-sub"
-                    clearable
-                  />
-                </template>
-                <template v-else>
-                  Authorization：
-                  <el-input
-                    v-model="formData.token"
-                    :placeholder="t('mcp.instance.token.placeholderToken')"
-                    clearable
-                  />
-                </template>
-                <el-button link class="ml-2 link-hover base-btn-link" @click="handleChangeBasic">
-                  <el-icon><Refresh /></el-icon
-                  >{{
-                    userDataKey.visible
-                      ? t('mcp.instance.token.custom')
-                      : t('mcp.instance.token.accountPassword')
-                  }}
-                </el-button>
-              </div>
-            </el-form-item>
-            <el-form-item prop="enabledTransport" class="enabledTransport">
-              <template #label>
-                <div class="w-full flex justify-between items-center">
-                  <div class="center">
-                    <span class="mr-2"> HTTP {{ t('mcp.instance.token.headers') }} </span>
-                    <el-popover placement="top" width="250">
-                      <div>{{ t('mcp.instance.token.headersPlaceholder') }}</div>
-                      <template #reference>
-                        <el-icon class="cursor-pointer"><Warning /></el-icon>
-                      </template>
-                    </el-popover>
-                  </div>
-                  <div class="center">
-                    <el-switch
-                      v-model="formData.enabledTransport"
-                      style="--el-switch-on-color: #13ce66"
-                      inline-prompt
-                      :active-text="t('mcp.instance.token.passthrough')"
-                      :inactive-text="t('mcp.instance.token.passthroughOff')"
-                    ></el-switch>
-                    <div
-                      class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
-                      @click="handleAddHeader"
-                    >
-                      <el-icon>
-                        <Plus />
-                      </el-icon>
-                    </div>
-                  </div>
-                </div>
-              </template>
-              <div
-                v-for="(header, index) in formData.headers"
-                :key="index"
-                class="flex items-center my-2 pr-3"
-              >
-                <el-input
-                  v-model="header.key"
-                  :placeholder="t('mcp.instance.token.headersKey')"
-                  class="flex-sub mr-2"
-                ></el-input>
-                ：
-                <el-input
-                  v-model="header.value"
-                  :placeholder="t('mcp.instance.token.headersValue')"
-                  class="flex-sub mr-2"
-                ></el-input>
-                <div
-                  class="cursor-pointer border border-style-solid border-rd-md border-white p-1 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
-                  @click="formData.headers.splice(index, 1)"
-                >
-                  <el-icon><Minus /></el-icon>
-                </div>
-              </div>
-            </el-form-item>
-            <el-form-item :label="t('mcp.instance.token.tag')" prop="usages">
-              <el-input-tag
-                v-model="formData.usages"
-                collapse-tags
-                collapse-tags-tooltip
-                :max-collapse-tags="3"
-                clearable
-                draggable
-                tag-type="primary"
-                tag-effect="plain"
-                :placeholder="t('mcp.instance.token.placeholderTag')"
-                class="tag-input"
-              >
-                <template #tag="{ value }">
-                  <div class="flex items-center">
-                    <span>{{ value }}</span>
-                  </div>
-                </template>
-              </el-input-tag>
-            </el-form-item>
-          </el-form>
-        </el-scrollbar>
-      </el-col>
-      <el-col :span="12" class="expanded">
-        <el-scrollbar ref="scrollbarRef" height="50vh" always class="config-info">
-          <div class="py-5 px-5">{{ editConfig }}</div>
-        </el-scrollbar>
-      </el-col>
-    </el-row>
-    <template #footer>
-      <div class="center">
-        <el-button @click="formData.visible = false" class="mr-4 w-25">{{
-          t('common.cancel')
-        }}</el-button>
-        <mcp-button @click="handleConfirmToken" class="w-25">{{ t('common.ok') }}</mcp-button>
-      </div>
-    </template>
-  </el-dialog>
+  <TokenForm
+    v-model="formData"
+    :instance-info="dialogInfo.instanceInfo"
+    :token-list="tokenList"
+    :current-edit-index="dialogInfo.currentEditIndex"
+    @on-confirm="handleConfirmToken"
+    @on-cancel="handleTokenList"
+  ></TokenForm>
+
+  <BatchChangeHeader
+    ref="batchChangeHeaderRef"
+    @on-confirm="handleCommitHeader"
+  ></BatchChangeHeader>
 </template>
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Plus,
-  Operation,
-  CopyDocument,
-  Link,
-  Key,
-  Warning,
-  Minus,
-  Refresh,
-} from '@element-plus/icons-vue'
-import McpButton from '@/components/mcp-button/index.vue'
+import { Operation, CopyDocument, Link, Key, Edit } from '@element-plus/icons-vue'
+// import McpButton from '@/components/mcp-button/index.vue'
 import { AccessType, TokenType, type InstanceResult } from '@/types'
-import { InstanceAPI } from '@/api/mcp/instance'
+import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
 import { useUserStore } from '@/stores'
 import { cloneDeep } from 'lodash-es'
 import { JsonFormatter } from '@/utils/json'
 import { useRouterHooks } from '@/utils/url'
+import SearchForm from '@/components/SearchForm/index.vue'
+import TokenForm from './components/token-form-list.vue'
+import BatchChangeHeader from './components/batch-change-header.vue'
+// @ts-expect-error - vue-virtual-scroller 缺少类型定义
+import { RecycleScroller } from 'vue-virtual-scroller'
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const { jumpToPage } = useRouterHooks()
-
-const disabledTokenStatus = computed(() => {
-  return tokenList.value.some((item) => item.enabledTransport) // !'存在一个透传的时候必须开启'
-})
 const { t } = useI18n()
 const { userInfo } = useUserStore()
 const emit = defineEmits<{
   (e: 'on-refresh'): void
 }>()
+const batchChangeHeaderRef = ref()
 const formRef = ref()
-const formData = ref({
+const formData = ref<any>({
   visible: false,
   token: '',
-  headers: [] as { key: string; value: string }[],
-  tokenType: null as TokenType | null,
-  enabledTransport: false,
+  headers: [{ key: 'Authorization', value: '' }],
+  tokenType: 1 as TokenType | null,
+  enabled: true,
   expireAt: null as number | null,
   usages: [] as string[],
 })
+const tokenFormConfig = ref([
+  {
+    span: 5,
+    key: 'name',
+    component: 'el-input',
+    label: t('mcp.instance.token.tagName'),
+    labelWidth: '60px',
+    props: { placeholder: t('mcp.instance.token.tagNamePlaceholder') },
+  },
+  {
+    span: 5,
+    key: 'type',
+    label: t('mcp.instance.token.tagType'),
+    component: 'el-select',
+    props: {
+      placeholder: t('mcp.instance.token.tagTypePlaceholder'),
+      options: [
+        { label: 'dify_user_id', value: 'dify_user_id' },
+        { label: 'dify_user_name', value: 'dify_user_name' },
+        { label: 'dify_space_id', value: 'dify_space_id' },
+        { label: 'dify_space_name', value: 'dify_space_name' },
+        { label: 'intelligent_access_id', value: 'intelligent_access_id' },
+        { label: 'intelligent_access_name', value: 'intelligent_access_name' },
+        { label: 'intelligent_access_type', value: 'intelligent_access_type' },
+        { label: 'default', value: 'default' },
+      ],
+    },
+  },
+  {
+    span: 5,
+    key: 'value',
+    label: t('mcp.instance.token.tagValue'),
+    component: 'el-input',
+    props: {
+      placeholder: t('mcp.instance.token.tagValuePlaceholder'),
+    },
+  },
+  {
+    span: 5,
+    key: 'handler',
+    component: 'slot',
+    slotName: 'handler',
+  },
+])
+const tokenFormData = ref({
+  name: '',
+  type: '',
+  value: '',
+})
+
 const userDataKey = ref({
   visible: false,
   username: '',
   password: '',
-})
-const rules = reactive({
-  tokenType: [
-    {
-      required: true,
-      validator: (rule: any, value: number, callback: (error?: string | Error) => void) => {
-        if (!value) {
-          callback(new Error(t('mcp.instance.token.placeholderTokenType')))
-        }
-        if (value === 4) {
-          if (!userDataKey.value.username || !userDataKey.value.password) {
-            callback(
-              new Error(
-                userDataKey.value.visible
-                  ? t('mcp.instance.token.Basic')
-                  : t('mcp.instance.token.mustToken'),
-              ),
-            )
-          }
-        } else {
-          if (!formData.value.token) {
-            callback(new Error(t('mcp.instance.token.mustToken')))
-          }
-        }
-        callback()
-      },
-      trigger: 'change',
-    },
-  ],
-  token: [{ required: true, message: t('mcp.instance.token.mustToken'), trigger: 'blur' }],
+  index: 0,
 })
 const dialogInfo = ref({
   visible: false,
@@ -543,6 +374,45 @@ const dialogInfo = ref({
   currentTokenIndex: null as number | null,
   currentEditIndex: null as number | null,
 })
+
+// token selection
+const selectedTokens = ref<number[]>([])
+
+// select all tokens
+const allTokenChecked = computed({
+  get() {
+    return (
+      showTokenList.value.length > 0 && selectedTokens.value.length === showTokenList.value.length
+    )
+  },
+  set(val: boolean) {
+    if (val) {
+      selectedTokens.value = showTokenList.value.map((token) => token.id)
+    } else {
+      selectedTokens.value = []
+    }
+  },
+})
+
+// select all status
+const isTokenIndeterminate = computed(() => {
+  return selectedTokens.value.length > 0 && selectedTokens.value.length < showTokenList.value.length
+})
+
+// select all or cancel all
+const handleCheckAllToken = (val: boolean) => {
+  allTokenChecked.value = val
+}
+
+// toggle token selection
+const toggleTokenSelection = (id: number) => {
+  const idx = selectedTokens.value.findIndex((tokenId) => tokenId === id)
+  if (idx > -1) {
+    selectedTokens.value.splice(idx, 1)
+  } else {
+    selectedTokens.value.push(id)
+  }
+}
 
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -569,38 +439,22 @@ const config = computed(() => {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
   if (dialogInfo.value.instanceInfo.enabledToken) {
-    let headersString = null
-    let tokenType = 0
-    if (dialogInfo.value.currentTokenIndex !== null) {
-      const headers =
-        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].headers || {}
-      tokenType = Number(
-        dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].tokenType,
-      )
-      headersString = Object.entries(headers)
-        .map(([key, value]) => `"${key}": "${value.replace(/"/g, '\\"')}"`)
-        .join(',\n                        ')
-    }
-
-    return JsonFormatter.format(
-      `{
+    if (!tokenList.value) return JsonFormatter.format(`{}`, 4)
+    if (dialogInfo.value.currentTokenIndex !== null && tokenList.value.length) {
+      return JsonFormatter.format(
+        `{
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
                       "headers": {
-                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][tokenType]}": "${
-                              dialogInfo.value.currentTokenIndex !== null
-                                ? dialogInfo.value.instanceInfo.tokens[
-                                    dialogInfo.value.currentTokenIndex
-                                  ].token
-                                : ''
-                            }"${headersString ? ',' + headersString : ''}
+                            "Authorization": "${tokenList.value[dialogInfo.value.currentTokenIndex].token}"
                       }
                 }
           }
       }`,
-      4,
-    )
+        4,
+      )
+    }
   }
   return JsonFormatter.format(
     `{
@@ -614,64 +468,114 @@ const config = computed(() => {
   )
 })
 
-const editConfig = computed(() => {
-  const headersString = formData.value.headers
-    .filter((header) => header.key && header.value)
-    .map((header) => `"${header.key}": "${header.value.replace(/"/g, '\\"')}"`)
-    .join(',\n                        ')
-
-  return JsonFormatter.format(
-    `{
-          "mcpServers": {
-                "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-                      "url": "${configUrl.value}",
-                      "headers": {
-                            "${['Unknown', 'Authorization', 'Api-Key', 'X-API-Key', 'Authorization'][formData.value.tokenType || 0]}": "${
-                              formData.value.tokenType === 4
-                                ? 'Basic ' +
-                                  btoa(
-                                    userDataKey.value.username + ':' + userDataKey.value.password,
-                                  )
-                                : formData.value.token || ''
-                            }"${headersString ? ',' + headersString : ''}
-                      }
-                }
-          }
-      }`,
-    4,
-  )
+const showDeleteBtn = computed(() => {
+  return (token: any) => {
+    if (
+      [
+        'dify_user_id',
+        'dify_user_name',
+        'dify_space_id',
+        'dify_space_name',
+        'intelligent_access_id',
+        'intelligent_access_name',
+        'intelligent_access_type',
+        'default',
+      ].some((keyword) => token.usages.some((usage: string) => usage.includes(keyword)))
+    ) {
+      return false
+    }
+    return true
+  }
 })
 
+const showTokenList = computed(() => {
+  // 筛选逻辑：根据tokenFormData的name/type/value
+  const list = tokenList.value || []
+  const { name, type, value } = tokenFormData.value || {}
+  // 如果都为空，直接返回全部
+  if (!name && !type && !value) return list
+
+  return list.filter((token) => {
+    // usages为标签数组
+    let match = true
+    // name精准匹配usages
+    if (name) {
+      match = token.usages?.includes(name)
+    }
+    // type模糊匹配usages
+    if (match && type && !value) {
+      match = token.usages?.some((u: any) => u.includes(type))
+    }
+    // type和value同时存在，精准匹配 type=value
+    if (match && type && value) {
+      match = token.usages?.includes(`${type}=${value}`)
+    }
+    return match
+  })
+})
 // token list
-const tokenList = computed(
-  () =>
-    dialogInfo.value.instanceInfo.tokens.map((item) => ({
-      ...item,
-      expire: item.expireAt !== 0 && item.expireAt < Date.now(),
-    })) || [],
-)
+const tokenList = ref<Array<any>>([])
+
+const handleQueryToken = (formData: any) => {
+  tokenFormData.value = formData
+  // 清空选择，避免筛选后索引不匹配
+  selectedTokens.value = []
+}
 
 const handleChangeTransport = async (token: any, index: number) => {
   try {
     dialogInfo.value.instanceInfo.loading = true
-    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+    tokenList.value[index].enabled = token.enabled
     await handleSaveTokens()
     emit('on-refresh')
   } catch {
-    dialogInfo.value.instanceInfo.tokens[index].enabledTransport = token.enabledTransport
+    tokenList.value[index].enabled = token.enabled
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
 }
 
+const handleBatchChangeHeader = () => {
+  if (selectedTokens.value.length === 0) {
+    ElMessage.warning(t('mcp.instance.token.mustSelectToken'))
+    return
+  }
+  batchChangeHeaderRef.value.init()
+}
+
+// confirm change headers
+const handleCommitHeader = async (formData: any) => {
+  await TokenAPI.edit({
+    tokens: tokenList.value
+      .filter((token) => selectedTokens.value.includes(token.id))
+      .map((token) => ({
+        ...token,
+        headers: {
+          ...token.headers,
+          ...Object.fromEntries(formData.headers.map((header: any) => [header.key, header.value])),
+        },
+        usages: [...token.usages, ...formData.usages],
+      })),
+  })
+  handleTokenList()
+  batchChangeHeaderRef.value.finish()
+}
+
 // handle add token
 const handleAddToken = () => {
+  const baseToken = `Bearer ${getToken(
+    JSON.stringify({
+      expireAt: formData.value.expireAt,
+      userId: userInfo.userId,
+      username: userInfo.username,
+    }),
+  )}`
   formData.value = {
     visible: true,
-    token: '',
-    headers: [] as { key: string; value: string }[],
-    tokenType: null as TokenType | null,
-    enabledTransport: false,
+    token: baseToken,
+    headers: [{ key: 'Authorization', value: baseToken }],
+    tokenType: 1 as TokenType | null,
+    enabled: true,
     expireAt: null as number | null,
     usages: [] as string[],
   }
@@ -679,9 +583,9 @@ const handleAddToken = () => {
     visible: false,
     username: '',
     password: '',
+    index: 0,
   }
   dialogInfo.value.currentEditIndex = null
-  formRef.value?.resetFields()
 }
 
 // handle edit token
@@ -689,7 +593,7 @@ const handleEditToken = (index: number) => {
   formRef.value?.resetFields()
   formData.value.visible = true
   dialogInfo.value.currentEditIndex = index
-  const token = dialogInfo.value.instanceInfo.tokens[index]
+  const token = tokenList.value[index]
   formData.value.token = token.token
   formData.value.expireAt = token.expireAt
   formData.value.usages = token.usages || []
@@ -698,18 +602,11 @@ const handleEditToken = (index: number) => {
     value: value,
   }))
   formData.value.tokenType = token.tokenType
-  formData.value.enabledTransport = token.enabledTransport
-  handleTokenTypeChange()
-}
-
-const handleChangeBasic = () => {
-  userDataKey.value.visible = !userDataKey.value.visible
-  formData.value.token = ''
-}
-
-// handle add header
-const handleAddHeader = () => {
-  formData.value.headers.push({ key: '', value: '' })
+  formData.value.enabled = token.enabled
+  if (formData.value.headers[0]?.value?.startsWith('Basic')) {
+    formData.value.tokenType = 4
+    formData.value.headers[0].tokenType = 4
+  }
 }
 
 // handle enabled token switch
@@ -721,6 +618,7 @@ const handleEabledToken = async () => {
       enabledToken: dialogInfo.value.instanceInfo.enabledToken,
     })
     // dialogInfo.value.currentTokenIndex = 0
+    handleTokenList()
     emit('on-refresh')
   } catch {
     dialogInfo.value.instanceInfo.enabledToken = !dialogInfo.value.instanceInfo.enabledToken
@@ -740,81 +638,6 @@ const handleSelectedToken = (index: number) => {
   dialogInfo.value.currentTokenIndex = index
 }
 
-// handle token type change and clear token value
-const handleTokenTypeChange = () => {
-  let roginData = { token: '', tokenType: '' }
-  if (dialogInfo.value.currentEditIndex !== null) {
-    roginData = dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] as any
-  }
-  if (Number(roginData.tokenType) === 4) {
-    userDataKey.value.username = atob(roginData.token.split(' ')[1]).split(':')[0]
-    userDataKey.value.password = atob(roginData.token.split(' ')[1]).split(':')[1]
-    return
-  }
-  formData.value.token = roginData.token
-}
-
-// handle random token
-const handleRandomToken = () => {
-  if (dialogInfo.value.currentEditIndex !== null) {
-    ElMessageBox.confirm(t('mcp.instance.action.random'), t('common.warn'), {
-      confirmButtonText: t('common.ok'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning',
-      customClass: 'tips-box',
-      center: true,
-      showClose: false,
-      confirmButtonClass: 'is-plain el-button--danger danger-btn',
-      customStyle: {
-        width: '517px',
-        height: '247px',
-      },
-    }).then(() => {
-      handleGetTokenValue()
-    })
-    return
-  }
-
-  handleGetTokenValue()
-}
-
-// handle get token value
-const handleGetTokenValue = () => {
-  if (Number(formData.value.tokenType) === 1) {
-    formData.value.token =
-      'Bearer ' +
-      getToken(
-        JSON.stringify({
-          expireAt: formData.value.expireAt,
-          userId: userInfo.userId,
-          username: userInfo.username,
-        }),
-      )
-  } else if (Number(formData.value.tokenType) === 2) {
-    formData.value.token = getToken(
-      JSON.stringify({
-        expireAt: formData.value.expireAt,
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  } else if (Number(formData.value.tokenType) === 3) {
-    formData.value.token = getToken(
-      JSON.stringify({
-        expireAt: formData.value.expireAt,
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  }
-}
-// handle add expire at
-const handleAddExpireAt = (days: number) => {
-  const expireDate = new Date()
-  expireDate.setDate(expireDate.getDate() + days)
-  formData.value.expireAt = expireDate.getTime()
-}
-
 // handle delete token
 const handleDeleteToken = (index: number) => {
   ElMessageBox.confirm(t('mcp.instance.action.deleteToken'), t('common.warn'), {
@@ -829,14 +652,17 @@ const handleDeleteToken = (index: number) => {
       width: '517px',
       height: '247px',
     },
-  }).then(() => {
-    dialogInfo.value.instanceInfo.tokens.splice(index, 1)
+  }).then(async () => {
+    await TokenAPI.delete({
+      id: tokenList.value[index].id,
+    })
+    ElMessage.success(t('action.delete'))
     if (dialogInfo.value.currentTokenIndex === index) {
       dialogInfo.value.currentTokenIndex = null
     } else if (dialogInfo.value.currentTokenIndex && dialogInfo.value.currentTokenIndex > index) {
       dialogInfo.value.currentTokenIndex!--
     }
-    handleSaveTokens()
+    tokenList.value.splice(index, 1)
   })
 }
 
@@ -845,32 +671,27 @@ const handleViewLog = (index: number) => {
     url: '/token-log',
     data: {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
-      token: dialogInfo.value.instanceInfo.tokens[index].token || '',
+      token: tokenList.value[index].token || '',
     },
   })
 }
 
 // handle confirm token
-const handleConfirmToken = async () => {
-  const result = await formRef.value.validate()
-  if (!result) return
-  if (Number(formData.value.tokenType) === 4) {
-    if (userDataKey.value.visible) {
-      const base64Credentials = btoa(`${userDataKey.value.username}:${userDataKey.value.password}`)
-      formData.value.token = `Basic ${base64Credentials}`
-    }
-  }
-  if (dialogInfo.value.currentEditIndex) {
-    dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex] = {
-      token: formData.value.token,
-      expireAt: formData.value.expireAt || 0,
-      publishAt: dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentEditIndex].publishAt,
-      usages: formData.value.usages,
-      enabledTransport: formData.value.enabledTransport,
-      headers: Object.fromEntries(
-        formData.value.headers.map((header) => [header.key, header.value]),
-      ),
-      tokenType: formData.value.tokenType,
+const handleConfirmToken = async (data: {
+  token: string
+  expireAt: number
+  usages: string[]
+  headers: Record<string, string>
+  currentEditIndex: number | null
+}) => {
+  if (data.currentEditIndex !== null) {
+    tokenList.value[data.currentEditIndex] = {
+      token: data.token,
+      expireAt: data.expireAt || 0,
+      publishAt: tokenList.value[data.currentEditIndex].publishAt,
+      usages: data.usages,
+      enabled: tokenList.value[data.currentEditIndex].enabled,
+      headers: data.headers,
     }
     dialogInfo.value.currentEditIndex = null
     await handleSaveTokens()
@@ -878,37 +699,32 @@ const handleConfirmToken = async () => {
       visible: false,
       token: '',
       headers: [],
-      tokenType: null,
-      enabledTransport: false,
+      enabled: true,
       expireAt: null,
       usages: [],
     }
     return
   }
   try {
-    dialogInfo.value.instanceInfo.tokens.push({
-      enabledTransport: formData.value.enabledTransport,
-      token: formData.value.token,
-      expireAt: formData.value.expireAt || 0,
+    tokenList.value.push({
+      enabled: true,
+      token: data.token,
+      expireAt: data.expireAt || 0,
       publishAt: Date.now(),
-      usages: formData.value.usages,
-      headers: Object.fromEntries(
-        formData.value.headers.map((header) => [header.key, header.value]),
-      ),
-      tokenType: formData.value.tokenType,
+      usages: data.usages,
+      headers: data.headers,
     })
     await handleSaveTokens()
     formData.value = {
       visible: false,
       token: '',
       headers: [],
-      tokenType: null,
-      enabledTransport: false,
+      enabled: true,
       expireAt: null,
       usages: [],
     }
   } catch {
-    dialogInfo.value.instanceInfo.tokens.pop()
+    tokenList.value.pop()
   }
 }
 
@@ -918,11 +734,33 @@ const handleConfirmToken = async () => {
 const handleSaveTokens = async () => {
   try {
     dialogInfo.value.instanceInfo.loading = true
-    await InstanceAPI.updateInstanceTokens({
-      instanceId: dialogInfo.value.instanceInfo.instanceId,
-      tokens: dialogInfo.value.instanceInfo.tokens,
+    console.log('tokens', tokenList.value)
+    await TokenAPI.edit({
+      tokens: tokenList.value.map((token) => ({
+        ...token,
+        instanceId: dialogInfo.value.instanceInfo.instanceId,
+      })),
     })
+    handleTokenList()
     emit('on-refresh')
+  } finally {
+    dialogInfo.value.instanceInfo.loading = false
+  }
+}
+
+const handleTokenList = async () => {
+  dialogInfo.value.instanceInfo.loading = true
+  try {
+    const { tokens } = await TokenAPI.list({
+      instanceId: dialogInfo.value.instanceInfo.instanceId,
+    })
+    // reverse the token list to show the latest created token on top
+    tokenList.value = (tokens || [])
+      .map((token: any) => ({
+        ...token,
+        expire: token.expireAt !== 0 && token.expireAt < Date.now(),
+      }))
+      .reverse()
   } finally {
     dialogInfo.value.instanceInfo.loading = false
   }
@@ -949,8 +787,10 @@ const handleCopy = async (type: string) => {
 const init = (instanceInfo: InstanceResult) => {
   dialogInfo.value.visible = true
   dialogInfo.value.instanceInfo = cloneDeep(instanceInfo)
+  selectedTokens.value = []
   if (instanceInfo.enabledToken) {
     dialogInfo.value.currentTokenIndex = 0
+    handleTokenList()
   } else {
     dialogInfo.value.currentTokenIndex = null
   }
@@ -969,7 +809,13 @@ defineExpose({
   border-radius: 8px;
   background: var(--ep-bg-color-deep);
   padding: 24px;
+  .scroller {
+    height: calc(75vh - 100px);
+    overflow: auto;
+  }
   .token-card {
+    flex: 1;
+    min-width: 0;
     border: 1px solid var(--ep-border-color);
     &.active {
       border-color: var(--ep-purple-color);
@@ -1075,6 +921,11 @@ defineExpose({
     display: block;
     width: 100%;
   }
+}
+.delete-header {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
 }
 </style>
 <style lang="scss">

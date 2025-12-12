@@ -20,31 +20,16 @@
             </el-tag>
           </div>
         </div>
-
-        <!-- time range -->
-        <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label"> {{ t('mcp.instance.log.timeRange') }} ： </span>
-          <div>
-            <el-date-picker
-              v-model="dateRange"
-              type="datetimerange"
-              :range-separator="t('mcp.instance.log.to')"
-              :start-placeholder="t('mcp.instance.log.startTime')"
-              :end-placeholder="t('mcp.instance.log.endTime')"
-              size="small"
-              class="w-full"
-              :disabled-date="disabledDate"
-              @change="handleDateRangeChange"
-            />
-          </div>
-          <span class="ml-1">
-            <el-popover placement="top" width="300">
+        <div class="col-span-6 flex items-center">
+          <span class="color-gray font-size-3">
+            {{ t('mcp.instance.log.timeTips') }}。{{ last24hText }}
+          </span>
+          <!-- <el-popover placement="top" width="300">
               <div>{{ t('mcp.instance.log.timeTips') }}</div>
               <template #reference>
                 <el-icon class="cursor-pointer"><Warning /></el-icon>
               </template>
-            </el-popover>
-          </span>
+            </el-popover> -->
         </div>
       </div>
 
@@ -94,8 +79,8 @@
       </div>
 
       <!-- Trace ID + refresh button -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
+      <div class="grid grid-cols-12">
+        <div class="col-span-6 flex items-center gap-3 mb-3">
           <span class="font-bold filter-label">Trace ID：</span>
           <el-input
             v-model="traceId"
@@ -111,10 +96,29 @@
             </template>
           </el-input>
         </div>
-        <el-button size="small" @click="handleGetLogs" :loading="loading">
-          <el-icon><Refresh /></el-icon>
-          {{ t('common.refresh') }}
-        </el-button>
+        <!-- time range -->
+        <div class="col-span-6 flex items-center justify-between gap-3 mb-3">
+          <div class="flex items-center gap-3">
+            <span class="font-bold filter-label">{{ t('mcp.instance.log.timeRange') }}： </span>
+            <div>
+              <el-date-picker
+                v-model="dateRange"
+                type="datetimerange"
+                :range-separator="t('mcp.instance.log.to')"
+                :start-placeholder="t('mcp.instance.log.startTime')"
+                :end-placeholder="t('mcp.instance.log.endTime')"
+                size="small"
+                class="w-full"
+                @change="handleDateRangeChange"
+              />
+              <!-- :disabled-date="disabledDate" -->
+            </div>
+          </div>
+          <el-button size="small" @click="handleGetLogs" :loading="loading">
+            <el-icon><Refresh /></el-icon>
+            {{ t('common.refresh') }}
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -210,6 +214,22 @@ const instanceId = computed(
 )
 const token = computed(() => selectedToken.value || (route.query.token as string) || '')
 
+// 最近24小时时间段展示
+const last24hText = computed(() => {
+  const end = new Date()
+  const start = new Date(end.getTime() - 24 * 60 * 60 * 1000)
+  const fmt = (d: Date) =>
+    d.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  return `${fmt(start)} ~ ${fmt(end)}`
+})
+
 // level change
 const handleLevelChange = (val: string | number) => {
   level.value = val
@@ -226,9 +246,9 @@ const toggleLogExpand = (logId: number) => {
   }
 }
 
-const disabledDate = (date: Date) => {
-  return date.getTime() > Date.now() || date.getTime() < Date.now() - 24 * 60 * 60 * 1000
-}
+// const disabledDate = (date: Date) => {
+//   return date.getTime() > Date.now() || date.getTime() < Date.now() - 24 * 60 * 60 * 1000
+// }
 
 const handleDateRangeChange = (value: [Date, Date] | null) => {
   if (!value || value.length !== 2) {

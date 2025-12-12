@@ -140,7 +140,7 @@ export interface InstanceResult extends InstanceForm {
   environmentName: string
   containerIsReady: boolean
   tokens: Array<{
-    enabledTransport: boolean
+    enabled: boolean
     token: string
     expireAt: number
     publishAt: number

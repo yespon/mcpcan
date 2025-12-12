@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"mime"
 	"os"
@@ -231,6 +232,18 @@ func (s *CodeService) GetCodeFile(c *gin.Context) {
 		return
 	}
 
+	// Check if file is an image - if so, return base64 encoded content
+	// This avoids data corruption when converting binary data to string
+	if utils.IsValidImageType(content) {
+		// Encode binary content as base64 for images
+		base64Content := base64.StdEncoding.EncodeToString(content)
+		common.GinSuccess(c, &code.GetCodeFileResponse{
+			Content: base64Content,
+		})
+		return
+	}
+
+	// For text files, return as string
 	common.GinSuccess(c, &code.GetCodeFileResponse{
 		Content: string(content),
 	})

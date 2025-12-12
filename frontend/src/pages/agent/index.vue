@@ -1,0 +1,222 @@
+<template>
+  <div class="agent-page">
+    <div class="flex justify-between page-header">
+      <div class="header-container">
+        {{ t('agent.pageDesc.title') }}
+        <span class="desc">{{ t('agent.pageDesc.desc') }}</span>
+      </div>
+      <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
+        <mcp-button :icon="Plus">{{ t('agent.action.create') }}</mcp-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="community" @click="handleNewAgent('Dify')">
+              <div class="flex align-center">
+                <McpImage :src="dify" fit="contain" width="80" height="20" />
+                {{ t('agent.action.community') }}
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item command="business" @click="handleNewAgent('DifyEnterprise')">
+              <McpImage :src="dify" fit="contain" width="80" height="20" />
+              {{ t('agent.action.enterprise') }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
+    <div v-loading="pageInfo.loading" :element-loading-text="pageInfo.loadingText">
+      <TablePlus
+        :showOperation="true"
+        searchContainer="#agentSearch"
+        ref="tablePlus"
+        :requestConfig="requestConfig"
+        :columns="columns"
+        show-view-mode
+        v-model:pageConfig="pageConfig"
+        :handlerColumnConfig="{
+          width: '120px',
+          fixed: 'right',
+        }"
+      >
+        <template #action>
+          <div class="flex justify-between mb-4">
+            <div class="center">
+              <el-image :src="agentLogo" style="width: 20px; height: 20px"></el-image>
+              <span class="desc">{{ t('agent.pageDesc.total') }}：{{ pageConfig.total }}</span>
+            </div>
+            <div id="agentSearch"></div>
+          </div>
+        </template>
+        <template #name="{ row }">
+          <div class="flex align-center">
+            <el-tooltip effect="dark" placement="top" class="flex-sub" :raw-content="true">
+              <div class="flex-sub ml-2 ellipsis-two">{{ (row as any).name }}</div>
+              <template #content>
+                <div style="width: 300px">
+                  {{ (row as any).name }}
+                </div>
+              </template>
+            </el-tooltip>
+          </div>
+        </template>
+        <template #operation="{ row }">
+          <div class="flex align-center">
+            <el-button
+              type="text"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleEdit(row)"
+              >{{ t('common.edit') }}</el-button
+            >
+            <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
+              <el-icon class="link-hover cursor-pointer"><More /></el-icon>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleConnection(row)">
+                    {{ t('common.connection') }}
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleDelete(row)">
+                    <el-button type="danger" size="small" link>{{ t('common.delete') }}</el-button>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </template>
+        <template #slotCard="{ row }: { row: any }">
+          <el-card>
+            <template #header>
+              <div class="flex align-center justify-between">
+                <span>{{ row.accessName }}</span>
+
+                <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
+                  <el-icon class="link-hover cursor-pointer"><More /></el-icon>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item @click="handleEdit(row)">
+                        {{ t('common.edit') }}
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="handleConnection(row)">
+                        {{ t('common.connection') }}
+                      </el-dropdown-item>
+                      <el-dropdown-item @click="handleDelete(row)">
+                        <el-button type="danger" size="small" link>{{
+                          t('common.delete')
+                        }}</el-button>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+            </template>
+            <div class="center">
+              <McpImage
+                :src="row.accessType === 'Dify' ? kymo : dify"
+                fit="contain"
+                width="80"
+                height="20"
+              />
+              <div class="flex-sub ml-2 ellipsis-two">
+                {{ row.accessType === 'Dify' ? '社区版' : '商业版' }}
+              </div>
+            </div>
+          </el-card>
+        </template>
+      </TablePlus>
+    </div>
+
+    <FormAgent ref="formAgent" @on-refresh="handleFormSuccess"></FormAgent>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { Plus, More } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+defineOptions({
+  name: 'AgentPage',
+})
+import TablePlus from '@/components/TablePlus/index.vue'
+import McpButton from '@/components/mcp-button/index.vue'
+import McpImage from '@/components/mcp-image/index.vue'
+import FormAgent from './modules/form-dialog.vue'
+import { kymo, dify } from '@/utils/logo.ts'
+import agentLogo from '@/assets/logo/instance.png'
+import { useAgentTableHooks } from './index.ts'
+
+const { t, tablePlus, columns, pageInfo, requestConfig, pageConfig, AgentAPI } =
+  useAgentTableHooks()
+// view model：'card' or 'table'
+const formAgent = ref()
+
+const handleNewAgent = (accessType: string) => {
+  formAgent.value.init(accessType, null)
+}
+
+// form data submit success
+const handleFormSuccess = () => {
+  // refresh table data
+  tablePlus.value?.initData()
+}
+
+const handleConnection = async (row: any) => {
+  try {
+    pageInfo.value.loading = true
+    await AgentAPI.connectionTest(row)
+    ElMessage.success(t('agent.action.successConnection'))
+  } catch (error) {
+    console.error('Failed to test connection:', error)
+  } finally {
+    pageInfo.value.loading = false
+  }
+}
+
+// handle edit formData
+const handleEdit = (row: any) => {
+  formAgent.value.init(row.accessType, row)
+}
+
+const handleDelete = (row: any) => {
+  ElMessageBox.confirm(t('agent.pageDesc.deleteDesc'), t('common.warn'), {
+    confirmButtonText: t('common.ok'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning',
+    customClass: 'tips-box',
+    center: true,
+    showClose: false,
+    confirmButtonClass: 'is-plain el-button--danger danger-btn',
+    customStyle: {
+      width: '517px',
+      height: '247px',
+    },
+  }).then(async () => {
+    await AgentAPI.delete(row.accessID)
+    ElMessage.success(t('action.delete'))
+    // refresh table data
+    tablePlus.value?.initData()
+  })
+}
+
+/**
+ * Handle init page list data
+ */
+const init = () => {
+  tablePlus.value.initData()
+}
+
+onMounted(init)
+</script>
+
+<style scoped lang="scss">
+.page-header {
+  margin-bottom: 24px;
+  .header-container {
+    font-size: 20px;
+  }
+}
+.desc {
+  font-size: 16px;
+  color: #999999;
+  margin-left: 16px;
+}
+</style>

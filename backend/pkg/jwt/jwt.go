@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -81,6 +82,12 @@ func generateRandomString(length int) (string, error) {
 
 // ParseTokenWithClaims 解析JWT token并提取Claims
 func ParseTokenWithClaims(tokenString, secret string) (Claims, error) {
+	// Remove "Bearer " prefix if present
+	if len(tokenString) > 7 && strings.ToUpper(tokenString[0:7]) == "BEARER " {
+		tokenString = tokenString[7:]
+	}
+	tokenString = strings.TrimSpace(tokenString)
+
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
