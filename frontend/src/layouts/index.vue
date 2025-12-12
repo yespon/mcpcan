@@ -34,13 +34,11 @@
     :BACK_COLOR="{ r: 0.5, g: 0, b: 0 }"
     :TRANSPARENT="true"
   /> -->
-  <TaskList ref="taskList"></TaskList>
 </template>
 <script setup lang="ts">
 import BaseHeader from './BaseHeader/index.vue'
 import BaseSide from './BaseSide/index.vue'
 // import TagsView from './TagsView/index.vue'
-import TaskList from './TaskList/index.vue'
 import { useSystemStoreHook } from '@/stores'
 // import SplashCursor from '@/components/Animation/SplashCursor.vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'

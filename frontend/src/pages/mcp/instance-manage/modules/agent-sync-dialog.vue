@@ -83,17 +83,12 @@
             </div>
           </div>
         </div>
-<<<<<<< HEAD
-        <div v-if="!dialogInfo.instanceList.length" class="empty-state">
-          <el-empty :description="t('agent.sync.emptyDesc')" />
-=======
         <div v-if="!dialogInfo.platformList.length" class="empty-state">
           <el-empty :description="t('agent.sync.emptyDesc')">
             <el-button link class="base-btn-link" @click="handleJumptoAgent"
               >去添加智能体平台</el-button
             >
           </el-empty>
->>>>>>> main
         </div>
       </div>
       <div v-else-if="dialogInfo.currentStep === 2" class="step-content">
@@ -263,17 +258,11 @@
 import { AgentAPI } from '@/api/agent'
 import TokenFormSync from './components/token-form-sync.vue'
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
-<<<<<<< HEAD
-
-const { t } = useI18n()
-const { taskInfo } = toRefs(useBusinessStoreHook())
-=======
 import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
 const { taskInfo } = toRefs(useBusinessStoreHook())
 const { jumpToPage } = useRouterHooks()
->>>>>>> main
 const dialogInfo = reactive({
   title: t('agent.sync.dialogTitle'),
   visible: false,
@@ -353,15 +342,12 @@ const isNamespaceIndeterminate = computed(() => {
   )
 })
 
-<<<<<<< HEAD
-=======
 const handleJumptoAgent = () => {
   jumpToPage({
     url: '/agent-manage',
   })
 }
 
->>>>>>> main
 // select all or cancel all
 const handleCheckAllNamespace = (val: boolean) => {
   allNamespaceChecked.value = val
