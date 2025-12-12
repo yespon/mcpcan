@@ -13,8 +13,8 @@ export const timestampToDate = (time: number | string, format: string = 'YYYY-MM
 
   // 2. 验证时间有效性（兼容Invalid Date）
   if (isNaN(date.getTime())) {
-    console.warn(`无效的时间格式：${time}`)
-    return ''
+    // console.warn(`无效的时间格式：${time}`)
+    return '--'
   }
 
   // 提取时间各部分（月份从0开始，需+1）

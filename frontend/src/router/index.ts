@@ -219,6 +219,13 @@ router.beforeEach(async (to, from, next) => {
       to.meta.title = title
     }
 
+    // Check if layout should be hidden via query parameter
+    const layoutQuery = to.query.layout as string
+    if (layoutQuery === 'false' || layoutQuery === '0') {
+      // Set meta to indicate no layout should be used
+      to.meta.hideLayout = true
+    }
+
     next()
   } catch (error) {
     console.error('❌ Route guard error:', error)

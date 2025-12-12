@@ -1,5 +1,11 @@
 <template>
-  <div class="common-layout">
+  <!-- 如果路由指定隐藏 layout，则只显示内容 -->
+  <div v-if="route.meta.hideLayout" class="empty-layout">
+    <el-config-provider :locale="elLocale">
+      <RouterView></RouterView>
+    </el-config-provider>
+  </div>
+  <div v-else class="common-layout">
     <el-container :key="locale">
       <BaseSide v-model="isCollapse" />
       <el-container>
@@ -52,6 +58,11 @@ const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
 onMounted(() => {})
 </script>
 <style lang="scss" scoped>
+.empty-layout {
+  width: 100%;
+  height: 100%;
+}
+
 .common-layout {
   width: 100vm;
   height: 100vh;
