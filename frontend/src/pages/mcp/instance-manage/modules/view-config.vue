@@ -426,9 +426,11 @@ const configToken = computed(() => {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].token || 'No Data'
   }
+  console.log(111, dialogInfo.value.currentTokenIndex)
+
   return `${
     dialogInfo.value.currentTokenIndex !== null
-      ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
+      ? tokenList.value[dialogInfo.value.currentTokenIndex].token
       : ''
   }`
 })

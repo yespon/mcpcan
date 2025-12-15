@@ -12,13 +12,13 @@ export default defineConfig({
     open: true,
     host: '0.0.0.0',
     // 配置证书
-    https: {
-      // 注意这里需要将证书配置放在https对象内
-      cert: fs.readFileSync(path.resolve(__dirname, './cert.pem')), // 使用path.resolve确保路径正确
-      key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
-    },
+    // https: {
+    //   // 注意这里需要将证书配置放在https对象内
+    //   cert: fs.readFileSync(path.resolve(__dirname, './cert.pem')), // 使用path.resolve确保路径正确
+    //   key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
+    // },
     // 可选配置
-    port: 443, // HTTPS 默认端口
+    // port: 443, // HTTPS 默认端口
     proxy: {
       '/api/authz': {
         target: 'https://mcp-dev.itqm.com',

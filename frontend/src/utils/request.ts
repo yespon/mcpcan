@@ -6,6 +6,7 @@ import { ElMessage, ElNotification } from 'element-plus'
 import router from '@/router'
 import baseConfig from '@/config/base_config.ts'
 import { t } from '@/utils/i18n'
+import { isEmbeddedInParent } from '@/utils/system'
 
 /**
  * 创建 HTTP 请求实例
@@ -179,7 +180,12 @@ async function redirectToLogin(message?: string): Promise<void> {
     // 跳转到登录页，保留当前路由用于登录后跳转
     const currentPath = router.currentRoute.value.fullPath
     await useUserStoreHook().resetUserState()
-    await router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+    // if (isEmbeddedInParent()) {
+    //   // 如果嵌入在父级项目中，发送消息给父页面请求导航到登录页
+    //   const parentWindow = window.parent || window.top
+    //   parentWindow.open('/login?redirect=' + encodeURIComponent(currentPath), '_self')
+    // }
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
   } catch (error) {
     console.error('Redirect to login error:', error)
   }

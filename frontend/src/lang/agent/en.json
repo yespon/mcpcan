@@ -25,13 +25,13 @@
       "failConnectionTips": "Platform connection failed; do you still want to save?"
     },
     "formData": {
-      "accessName": "Access Name",
+      "accessName": "Access name",
       "accessType": "Access Type",
-      "dbHost": "Database Host",
-      "dbPort": "Database Port",
-      "dbUser": "Database User",
-      "dbPassword": "Database Password",
-      "dbName": "Database Name",
+      "dbHost": "Database address",
+      "dbPort": "Port",
+      "dbUser": "Username",
+      "dbPassword": "Password",
+      "dbName": "Database name",
       "loadingText": "Connecting to service..."
     },
     "placeholder": {

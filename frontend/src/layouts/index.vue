@@ -54,8 +54,6 @@ const { locale } = useI18n()
 const route = useRoute()
 const { isCollapse, language } = toRefs(useSystemStoreHook())
 const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
-
-onMounted(() => {})
 </script>
 <style lang="scss" scoped>
 .empty-layout {
@@ -68,18 +66,22 @@ onMounted(() => {})
   height: 100vh;
   .el-header {
     border-bottom: 1px solid var(--el-menu-border-color);
+
     &.tag-view {
       padding: 0;
       border: 0;
       height: auto;
     }
   }
+
   .el-container {
     height: 100%;
   }
+
   .el-main {
     height: calc(100vh - 94px);
     background: var(--ep-bg-color);
+
     &.p-0 {
       padding: 0 !important;
     }
