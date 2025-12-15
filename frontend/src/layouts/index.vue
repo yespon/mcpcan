@@ -2,7 +2,9 @@
   <!-- 如果路由指定隐藏 layout，则只显示内容 -->
   <div v-if="route.meta.hideLayout" class="empty-layout">
     <el-config-provider :locale="elLocale">
-      <RouterView></RouterView>
+      <el-main class="hide-scrollbar">
+        <RouterView></RouterView>
+      </el-main>
     </el-config-provider>
   </div>
   <div v-else class="common-layout">

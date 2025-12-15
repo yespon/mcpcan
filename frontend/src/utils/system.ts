@@ -1,5 +1,7 @@
-// 时间戳转换为标准显示时间
+import { Storage } from '@/utils/storage'
+import { useSystemStoreHook } from '@/stores/modules/system-store'
 
+// 时间戳转换为标准显示时间
 export const timestampToDate = (time: number | string, format: string = 'YYYY-MM-DD HH:mm:ss') => {
   let date: Date
   if (typeof time === 'string') {
@@ -120,7 +122,7 @@ export const getToken = (baseInfo: any) => {
 
 // 获取父级项目缓存信息
 // 当前项目作为子项目嵌入父级项目时，尝试访问父级项目的 localStorage
-export const getParentLocalStorageItem = (key: string, timeout = 1000) => {
+export const getParentLocalStorageItem = (key: string, timeout = 1000): Promise<any> => {
   // 不同源的情况下，无法直接访问父窗口的 localStorage，需要通过 postMessage 通信获取
   if (isEmbeddedInParent()) {
     return new Promise((resolve, reject) => {
@@ -164,5 +166,44 @@ export const isEmbeddedInParent = () => {
     return window.parent && window.parent !== window
   } catch {
     return false
+  }
+}
+
+//初始化国际化信息
+export const initUseI18n = async () => {
+  try {
+    const systemStore = useSystemStoreHook()
+    const locale = await getParentLocalStorageItem('responsive-locale')
+    systemStore.changeLanguage(JSON.parse(locale).locale === 'zh' ? 'zh-cn' : 'en')
+  } catch {}
+}
+
+//初始化主题信息
+export const initThemeInfo = async () => {
+  try {
+    const theme = await getParentLocalStorageItem('responsive-layout')
+    Storage.set('theme', JSON.parse(theme).overallStyle || 'dark')
+  } catch {}
+}
+
+// 初始化用户鉴权信息
+
+export const initAuthInfo = async () => {
+  try {
+    // normalize possible sync/async return from getParentLocalStorageItem
+    const token = await getParentLocalStorageItem('ELADMIN-TOEKN')
+    const userInfo = await getParentLocalStorageItem('user-info')
+    if (typeof token === 'string' && token) {
+      // Storage.set('token', token.split(' ')[1] || '')
+      Storage.set(
+        'token',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJleHAiOjE3NjU4NzMwMjQsImlhdCI6MTc2NTc4NjYyNH0.bCh5-Iel26ZNuUQHgkJv_ufzwuTg4asERn8J9HOB9fk',
+      )
+    }
+    if (userInfo) {
+      Storage.set('userInfo', userInfo)
+    }
+  } catch (err) {
+    console.warn('init parent token failed', err)
   }
 }
