@@ -20,10 +20,8 @@ import { initThemeInfo, initUseI18n, isEmbeddedInParent } from '@/utils/system'
  */
 const init = async () => {
   // is embedded in parent window and sync theme info
-  if (isEmbeddedInParent()) {
-    initUseI18n()
-    await initThemeInfo()
-  }
+  initUseI18n()
+  await initThemeInfo()
   const root = document.documentElement
   root.className = Storage.get('theme') || 'dark'
 }

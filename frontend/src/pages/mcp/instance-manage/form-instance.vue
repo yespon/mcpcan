@@ -499,6 +499,7 @@ const {
   query,
   router,
   jumpToPage,
+  jumpBack,
   userInfo,
   pageInfo,
   originForm,
@@ -642,7 +643,8 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  router.push('/instance-manage')
+  // router.push('/instance-manage')
+  jumpBack()
 }
 /**
  * Handle confirm save
