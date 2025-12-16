@@ -199,7 +199,7 @@ export const initUseI18n = async () => {
   try {
     const systemStore = useSystemStoreHook()
     const locale = await getParentLocalStorageItem('responsive-locale')
-    systemStore.changeLanguage(JSON.parse(locale).locale === 'zh' ? 'zh-cn' : 'en')
+    systemStore.language = JSON.parse(locale).locale === 'zh' ? 'zh-cn' : 'en'
   } catch {}
 }
 
@@ -235,22 +235,22 @@ export const initThemeInfo = async () => {
     )
 
     // 按钮颜色
-    document.documentElement.style.setProperty(
-      '--ep-btn-color-top',
-      adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
-    )
-    document.documentElement.style.setProperty(
-      '--ep-btn-color-bottom',
-      adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
-    )
-    document.documentElement.style.setProperty(
-      '--ep-btn-color-disabled-top',
-      adjustHexByDeltas((themeObj.epThemeColor || ' #8d6fe6') + '50', 1, 2, 0),
-    )
-    document.documentElement.style.setProperty(
-      '--ep-btn-color-disabled-bottom',
-      adjustHexByDeltas((themeObj.epThemeColor || ' #8d6fe6') + '50', 1, 2, 0),
-    )
+    // document.documentElement.style.setProperty(
+    //   '--ep-btn-color-top',
+    //   adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
+    // )
+    // document.documentElement.style.setProperty(
+    //   '--ep-btn-color-bottom',
+    //   adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
+    // )
+    // document.documentElement.style.setProperty(
+    //   '--ep-btn-color-disabled-top',
+    //   adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    // )
+    // document.documentElement.style.setProperty(
+    //   '--ep-btn-color-disabled-bottom',
+    //   adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    // )
     console.log('初始化主题信息', themeObj.epThemeColor)
   } catch {}
 }

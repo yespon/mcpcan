@@ -1,3 +1,4 @@
+import { da } from 'element-plus/es/locales.mjs'
 import { useRouter } from 'vue-router'
 
 /**
@@ -37,14 +38,21 @@ export const useRouterHooks = () => {
     return new Promise((resolve: any) => {
       const { url, data = {}, isOpen = false } = params
 
+      // 如果当前路由存在 layout 参数并且目标没有 layout，则带上当前 layout
+
+      let paramsData = {
+        ...data,
+        layout: router.currentRoute.value.query?.layout,
+      }
+
       if (isOpen) {
-        window.open(url + obj2UrlString(data))
+        window.open(url + obj2UrlString(paramsData))
       } else {
         router
           .push({
             path: url,
             query: {
-              ...data,
+              ...paramsData,
             },
           })
           .then(() => {

@@ -32,10 +32,10 @@ html.dark {
   // --ep-bg-purple-color-deep: #ccbbff80;
   // --ep-pager-border: #ccbbff;
   // --el-color-primary-hover: #cdbdff80;
-  // --ep-btn-color-top: #a083f7;
-  // --ep-btn-color-bottom: #2a029f;
-  // --ep-btn-color-disabled-top: #8d6fe6;
-  // --ep-btn-color-disabled-bottom: #8d6fe6;
+  --ep-btn-color-top: #a083f7;
+  --ep-btn-color-bottom: #2a029f;
+  --ep-btn-color-disabled-top: #8d6fe6;
+  --ep-btn-color-disabled-bottom: #8d6fe6;
   --ep-pager-bg: #ccbbff3d;
   --ep-bg-grey: #ffffff29;
   --ep-home-glass: #d8d8d84d;
@@ -255,6 +255,7 @@ code {
   background: linear-gradient(180deg, var(--ep-btn-color-top) 0%, var(--ep-btn-color-bottom) 100%);
   border: none;
   &:hover {
+    color: var(--el-button-text-color) !important;
     background: linear-gradient(
       180deg,
       var(--ep-btn-color-disabled-top) 0%,
@@ -262,6 +263,7 @@ code {
     );
   }
   &.is-disabled {
+    color: var(--el-button-text-color) !important;
     background: linear-gradient(
       180deg,
       var(--ep-btn-color-disabled-top) 0%,

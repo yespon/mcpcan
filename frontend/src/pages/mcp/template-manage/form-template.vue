@@ -477,6 +477,7 @@ import { cloneDeep } from 'lodash-es'
 const { t } = useI18n()
 const {
   jumpToPage,
+  jumpBack,
   router,
   query,
   pageInfo,
@@ -619,7 +620,8 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  router.push('/template-manage')
+  // router.push('/template-manage')
+  jumpBack()
 }
 /**
  * Handle confirm
