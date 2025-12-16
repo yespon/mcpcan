@@ -3,10 +3,9 @@ package biz
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
@@ -71,12 +70,8 @@ func mapHTTPToI18nCode(status int) int {
 }
 
 func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token string, headers map[string]string, cookies []*http.Cookie) (*ValidateResult, *KymoError, int) {
-	base := os.Getenv("KYMO_AUTH_BASE_URL")
-	if base == "" {
-		base = "https://ai-test.itqm.cn/intelligent-api"
-	}
-	url := strings.TrimRight(base, "/") + "/auth/info"
-
+	// dev "https://ai-dev.itqm.cn/intelligent-api"
+	url := fmt.Sprintf("http://%s/intelligent-api", "intelligent-api-svc")
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	for k, v := range headers {

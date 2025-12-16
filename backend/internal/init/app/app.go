@@ -64,14 +64,15 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to copy data directory: %w", err)
 	}
 
-	// 创建管理员用户
-	_, err := a.createAdminUser()
-	if err != nil {
-		return fmt.Errorf("failed to create admin user: %w", err)
+	if a.config.IsKymo {
+		// 创建管理员用户
+		_, err := a.createAdminUser()
+		if err != nil {
+			return fmt.Errorf("failed to create admin user: %w", err)
+		}
 	}
 
 	wg := &sync.WaitGroup{}
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

@@ -19,6 +19,7 @@ type Config struct {
 	Database    common.DatabaseConfig `mapstructure:"database"`
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
+	IsKymo      bool                  `mapstructure:"isKymo"`
 }
 
 // JWTConfig JWT configuration

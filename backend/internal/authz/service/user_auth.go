@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/api/authz/user_auth"
 	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
+	"github.com/kymo-mcp/mcpcan/internal/authz/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
@@ -154,7 +154,8 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		return
 	}
 
-	if os.Getenv("IS_KYMO") == "true" {
+	config := config.GetConfig()
+	if config.IsKymo {
 		headers := map[string]string{
 			"Accept":           c.GetHeader("Accept"),
 			"Accept-Language":  c.GetHeader("Accept-Language"),
