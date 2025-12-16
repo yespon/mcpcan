@@ -206,9 +206,11 @@ export const initUseI18n = async () => {
 //初始化主题信息
 export const initThemeInfo = async () => {
   try {
+    const systemStore = useSystemStoreHook()
     const theme = await getParentLocalStorageItem('responsive-layout')
     let themeObj = JSON.parse(theme) || {}
-    Storage.set('theme', themeObj.overallStyle || 'dark')
+    // Storage.set('theme', themeObj.overallStyle || 'dark')
+    systemStore.themeType = themeObj.overallStyle || 'dark'
     document.documentElement.style.setProperty(
       '--el-color-primary',
       themeObj.epThemeColor || '#cdbdff',
@@ -254,7 +256,6 @@ export const initThemeInfo = async () => {
 }
 
 // 初始化用户鉴权信息
-
 export const initAuthInfo = async () => {
   try {
     // normalize possible sync/async return from getParentLocalStorageItem

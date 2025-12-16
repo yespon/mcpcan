@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { Storage } from '@/utils/storage'
-import { initThemeInfo, initUseI18n } from '@/utils/system'
+import { initThemeInfo, initUseI18n, isEmbeddedInParent } from '@/utils/system'
 // import { useSystemStoreHook } from '@/stores/modules/system-store'
 // const systemStore = useSystemStoreHook()
 
@@ -19,8 +19,11 @@ import { initThemeInfo, initUseI18n } from '@/utils/system'
  * Handle init dark theme
  */
 const init = async () => {
-  initUseI18n()
-  await initThemeInfo()
+  // is embedded in parent window and sync theme info
+  if (isEmbeddedInParent()) {
+    initUseI18n()
+    await initThemeInfo()
+  }
   const root = document.documentElement
   root.className = Storage.get('theme') || 'dark'
 }

@@ -3,7 +3,7 @@
   --transition-animation-new: reveal-in;
 }
 ::view-transition {
-  background: #555;
+  background: var(--ep-bg-color);
 }
 ::view-transition-image-pair(root) {
   perspective: 2500px;
