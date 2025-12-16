@@ -33,7 +33,7 @@ func NewIntelligentAccessService(ctx context.Context) *IntelligentAccessService 
 
 // CreateHandler creates intelligent access HTTP handler function
 func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
-	if config.GetConfig().RunKimo {
+	if config.GetConfig().RunMode == common.RunModeKymo {
 		common.GinError(c, i18nresp.CodeForbidden, "cannot create intelligent access when running in kimo mode")
 		return
 	}
@@ -86,7 +86,7 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 
 // UpdateHandler updates intelligent access HTTP handler function
 func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
-	if config.GetConfig().RunKimo {
+	if config.GetConfig().RunMode == common.RunModeKymo {
 		common.GinError(c, i18nresp.CodeForbidden, "cannot update intelligent access when running in kimo mode")
 		return
 	}
@@ -138,7 +138,7 @@ func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
 
 // DeleteHandler deletes intelligent access HTTP handler function
 func (s *IntelligentAccessService) DeleteHandler(c *gin.Context) {
-	if config.GetConfig().RunKimo {
+	if config.GetConfig().RunMode == common.RunModeKymo {
 		common.GinError(c, i18nresp.CodeForbidden, "cannot delete intelligent access when running in kimo mode")
 		return
 	}

@@ -18,15 +18,6 @@ var SysRoleRepo *SysRoleRepository
 // SysRoleRepository 角色仓库
 type SysRoleRepository struct{}
 
-func init() {
-	RegisterInit(func() {
-		repo := NewSysRoleRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize sys_role table: %v", err))
-		}
-	})
-}
-
 // NewSysRoleRepository 创建角色仓库实例
 func NewSysRoleRepository() *SysRoleRepository {
 	SysRoleRepo = &SysRoleRepository{}

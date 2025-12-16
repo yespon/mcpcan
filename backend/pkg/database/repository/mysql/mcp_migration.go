@@ -2,22 +2,12 @@ package mysql
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"gorm.io/gorm"
 )
 
 var McpMigrationRepo *McpMigrationRepository
-
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpMigrationRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcpcan_tokens table: %v", err))
-		}
-	})
-}
 
 // NewMcpMigrationRepository creates repository and assigns global instance
 func NewMcpMigrationRepository() *McpMigrationRepository {

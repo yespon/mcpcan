@@ -17,6 +17,8 @@ var GlobalConfig *Config
 
 // Config represents configuration structure
 type Config struct {
+	// RunMode indicates current running mode, e.g., "demo" or "prod" or "kymo"
+	RunMode     string                `mapstructure:"runMode"`
 	ServiceName string                `mapstructure:"-"`
 	VersionInfo *version.VersionInfo  `mapstructure:"-"`
 	Server      common.ServerConfig   `mapstructure:"server"`
@@ -29,9 +31,6 @@ type Config struct {
 	Storage     common.StorageConfig  `mapstructure:"storage"`
 	// RunEnvironment configuration
 	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
-	// RunMode indicates current running mode, e.g., "demo" or "prod"
-	RunMode string `mapstructure:"runMode"`
-	RunKimo bool   `mapstructure:"runKimo"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
 	DemoMaxInstances int `mapstructure:"demoMaxInstances"`
 }
@@ -72,14 +71,9 @@ func Load() (*Config, error) {
 
 	// Read run mode from environment if not provided in config
 	if strings.TrimSpace(config.RunMode) == "" {
-		if envMode := strings.TrimSpace(os.Getenv("RUN_MODE")); envMode != "" {
+		if envMode := strings.TrimSpace(config.RunMode); envMode != "" {
 			config.RunMode = envMode
 		}
-	}
-
-	envMode := os.Getenv("RUN_KIMO")
-	if envMode == "false" || envMode == "true" {
-		config.RunKimo = envMode == "true"
 	}
 
 	// Read demo max instances from environment if provided

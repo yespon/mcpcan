@@ -11,15 +11,6 @@ import (
 
 var McpTokenRepo *McpTokenRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpTokenRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcpcan_tokens table: %v", err))
-		}
-	})
-}
-
 // NewMcpTokenRepository creates repository and assigns global instance
 func NewMcpTokenRepository() *McpTokenRepository {
 	McpTokenRepo = &McpTokenRepository{}

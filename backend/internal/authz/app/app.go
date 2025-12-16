@@ -16,6 +16,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/internal/authz/service"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	dbpkg "github.com/kymo-mcp/mcpcan/pkg/database"
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/middleware"
@@ -59,7 +60,7 @@ func (a *App) Initialize() error {
 	}
 
 	// Initialize database
-	if err := dbpkg.Init(&a.config.Database.MySQL); err != nil {
+	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
@@ -70,6 +71,38 @@ func (a *App) Initialize() error {
 
 	logger.Info("Authz service initialized successfully")
 	return nil
+}
+
+// loadMysql initializes MySQL database connection and loads necessary tables
+func (a *App) loadMysql() error {
+	var tableInitializers []func() (string, error)
+	// 当运行模式不是 kymo 时，加载逻辑中使用的表
+	if a.config.RunMode != "kymo" {
+		tableInitializers = []func() (string, error){
+			func() (string, error) {
+				mysql.NewSysUserRepository()
+				return (&model.SysUser{}).TableName(), nil
+			},
+			func() (string, error) {
+				mysql.NewSysRoleRepository()
+				return (&model.SysRole{}).TableName(), nil
+			},
+			func() (string, error) {
+				mysql.NewSysDeptRepository()
+				return (&model.SysDept{}).TableName(), nil
+			},
+			func() (string, error) {
+				mysql.NewSysUsersRolesRepository()
+				return (&model.SysUsersRoles{}).TableName(), nil
+			},
+			func() (string, error) {
+				mysql.NewSysRolesDeptsRepository()
+				return (&model.SysRolesDepts{}).TableName(), nil
+			},
+		}
+	}
+
+	return dbpkg.Init(&a.config.Database.MySQL, tableInitializers...)
 }
 
 // setupHTTPServer sets up HTTP server

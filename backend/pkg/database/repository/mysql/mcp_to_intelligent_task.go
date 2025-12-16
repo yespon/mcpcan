@@ -11,15 +11,6 @@ import (
 
 var McpToIntelligentTaskRepo *McpToIntelligentTaskRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpToIntelligentTaskRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_to_intelligent_task table: %v", err))
-		}
-	})
-}
-
 // McpToIntelligentTaskRepository 封装 mcp_to_intelligent_task 表的增删改查操作
 type McpToIntelligentTaskRepository struct{}
 

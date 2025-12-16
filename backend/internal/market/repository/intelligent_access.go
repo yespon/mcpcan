@@ -12,15 +12,6 @@ import (
 
 var IntelligentAccessRepo *IntelligentAccessRepository
 
-func init() {
-	mysql.RegisterInit(func() {
-		repo := NewIntelligentAccessRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize intelligent_access table: %v", err))
-		}
-	})
-}
-
 // IntelligentAccessRepository 封装 intelligent_access 表的增删改查操作
 type IntelligentAccessRepository struct{}
 

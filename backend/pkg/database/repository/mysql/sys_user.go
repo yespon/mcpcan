@@ -14,20 +14,11 @@ import (
 
 var SysUserRepo *SysUserRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewSysUserRepository(db)
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize sys_user table: %v", err))
-		}
-	})
-}
-
 // SysUserRepository 系统用户仓库
 type SysUserRepository struct{}
 
 // NewSysUserRepository 创建系统用户仓库实例
-func NewSysUserRepository(db *gorm.DB) *SysUserRepository {
+func NewSysUserRepository() *SysUserRepository {
 	SysUserRepo = &SysUserRepository{}
 	return SysUserRepo
 }

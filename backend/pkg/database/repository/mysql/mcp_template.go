@@ -12,15 +12,6 @@ import (
 
 var McpTemplateRepo *McpTemplateRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpTemplateRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_template table: %v", err))
-		}
-	})
-}
-
 // McpTemplateRepository 封装 mcp_template 表的增删改查操作
 type McpTemplateRepository struct{}
 

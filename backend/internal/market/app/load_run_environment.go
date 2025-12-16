@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -40,11 +39,6 @@ func (a *App) initRunEnvironment(ctx context.Context) error {
 
 	// Determine creator ID (default to 1 for system admin)
 	creatorID := "1"
-	// Try to find admin user (optional, just to be sure)
-	adminUser, err := mysql.SysUserRepo.FindByID(ctx, 1)
-	if err == nil && adminUser != nil {
-		creatorID = strconv.FormatUint(uint64(adminUser.UserID), 10)
-	}
 
 	switch strings.ToLower(cfg.Type) {
 	case "kubernetes":

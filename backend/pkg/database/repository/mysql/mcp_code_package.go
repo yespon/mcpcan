@@ -13,15 +13,6 @@ import (
 
 var McpCodePackageRepo *McpCodePackageRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpCodePackageRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize code_package table: %v", err))
-		}
-	})
-}
-
 // McpCodePackageRepository 封装 code_package 表的增删改查操作
 type McpCodePackageRepository struct{}
 

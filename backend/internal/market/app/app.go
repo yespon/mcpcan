@@ -11,8 +11,10 @@ import (
 	"time"
 
 	cfg "github.com/kymo-mcp/mcpcan/internal/market/config"
+	"github.com/kymo-mcp/mcpcan/internal/market/repository"
 	"github.com/kymo-mcp/mcpcan/internal/market/service"
 	"github.com/kymo-mcp/mcpcan/internal/market/task"
+
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -78,15 +80,9 @@ func New() (*App, error) {
 
 // Initialize initialize all application components
 func (a *App) Initialize() error {
-	// Set table name based on RunKimo flag
-	if a.config.RunKimo {
-		model.SetIntelligentAccessTableName("intelligent_access")
-	} else {
-		model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
-	}
 
 	// Initialize database
-	if err := database.Init(&a.config.Database.MySQL); err != nil {
+	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
@@ -129,6 +125,64 @@ func (a *App) Initialize() error {
 
 	a.logger.Info("Application initialization completed")
 	return nil
+}
+
+// loadMysql initializes MySQL database connection and loads necessary tables
+func (a *App) loadMysql() error {
+	// Set table name based on RunMode flag
+	if a.config.RunMode == common.RunModeKymo {
+		model.SetIntelligentAccessTableName("intelligent_access")
+	} else {
+		model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
+	}
+	tableInitializers := []func() (string, error){
+		func() (string, error) {
+			mysql.NewMcpCodePackageRepository()
+			return (&model.McpCodePackage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpEnvironmentRepository()
+			return (&model.McpEnvironment{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpMigrationRepository()
+			return (&model.Migration{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpOpenapiPackageRepository()
+			return (&model.McpOpenapiPackage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpTemplateRepository()
+			return (&model.McpTemplate{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpToIntelligentTaskRepository()
+			return (&model.McpToIntelligentTask{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpToIntelligentTaskLogRepository()
+			return (&model.McpToIntelligentTaskLog{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpTokenRepository()
+			return (&model.McpToken{}).TableName(), nil
+		},
+		func() (string, error) {
+			repo := repository.NewIntelligentAccessRepository()
+			return (&model.IntelligentAccess{}).TableName(), repo.InitTable()
+		},
+	}
+
+	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
 
 // initializeScheduler initialize scheduler

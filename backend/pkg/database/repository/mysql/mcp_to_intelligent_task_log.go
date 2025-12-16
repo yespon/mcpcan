@@ -11,15 +11,6 @@ import (
 
 var McpToIntelligentTaskLogRepo *McpToIntelligentTaskLogRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpToIntelligentTaskLogRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_to_intelligent_task table: %v", err))
-		}
-	})
-}
-
 // McpToIntelligentTaskLogRepository 封装 mcp_to_intelligent_task_log 表的增删改查操作
 type McpToIntelligentTaskLogRepository struct{}
 
