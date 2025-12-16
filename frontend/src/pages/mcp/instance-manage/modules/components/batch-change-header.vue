@@ -335,10 +335,10 @@ defineExpose({
 </script>
 <style lang="scss" scoped>
 :deep(.el-tag) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   border-color: var(--ep-border-color);
   .el-tag__close {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
     &:hover {
       background-color: var(--ep-bg-purple-color-deep);
     }

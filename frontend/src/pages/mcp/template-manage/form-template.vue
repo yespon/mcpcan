@@ -778,7 +778,7 @@ onMounted(init)
   background: rgba(255, 255, 255, 0.08);
   padding: 24px;
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
   }
   .package-logo {
     font-size: 65px;

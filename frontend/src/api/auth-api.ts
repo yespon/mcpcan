@@ -10,7 +10,7 @@ const AuthAPI = {
     // formData.append('captchaKey', data.captchaKey)
     // formData.append('captchaCode', data.captchaCode)
     return request<LoginFormData, LoginResult<UserInfo>>({
-      url: `${baseConfig.baseUrlVersion}/authz/login`,
+      url: `/authz/login`,
       method: 'POST',
       data: formData,
     })
@@ -18,7 +18,7 @@ const AuthAPI = {
 
   getEncryptionKey() {
     return request<unknown, EncryptionInfo>({
-      url: `${baseConfig.baseUrlVersion}/authz/encryption-key`,
+      url: `/authz/encryption-key`,
       method: 'POST',
       params: {},
     })
@@ -26,7 +26,7 @@ const AuthAPI = {
 
   refreshToken(refreshToken: string) {
     return request<unknown, LoginResult<UserInfo>>({
-      url: `${baseConfig.baseUrlVersion}/authz/refresh`,
+      url: `/authz/refresh`,
       method: 'POST',
       data: {
         refreshToken,
@@ -36,7 +36,7 @@ const AuthAPI = {
 
   logout(params: LoginOutParams) {
     return request<LoginOutParams>({
-      url: `${baseConfig.baseUrlVersion}/authz/logout`,
+      url: `/authz/logout`,
       method: 'POST',
       params,
     })
@@ -51,7 +51,7 @@ const AuthAPI = {
    */
   changePassword(params: ChangePasswordParams) {
     return request<ChangePasswordParams>({
-      url: `${baseConfig.baseUrlVersion}/authz/users/update-password`,
+      url: `/authz/users/update-password`,
       method: 'PUT',
       params,
     })

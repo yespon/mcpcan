@@ -12,7 +12,7 @@ import { isEmbeddedInParent } from '@/utils/system'
  * 创建 HTTP 请求实例
  */
 const request = axios.create({
-  baseURL: baseConfig.SERVER_BASE_URL,
+  baseURL: baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE,
   timeout: 60000,
   headers: { 'Content-Type': 'application/json;' },
   // headers: { 'Content-Type': 'application/json;charset=utf-8' },

@@ -351,7 +351,7 @@ watch(
   .task-tag {
     width: 60px;
     height: 60px;
-    background: var(--ep-purple-color);
+    background: var(--el-color-primary);
     border-radius: 50%;
     box-shadow: 0 4px 12px var(--ep-bg-purple-color-deep);
   }

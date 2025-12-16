@@ -5,7 +5,7 @@ export const EnvAPI = {
   // 环境列表
   list(data: TableData | null) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/environments`,
+      url: `/market/environments`,
       method: 'GET',
       data,
     })
@@ -13,7 +13,7 @@ export const EnvAPI = {
   // 命名空间列表
   namespaceList(data: any | null) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/environments/namespaces`,
+      url: `/market/environments/namespaces`,
       method: 'POST',
       data,
     })
@@ -21,7 +21,7 @@ export const EnvAPI = {
   // 创建运行环境
   createEnv(data: any) {
     return request({
-      url: `${baseConfig.baseUrlVersion}/market/environments`,
+      url: `/market/environments`,
       method: 'POST',
       data,
     })
@@ -29,14 +29,14 @@ export const EnvAPI = {
   // 删除运行环境
   delete(id: string) {
     return request({
-      url: `${baseConfig.baseUrlVersion}/market/environments/${id}`,
+      url: `/market/environments/${id}`,
       method: 'DELETE',
     })
   },
   // 编辑运行环境
   editEnv(data: any) {
     return request({
-      url: `${baseConfig.baseUrlVersion}/market/environments/${data.id}`,
+      url: `/market/environments/${data.id}`,
       method: 'PUT',
       data,
     })
@@ -44,7 +44,7 @@ export const EnvAPI = {
   // 连通性测试
   testEnv(id: string) {
     return request({
-      url: `${baseConfig.baseUrlVersion}/market/environments/${id}/test`,
+      url: `/market/environments/${id}/test`,
       method: 'POST',
     })
   },
@@ -79,7 +79,7 @@ export const PvcAPI = {
   // PVC列表
   list(params: TableData | null) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/resources/pvcs`,
+      url: `/market/resources/pvcs`,
       method: 'GET',
       params,
     })
@@ -87,7 +87,7 @@ export const PvcAPI = {
   // 存储类型列表
   storageList(params: any | null) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/resources/storage-classes`,
+      url: `/market/resources/storage-classes`,
       method: 'GET',
       params,
     })
@@ -95,7 +95,7 @@ export const PvcAPI = {
   // 创建PVC
   createPvc(data: any) {
     return request<any, PvcParams>({
-      url: `${baseConfig.baseUrlVersion}/market/resources/pvcs`,
+      url: `/market/resources/pvcs`,
       method: 'POST',
       data,
     })
@@ -106,7 +106,7 @@ export const NodeAPI = {
   // Node节点列表
   list(params: any | null) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/resources/nodes`,
+      url: `/market/resources/nodes`,
       method: 'GET',
       params,
     })

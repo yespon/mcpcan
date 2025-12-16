@@ -474,7 +474,7 @@ onMounted(init)
   cursor: pointer;
 
   &:hover {
-    background-color: var(--ep-purple-color-hover);
+    background-color: var(--el-color-primary-hover);
   }
 
   &:last-child {

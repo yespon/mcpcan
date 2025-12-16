@@ -390,11 +390,11 @@ defineExpose({
   cursor: pointer;
 }
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: var(--ep-purple-color);
+  background-color: var(--el-color-primary);
   border-color: var(--ep-pager-border);
 }
 .el-checkbox__input.is-indeterminate .el-checkbox__inner {
-  background-color: var(--ep-purple-color);
+  background-color: var(--el-color-primary);
   border-color: var(--ep-pager-border);
 }
 .el-checkbox__inner:hover {

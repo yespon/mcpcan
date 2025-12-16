@@ -9,7 +9,7 @@ const UserAPI = {
    */
   getInfo() {
     return request<any, UserInfo>({
-      url: `${baseConfig.baseUrlVersion}/authz/users/get-current-user`,
+      url: `/authz/users/get-current-user`,
       method: 'get',
     })
   },

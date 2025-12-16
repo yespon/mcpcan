@@ -27,13 +27,17 @@ html.dark {
   --ep-color: #000;
   --ep-bg-color: #f6f3f4;
   --ep-bg-color-deep: #f6f3f4;
-  --ep-purple-color: #cdbdff;
-  --ep-bg-purple-color: rgba(204, 187, 255, 0.16);
-  --ep-bg-purple-color-deep: rgba(204, 187, 255, 0.5);
+  // --el-color-primary: #cdbdff !important;
+  // --ep-bg-purple-color: #ccbbff29;
+  // --ep-bg-purple-color-deep: #ccbbff80;
+  // --ep-pager-border: #ccbbff;
+  // --el-color-primary-hover: #cdbdff80;
+  // --ep-btn-color-top: #a083f7;
+  // --ep-btn-color-bottom: #2a029f;
+  // --ep-btn-color-disabled-top: #8d6fe6;
+  // --ep-btn-color-disabled-bottom: #8d6fe6;
   --ep-pager-bg: #ccbbff3d;
-  --ep-pager-border: #ccbbff;
   --ep-bg-grey: #ffffff29;
-  --ep-purple-color-hover: #cdbdff80;
   --ep-home-glass: #d8d8d84d;
   --ep-bg-stripe-dark: #fafafa;
   --ep-bg-stripe-light: rgba(0, 0, 0, 0.06);
@@ -196,7 +200,7 @@ code {
   justify-content: space-around;
 }
 .text-purple {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 .text-primary {
   color: #409eff;
@@ -248,24 +252,36 @@ code {
   text-overflow: ellipsis;
 }
 .base-btn {
-  background: linear-gradient(180deg, #a083f7 0%, #2a029f 100%);
+  background: linear-gradient(180deg, var(--ep-btn-color-top) 0%, var(--ep-btn-color-bottom) 100%);
   border: none;
   &:hover {
-    background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+    background: linear-gradient(
+      180deg,
+      var(--ep-btn-color-disabled-top) 0%,
+      var(--ep-btn-color-disabled-bottom) 100%
+    );
   }
   &.is-disabled {
-    background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+    background: linear-gradient(
+      180deg,
+      var(--ep-btn-color-disabled-top) 0%,
+      var(--ep-btn-color-disabled-bottom) 100%
+    );
     &:hover {
-      background: linear-gradient(180deg, #8d6fe6 0%, #1e017d 100%);
+      background: linear-gradient(
+        180deg,
+        var(--ep-btn-color-disabled-top) 0%,
+        var(--ep-btn-color-disabled-bottom) 100%
+      );
     }
   }
 }
 .link-hover:hover {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 .base-btn-link {
-  color: var(--ep-purple-color) !important;
+  color: var(--el-color-primary) !important;
   &:hover {
-    color: var(--ep-purple-color-hover) !important;
+    color: var(--el-color-primary-hover) !important;
   }
 }

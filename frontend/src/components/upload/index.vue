@@ -30,7 +30,9 @@ import { Storage } from '@/utils/storage'
 import { CircleCloseFilled } from '@element-plus/icons-vue'
 import McpImage from '../mcp-image/index.vue'
 
-const action = ref(baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/storage/image')
+const action = ref(
+  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/storage/image',
+)
 const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
 })
@@ -87,10 +89,10 @@ watch(
   width: 90px;
   height: 90px;
   border-radius: 8px;
-  border: 1px dashed var(--ep-purple-color);
+  border: 1px dashed var(--el-color-primary);
   .el-icon.avatar-uploader-icon {
     font-size: 28px;
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
     width: 90px;
     height: 90px;
     text-align: center;
@@ -101,7 +103,7 @@ watch(
   width: 90px;
   height: 90px;
   border-radius: 8px;
-  border: 1px dashed var(--ep-purple-color);
+  border: 1px dashed var(--el-color-primary);
 }
 
 .avatar-overlay {

@@ -120,9 +120,34 @@ export const getToken = (baseInfo: any) => {
   return btoa(uuid + baseInfo)
 }
 
+// 将十六进制颜色按 RGB 分量偏移并返回 6 位十六进制字符串（带 '#')
+function adjustHexByDeltas(hex: string, dR: number, dG: number, dB: number) {
+  if (!hex) return hex
+  let h = String(hex).trim()
+  if (h.startsWith('#')) h = h.slice(1)
+  if (h.length === 3) {
+    h = h
+      .split('')
+      .map((c) => c + c)
+      .join('')
+  }
+  if (h.length !== 6) return `#${h}`
+
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
+  const r = clamp(parseInt(h.slice(0, 2), 16) + dR)
+  const g = clamp(parseInt(h.slice(2, 4), 16) + dG)
+  const b = clamp(parseInt(h.slice(4, 6), 16) + dB)
+
+  const to2 = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${to2(r)}${to2(g)}${to2(b)}`
+}
+
 // 获取父级项目缓存信息
 // 当前项目作为子项目嵌入父级项目时，尝试访问父级项目的 localStorage
-export const getParentLocalStorageItem = (key: string, timeout = 1000): Promise<any> => {
+export const getParentLocalStorageItem = (
+  key: string,
+  timeout = 1000,
+): Promise<any | null> | null | string => {
   // 不同源的情况下，无法直接访问父窗口的 localStorage，需要通过 postMessage 通信获取
   if (isEmbeddedInParent()) {
     return new Promise((resolve, reject) => {
@@ -182,7 +207,49 @@ export const initUseI18n = async () => {
 export const initThemeInfo = async () => {
   try {
     const theme = await getParentLocalStorageItem('responsive-layout')
-    Storage.set('theme', JSON.parse(theme).overallStyle || 'dark')
+    let themeObj = JSON.parse(theme) || {}
+    Storage.set('theme', themeObj.overallStyle || 'dark')
+    document.documentElement.style.setProperty(
+      '--el-color-primary',
+      themeObj.epThemeColor || '#cdbdff',
+    )
+    document.documentElement.style.setProperty(
+      '--el-color-primary-hover',
+      (themeObj.epThemeColor || '#cdbdff') + '80',
+    )
+
+    document.documentElement.style.setProperty(
+      '--ep-bg-purple-color',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0) + '29',
+    )
+    // 背景色
+    document.documentElement.style.setProperty(
+      '--ep-bg-purple-color-deep',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0) + '80',
+    )
+    document.documentElement.style.setProperty(
+      '--ep-pager-border',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0),
+    )
+
+    // 按钮颜色
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-top',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-bottom',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-top',
+      adjustHexByDeltas((themeObj.epThemeColor || ' #8d6fe6') + '50', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-bottom',
+      adjustHexByDeltas((themeObj.epThemeColor || ' #8d6fe6') + '50', 1, 2, 0),
+    )
+    console.log('初始化主题信息', themeObj.epThemeColor)
   } catch {}
 }
 

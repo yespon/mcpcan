@@ -5,7 +5,7 @@ export const DocsAPI = {
   // docs list
   list(params: TableData | null) {
     return request<any, List<any>>({
-      url: `${baseConfig.baseUrlVersion}/market/openapi/files`,
+      url: `/market/openapi/files`,
       method: 'GET',
       params,
     })
@@ -13,7 +13,7 @@ export const DocsAPI = {
   // download docs
   download(code: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/openapi/download/${code.id}`,
+      url: `/market/openapi/download/${code.id}`,
       method: 'GET',
       responseType: 'blob',
     })
@@ -21,14 +21,14 @@ export const DocsAPI = {
   // delete Docs
   delete(id: string) {
     return request<string>({
-      url: `${baseConfig.baseUrlVersion}/market/openapi/files/${id}`,
+      url: `/market/openapi/files/${id}`,
       method: 'DELETE',
     })
   },
   // get Docs COntent
   fileContent(params: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/openapi/content`,
+      url: `/market/openapi/content`,
       method: 'GET',
       params,
     })
@@ -36,7 +36,7 @@ export const DocsAPI = {
   // edit docs
   editDocs(params: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/openapi/edit`,
+      url: `/market/openapi/edit`,
       method: 'POST',
       params,
     })

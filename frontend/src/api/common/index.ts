@@ -5,7 +5,7 @@ export const ResourceAPI = {
   // 节点列表
   nodeList(data: TableData) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/resources/nodes`,
+      url: `/market/resources/nodes`,
       method: 'POST',
       data,
     })

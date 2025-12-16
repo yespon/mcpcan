@@ -85,7 +85,9 @@ import { useRouterHooks } from '@/utils/url'
 import McpImage from '@/components/mcp-image/index.vue'
 
 const action = ref(
-  baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/authz/users/update-avatar',
+  baseConfig.SERVER_BASE_URL +
+    (window as any).__APP_CONFIG__?.API_BASE +
+    '/authz/users/update-avatar',
 )
 const { t } = useI18n()
 const headers = ref({
@@ -171,10 +173,10 @@ onMounted(init)
       width: 134px;
       height: 134px;
       border-radius: 50%;
-      border: 1px dashed var(--ep-purple-color);
+      border: 1px dashed var(--el-color-primary);
       .el-icon.avatar-uploader-icon {
         font-size: 28px;
-        color: var(--ep-purple-color);
+        color: var(--el-color-primary);
         width: 134px;
         height: 134px;
         text-align: center;

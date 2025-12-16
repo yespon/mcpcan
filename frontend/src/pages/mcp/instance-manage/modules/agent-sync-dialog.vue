@@ -65,7 +65,7 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-zhinengti"></i
                 ></el-icon>
               </div>
@@ -130,7 +130,7 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-mingmingkongjian"></i
                 ></el-icon>
               </div>
@@ -183,7 +183,7 @@
                     class="selected-badge"
                   ></div>
                   <div class="agent-icon">
-                    <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                    <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                       ><i class="icon iconfont MCP-zhinengti"></i
                     ></el-icon>
                   </div>
@@ -452,7 +452,7 @@ const handleConfirmSync = async () => {
         ),
       })),
       mcpInstanceIDs: dialogInfo.instanceList.map((item) => item.instanceId),
-      domain: window.location.origin,
+      domain: window.location.origin + (window as any).__APP_CONFIG__?.PUBLIC_PATH,
     }
 
     await AgentAPI.createSyncTask(params)
@@ -483,18 +483,18 @@ defineExpose({
 
 <style scoped lang="scss">
 :deep(.is-finish .el-step__icon) {
-  border-color: var(--ep-purple-color);
-  color: var(--ep-purple-color);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 :deep(.is-finish .el-step__line) {
-  border-color: var(--ep-purple-color);
-  color: var(--ep-purple-color);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 :deep(.el-step__title.is-finish) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 :deep(.el-step__description.is-finish) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 
 .step-content {
@@ -515,7 +515,7 @@ defineExpose({
   }
 }
 .count-highlight {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   font-weight: 600;
   margin: 0 4px;
 }
@@ -553,12 +553,12 @@ defineExpose({
   height: 100px;
 
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   &.active {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
     background: var(--ep-bg-purple-color);
     box-shadow: 0 0 12px rgba(124, 77, 255, 0.15);
   }
@@ -571,7 +571,7 @@ defineExpose({
     height: 0px;
     border-style: solid;
     border-width: 0 40px 40px 0;
-    border-color: transparent var(--ep-purple-color) transparent transparent;
+    border-color: transparent var(--el-color-primary) transparent transparent;
     border-top-right-radius: 6px;
   }
 
@@ -620,7 +620,7 @@ defineExpose({
   min-height: 400px;
 }
 :deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 </style>
 

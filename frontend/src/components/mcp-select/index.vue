@@ -172,29 +172,29 @@ const handleComfirm = () => {
   flex: 1;
 }
 :deep(.el-radio__inner) {
-  border: 1px solid var(--ep-purple-color);
+  border: 1px solid var(--el-color-primary);
 }
 :deep(.el-radio__input.is-checked .el-radio__inner) {
-  background: var(--ep-purple-color);
-  border-color: var(--ep-purple-color);
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
 }
 :deep(.el-radio__input.is-checked + .el-radio__label) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 :deep(.el-upload-dragger) {
   height: 100%;
-  border: 1px dashed var(--ep-purple-color);
+  border: 1px dashed var(--el-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6px;
   &:hover {
-    border-color: var(--ep-purple-color-hover);
+    border-color: var(--el-color-primary-hover);
     .el-icon--upload {
-      color: var(--ep-purple-color-hover);
+      color: var(--el-color-primary-hover);
     }
     .el-upload__text {
-      color: var(--ep-purple-color-hover);
+      color: var(--el-color-primary-hover);
     }
   }
 }

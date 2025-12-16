@@ -41,7 +41,7 @@
                 :indeterminate="isTokenIndeterminate"
                 @change="handleCheckAllToken"
               >
-                <span style="color: var(--ep-purple-color)">{{ t('agent.sync.selectAll') }}</span>
+                <span style="color: var(--el-color-primary)">{{ t('agent.sync.selectAll') }}</span>
               </el-checkbox>
               <div>
                 <span class="mr-4 color-green">
@@ -419,7 +419,7 @@ const configUrl = computed(() => {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].url
   }
-  return `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${dialogInfo.value.instanceInfo.publicProxyPath}`
 })
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -820,11 +820,11 @@ defineExpose({
     min-width: 0;
     border: 1px solid var(--ep-border-color);
     &.active {
-      border-color: var(--ep-purple-color);
+      border-color: var(--el-color-primary);
       background-color: var(--ep-bg-purple-color-deep);
     }
     &:hover {
-      border-color: var(--ep-purple-color);
+      border-color: var(--el-color-primary);
     }
     &.disabled {
       cursor: not-allowed;
@@ -905,10 +905,10 @@ defineExpose({
 
 .tag-input {
   :deep(.el-tag) {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
     border-color: var(--ep-border-color);
     .el-tag__close {
-      color: var(--ep-purple-color);
+      color: var(--el-color-primary);
       &:hover {
         background-color: var(--ep-bg-purple-color-deep);
       }

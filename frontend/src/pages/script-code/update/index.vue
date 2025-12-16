@@ -52,7 +52,9 @@ import { ElMessage } from 'element-plus'
 import { Storage } from '@/utils/storage'
 
 const { t } = useI18n()
-const action = ref(baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/code/upload')
+const action = ref(
+  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASEn + '/market/code/upload',
+)
 const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
 })
@@ -90,24 +92,24 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
 }
 .upload-demo {
   width: 540px;
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   :deep(.el-upload-dragger) {
-    border: 1px dashed var(--ep-purple-color);
+    border: 1px dashed var(--el-color-primary);
     &:hover {
-      border-color: var(--ep-purple-color-hover);
+      border-color: var(--el-color-primary-hover);
       .el-icon--upload {
-        color: var(--ep-purple-color-hover);
+        color: var(--el-color-primary-hover);
       }
       .el-upload__text {
-        color: var(--ep-purple-color-hover);
+        color: var(--el-color-primary-hover);
       }
     }
   }
   .el-icon--upload {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
   }
   .el-upload__text {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
   }
 }
 .footer {
