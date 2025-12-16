@@ -60,7 +60,7 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 	if err == nil && existingUser != nil {
 		fmt.Println("Admin user already exists, updating password...")
 		// Update password
-		err := userBiz.SetUserPassword(ctx, existingUser, password)
+		err = userBiz.SetUserPassword(ctx, existingUser, password)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update admin password: %v", err)
 		}

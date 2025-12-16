@@ -4,6 +4,10 @@ import "time"
 
 // Global configuration constants
 const (
+	RunModeKymo = "kymo"
+	RunModeDev  = "demo"
+	RunModeProd = "prod"
+
 	DefaultPageSize = 10
 	MaxPageSize     = 100
 

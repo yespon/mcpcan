@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kymo-mcp/mcpcan/internal/init/config"
+	"github.com/kymo-mcp/mcpcan/pkg/common"
 	dbpkg "github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -64,7 +65,7 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to copy data directory: %w", err)
 	}
 
-	if a.config.IsKymo {
+	if a.config.RunMode == common.RunModeKymo {
 		// 创建管理员用户
 		_, err := a.createAdminUser()
 		if err != nil {

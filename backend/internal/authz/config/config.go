@@ -11,6 +11,7 @@ import (
 
 // Config represents configuration structure
 type Config struct {
+	RunMode     string                `mapstructure:"runMode"`
 	ServiceName string                `mapstructure:"-"`
 	VersionInfo *version.VersionInfo  `mapstructure:"-"`
 	Server      ServerConfig          `mapstructure:"server"`
@@ -19,7 +20,6 @@ type Config struct {
 	Database    common.DatabaseConfig `mapstructure:"database"`
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
-	IsKymo      bool                  `mapstructure:"isKymo"`
 }
 
 // JWTConfig JWT configuration

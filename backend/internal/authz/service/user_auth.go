@@ -155,7 +155,7 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 	}
 
 	config := config.GetConfig()
-	if config.IsKymo {
+	if config.RunMode == common.RunModeKymo {
 		headers := map[string]string{
 			"Accept":           c.GetHeader("Accept"),
 			"Accept-Language":  c.GetHeader("Accept-Language"),
@@ -166,11 +166,11 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		if kerr != nil {
 			c.Writer.Header().Set("X-Consum-Error-Code", strconv.Itoa(kerr.Code))
 			c.Writer.Header().Set("X-Consum-Error-Message", kerr.Message)
-			c.JSON(status, i18nresp.Response{Code: kerr.Code, Message: kerr.Message, Data: kerr.Data})
+			common.GinUnauthorized(c, kerr.Message)
 			return
 		}
 		if result == nil || !result.Valid || result.UserInfo == nil {
-			c.JSON(status, i18nresp.Response{Code: i18nresp.CodeInvalidToken, Message: "token is invalid", Data: nil})
+			common.GinUnauthorized(c, fmt.Sprintf("from kymo system token is invalid status: %d", status))
 			return
 		}
 		resp := &user_auth.ValidateTokenResponse{
