@@ -3,7 +3,6 @@ package biz
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -42,6 +41,12 @@ type KymoError struct {
 	Data    interface{}
 }
 
+const (
+	// dev url := "https://ai-dev.itqm.cn/intelligent-api/auth/info"
+	// prod url := "http://intelligent-api-svc/intelligent-api/auth/info"
+	KymoAuthURL = "http://intelligent-api-svc/intelligent-api/auth/info"
+)
+
 func mapHTTPToI18nCode(status int) int {
 	switch status {
 	case http.StatusBadRequest:
@@ -70,9 +75,7 @@ func mapHTTPToI18nCode(status int) int {
 }
 
 func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token string, headers map[string]string, cookies []*http.Cookie) (*ValidateResult, *KymoError, int) {
-	// dev "https://ai-dev.itqm.cn/intelligent-api"
-	url := fmt.Sprintf("http://%s/intelligent-api", "intelligent-api-svc")
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", KymoAuthURL, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	for k, v := range headers {
 		if v != "" {
@@ -86,7 +89,7 @@ func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token strin
 		req.AddCookie(ck)
 	}
 
-	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", url), zap.Any("headers", req.Header))
+	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", KymoAuthURL), zap.Any("headers", req.Header))
 
 	cli := &http.Client{Timeout: 5 * time.Second}
 	resp, err := cli.Do(req)
@@ -96,7 +99,7 @@ func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token strin
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 
-	logger.Info("ValidateTokenExternalKymo Response", zap.String("url", url), zap.Any("headers", resp.Header), zap.ByteString("body", body))
+	logger.Info("ValidateTokenExternalKymo Response", zap.String("url", KymoAuthURL), zap.Any("headers", resp.Header), zap.ByteString("body", body))
 
 	if resp.StatusCode != http.StatusOK {
 		var upstream struct {
