@@ -25,6 +25,7 @@ interface ApiResponse<T = any> {
   code: number
   data: T
   message: string
+  status: number
 }
 
 /**
@@ -88,17 +89,14 @@ request.interceptors.response.use(
     }
 
     const { code, message } = response.data as ApiResponse
-
     switch (code) {
-      case 403:
+      case 1001:
         // Access Token 过期，尝试刷新
         return refreshTokenAndRetry(config)
-
       case 401:
         // Refresh Token 过期，跳转登录页
         await redirectToLogin(t('request.authFail') as string)
         return Promise.reject(new Error(message || 'Refresh Token Invalid'))
-
       default:
         ElMessage.error(message || (t('request.error') as string))
         return Promise.reject(new Error(message || 'Request Error'))
