@@ -5,8 +5,8 @@ import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 
-// 专门用于 /mcpcan-web 路径部署的配置文件; 部署位置有自定义路径的情况，base：'./' || '/自定义路径/'
-// https://vite.dev/config/
+// 专门用于 /mcpcan-web 路径部署的配置文件
+// 使用绝对路径 base: '/mcpcan-web/'，确保所有静态资源路径都包含 /mcpcan-web 前缀
 export default defineConfig({
   base: '/mcpcan-web/',
   server: {
@@ -46,3 +46,4 @@ export default defineConfig({
     },
   },
 })
+

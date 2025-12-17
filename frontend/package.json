@@ -10,10 +10,10 @@
     "dev": "vite",
     "dev:https": "vite --config vite.config.https.js",
     "build": "run-p type-check \"build-only {@}\" --",
-    "build:custom": "run-p type-check \"build-only:custom {@}\" --",
+    "build:mcpcan-web": "run-p type-check \"build-only:mcpcan-web {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "build-only:custom": "vite build --config vite.config.custom.ts",
+    "build-only:mcpcan-web": "vite build --config vite.config.mcpcan-web.ts",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
