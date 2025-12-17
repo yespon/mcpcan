@@ -151,8 +151,6 @@ func (a *App) setupMiddleware() {
 // setupRoutes sets up routes
 func (a *App) setupRoutes() {
 	// Create service instances
-	userService := service.NewUserService()
-
 	userAuthService := service.NewUserAuthService()
 
 	// Health check
@@ -162,6 +160,14 @@ func (a *App) setupRoutes() {
 
 	// API version prefix
 	authzGroup := a.ginEngine.Group(common.GetAuthzRoutePrefix())
+
+	// If running in kymo mode, only load the validation interface
+	if a.config.RunMode == common.RunModeKymo {
+		authzGroup.GET("/validate", userAuthService.KymoValidateToken)
+		return
+	}
+
+	userService := service.NewUserService()
 
 	// User related routes
 	userGroup := authzGroup.Group("/users")

@@ -10,7 +10,6 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/api/authz/user_auth"
 	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
-	"github.com/kymo-mcp/mcpcan/internal/authz/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
@@ -151,45 +150,6 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 	if token == "" {
 		logger.Error("missing token")
 		common.GinUnauthorized(c, "missing token")
-		return
-	}
-
-	config := config.GetConfig()
-	if config.RunMode == common.RunModeKymo {
-		headers := map[string]string{
-			"Accept":           c.GetHeader("Accept"),
-			"Accept-Language":  c.GetHeader("Accept-Language"),
-			"User-Agent":       c.GetHeader("User-Agent"),
-			"X-Requested-With": c.GetHeader("X-Requested-With"),
-		}
-		result, kerr, status := s.authUseBiz.ValidateTokenExternalKymo(c.Request.Context(), token, headers, c.Request.Cookies())
-		if kerr != nil {
-			c.Writer.Header().Set("X-Consum-Error-Code", strconv.Itoa(kerr.Code))
-			c.Writer.Header().Set("X-Consum-Error-Message", kerr.Message)
-			common.GinUnauthorized(c, kerr.Message)
-			return
-		}
-		if result == nil || !result.Valid || result.UserInfo == nil {
-			common.GinUnauthorized(c, fmt.Sprintf("from kymo system token is invalid status: %d", status))
-			return
-		}
-		resp := &user_auth.ValidateTokenResponse{
-			Valid: true,
-			UserInfo: &user_auth.UserInfo{
-				UserId:    result.UserInfo.UserID,
-				Username:  result.UserInfo.Username,
-				Nickname:  result.UserInfo.Nickname,
-				Email:     result.UserInfo.Email,
-				Phone:     result.UserInfo.Phone,
-				Avatar:    result.UserInfo.Avatar,
-				DeptId:    result.UserInfo.DeptID,
-				DeptName:  result.UserInfo.DeptName,
-				RoleIds:   s.convertUintToInt64Slice(result.UserInfo.RoleIDs),
-				RoleNames: result.UserInfo.RoleNames,
-			},
-		}
-		c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", result.UserInfo.UserID))
-		common.GinSuccess(c, resp)
 		return
 	}
 
@@ -362,4 +322,50 @@ func (s *UserAuthService) decryptPasswordWithRSA(keyID, encryptedPassword string
 	}
 
 	return string(decryptedBytes), nil
+}
+
+// KymoValidateToken validate token
+func (s *UserAuthService) KymoValidateToken(c *gin.Context) {
+	var _ user_auth.ValidateTokenRequest
+	token := middleware.ExtractToken(c)
+	if token == "" {
+		logger.Error("missing token")
+		common.GinUnauthorized(c, "missing token")
+		return
+	}
+
+	headers := map[string]string{
+		"Accept":           c.GetHeader("Accept"),
+		"Accept-Language":  c.GetHeader("Accept-Language"),
+		"User-Agent":       c.GetHeader("User-Agent"),
+		"X-Requested-With": c.GetHeader("X-Requested-With"),
+	}
+	result, kerr, status := s.authUseBiz.ValidateTokenExternalKymo(c.Request.Context(), token, headers, c.Request.Cookies())
+	if kerr != nil {
+		c.Writer.Header().Set("X-Consum-Error-Code", strconv.Itoa(kerr.Code))
+		c.Writer.Header().Set("X-Consum-Error-Message", kerr.Message)
+		common.GinUnauthorized(c, kerr.Message)
+		return
+	}
+	if result == nil || !result.Valid || result.UserInfo == nil {
+		common.GinUnauthorized(c, fmt.Sprintf("from kymo system token is invalid status: %d", status))
+		return
+	}
+	resp := &user_auth.ValidateTokenResponse{
+		Valid: true,
+		UserInfo: &user_auth.UserInfo{
+			UserId:    result.UserInfo.UserID,
+			Username:  result.UserInfo.Username,
+			Nickname:  result.UserInfo.Nickname,
+			Email:     result.UserInfo.Email,
+			Phone:     result.UserInfo.Phone,
+			Avatar:    result.UserInfo.Avatar,
+			DeptId:    result.UserInfo.DeptID,
+			DeptName:  result.UserInfo.DeptName,
+			RoleIds:   s.convertUintToInt64Slice(result.UserInfo.RoleIDs),
+			RoleNames: result.UserInfo.RoleNames,
+		},
+	}
+	c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", result.UserInfo.UserID))
+	common.GinSuccess(c, resp)
 }
