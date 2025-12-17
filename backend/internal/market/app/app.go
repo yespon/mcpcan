@@ -11,7 +11,6 @@ import (
 	"time"
 
 	cfg "github.com/kymo-mcp/mcpcan/internal/market/config"
-	"github.com/kymo-mcp/mcpcan/internal/market/repository"
 	"github.com/kymo-mcp/mcpcan/internal/market/service"
 	"github.com/kymo-mcp/mcpcan/internal/market/task"
 
@@ -129,12 +128,6 @@ func (a *App) Initialize() error {
 
 // loadMysql initializes MySQL database connection and loads necessary tables
 func (a *App) loadMysql() error {
-	// Set table name based on RunMode flag
-	if a.config.RunMode == common.RunModeKymo {
-		model.SetIntelligentAccessTableName("intelligent_access")
-	} else {
-		model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
-	}
 	tableInitializers := []func() (string, error){
 		func() (string, error) {
 			mysql.NewMcpCodePackageRepository()
@@ -177,8 +170,18 @@ func (a *App) loadMysql() error {
 			return (&model.McpToken{}).TableName(), nil
 		},
 		func() (string, error) {
-			repo := repository.NewIntelligentAccessRepository()
-			return (&model.IntelligentAccess{}).TableName(), repo.InitTable()
+			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
+			// Not Kymo environment, initialize the table structure
+			if a.config.RunMode == common.RunModeKymo {
+				model.SetIntelligentAccessTableName("intelligent_access")
+				mod := &model.IntelligentAccess{}
+				return mod.TableName(), nil
+			} else {
+				model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
+				mod := &model.IntelligentAccess{}
+				repo := mysql.NewIntelligentAccessRepository()
+				return mod.TableName(), repo.InitTable()
+			}
 		},
 	}
 

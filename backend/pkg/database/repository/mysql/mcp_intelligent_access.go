@@ -1,4 +1,4 @@
-package repository
+package mysql
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +22,7 @@ func NewIntelligentAccessRepository() *IntelligentAccessRepository {
 
 // getDB 获取数据库连接
 func (r *IntelligentAccessRepository) getDB() *gorm.DB {
-	return mysql.GetDB().Model(&model.IntelligentAccess{})
+	return GetDB().Model(&model.IntelligentAccess{})
 }
 
 // Create 创建
