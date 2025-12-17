@@ -10,8 +10,10 @@
     "dev": "vite",
     "dev:https": "vite --config vite.config.https.js",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:custom": "run-p type-check \"build-only:custom {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
+    "build-only:custom": "vite build --config vite.config.custom.ts",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"

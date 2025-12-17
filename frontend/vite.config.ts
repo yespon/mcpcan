@@ -3,12 +3,10 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
-import fs from 'node:fs' // 使用ES模块风格导入fs
 import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './',
   server: {
     open: true,
     host: '0.0.0.0',
