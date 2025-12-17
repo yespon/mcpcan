@@ -144,7 +144,7 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to copy data directory: %w", err)
 	}
 
-	if a.config.RunMode == common.RunModeKymo {
+	if a.config.RunMode != common.RunModeKymo {
 		// 创建管理员用户
 		_, err := a.createAdminUser()
 		if err != nil {
