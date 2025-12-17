@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import Layout from '@/layouts/index.vue'
 import NProgress from '@/utils/nprogress'
 import { useUserStore } from '@/stores'
@@ -7,7 +7,8 @@ import { useUserStore } from '@/stores'
 // 开发环境或使用 base: './' 时: './'
 // 使用 base: '/mcpcan-web/' 时: '/mcpcan-web/'
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
