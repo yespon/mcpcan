@@ -31,6 +31,6 @@ onMounted(init)
 <style scoped>
 .wh-full {
   width: 100%;
-  height: 100vh;
+  /* height: 100vh; */
 }
 </style>

@@ -34,7 +34,7 @@
     </div>
 
     <!-- count data model -->
-    <el-row justify="space-around">
+    <el-row v-if="!meta.hideLayout" justify="space-around">
       <el-col :span="6" class="center" v-for="(dataCount, index) in dataCountList" :key="index">
         <GlareHover
           width="338px"
@@ -342,6 +342,7 @@ const {
   timer,
   selection,
   agentSyncDialog,
+  meta,
 } = useInstanceTableHooks()
 
 /**

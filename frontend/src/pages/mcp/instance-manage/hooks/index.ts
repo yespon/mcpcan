@@ -13,7 +13,7 @@ export const useInstanceTableHooks = () => {
   const probe = ref()
   const openAPIDialog = ref()
   const agentSyncDialog = ref()
-  const { query } = useRoute()
+  const { query, meta } = useRoute()
   const load = ref({
     status: false,
     text: '',
@@ -242,6 +242,7 @@ export const useInstanceTableHooks = () => {
   return {
     load,
     query,
+    meta,
     columns,
     jumpToPage,
     tablePlus,

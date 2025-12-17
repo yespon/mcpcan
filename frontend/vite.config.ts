@@ -8,6 +8,7 @@ import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vu
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   server: {
     open: true,
     host: '0.0.0.0',

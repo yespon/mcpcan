@@ -1,8 +1,8 @@
 <template>
   <!-- 如果路由指定隐藏 layout，则只显示内容 -->
-  <div v-if="route.meta.hideLayout" class="empty-layout">
+  <div v-if="route.meta.hideLayout" class="empty-layout m-4">
     <el-config-provider :locale="elLocale">
-      <el-main class="hide-scrollbar">
+      <el-main class="hide-scrollbar main-card w-full h-full">
         <RouterView></RouterView>
       </el-main>
     </el-config-provider>
@@ -59,8 +59,11 @@ const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
 </script>
 <style lang="scss" scoped>
 .empty-layout {
-  width: 100%;
-  height: 100%;
+  // width: 100%;
+  // height: 100%;
+  .main-card {
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 0px 8px 0px;
+  }
 }
 
 .common-layout {
