@@ -146,8 +146,8 @@ func MarshalAndAssignConfig(config interface{}) (json.RawMessage, error) {
 // GetMcpHostingImage returns mcp-hosting image
 func GetMcpHostingImage() string {
 	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") == "cn" {
-		return "ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v3"
+	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
+		return fmt.Sprintf("%s/mcp-hosting:v3", os.Getenv("REGISTORY_IMAGE_MIRROR"))
 	}
 	return "77kymo/mcp-hosting:v3"
 }
@@ -156,8 +156,8 @@ func GetMcpHostingImage() string {
 // GetOpenapiToMcpImage returns openapi-to-mcp image
 func GetOpenapiToMcpImage() string {
 	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") == "cn" {
-		return "ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:v0.2.7"
+	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
+		return fmt.Sprintf("%s/openapi-to-mcp:v0.2.7", os.Getenv("REGISTORY_IMAGE_MIRROR"))
 	}
 	return "77kymo/openapi-to-mcp:v0.2.7"
 }
