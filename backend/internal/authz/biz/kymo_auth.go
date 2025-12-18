@@ -88,7 +88,7 @@ func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token strin
 		req.AddCookie(ck)
 	}
 
-	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", KymoAuthURL), zap.Any("headers", req.Header))
+	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", KymoAuthURL), zap.Any("headers", req.Header), zap.Any("cookies", cookies))
 
 	cli := &http.Client{Timeout: 5 * time.Second}
 	resp, err := cli.Do(req)
