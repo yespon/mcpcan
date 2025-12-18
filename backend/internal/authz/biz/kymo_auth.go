@@ -43,7 +43,7 @@ type KymoError struct {
 
 const (
 	// KymoAuthURL = "https://ai-dev.itqm.cn/intelligent-api/auth/info" // dev url
-	KymoAuthURL = "http://intelligent-api-svc:8000/intelligent-api/auth/info" // prod url
+	KymoAuthURL = "http://intelligent-api-svc:8000/auth/info" // prod url
 )
 
 func mapHTTPToI18nCode(status int) int {
