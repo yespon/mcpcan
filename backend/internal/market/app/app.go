@@ -309,11 +309,16 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)
 
 	// Create resource management service instance
-	resourceService := service.NewResourceService(context.Background())
+	resourceService := service.NewResourceService()
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/pvcs", routerPrefix), resourceService.ListPVCsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/resources/pvcs", routerPrefix), resourceService.CreatePVCHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/nodes", routerPrefix), resourceService.ListNodesHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/storage-classes", routerPrefix), resourceService.ListStorageClassesHandler)
+	// Register Docker volume management interface
+	a.ginEngine.GET(fmt.Sprintf("/%s/resources/docker/volumes", routerPrefix), resourceService.ListDockerVolumesHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/create", routerPrefix), resourceService.CreateDockerVolumeHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/find", routerPrefix), resourceService.FindDockerVolumeHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/remove", routerPrefix), resourceService.RemoveDockerVolumeHandler)
 
 	// Create environment management service instance
 	environmentService := service.NewEnvironmentService()

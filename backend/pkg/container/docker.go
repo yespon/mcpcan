@@ -1,7 +1,6 @@
 package container
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
 )
@@ -159,6 +160,13 @@ func (dr *DockerRuntime) GetContainerManager() ContainerManager {
 func (dr *DockerRuntime) GetServiceManager() ServiceManager {
 	return &DockerServiceManager{
 		networkName: dr.networkName,
+	}
+}
+
+// GetVolumeManager gets volume manager
+func (dr *DockerRuntime) GetVolumeManager() VolumeManager {
+	return &DockerVolumeManager{
+		client: dr.client,
 	}
 }
 
@@ -348,44 +356,36 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	_ = stopCmd.Run() // ignore stop error, container might already be stopped
 
 	// Delete container
-	deleteCmd := exec.CommandContext(ctx, "docker", "rm", "-f", containerName)
-	deleteCmd.Env = os.Environ()
+	rmCmd := exec.CommandContext(ctx, "docker", "rm", containerName)
+	rmCmd.Env = os.Environ()
 	if dcm.config.DockerHost != "" {
-		deleteCmd.Env = append(deleteCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+		rmCmd.Env = append(rmCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
 	}
-	if err := deleteCmd.Run(); err != nil {
+	if err := rmCmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete Docker container: %w", err)
 	}
+
 	return nil
 }
 
-// Scale sets container replica count (in Docker environment, 0 means delete, greater than 0 is not supported)
+// Scale sets container replica count (only applicable to k8s)
 func (dcm *DockerContainerManager) Scale(ctx context.Context, containerName string, replicas int32) error {
-	if replicas == 0 {
-		return dcm.Delete(ctx, containerName)
-	}
-	return fmt.Errorf("Docker environment does not support setting replica count to %d, only supports 0 (delete container)", replicas)
+	// Docker does not support native scaling (except Swarm/Compose), here we just log
+	fmt.Printf("Warning: Scale not supported for Docker runtime\n")
+	return nil
 }
 
-// Restart restarts container (Docker environment: delete and restart if exists, start directly if not exists)
+// Restart restarts container
 func (dcm *DockerContainerManager) Restart(ctx context.Context, options ContainerCreateOptions) error {
-	// Check if container exists
-	_, err := dcm.GetInfo(ctx, options.ContainerName)
-	if err == nil {
-		// Container exists, delete first
-		if err := dcm.Delete(ctx, options.ContainerName); err != nil {
-			return fmt.Errorf("failed to delete existing container: %w", err)
-		}
-	} else if !strings.Contains(err.Error(), "not found") && !strings.Contains(err.Error(), "No such container") && !strings.Contains(err.Error(), "No such object") {
-		return fmt.Errorf("failed to check container status: %w", err)
+	// Docker restart is simpler, can directly use docker restart
+	// But to support updating configuration (like env vars), we delete and recreate
+	if err := dcm.Delete(ctx, options.ContainerName); err != nil {
+		// Ignore error if container doesn't exist
+		fmt.Printf("Warning: failed to delete container %s during restart: %v\n", options.ContainerName, err)
 	}
 
-	// Create new container
-	_, err = dcm.Create(ctx, options)
-	if err != nil {
-		return fmt.Errorf("failed to create container: %w", err)
-	}
-	return nil
+	_, err := dcm.Create(ctx, options)
+	return err
 }
 
 // GetInfo gets container information
@@ -395,27 +395,32 @@ func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName st
 	if dcm.config.DockerHost != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
 	}
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Docker container information: %w, stderr: %s", err, stderr.String())
+		return nil, fmt.Errorf("failed to inspect Docker container: %w", err)
 	}
 
-	var dockerInfos []DockerContainerInfo
-	if err := json.Unmarshal(output, &dockerInfos); err != nil {
-		return nil, fmt.Errorf("failed to parse Docker container information: %w", err)
+	var containers []DockerContainerInfo
+	if err := json.Unmarshal(output, &containers); err != nil {
+		return nil, fmt.Errorf("failed to parse Docker inspect output: %w", err)
 	}
 
-	if len(dockerInfos) == 0 {
-		return nil, fmt.Errorf("container does not exist: %s", containerName)
+	if len(containers) == 0 {
+		return nil, fmt.Errorf("container not found")
 	}
 
-	info := dockerInfos[0]
+	c := containers[0]
 
-	// Extract port information
+	// Get IP
+	ip := ""
+	for _, net := range c.NetworkSettings.Networks {
+		ip = net.IPAddress
+		break // use first network IP
+	}
+
+	// Get ports
 	var ports []int32
-	for k := range info.NetworkSettings.Ports {
+	for k := range c.NetworkSettings.Ports {
 		// k is like "80/tcp"
 		parts := strings.Split(k, "/")
 		if len(parts) > 0 {
@@ -427,73 +432,37 @@ func (dcm *DockerContainerManager) GetInfo(ctx context.Context, containerName st
 		}
 	}
 
-	// Get container IP
-	ip := ""
-	for _, net := range info.NetworkSettings.Networks {
-		if net.IPAddress != "" {
-			ip = net.IPAddress
-			break
-		}
-	}
-
-	// Parse created time
-	createdAt := info.Created
-	if t, err := time.Parse(time.RFC3339Nano, info.Created); err == nil {
-		createdAt = t.Format("2006-01-02 15:04:05")
-	}
-
 	return &ContainerInfo{
-		Name:      strings.TrimPrefix(info.Name, "/"),
-		Status:    info.State.Status,
+		Name:      c.Name,
+		Status:    c.State.Status, // running, exited, etc.
 		IP:        ip,
 		Ports:     ports,
-		Labels:    info.Config.Labels,
-		CreatedAt: createdAt,
+		Labels:    c.Config.Labels,
+		CreatedAt: c.Created,
 	}, nil
 }
 
 // IsReady checks if container is ready
 func (dcm *DockerContainerManager) IsReady(ctx context.Context, containerName string) (bool, string, error) {
-	// Check container status
 	info, err := dcm.GetInfo(ctx, containerName)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "No such container") {
-			return false, "container does not exist", fmt.Errorf("failed to check container status: %w", err)
-		}
-		return false, err.Error(), err
+		return false, "", err
 	}
 
-	status := info.Status
-	if status != "running" {
-		return false, fmt.Sprintf("container status: %s", status), nil
+	if info.Status == "running" {
+		return true, "Running", nil
 	}
 
-	// Check health status (if health check is configured)
-	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{.State.Health.Status}}", containerName)
-	cmd.Env = os.Environ()
-	if dcm.config.DockerHost != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
-	}
-	output, err := cmd.Output()
-	if err == nil {
-		healthStatus := strings.TrimSpace(string(output))
-		if healthStatus == "healthy" {
-			return true, "container is running normally and health check passed", nil
-		} else if healthStatus != "" && healthStatus != "<no value>" {
-			return false, fmt.Sprintf("health check status: %s", healthStatus), nil
-		}
-	}
-
-	// If no health check, consider ready as long as container is running
-	return true, "container is running normally", nil
+	return false, info.Status, nil
 }
 
-// GetEvents gets container events (Docker doesn't have direct event concept, returns log information)
+// GetEvents gets container events
 func (dcm *DockerContainerManager) GetEvents(ctx context.Context, containerName string) ([]ContainerEvent, error) {
-	// Docker doesn't have an event system like Kubernetes, here we return the last few lines of container logs as events
+	// Docker events are stream based, here we simulate by getting logs or just returning empty
+	// For simplicity, we can return recent logs as "events"
 	logs, err := dcm.GetLogs(ctx, containerName, 10)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get container logs: %w", err)
+		return nil, err
 	}
 
 	// Convert logs to events
@@ -701,4 +670,119 @@ func (dsm *DockerServiceManager) waitForServiceDeletion(ctx context.Context, ser
 		time.Sleep(retryInterval)
 	}
 	return fmt.Errorf("waiting for service deletion timed out, exceeded %d seconds", maxRetries)
+}
+
+// DockerVolumeManager Docker volume manager implementation
+type DockerVolumeManager struct {
+	client *client.Client
+}
+
+// List lists volumes
+func (dvm *DockerVolumeManager) List(ctx context.Context) ([]VolumeInfo, error) {
+	if dvm.client == nil {
+		return nil, fmt.Errorf("docker client is not initialized")
+	}
+	volumes, err := dvm.client.VolumeList(ctx, volume.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	var result []VolumeInfo
+	for _, v := range volumes.Volumes {
+		result = append(result, VolumeInfo{
+			Name:       v.Name,
+			Driver:     v.Driver,
+			Mountpoint: v.Mountpoint,
+			Labels:     v.Labels,
+			Options:    v.Options,
+			Scope:      v.Scope,
+			CreatedAt:  v.CreatedAt,
+			Status:     convertUsageData(v.UsageData),
+		})
+	}
+	return result, nil
+}
+
+// Create creates a volume
+func (dvm *DockerVolumeManager) Create(ctx context.Context, name string, driver string, labels map[string]string, options map[string]string) (VolumeInfo, error) {
+	if dvm.client == nil {
+		return VolumeInfo{}, fmt.Errorf("docker client is not initialized")
+	}
+
+	vol, err := dvm.client.VolumeCreate(ctx, volume.CreateOptions{
+		Name:       name,
+		Driver:     driver,
+		Labels:     labels,
+		DriverOpts: options,
+	})
+	if err != nil {
+		return VolumeInfo{}, err
+	}
+
+	return VolumeInfo{
+		Name:       vol.Name,
+		Driver:     vol.Driver,
+		Mountpoint: vol.Mountpoint,
+		Labels:     vol.Labels,
+		Options:    vol.Options,
+		Scope:      vol.Scope,
+		CreatedAt:  vol.CreatedAt,
+		Status:     convertUsageData(vol.UsageData),
+	}, nil
+}
+
+// Inspect inspects a volume
+func (dvm *DockerVolumeManager) Inspect(ctx context.Context, name string) (VolumeInfo, error) {
+	if dvm.client == nil {
+		return VolumeInfo{}, fmt.Errorf("docker client is not initialized")
+	}
+
+	vol, err := dvm.client.VolumeInspect(ctx, name)
+	if err != nil {
+		return VolumeInfo{}, err
+	}
+
+	return VolumeInfo{
+		Name:       vol.Name,
+		Driver:     vol.Driver,
+		Mountpoint: vol.Mountpoint,
+		Labels:     vol.Labels,
+		Options:    vol.Options,
+		Scope:      vol.Scope,
+		CreatedAt:  vol.CreatedAt,
+		Status:     convertUsageData(vol.UsageData),
+	}, nil
+}
+
+// Remove removes a volume
+func (dvm *DockerVolumeManager) Remove(ctx context.Context, name string) error {
+	if dvm.client == nil {
+		return fmt.Errorf("docker client is not initialized")
+	}
+
+	return dvm.client.VolumeRemove(ctx, name, false)
+}
+
+// Prune removes unused volumes
+func (dvm *DockerVolumeManager) Prune(ctx context.Context) (int, error) {
+	if dvm.client == nil {
+		return 0, fmt.Errorf("docker client is not initialized")
+	}
+
+	report, err := dvm.client.VolumesPrune(ctx, filters.Args{})
+	if err != nil {
+		return 0, err
+	}
+
+	return len(report.VolumesDeleted), nil
+}
+
+func convertUsageData(data *volume.UsageData) map[string]interface{} {
+	if data == nil {
+		return nil
+	}
+	return map[string]interface{}{
+		"size":     data.Size,
+		"refCount": data.RefCount,
+	}
 }

@@ -74,6 +74,11 @@ func (e *Entry) GetServiceManager() ServiceManager {
 	return e.runtime.GetServiceManager()
 }
 
+// GetVolumeManager gets volume manager
+func (e *Entry) GetVolumeManager() VolumeManager {
+	return e.runtime.GetVolumeManager()
+}
+
 // GetRuntimeType gets runtime type
 func (e *Entry) GetRuntimeType() ContainerRuntime {
 	return e.runtime.GetRuntimeType()

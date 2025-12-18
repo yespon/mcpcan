@@ -1,13 +1,13 @@
 package service
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/kymo-mcp/mcpcan/api/market/resource"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
+	"github.com/kymo-mcp/mcpcan/pkg/container"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/k8s"
 
@@ -16,14 +16,11 @@ import (
 
 // ResourceService provides resource management functionality
 type ResourceService struct {
-	ctx context.Context
 }
 
 // NewResourceService creates a new ResourceService instance
-func NewResourceService(ctx context.Context) *ResourceService {
-	return &ResourceService{
-		ctx: ctx,
-	}
+func NewResourceService() *ResourceService {
+	return &ResourceService{}
 }
 
 // convertPVCInfo converts PVC information to protobuf format
@@ -115,6 +112,153 @@ func (s *ResourceService) ListPVCs(req *resource.ListPVCsRequest) (*resource.Lis
 	}
 
 	return response, nil
+}
+
+// convertDockerVolumeInfo converts Docker volume info to protobuf format
+func convertDockerVolumeInfo(v container.VolumeInfo) *resource.DockerVolumeInfo {
+	statusMap := make(map[string]string)
+	for k, val := range v.Status {
+		statusMap[k] = fmt.Sprintf("%v", val)
+	}
+
+	return &resource.DockerVolumeInfo{
+		Name:       v.Name,
+		Driver:     v.Driver,
+		Mountpoint: v.Mountpoint,
+		Labels:     v.Labels,
+		Options:    v.Options,
+		Scope:      v.Scope,
+		CreatedAt:  v.CreatedAt,
+		Status:     statusMap,
+	}
+}
+
+// ListDockerVolumesHandler Docker volume list handler
+func (s *ResourceService) ListDockerVolumesHandler(c *gin.Context) {
+	var req resource.ListDockerVolumesRequest
+	if err := common.BindAndValidateQuery(c, &req); err != nil {
+		return
+	}
+
+	result, err := s.ListDockerVolumes(&req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, result)
+}
+
+// ListDockerVolumes lists Docker volumes
+func (s *ResourceService) ListDockerVolumes(req *resource.ListDockerVolumesRequest) (*resource.ListDockerVolumesResponse, error) {
+	list, err := biz.GResourceBiz.ListDockerVolumes(uint(req.EnvironmentId))
+	if err != nil {
+		return nil, err
+	}
+
+	var pbList []*resource.DockerVolumeInfo
+	for _, v := range list {
+		pbList = append(pbList, convertDockerVolumeInfo(v))
+	}
+
+	return &resource.ListDockerVolumesResponse{
+		List: pbList,
+	}, nil
+}
+
+// CreateDockerVolumeHandler create Docker volume handler
+func (s *ResourceService) CreateDockerVolumeHandler(c *gin.Context) {
+	var req resource.CreateDockerVolumeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "request parameter error: "+err.Error())
+		return
+	}
+
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
+		return
+	}
+
+	result, err := s.CreateDockerVolume(&req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, result)
+}
+
+// CreateDockerVolume creates a Docker volume
+func (s *ResourceService) CreateDockerVolume(req *resource.CreateDockerVolumeRequest) (*resource.CreateDockerVolumeResponse, error) {
+	vol, err := biz.GResourceBiz.CreateDockerVolume(uint(req.EnvironmentId), req.Name, req.Labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource.CreateDockerVolumeResponse{
+		Volume: convertDockerVolumeInfo(vol),
+	}, nil
+}
+
+// FindDockerVolumeHandler get Docker volume handler
+func (s *ResourceService) FindDockerVolumeHandler(c *gin.Context) {
+	var req resource.FindDockerVolumeRequest
+	if err := common.BindAndValidateQuery(c, &req); err != nil {
+		return
+	}
+
+	result, err := s.FindDockerVolume(&req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, result)
+}
+
+// FindDockerVolume inspects a Docker volume
+func (s *ResourceService) FindDockerVolume(req *resource.FindDockerVolumeRequest) (*resource.FindDockerVolumeResponse, error) {
+	vol, err := biz.GResourceBiz.GetDockerVolume(uint(req.EnvironmentId), req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource.FindDockerVolumeResponse{
+		Volume: convertDockerVolumeInfo(vol),
+	}, nil
+}
+
+// RemoveDockerVolumeHandler remove Docker volume handler
+func (s *ResourceService) RemoveDockerVolumeHandler(c *gin.Context) {
+	var req resource.RemoveDockerVolumeRequest
+	if err := common.BindAndValidateQuery(c, &req); err != nil {
+		return
+	}
+
+	if config.IsDemoMode() {
+		common.GinError(c, i18nresp.CodeForbidden, "operation forbidden in demo mode")
+		return
+	}
+
+	result, err := s.RemoveDockerVolume(&req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, result)
+}
+
+// RemoveDockerVolume removes a Docker volume
+func (s *ResourceService) RemoveDockerVolume(req *resource.RemoveDockerVolumeRequest) (*resource.RemoveDockerVolumeResponse, error) {
+	err := biz.GResourceBiz.RemoveDockerVolume(uint(req.EnvironmentId), req.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resource.RemoveDockerVolumeResponse{
+		Success: true,
+	}, nil
 }
 
 // CreatePVCHandler create PVC interface Handler
