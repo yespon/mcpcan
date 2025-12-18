@@ -619,13 +619,14 @@ func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
 // volumeMountFromPb converts pb volume mount to local structure
 func (cd *ContainerBiz) volumeMountFromPb(vm *instancepb.VolumeMount) k8s.UnifiedMount {
 	unifiedMount := k8s.UnifiedMount{
-		Type:      k8s.MountType(vm.Type),
-		MountPath: vm.MountPath,
-		ReadOnly:  vm.ReadOnly,
-		SubPath:   vm.SubPath,
-		NodeName:  vm.NodeName,
-		HostPath:  vm.HostPath,
-		PVCName:   vm.PvcName,
+		Type:       k8s.MountType(vm.Type),
+		MountPath:  vm.MountPath,
+		ReadOnly:   vm.ReadOnly,
+		SubPath:    vm.SubPath,
+		NodeName:   vm.NodeName,
+		HostPath:   vm.HostPath,
+		PVCName:    vm.PvcName,
+		VolumeName: vm.VolumeName,
 	}
 	return unifiedMount
 }

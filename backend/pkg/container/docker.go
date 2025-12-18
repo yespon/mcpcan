@@ -282,12 +282,21 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 
 	// Set volume mounts
 	for _, mount := range options.Mounts {
-		if mount.Type == k8s.MountTypeHostPath {
+		switch mount.Type {
+		case k8s.MountTypeHostPath:
 			// For Docker, treat HostPath as bind mount
-			args = append(args, "--mount", fmt.Sprintf("type=bind,source=%s,target=%s", mount.HostPath, mount.MountPath))
-		} else if mount.Type == k8s.MountTypePVC {
-			// For Docker, treat PVC as volume mount
-			args = append(args, "-v", fmt.Sprintf("%s:%s", mount.PVCName, mount.MountPath))
+			args = append(args, "-v", fmt.Sprintf("%s:%s", mount.HostPath, mount.MountPath))
+			if mount.ReadOnly {
+				args = append(args, ":ro")
+			}
+		case k8s.MountTypeVolume:
+			// For Docker, treat Volume as volume mount
+			args = append(args, "-v", fmt.Sprintf("%s:%s", mount.VolumeName, mount.MountPath))
+			if mount.ReadOnly {
+				args = append(args, ":ro")
+			}
+		default:
+			return "", fmt.Errorf("unsupported mount type: %s", mount.Type)
 		}
 	}
 

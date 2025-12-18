@@ -383,7 +383,7 @@ message RestartResp {
 
 // VolumeMount volume mount configuration
 message VolumeMount {
-  // @inject_tag: json:"type" desc:"Volume type: hostPath, pvc"
+  // @inject_tag: json:"type" desc:"Volume type: hostPath, pvc, volume"
   string type = 1;
   // @inject_tag: json:"mountPath" desc:"Mount path"
   string mountPath = 2;
@@ -397,6 +397,8 @@ message VolumeMount {
   string hostPath = 6;
   // @inject_tag: json:"nodeName" desc:"Node name (required for hostPath type)"
   string nodeName = 7;
+  // @inject_tag: json:"volumeName" desc:"Volume name (required for volume type)"
+  string volumeName = 8;
 }
 
 // ContainerDeleteRequest container deletion request
