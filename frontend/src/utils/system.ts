@@ -262,11 +262,7 @@ export const initAuthInfo = async () => {
     const token = await getParentLocalStorageItem('ELADMIN-TOEKN')
     const userInfo = await getParentLocalStorageItem('user-info')
     if (typeof token === 'string' && token) {
-      // Storage.set('token', token.split(' ')[1] || '')
-      Storage.set(
-        'token',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJleHAiOjE3NjU4NzMwMjQsImlhdCI6MTc2NTc4NjYyNH0.bCh5-Iel26ZNuUQHgkJv_ufzwuTg4asERn8J9HOB9fk',
-      )
+      Storage.set('token', token.split(' ')[1] || '')
     }
     if (userInfo) {
       Storage.set('userInfo', userInfo)
