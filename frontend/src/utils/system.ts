@@ -148,40 +148,15 @@ export const getParentLocalStorageItem = (
   key: string,
   timeout = 1000,
 ): Promise<any | null> | null | string => {
-  // 不同源的情况下，无法直接访问父窗口的 localStorage，需要通过 postMessage 通信获取
-  if (isEmbeddedInParent()) {
-    return new Promise((resolve, reject) => {
-      const id = Math.random().toString(36).slice(2)
-      function onMessage(e: MessageEvent) {
-        // 可选择验证 e.origin 是否是父窗口允许的来源
-        if (e.source !== window.parent) return
-        const d = e.data || {}
-        if (d?.type === 'PARENT_STORAGE_RESPONSE' && d?.id === id) {
-          window.removeEventListener('message', onMessage)
-          resolve(d.value ?? null)
-        }
-      }
-      window.addEventListener('message', onMessage)
-      // 发送请求到 parent：父端必须监听此消息并回复
-      window.parent.postMessage({ type: 'PARENT_STORAGE_REQUEST', id, key }, '*')
-      // 超时处理
-      setTimeout(() => {
-        window.removeEventListener('message', onMessage)
-        reject(new Error('request timeout'))
-      }, timeout)
-    })
-  } else {
-    try {
-      // window.parent 可能为 self（在非嵌入场景），所以用 parent || top
-      const parentWindow = window.parent || window.top
-      if (!parentWindow) return null
-      // 直接访问
-      return parentWindow.localStorage.getItem(key)
-    } catch (err) {
-      // 可能因为跨域或 sandbox 抛错
-      console.error('无法访问父 localStorage：', err)
-      return null
-    }
+  try {
+    // const parentWindow = window.parent || window.top
+    // if (!parentWindow) return null
+    // 直接访问
+    return window.localStorage.getItem(key)
+  } catch (err) {
+    // 可能因为跨域或 sandbox 抛错
+    console.error('无法访问父 localStorage：', err)
+    return null
   }
 }
 
@@ -259,8 +234,11 @@ export const initThemeInfo = async () => {
 export const initAuthInfo = async () => {
   try {
     // normalize possible sync/async return from getParentLocalStorageItem
+    console.log('localStorage', window.localStorage)
     const token = await getParentLocalStorageItem('ELADMIN-TOEKN')
     const userInfo = await getParentLocalStorageItem('user-info')
+    console.log('从父项目获取 token ', token, userInfo)
+    console.log('从父项目获取用户信息 ', userInfo)
     if (typeof token === 'string' && token) {
       Storage.set('token', token.split(' ')[1] || '')
     }
