@@ -13,6 +13,7 @@ import (
 	cfg "github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/internal/market/service"
 	"github.com/kymo-mcp/mcpcan/internal/market/task"
+
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -78,21 +79,20 @@ func New() (*App, error) {
 
 // Initialize initialize all application components
 func (a *App) Initialize() error {
-	// Set table name based on RunKimo flag
-	if a.config.RunKimo {
-		model.SetIntelligentAccessTableName("intelligent_access")
-	} else {
-		model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
-	}
 
 	// Initialize database
-	if err := database.Init(&a.config.Database.MySQL); err != nil {
+	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
 	// Initialize Redis
 	if err := redis.Init(&a.config.Database.Redis); err != nil {
 		return fmt.Errorf("failed to initialize Redis: %w", err)
+	}
+
+	// load run environment
+	if err := a.initRunEnvironment(context.Background()); err != nil {
+		return fmt.Errorf("failed to init run environment: %w", err)
 	}
 
 	// Use global database repository instance (already initialized in init)
@@ -124,6 +124,68 @@ func (a *App) Initialize() error {
 
 	a.logger.Info("Application initialization completed")
 	return nil
+}
+
+// loadMysql initializes MySQL database connection and loads necessary tables
+func (a *App) loadMysql() error {
+	tableInitializers := []func() (string, error){
+		func() (string, error) {
+			mysql.NewMcpCodePackageRepository()
+			return (&model.McpCodePackage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpEnvironmentRepository()
+			return (&model.McpEnvironment{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpMigrationRepository()
+			return (&model.Migration{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpOpenapiPackageRepository()
+			return (&model.McpOpenapiPackage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpTemplateRepository()
+			return (&model.McpTemplate{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpToIntelligentTaskRepository()
+			return (&model.McpToIntelligentTask{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpToIntelligentTaskLogRepository()
+			return (&model.McpToIntelligentTaskLog{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewMcpTokenRepository()
+			return (&model.McpToken{}).TableName(), nil
+		},
+		func() (string, error) {
+			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
+			// Not Kymo environment, initialize the table structure
+			if a.config.RunMode == common.RunModeKymo {
+				model.SetIntelligentAccessTableName("intelligent_access")
+				mod := &model.IntelligentAccess{}
+				return mod.TableName(), nil
+			} else {
+				model.SetIntelligentAccessTableName("mcpcan_intelligent_access")
+				mod := &model.IntelligentAccess{}
+				repo := mysql.NewIntelligentAccessRepository()
+				return mod.TableName(), repo.InitTable()
+			}
+		},
+	}
+
+	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
 
 // initializeScheduler initialize scheduler
@@ -229,7 +291,7 @@ func (a *App) setupHttpServer() {
 	routerPrefix = strings.Trim(routerPrefix, "/")
 
 	// Register instance management interface
-	instanceService := service.NewInstanceService(context.Background())
+	instanceService := service.NewInstanceService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/create", routerPrefix), instanceService.CreateHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/instance/:instanceId", routerPrefix), instanceService.DetailHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/edit", routerPrefix), instanceService.EditHandler)
@@ -254,10 +316,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/storage-classes", routerPrefix), resourceService.ListStorageClassesHandler)
 
 	// Create environment management service instance
-	environmentService := service.NewEnvironmentService(context.Background())
-	a.ginEngine.POST(fmt.Sprintf("/%s/environments", routerPrefix), environmentService.CreateEnvironmentHandler)
-	a.ginEngine.PUT(fmt.Sprintf("/%s/environments/:id", routerPrefix), environmentService.UpdateEnvironmentHandler)
-	a.ginEngine.DELETE(fmt.Sprintf("/%s/environments/:id", routerPrefix), environmentService.DeleteEnvironmentHandler)
+	environmentService := service.NewEnvironmentService()
 	a.ginEngine.GET(fmt.Sprintf("/%s/environments", routerPrefix), environmentService.ListEnvironmentsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/environments/namespaces", routerPrefix), environmentService.ListNamespacesHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/environments/:id/test", routerPrefix), environmentService.TestConnectivityHandler)
@@ -319,7 +378,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.DELETE(fmt.Sprintf("/%s/intelligent_access/delete", routerPrefix), intelligentAccessService.DeleteHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/intelligent_access/edit", routerPrefix), intelligentAccessService.UpdateHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/test-connection", routerPrefix), intelligentAccessService.TestConnectionHandler)
-	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-dify-user-space", routerPrefix), intelligentAccessService.ListDifyUserSpaceHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-user-space", routerPrefix), intelligentAccessService.ListUserSpaceHandler)
 
 	mcpToIntelligentTaskService := service.NewMcpToIntelligentTaskService(context.Background())
 	// Register mcp to intelligent task management interface
@@ -352,8 +411,8 @@ func (a *App) setupMiddleware() {
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
-	// Add authentication middleware
-	a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
+	// // Add authentication middleware
+	// a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

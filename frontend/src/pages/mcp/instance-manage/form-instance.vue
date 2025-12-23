@@ -1,11 +1,17 @@
 <template>
   <div v-loading="pageInfo.loading">
-    <div class="page-title">
+    <div class="page-title flex justify-between items-center">
       {{
         query.instanceId
           ? t('mcp.instance.pageDesc.editTitle')
           : t('mcp.instance.pageDesc.createTitle')
       }}
+      <el-button v-if="layout" @click="handleBack" class="link-hover">
+        <el-icon class="mr-2">
+          <i class="icon iconfont MCP-fanhui"></i>
+        </el-icon>
+        {{ t('common.back') }}
+      </el-button>
     </div>
     <div class="page-title base-info">{{ t('mcp.instance.formData.baseInfo') }}</div>
     <el-form
@@ -495,10 +501,11 @@ import { cloneDeep } from 'lodash-es'
 import TokenForm from './modules/components/token-form.vue'
 
 const { t } = useI18n()
+const layout = useLayout()
 const {
   query,
-  router,
   jumpToPage,
+  jumpBack,
   userInfo,
   pageInfo,
   originForm,
@@ -642,7 +649,8 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  router.push('/instance-manage')
+  // router.push('/instance-manage')
+  jumpBack()
 }
 /**
  * Handle confirm save
@@ -782,6 +790,11 @@ const handleGetTemplateDetail = async () => {
   ]
 }
 
+// back last class page
+const handleBack = () => {
+  jumpBack()
+}
+
 /**
  * init data
  * @param form - instance form data
@@ -844,7 +857,7 @@ onMounted(init)
   background: rgba(255, 255, 255, 0.08);
   padding: 24px;
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
   }
   .package-logo {
     font-size: 65px;

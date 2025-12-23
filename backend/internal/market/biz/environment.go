@@ -87,6 +87,16 @@ func (biz *EnvironmentBiz) ListEnvironmentsByType(ctx context.Context, environme
 	return biz.repo.FindByEnvironment(ctx, environmentType)
 }
 
+// ListEnvironmentsWithPagination get environment list with pagination
+func (biz *EnvironmentBiz) ListEnvironmentsWithPagination(ctx context.Context, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	return biz.repo.FindAllWithPagination(ctx, page, pageSize)
+}
+
+// ListEnvironmentsByTypeWithPagination get environment list by environment type with pagination
+func (biz *EnvironmentBiz) ListEnvironmentsByTypeWithPagination(ctx context.Context, environmentType model.McpEnvironmentType, page, pageSize int) ([]*model.McpEnvironment, int64, error) {
+	return biz.repo.FindByEnvironmentWithPagination(ctx, environmentType, page, pageSize)
+}
+
 // GetDeletedEnvironment get deleted environment by ID
 func (biz *EnvironmentBiz) GetDeletedEnvironment(ctx context.Context, id uint) (*model.McpEnvironment, error) {
 	return biz.repo.FindDeletedByID(ctx, id)
@@ -125,7 +135,7 @@ func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, envir
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  environment.Namespace,
 		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
-		Network:    "bridge", // Default network configuration
+		Docker:     container.DockerConfig{Network: "bridge"}, // Default network configuration
 	}
 
 	// Create container runtime entry
@@ -174,7 +184,14 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 	// Create container runtime configuration
 	config := container.Config{
 		Runtime: container.RuntimeDocker,
-		Network: "bridge", // Default Docker network
+		Docker: container.DockerConfig{
+			Network:        environment.DockerNetwork,
+			DockerHost:     environment.DockerHost,
+			DockerCertData: environment.DockerCertData,
+			DockerKeyData:  environment.DockerKeyData,
+			DockerCAData:   environment.DockerCaData,
+			DockerUseTLS:   environment.DockerUseTLS,
+		},
 	}
 
 	// Create container runtime entry
@@ -266,7 +283,7 @@ func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, en
 		Runtime:    container.RuntimeKubernetes,
 		Namespace:  "default", // Use default namespace to connect to cluster
 		Kubeconfig: kubeconfig,
-		Network:    "bridge",
+		Docker:     container.DockerConfig{Network: "bridge"},
 	}
 
 	// Create container runtime entry

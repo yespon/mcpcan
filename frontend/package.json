@@ -1,6 +1,6 @@
 {
   "name": "qm_mcp_market_admin",
-  "version": "v1.4.0",
+  "version": "v1.5.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,8 +10,10 @@
     "dev": "vite",
     "dev:https": "vite --config vite.config.https.js",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build:mcpcan-web": "run-p type-check \"build-only:mcpcan-web {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
+    "build-only:mcpcan-web": "vite build --config vite.config.mcpcan-web.ts",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"

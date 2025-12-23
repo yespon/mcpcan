@@ -41,7 +41,7 @@
                 :indeterminate="isTokenIndeterminate"
                 @change="handleCheckAllToken"
               >
-                <span style="color: var(--ep-purple-color)">{{ t('agent.sync.selectAll') }}</span>
+                <span style="color: var(--el-color-primary)">{{ t('agent.sync.selectAll') }}</span>
               </el-checkbox>
               <div>
                 <span class="mr-4 color-green">
@@ -328,10 +328,10 @@ const tokenFormConfig = ref([
     props: {
       placeholder: t('mcp.instance.token.tagTypePlaceholder'),
       options: [
-        { label: 'dify_user_id', value: 'dify_user_id' },
-        { label: 'dify_user_name', value: 'dify_user_name' },
-        { label: 'dify_space_id', value: 'dify_space_id' },
-        { label: 'dify_space_name', value: 'dify_space_name' },
+        { label: 'user_id', value: 'user_id' },
+        { label: 'user_name', value: 'user_name' },
+        { label: 'space_id', value: 'space_id' },
+        { label: 'space_name', value: 'space_name' },
         { label: 'intelligent_access_id', value: 'intelligent_access_id' },
         { label: 'intelligent_access_name', value: 'intelligent_access_name' },
         { label: 'intelligent_access_type', value: 'intelligent_access_type' },
@@ -426,9 +426,11 @@ const configToken = computed(() => {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].token || 'No Data'
   }
+  console.log(111, dialogInfo.value.currentTokenIndex)
+
   return `${
     dialogInfo.value.currentTokenIndex !== null
-      ? dialogInfo.value.instanceInfo.tokens[dialogInfo.value.currentTokenIndex].token
+      ? tokenList.value[dialogInfo.value.currentTokenIndex].token
       : ''
   }`
 })
@@ -472,10 +474,10 @@ const showDeleteBtn = computed(() => {
   return (token: any) => {
     if (
       [
-        'dify_user_id',
-        'dify_user_name',
-        'dify_space_id',
-        'dify_space_name',
+        'user_id',
+        'user_name',
+        'space_id',
+        'space_name',
         'intelligent_access_id',
         'intelligent_access_name',
         'intelligent_access_type',
@@ -818,11 +820,11 @@ defineExpose({
     min-width: 0;
     border: 1px solid var(--ep-border-color);
     &.active {
-      border-color: var(--ep-purple-color);
+      border-color: var(--el-color-primary);
       background-color: var(--ep-bg-purple-color-deep);
     }
     &:hover {
-      border-color: var(--ep-purple-color);
+      border-color: var(--el-color-primary);
     }
     &.disabled {
       cursor: not-allowed;
@@ -903,10 +905,10 @@ defineExpose({
 
 .tag-input {
   :deep(.el-tag) {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
     border-color: var(--ep-border-color);
     .el-tag__close {
-      color: var(--ep-purple-color);
+      color: var(--el-color-primary);
       &:hover {
         background-color: var(--ep-bg-purple-color-deep);
       }

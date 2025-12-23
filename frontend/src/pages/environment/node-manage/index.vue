@@ -2,7 +2,13 @@
   <div>
     <!-- 头部区域 -->
     <div class="flex justify-between page-header">
-      <div class="header-container">
+      <div class="header-container flex items-center">
+        <el-link v-if="layout" link @click="handleBack" class="link-hover mr-4" underline="never">
+          <el-icon class="mr-2">
+            <i class="icon iconfont MCP-fanhui"></i>
+          </el-icon>
+          {{ t('common.back') }}
+        </el-link>
         {{ t('env.run.pageDesc.nodeList') }}-{{ query.name }}
         <span class="desc"></span>
       </div>
@@ -26,7 +32,7 @@
             <el-image :src="nodeLogo" style="width: 20px; height: 20px"></el-image>
             <span class="desc">{{ t('env.run.pageDesc.nodeTotal') }}：{{ pageConfig.total }}</span>
           </div>
-          <div id="nodeSearch"></div>
+          <div id="nodeSearch" v-show="false"></div>
         </div>
       </template>
       <template #status="{ row }">
@@ -50,9 +56,18 @@ import TablePlus from '@/components/TablePlus/index.vue'
 import { timestampToDate } from '@/utils/system'
 import { usePvcTableHooks } from './hooks'
 import nodeLogo from '@/assets/logo/node.png'
+import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
-const { tablePlus, columns, requestConfig, pageConfig, statusOptions, query } = usePvcTableHooks()
+const { tablePlus, columns, requestConfig, pageConfig, statusOptions, query, meta } =
+  usePvcTableHooks()
+const { jumpBack } = useRouterHooks()
+const layout = useLayout()
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
+}
 
 /**
  * Handle init list

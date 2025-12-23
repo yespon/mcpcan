@@ -36,7 +36,12 @@
       </template>
       <template #name="{ row }">
         <div class="flex align-center">
-          <mcp-image :src="row.iconPath" width="32" height="32" :key="row.templateId"></mcp-image>
+          <mcp-image
+            :src="baseUrl + row.iconPath"
+            width="32"
+            height="32"
+            :key="row.templateId"
+          ></mcp-image>
           <el-tooltip effect="dark" placement="top" class="ml-6" :raw-content="true">
             <div class="flex-sub ml-2 ellipsis-two">{{ row.name }}</div>
             <template #content>
@@ -94,6 +99,8 @@ import { type TemplateResult } from '@/types/index.ts'
 const { t } = useI18n()
 const { tablePlus, columns, requestConfig, pageConfig } = useTemplateTableHooks()
 const { jumpToPage } = useRouterHooks()
+const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
+
 /**
  * Handle create a tamplate
  */

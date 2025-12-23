@@ -15,15 +15,6 @@ import (
 // GatewayLogRepo is the global repository instance for gateway logs
 var GatewayLogRepo *GatewayLogRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewGatewayLogRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_gateway_log table: %v", err))
-		}
-	})
-}
-
 // GatewayLogRepository encapsulates CRUD and query operations for mcp_gateway_log
 type GatewayLogRepository struct{}
 

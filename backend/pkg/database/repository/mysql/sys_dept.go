@@ -14,15 +14,6 @@ import (
 
 var SysDeptRepo *SysDeptRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewSysDeptRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize sys_dept table: %v", err))
-		}
-	})
-}
-
 // SysDeptRepository 部门仓库
 type SysDeptRepository struct{}
 

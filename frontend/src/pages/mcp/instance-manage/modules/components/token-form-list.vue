@@ -285,10 +285,10 @@ const inputValue = ref('')
 const showClosAble = computed(() => {
   return (tag: string) => {
     return ![
-      'dify_user_id',
-      'dify_user_name',
-      'dify_space_id',
-      'dify_space_name',
+      'user_id',
+      'user_name',
+      'space_id',
+      'space_name',
       'intelligent_access_id',
       'intelligent_access_name',
       'intelligent_access_type',
@@ -442,10 +442,10 @@ const handleConfirmAccount = () => {
 
 <style lang="scss" scoped>
 :deep(.el-tag) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   border-color: var(--ep-border-color);
   .el-tag__close {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
     &:hover {
       background-color: var(--ep-bg-purple-color-deep);
     }

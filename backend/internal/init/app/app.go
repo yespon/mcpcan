@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/kymo-mcp/mcpcan/internal/init/config"
+	"github.com/kymo-mcp/mcpcan/pkg/common"
 	dbpkg "github.com/kymo-mcp/mcpcan/pkg/database"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -48,13 +49,92 @@ func New() *App {
 
 // Initialize initializes the application
 func (a *App) Initialize() error {
-	// 初始化数据库
-	if err := dbpkg.Init(&a.config.Database.MySQL); err != nil {
+	// Initialize database
+	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	logger.Info("Authz service initialized successfully")
+	logger.Info("Init service initialized successfully")
 	return nil
+}
+
+// loadMysql initializes MySQL database connection and loads necessary tables
+func (a *App) loadMysql() error {
+	// Common tables for all modes
+	tableInitializers := []func() (string, error){
+		func() (string, error) {
+			repo := mysql.NewMcpCodePackageRepository()
+			return (&model.McpCodePackage{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpEnvironmentRepository()
+			return (&model.McpEnvironment{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpMigrationRepository()
+			return (&model.Migration{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpOpenapiPackageRepository()
+			return (&model.McpOpenapiPackage{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpTemplateRepository()
+			return (&model.McpTemplate{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpToIntelligentTaskRepository()
+			return (&model.McpToIntelligentTask{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpToIntelligentTaskLogRepository()
+			return (&model.McpToIntelligentTaskLog{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewMcpTokenRepository()
+			return (&model.McpToken{}).TableName(), repo.InitTable()
+		},
+	}
+
+	// Sys tables - only load when NOT in kymo mode
+	if a.config.RunMode != common.RunModeKymo {
+		tableInitializers = append(tableInitializers,
+			func() (string, error) {
+				repo := mysql.NewSysDeptRepository()
+				return (&model.SysDept{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysEncryptionKeyRepository(mysql.GetDB())
+				return (&model.SysEncryptionKey{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRoleRepository()
+				return (&model.SysRole{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRolesDeptsRepository()
+				return (&model.SysRolesDepts{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUserRepository()
+				return (&model.SysUser{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUsersRolesRepository()
+				return (&model.SysUsersRoles{}).TableName(), repo.InitTable()
+			},
+		)
+	}
+
+	return dbpkg.Init(&a.config.Database.MySQL, tableInitializers...)
 }
 
 // Run 运行应用程序
@@ -64,27 +144,20 @@ func (a *App) Run() error {
 		return fmt.Errorf("failed to copy data directory: %w", err)
 	}
 
-	// 创建管理员用户
-	adminUser, err := a.createAdminUser()
-	if err != nil {
-		return fmt.Errorf("failed to create admin user: %w", err)
+	if a.config.RunMode != common.RunModeKymo {
+		// 创建管理员用户
+		_, err := a.createAdminUser()
+		if err != nil {
+			return fmt.Errorf("failed to create admin user: %w", err)
+		}
 	}
 
 	wg := &sync.WaitGroup{}
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := a.initDataScope(context.Background(), adminUser); err != nil {
+		if err := a.initDataScope(context.Background()); err != nil {
 			logger.Error("Failed to init data scope", zap.Error(err))
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := a.initDefaultKubernetesEnvironment(context.Background(), adminUser); err != nil {
-			logger.Error("Failed to init default kubernetes environment", zap.Error(err))
 		}
 	}()
 
@@ -96,7 +169,7 @@ func (a *App) Run() error {
 
 	wg.Wait()
 
-	logger.Info("Shutting down authz service...")
+	logger.Info("Shutting down init service...")
 
 	// 优雅关闭
 	return a.Shutdown()
@@ -110,12 +183,12 @@ func (a *App) Shutdown() error {
 		return err
 	}
 
-	logger.Info("Authz service shutdown completed")
+	logger.Info("Init service shutdown completed")
 	return nil
 }
 
 // initDataScope creates the default environment
-func (a *App) initDataScope(ctx context.Context, adminUser *model.SysUser) error {
+func (a *App) initDataScope(ctx context.Context) error {
 	// 初始化代码包数据
 	if err := a.initCodePackage(ctx); err != nil {
 		return fmt.Errorf("failed to init code package data: %w", err)

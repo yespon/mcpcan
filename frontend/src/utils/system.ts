@@ -1,5 +1,7 @@
-// 时间戳转换为标准显示时间
+import { Storage } from '@/utils/storage'
+import { useSystemStoreHook } from '@/stores/modules/system-store'
 
+// 时间戳转换为标准显示时间
 export const timestampToDate = (time: number | string, format: string = 'YYYY-MM-DD HH:mm:ss') => {
   let date: Date
   if (typeof time === 'string') {
@@ -13,8 +15,8 @@ export const timestampToDate = (time: number | string, format: string = 'YYYY-MM
 
   // 2. 验证时间有效性（兼容Invalid Date）
   if (isNaN(date.getTime())) {
-    console.warn(`无效的时间格式：${time}`)
-    return ''
+    // console.warn(`无效的时间格式：${time}`)
+    return '--'
   }
 
   // 提取时间各部分（月份从0开始，需+1）
@@ -116,4 +118,157 @@ function genUUID() {
 export const getToken = (baseInfo: any) => {
   const uuid = genUUID()
   return btoa(uuid + baseInfo)
+}
+
+// 将十六进制颜色按 RGB 分量偏移并返回 6 位十六进制字符串（带 '#')
+function adjustHexByDeltas(hex: string, dR: number, dG: number, dB: number) {
+  if (!hex) return hex
+  let h = String(hex).trim()
+  if (h.startsWith('#')) h = h.slice(1)
+  if (h.length === 3) {
+    h = h
+      .split('')
+      .map((c) => c + c)
+      .join('')
+  }
+  if (h.length !== 6) return `#${h}`
+
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
+  const r = clamp(parseInt(h.slice(0, 2), 16) + dR)
+  const g = clamp(parseInt(h.slice(2, 4), 16) + dG)
+  const b = clamp(parseInt(h.slice(4, 6), 16) + dB)
+
+  const to2 = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${to2(r)}${to2(g)}${to2(b)}`
+}
+
+// 获取父级项目缓存信息
+// 当前项目作为子项目嵌入父级项目时，尝试访问父级项目的 localStorage
+export const getParentLocalStorageItem = (
+  key: string,
+  timeout = 1000,
+): Promise<any | null> | null | string => {
+  try {
+    // const parentWindow = window.parent || window.top
+    // if (!parentWindow) return null
+    // 直接访问
+    return window.localStorage.getItem(key)
+  } catch (err) {
+    // 可能因为跨域或 sandbox 抛错
+    console.error('无法访问父 localStorage：', err)
+    return null
+  }
+}
+
+// 判断当前项目是否作为子项目嵌入父级项目
+export const isEmbeddedInParent = () => {
+  try {
+    return window.parent && window.parent !== window
+  } catch {
+    return false
+  }
+}
+
+//初始化国际化信息
+export const initUseI18n = async () => {
+  try {
+    const systemStore = useSystemStoreHook()
+    const locale = await getParentLocalStorageItem('responsive-locale')
+    systemStore.language = JSON.parse(locale).locale === 'zh' ? 'zh-cn' : 'en'
+  } catch {}
+}
+
+//初始化主题信息
+export const initThemeInfo = async () => {
+  try {
+    const systemStore = useSystemStoreHook()
+    const theme = await getParentLocalStorageItem('responsive-layout')
+    let themeObj = JSON.parse(theme) || {}
+    // Storage.set('theme', themeObj.overallStyle || 'dark')
+    systemStore.themeType = themeObj.overallStyle || 'dark'
+    document.documentElement.style.setProperty(
+      '--el-color-primary',
+      themeObj.epThemeColor || '#cdbdff',
+    )
+    document.documentElement.style.setProperty(
+      '--el-color-primary-hover',
+      (themeObj.epThemeColor || '#cdbdff') + '80',
+    )
+
+    document.documentElement.style.setProperty(
+      '--ep-bg-purple-color',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0) + '29',
+    )
+    // 背景色
+    document.documentElement.style.setProperty(
+      '--ep-bg-purple-color-deep',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0) + '80',
+    )
+    document.documentElement.style.setProperty(
+      '--ep-pager-border',
+      adjustHexByDeltas(themeObj.epThemeColor || '#ccbbff', 1, 2, 0),
+    )
+
+    // 按钮颜色
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-top',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-bottom',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-top',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-bottom',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    )
+  } catch {}
+}
+
+// 初始化用户鉴权信息
+export const initAuthInfo = async () => {
+  try {
+    // normalize possible sync/async return from getParentLocalStorageItem
+    const token = await getParentLocalStorageItem('ELADMIN-TOEKN')
+    const userInfo = await getParentLocalStorageItem('user-info')
+    // 清洗并解析 token，处理可能带引号或其他包装情况
+    function cleanToken(raw: any) {
+      if (!raw && raw !== 0) return ''
+      let s = String(raw)
+      s = s.trim()
+      // 移除外层双引号或单引号
+      if ((s.startsWith('\"') && s.endsWith('\"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.slice(1, -1)
+      }
+      // 常见格式：Bearer <token> 或 "Bearer <token>"
+      if (s.toLowerCase().startsWith('bearer ')) {
+        return s.split(' ')[1] || ''
+      }
+      // 可能直接就是 token
+      return s
+    }
+
+    if (typeof token === 'string' && token) {
+      const parsed = cleanToken(token)
+      Storage.set('token', parsed || '')
+    }
+    if (userInfo) {
+      Storage.set('userInfo', userInfo)
+    }
+  } catch (err) {
+    console.warn('init parent token failed', err)
+  }
+}
+
+// 监听localStorage变化
+export const watchStorage = (key: string, callback: (value: any) => void) => {
+  window.addEventListener('storage', (event) => {
+    if (event.key === key) {
+      callback(event.newValue)
+    }
+  })
 }

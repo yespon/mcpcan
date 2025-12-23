@@ -15,27 +15,35 @@
       "accessType": "Database Type",
       "dbHost": "Database Host",
       "createdAt": "Created At",
-      "updatedAt": "Updated At"
+      "updatedAt": "Updated At",
+      "person": "Personal",
+      "team": "Team"
     },
     "action": {
       "create": "Create Agent",
       "community": "Community",
       "enterprise": "Enterprise",
       "successConnection": "Connection Test Successful",
-      "failConnectionTips": "Platform connection failed; do you still want to save?"
+      "failConnectionTips": "Platform connection failed; do you still want to save?",
+      "connection": "Connect Now",
+      "addAgent": "Add Agent Platform"
     },
     "formData": {
-      "accessName": "Access Name",
+      "accessName": "Access name",
+      "subType": "Access type",
+      "enterpriseId": "Team/Enterprise ID",
       "accessType": "Access Type",
-      "dbHost": "Database Host",
-      "dbPort": "Database Port",
-      "dbUser": "Database User",
-      "dbPassword": "Database Password",
-      "dbName": "Database Name",
+      "dbHost": "Database address",
+      "dbPort": "Port",
+      "dbUser": "Username",
+      "dbPassword": "Password",
+      "dbName": "Database name",
       "loadingText": "Connecting to service..."
     },
     "placeholder": {
       "accessName": "Please enter access name",
+      "subType": "Please select access type",
+      "enterpriseId": "Please enter team/enterprise ID",
       "accessNameLength": "Please enter access name, length 2-64 characters",
       "accessType": "Please select access type",
       "dbHost": "Please enter database host",
@@ -43,7 +51,8 @@
       "dbPortLength": "Port range 1-65535",
       "dbUser": "Please enter database user",
       "dbPassword": "Please enter database password",
-      "dbName": "Please enter database name"
+      "dbName": "Please enter database name",
+      "cookie": "Please enter cookie; Use cookie to connect and sync agent platform namespaces"
     },
     "sync": {
       "platform": "Platform: ",

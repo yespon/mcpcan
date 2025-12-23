@@ -1,1 +1,5 @@
-window.__APP_CONFIG__ = { API_BASE: '${API_BASE}', VITE_DEMO: 'false', PUBLIC_PATH: '/mcpcan-web' }
+window.__APP_CONFIG__ = {
+  VITE_DEMO: 'false',
+  PUBLIC_PATH: '', // 设置应用的公共路径; 默认为 '';kymo:'/mcpcan-web'
+  API_BASE: '/api', // 设置API请求的基础路径; 默认为 '/api';kymo:'/mcpcan-api'
+}

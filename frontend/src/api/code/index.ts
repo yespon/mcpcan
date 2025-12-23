@@ -6,7 +6,7 @@ export const CodeAPI = {
   // code package list
   list(params: TableData | null) {
     return request<any, List<Code>>({
-      url: `${baseConfig.baseUrlVersion}/market/code/packages`,
+      url: `/market/code/packages`,
       method: 'GET',
       params,
     })
@@ -14,7 +14,7 @@ export const CodeAPI = {
   // download code package
   download(code: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/code/download/${code.id}`,
+      url: `/market/code/download/${code.id}`,
       method: 'GET',
       responseType: 'blob',
     })
@@ -22,14 +22,14 @@ export const CodeAPI = {
   // delete package
   delete(id: string) {
     return request<string>({
-      url: `${baseConfig.baseUrlVersion}/market/code/packages/${id}`,
+      url: `/market/code/packages/${id}`,
       method: 'DELETE',
     })
   },
   // get files tree list
   fileTree(params: any) {
     return request<any, FileTree>({
-      url: `${baseConfig.baseUrlVersion}/market/code/tree`,
+      url: `/market/code/tree`,
       method: 'GET',
       params,
     })
@@ -37,7 +37,7 @@ export const CodeAPI = {
   // get file content
   fileContent(params: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/code/get`,
+      url: `/market/code/get`,
       method: 'GET',
       params,
     })
@@ -45,7 +45,7 @@ export const CodeAPI = {
   // get file content as blob (for binary files like images)
   fileContentBlob(params: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/code/get`,
+      url: `/market/code/get`,
       method: 'GET',
       params,
       responseType: 'blob',

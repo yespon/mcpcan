@@ -11,7 +11,12 @@
       <div class="flex items-center w-full">
         <span>{{ dialogInfo.title }}</span
         >:
-        <McpImage :src="dify" fit="contain" width="80" height="20" />
+        <McpImage
+          :src="formModel.accessType === 'COZE' ? coze : dify"
+          fit="contain"
+          width="80"
+          height="20"
+        />
         <span class="text-purple">{{
           formModel.accessType === 'Dify'
             ? t('agent.action.community')
@@ -20,7 +25,22 @@
       </div>
     </template>
     <div v-loading="dialogInfo.loading" :element-loading-text="t('agent.formData.loadingText')">
-      <el-form ref="formRef" :model="formModel" :rules="rules" label-width="110px">
+      <el-form
+        ref="formRef"
+        :model="formModel"
+        :rules="rules"
+        :label-width="locale === 'en' ? '160px' : '110px'"
+      >
+        <el-form-item
+          v-if="formModel.accessType === 'COZE'"
+          :label="t('agent.formData.subType')"
+          prop="subType"
+        >
+          <el-radio-group v-model="formModel.subType" fill="var(--el-color-primary)">
+            <el-radio-button :label="t('agent.columns.person')" value="Person" />
+            <el-radio-button :label="t('agent.columns.team')" value="Team" />
+          </el-radio-group>
+        </el-form-item>
         <el-form-item :label="t('agent.formData.accessName')" prop="accessName">
           <el-input
             v-model="formModel.accessName"
@@ -29,38 +49,49 @@
             show-word-limit
           />
         </el-form-item>
-
-        <el-form-item :label="t('agent.formData.dbHost')" prop="dbHost">
-          <el-input v-model="formModel.dbHost" :placeholder="t('agent.placeholder.dbHost')" />
-        </el-form-item>
-
-        <el-form-item :label="t('agent.formData.dbPort')" prop="dbPort">
-          <el-input-number
-            v-model="formModel.dbPort"
-            :min="1"
-            :max="65535"
-            :controls="false"
-            :placeholder="t('agent.placeholder.dbPort')"
-            style="width: 100%"
-          />
-        </el-form-item>
-
-        <el-form-item :label="t('agent.formData.dbUser')" prop="dbUser">
-          <el-input v-model="formModel.dbUser" :placeholder="t('agent.placeholder.dbUser')" />
-        </el-form-item>
-
-        <el-form-item :label="t('agent.formData.dbPassword')" prop="dbPassword">
+        <el-form-item
+          v-if="formModel.accessType === 'COZE' && formModel.subType === 'Team'"
+          :label="t('agent.formData.enterpriseId')"
+          prop="enterpriseID"
+        >
           <el-input
-            v-model="formModel.dbPassword"
-            type="password"
-            show-password
-            :placeholder="t('agent.placeholder.dbPassword')"
+            v-model="formModel.enterpriseID"
+            type="text"
+            :placeholder="t('agent.placeholder.enterpriseId')"
           />
         </el-form-item>
+        <template
+          v-if="formModel.accessType === 'DifyEnterprise' || formModel.accessType === 'Dify'"
+        >
+          <el-form-item :label="t('agent.formData.dbHost')" prop="dbHost">
+            <el-input v-model="formModel.dbHost" :placeholder="t('agent.placeholder.dbHost')" />
+          </el-form-item>
+          <el-form-item :label="t('agent.formData.dbPort')" prop="dbPort">
+            <el-input-number
+              v-model="formModel.dbPort"
+              :min="1"
+              :max="65535"
+              :controls="false"
+              :placeholder="t('agent.placeholder.dbPort')"
+              style="width: 100%"
+            />
+          </el-form-item>
+          <el-form-item :label="t('agent.formData.dbUser')" prop="dbUser">
+            <el-input v-model="formModel.dbUser" :placeholder="t('agent.placeholder.dbUser')" />
+          </el-form-item>
+          <el-form-item :label="t('agent.formData.dbPassword')" prop="dbPassword">
+            <el-input
+              v-model="formModel.dbPassword"
+              type="password"
+              show-password
+              :placeholder="t('agent.placeholder.dbPassword')"
+            />
+          </el-form-item>
 
-        <el-form-item :label="t('agent.formData.dbName')" prop="dbName">
-          <el-input v-model="formModel.dbName" :placeholder="t('agent.placeholder.dbName')" />
-        </el-form-item>
+          <el-form-item :label="t('agent.formData.dbName')" prop="dbName">
+            <el-input v-model="formModel.dbName" :placeholder="t('agent.placeholder.dbName')" />
+          </el-form-item>
+        </template>
       </el-form>
     </div>
 
@@ -76,15 +107,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import McpButton from '@/components/mcp-button/index.vue'
 import { AgentAPI } from '@/api/agent/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import McpImage from '@/components/mcp-image/index.vue'
-import { dify } from '@/utils/logo.ts'
+import { dify, coze } from '@/utils/logo.ts'
+import { saveFile } from 'jsrsasign'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const dialogInfo = ref<{
   title: string
   visible: boolean
@@ -105,6 +136,8 @@ const formModel = ref<{
   dbUser: string
   dbPassword: string
   dbName: string
+  enterpriseID?: string
+  subType?: string
 }>({
   accessID: '',
   accessName: '',
@@ -114,6 +147,8 @@ const formModel = ref<{
   dbUser: '',
   dbPassword: '',
   dbName: '',
+  enterpriseID: '',
+  subType: 'Person',
 })
 
 const formRef = ref<FormInstance>()
@@ -124,7 +159,9 @@ const rules: FormRules<typeof formModel.value> = {
     { required: true, message: t('agent.formData.accessName'), trigger: 'blur' },
     { min: 2, max: 64, message: t('agent.formData.accessName'), trigger: 'blur' },
   ],
+  subType: [{ required: true, message: t('agent.placeholder.subType'), trigger: 'change' }],
   accessType: [{ required: true, message: t('agent.formData.accessType'), trigger: 'change' }],
+  enterpriseID: [{ required: true, message: t('agent.formData.enterpriseId'), trigger: 'blur' }],
   dbHost: [{ required: true, message: t('agent.formData.dbHost'), trigger: 'blur' }],
   dbPort: [
     {
@@ -155,6 +192,15 @@ const emit = defineEmits<{
 
 // handle form submit
 const handleSubmit = async () => {
+  if (formModel.value.accessType === 'COZE') {
+    await handleSaveCoze()
+  } else {
+    await handleSaveDify()
+  }
+}
+
+// handle save dify
+const handleSaveDify = async () => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
@@ -174,7 +220,7 @@ const handleSubmit = async () => {
           await (formModel.value.accessID
             ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
             : AgentAPI.create(params))
-          ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
+          ElMessage.success(formModel.value.accessID ? t('action.edit') : t('action.create'))
           emit('on-refresh')
           dialogInfo.value.visible = false
           formRef.value?.resetFields()
@@ -201,7 +247,7 @@ const handleSubmit = async () => {
             await (formModel.value.accessID
               ? AgentAPI.update({ accessID: formModel.value.accessID, ...params })
               : AgentAPI.create(params))
-            ElMessage.success(formModel.value.accessID ? t('action.update') : t('action.create'))
+            ElMessage.success(formModel.value.accessID ? t('action.edit') : t('action.create'))
             emit('on-refresh')
             dialogInfo.value.visible = false
             formRef.value?.resetFields()
@@ -210,6 +256,35 @@ const handleSubmit = async () => {
     } catch {
     } finally {
       dialogInfo.value.loading = false
+    }
+  })
+}
+
+// handle save coze
+const handleSaveCoze = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+    try {
+      const params = {
+        accessName: formModel.value.accessName,
+        accessType: formModel.value.accessType,
+        enterpriseID: formModel.value.subType === 'Team' ? formModel.value.enterpriseID : '',
+        subType: formModel.value.subType,
+      }
+      await (formModel.value.accessID
+        ? AgentAPI.update({
+            accessID: formModel.value.accessID,
+            ...params,
+          })
+        : AgentAPI.create({
+            ...params,
+          }))
+      ElMessage.success(formModel.value.accessID ? t('action.edit') : t('action.create'))
+      emit('on-refresh')
+      dialogInfo.value.visible = false
+      formRef.value?.resetFields()
+    } finally {
     }
   })
 }
@@ -232,6 +307,8 @@ const init = (accessType: string, row: any) => {
       dbUser: '',
       dbPassword: '',
       dbName: '',
+      enterpriseID: '',
+      subType: 'Person',
     }
   }
 }

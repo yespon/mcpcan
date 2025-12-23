@@ -9,5 +9,12 @@
     "source.fixAll": "explicit"
   },
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // 禁用 Vetur（Vue 2 时代的扩展），使用 Volar 替代
+  "vetur.enable": false,
+  // Volar 配置
+  "volar.takeOverMode.enabled": true,
+  // TypeScript 配置
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }

@@ -13,20 +13,11 @@ import (
 
 var SysRolesDeptsRepo *SysRolesDeptsRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewSysRolesDeptsRepository(db)
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize sys_roles_depts table: %v", err))
-		}
-	})
-}
-
 // SysRolesDeptsRepository 角色部门关联仓库
 type SysRolesDeptsRepository struct{}
 
 // NewSysRolesDeptsRepository 创建角色部门关联仓库实例
-func NewSysRolesDeptsRepository(db *gorm.DB) *SysRolesDeptsRepository {
+func NewSysRolesDeptsRepository() *SysRolesDeptsRepository {
 	SysRolesDeptsRepo = &SysRolesDeptsRepository{}
 	return SysRolesDeptsRepo
 }

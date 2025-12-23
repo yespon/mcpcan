@@ -227,7 +227,7 @@ const docObject = ref<any>(null)
 const originFileText = ref<any>(null)
 
 const action = ref(
-  baseConfig.SERVER_BASE_URL + baseConfig.baseUrlVersion + '/market/openapi/upload',
+  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/openapi/upload',
 )
 const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
@@ -329,7 +329,7 @@ const renderContent = (h: any, params: any) => {
               default: () =>
                 h(
                   'span',
-                  { class: 'cursor-pointer', style: { color: 'var(--ep-purple-color)' } },
+                  { class: 'cursor-pointer', style: { color: 'var(--el-color-primary)' } },
                   t('common.more'),
                 ),
             },
@@ -663,27 +663,27 @@ defineExpose({
 
 <style lang="scss" scoped>
 .api-info {
-  border: 1px dashed var(--ep-purple-color);
+  border: 1px dashed var(--el-color-primary);
 }
 .upload-demo {
   width: 100%;
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   :deep(.el-upload.is-drag) {
     height: 100%;
   }
   .el-icon--upload {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
   }
   .el-upload__text {
-    color: var(--ep-purple-color);
+    color: var(--el-color-primary);
   }
 }
 .select-api {
-  border: 1px dashed var(--ep-purple-color);
-  color: var(--ep-purple-color);
+  border: 1px dashed var(--el-color-primary);
+  color: var(--el-color-primary);
   &:hover {
-    border-color: var(--ep-purple-color-hover);
-    color: var(--ep-purple-color-hover);
+    border-color: var(--el-color-primary-hover);
+    color: var(--el-color-primary-hover);
   }
 }
 :deep(.el-tree-node__content) {
@@ -695,19 +695,19 @@ defineExpose({
   }
 }
 :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: var(--ep-purple-color);
-  border-color: var(--ep-purple-color);
+  background-color: var(--el-color-primary);
+  border-color: var(--el-color-primary);
   border-radius: 4px;
 }
 :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
-  background-color: var(--ep-purple-color);
+  background-color: var(--el-color-primary);
 }
 :deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
-  border-color: var(--ep-purple-color);
+  border-color: var(--el-color-primary);
 }
 :deep(.el-checkbox__inner) {
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
   }
 }
 </style>

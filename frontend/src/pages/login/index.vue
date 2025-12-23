@@ -51,6 +51,7 @@
 import logo from '@/assets/logo.png'
 import { useUserStore } from '@/stores'
 import url from '@/assets/images/global.png'
+import { getParentLocalStorageItem } from '@/utils/system'
 
 const userStore = useUserStore()
 const { t } = useI18n()
@@ -63,6 +64,7 @@ const formComponents = {
   register: defineAsyncComponent(() => import('./components/Register.vue')),
   resetPwd: defineAsyncComponent(() => import('./components/ResetPwd.vue')),
 }
+
 const init = async () => {
   await userStore.handleGetEncryptionKey()
 }
@@ -81,7 +83,7 @@ onMounted(init)
   justify-content: center;
   background: linear-gradient(180deg, #202021 0%, #000000 100%);
   width: 100%;
-  height: 100%;
+  height: 100vh;
 }
 
 .action-bar {

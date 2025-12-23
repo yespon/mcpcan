@@ -2,7 +2,13 @@
   <div>
     <!-- 头部区域 -->
     <div class="flex justify-between page-header">
-      <div class="header-container">
+      <div class="header-container flex items-center">
+        <el-link v-if="layout" link @click="handleBack" class="link-hover mr-4" underline="never">
+          <el-icon class="mr-2">
+            <i class="icon iconfont MCP-fanhui"></i>
+          </el-icon>
+          {{ t('common.back') }}
+        </el-link>
         {{ query.name }} - {{ t('env.run.pageDesc.pvcList') }}
         <span class="desc">{{ t('env.run.pageDesc.pvcDesc') }}</span>
       </div>
@@ -29,7 +35,7 @@
             <el-image :src="pvcLogo" style="width: 20px; height: 20px"></el-image>
             <span class="desc">{{ t('env.run.pageDesc.pvcTotal') }}：{{ pageConfig.total }}</span>
           </div>
-          <div id="pvcSearch"></div>
+          <div id="pvcSearch" v-show="false"></div>
         </div>
       </template>
       <template #accessModes="{ row }">
@@ -67,8 +73,10 @@ import { usePvcTableHooks } from './hooks'
 import NewPvcDialog from './modules/new-pvc-dialog.vue'
 import pvcLogo from '@/assets/logo/pvc.png'
 import McpButton from '@/components/mcp-button/index.vue'
+import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
+const layout = useLayout()
 const {
   PvcAPI,
   tablePlus,
@@ -79,6 +87,8 @@ const {
   newPvcDialog,
   query,
 } = usePvcTableHooks()
+
+const { jumpBack } = useRouterHooks()
 
 const handleAddPvc = () => {
   newPvcDialog.value.init()
@@ -92,6 +102,11 @@ const handleGetStorageClassList = async () => {
   storageClassOptions.value = data.list.map((storage) => {
     return { label: storage.name, value: storage.name }
   })
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**

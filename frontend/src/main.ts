@@ -14,6 +14,7 @@ import 'element-plus/theme-chalk/dark/css-vars.css'
 import '~/assets/icon/iconfont.css'
 import countTo from './directives/numberScrollDirective.ts'
 import { store } from './stores'
+import { initAuthInfo } from '@/utils/system'
 
 const app = createApp(App)
 app.directive('countTo', countTo)
@@ -24,4 +25,9 @@ app.use(router)
 app.use(ElementPlus)
 app.use(store)
 
-app.mount('#app')
+async function bootstrap() {
+  await initAuthInfo()
+  app.mount('#app')
+}
+
+bootstrap()

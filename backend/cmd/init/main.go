@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/kymo-mcp/mcpcan/internal/init/app"
 )
 

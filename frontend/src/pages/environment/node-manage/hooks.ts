@@ -5,7 +5,7 @@ export const usePvcTableHooks = () => {
   const { t } = useI18n()
   const tablePlus = ref()
   const $route = useRoute()
-  const { query } = $route
+  const { query, meta } = $route
   const statusOptions = {
     Ready: 'success',
     NotReady: 'danger',
@@ -74,5 +74,5 @@ export const usePvcTableHooks = () => {
     pageSize: 10,
   })
 
-  return { tablePlus, columns, requestConfig, pageConfig, statusOptions, query }
+  return { tablePlus, columns, requestConfig, pageConfig, statusOptions, query, meta }
 }

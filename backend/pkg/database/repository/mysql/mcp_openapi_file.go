@@ -12,15 +12,6 @@ import (
 
 var McpOpenapiPackageRepo *McpOpenapiPackageRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpOpenapiPackageRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize openapi_package table: %v", err))
-		}
-	})
-}
-
 // McpOpenapiPackageRepository 封装 openapi_package 表的增删改查操作
 type McpOpenapiPackageRepository struct{}
 

@@ -15,17 +15,23 @@
       "accessType": "平台类型",
       "dbHost": "数据库地址",
       "createdAt": "创建时间",
-      "updatedAt": "更新时间"
+      "updatedAt": "更新时间",
+      "person": "个人",
+      "team": "团队"
     },
     "action": {
       "create": "创建智能体平台",
       "community": "社区版",
       "enterprise": "商业版",
       "successConnection": "测试连接成功",
-      "failConnectionTips": "平台链接失败；是否任然保存？"
+      "failConnectionTips": "平台链接失败；是否任然保存？",
+      "connection": "立即链接",
+      "addAgent": "去添加智能体平台"
     },
     "formData": {
       "accessName": "接入名称",
+      "subType": "接入类型",
+      "enterpriseId": "团队/企业 ID",
       "accessType": "接入类型",
       "dbHost": "数据库地址",
       "dbPort": "端口",
@@ -36,6 +42,8 @@
     },
     "placeholder": {
       "accessName": "请输入接入名称",
+      "subType": "请选择接入类型",
+      "enterpriseId": "请输入团队/企业 ID",
       "accessNameLength": "请输入接入名称，长度 2-64 个字符",
       "accessType": "请选择接入类型",
       "dbHost": "请输入数据库地址",
@@ -43,7 +51,8 @@
       "dbPortLength": "端口范围 1-65535",
       "dbUser": "请输入用户名",
       "dbPassword": "请输入密码",
-      "dbName": "请输入数据库名称"
+      "dbName": "请输入数据库名称",
+      "cookie": "请输入cookie; 通过cookie连接可同步的智能体平台命名空间"
     },
     "sync": {
       "platform": "平台：",

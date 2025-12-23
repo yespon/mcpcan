@@ -337,6 +337,30 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		filters["name"] = req.Name
 	}
 
+	// Add access type filter
+	if req.AccessType != instance.AccessType_AccessTypeUnknown {
+		switch req.AccessType {
+		case instance.AccessType_DIRECT:
+			filters["access_type"] = model.AccessTypeDirect
+		case instance.AccessType_PROXY:
+			filters["access_type"] = model.AccessTypeProxy
+		case instance.AccessType_HOSTING:
+			filters["access_type"] = model.AccessTypeHosting
+		}
+	}
+
+	// Add mcp protocol filter
+	if req.McpProtocol != instance.McpProtocol_McpProtocolUnknown {
+		switch req.McpProtocol {
+		case instance.McpProtocol_SSE:
+			filters["mcp_protocol"] = model.McpProtocolSSE
+		case instance.McpProtocol_STEAMABLE_HTTP:
+			filters["mcp_protocol"] = model.McpProtocolStreamableHttp
+		case instance.McpProtocol_STDIO:
+			filters["mcp_protocol"] = model.McpProtocolStdio
+		}
+	}
+
 	// Paginated query for template list
 	templates, total, err := s.templateData.GetTemplatesWithPagination(ctx, page, pageSize, filters, "id", "desc")
 	if err != nil {

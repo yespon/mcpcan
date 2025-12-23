@@ -19,6 +19,10 @@
               <McpImage :src="dify" fit="contain" width="80" height="20" />
               {{ t('agent.action.enterprise') }}
             </el-dropdown-item>
+            <el-dropdown-item command="business" @click="handleNewAgent('COZE')">
+              <McpImage :src="coze" fit="contain" width="80" height="20" />
+              {{ t('agent.action.enterprise') }}
+            </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -31,6 +35,7 @@
         :requestConfig="requestConfig"
         :columns="columns"
         show-view-mode
+        default-view-mode="card"
         v-model:pageConfig="pageConfig"
         :handlerColumnConfig="{
           width: '120px',
@@ -72,7 +77,7 @@
               <el-icon class="link-hover cursor-pointer"><More /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item @click="handleConnection(row)">
+                  <el-dropdown-item v-if="row.accessType !== 'COZE'" @click="handleConnection(row)">
                     {{ t('common.connection') }}
                   </el-dropdown-item>
                   <el-dropdown-item @click="handleDelete(row)">
@@ -96,7 +101,10 @@
                       <el-dropdown-item @click="handleEdit(row)">
                         {{ t('common.edit') }}
                       </el-dropdown-item>
-                      <el-dropdown-item @click="handleConnection(row)">
+                      <el-dropdown-item
+                        v-if="row.accessType !== 'COZE'"
+                        @click="handleConnection(row)"
+                      >
                         {{ t('common.connection') }}
                       </el-dropdown-item>
                       <el-dropdown-item @click="handleDelete(row)">
@@ -111,7 +119,7 @@
             </template>
             <div class="center">
               <McpImage
-                :src="row.accessType === 'Dify' ? kymo : dify"
+                :src="row.accessType === 'Dify' ? kymo : row.accessType === 'COZE' ? coze : dify"
                 fit="contain"
                 width="80"
                 height="20"
@@ -132,18 +140,17 @@
 <script setup lang="ts">
 import { Plus, More } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-defineOptions({
-  name: 'AgentPage',
-})
 import TablePlus from '@/components/TablePlus/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import FormAgent from './modules/form-dialog.vue'
-import { kymo, dify } from '@/utils/logo.ts'
+import { kymo, dify, coze } from '@/utils/logo.ts'
 import agentLogo from '@/assets/logo/instance.png'
 import { useAgentTableHooks } from './index.ts'
 
+defineOptions({
+  name: 'AgentPage',
+})
 const { t, tablePlus, columns, pageInfo, requestConfig, pageConfig, AgentAPI } =
   useAgentTableHooks()
 // view model：'card' or 'table'

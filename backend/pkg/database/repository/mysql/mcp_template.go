@@ -12,15 +12,6 @@ import (
 
 var McpTemplateRepo *McpTemplateRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpTemplateRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_template table: %v", err))
-		}
-	})
-}
-
 // McpTemplateRepository 封装 mcp_template 表的增删改查操作
 type McpTemplateRepository struct{}
 
@@ -154,15 +145,11 @@ func (r *McpTemplateRepository) FindWithPagination(ctx context.Context, page, pa
 	// 应用筛选条件
 	for key, value := range filters {
 		switch key {
-		case "environment_id":
+		case "environment_id", "environmentId":
 			if envId, ok := value.(uint); ok && envId > 0 {
 				query = query.Where("environment_id = ?", envId)
 			}
-		case "environmentId":
-			if envId, ok := value.(int64); ok && envId > 0 {
-				query = query.Where("environment_id = ?", envId)
-			}
-		case "template_id":
+		case "template_id", "templateId":
 			if templateId, ok := value.(int32); ok && templateId > 0 {
 				query = query.Where("id = ?", templateId)
 			}
@@ -170,15 +157,15 @@ func (r *McpTemplateRepository) FindWithPagination(ctx context.Context, page, pa
 			if name, ok := value.(string); ok && name != "" {
 				query = query.Where("name LIKE ? OR id LIKE ?", "%"+name+"%", "%"+name+"%")
 			}
-		case "mcpProtocol":
+		case "mcpProtocol", "mcp_protocol":
 			if mcpProtocol, ok := value.(model.McpProtocol); ok {
 				query = query.Where("mcp_protocol = ?", mcpProtocol)
 			}
-		case "accessType":
+		case "accessType", "access_type":
 			if accessType, ok := value.(model.AccessType); ok {
 				query = query.Where("access_type = ?", accessType)
 			}
-		case "sourceType":
+		case "sourceType", "source_type":
 			if sourceType, ok := value.(model.SourceType); ok {
 				query = query.Where("source_type = ?", sourceType)
 			}
@@ -197,9 +184,9 @@ func (r *McpTemplateRepository) FindWithPagination(ctx context.Context, page, pa
 			order = "DESC"
 		}
 		switch sortBy {
-		case "createdAt":
+		case "createdAt", "created_at":
 			query = query.Order(fmt.Sprintf("created_at %s", order))
-		case "updatedAt":
+		case "updatedAt", "updated_at":
 			query = query.Order(fmt.Sprintf("updated_at %s", order))
 		case "name":
 			query = query.Order(fmt.Sprintf("name %s", order))

@@ -1,4 +1,4 @@
-package repository
+package mysql
 
 import (
 	"context"
@@ -6,20 +6,10 @@ import (
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"gorm.io/gorm"
 )
 
 var IntelligentAccessRepo *IntelligentAccessRepository
-
-func init() {
-	mysql.RegisterInit(func() {
-		repo := NewIntelligentAccessRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize intelligent_access table: %v", err))
-		}
-	})
-}
 
 // IntelligentAccessRepository 封装 intelligent_access 表的增删改查操作
 type IntelligentAccessRepository struct{}
@@ -32,7 +22,7 @@ func NewIntelligentAccessRepository() *IntelligentAccessRepository {
 
 // getDB 获取数据库连接
 func (r *IntelligentAccessRepository) getDB() *gorm.DB {
-	return mysql.GetDB().Model(&model.IntelligentAccess{})
+	return GetDB().Model(&model.IntelligentAccess{})
 }
 
 // Create 创建

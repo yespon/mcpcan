@@ -651,6 +651,10 @@ message TemplateListRequest {
   int32 templateId = 3;
   // @inject_tag: json:"name" form:"name" desc:"Template name"
   string name = 4;
+  // @inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"
+  AccessType accessType = 5;
+  // @inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"
+  McpProtocol mcpProtocol = 6;
 }
 
 // TemplateListResp template list response

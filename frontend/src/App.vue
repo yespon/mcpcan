@@ -11,14 +11,24 @@
 
 <script setup lang="ts">
 import { Storage } from '@/utils/storage'
-
+import { initThemeInfo, initUseI18n, isEmbeddedInParent, watchStorage } from '@/utils/system'
 // import { useSystemStoreHook } from '@/stores/modules/system-store'
-
 // const systemStore = useSystemStoreHook()
+
+const route = useRoute()
 /**
  * Handle init dark theme
  */
-const init = () => {
+const init = async () => {
+  // is embedded in parent window and sync theme info
+  initUseI18n()
+  await initThemeInfo()
+  watchStorage('responsive-locale', async (newValue) => {
+    window.location.reload()
+  })
+  watchStorage('responsive-layout', async (newValue) => {
+    window.location.reload()
+  })
   const root = document.documentElement
   root.className = Storage.get('theme') || 'dark'
 }
@@ -28,6 +38,6 @@ onMounted(init)
 <style scoped>
 .wh-full {
   width: 100%;
-  height: 100vh;
+  /* height: 100vh; */
 }
 </style>

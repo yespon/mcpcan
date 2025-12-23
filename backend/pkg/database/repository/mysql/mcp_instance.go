@@ -12,15 +12,6 @@ import (
 
 var McpInstanceRepo *McpInstanceRepository
 
-func init() {
-	RegisterInit(func() {
-		repo := NewMcpInstanceRepository()
-		if err := repo.InitTable(); err != nil {
-			panic(fmt.Sprintf("Failed to initialize mcp_instance table: %v", err))
-		}
-	})
-}
-
 // McpInstanceRepository 封装 mcp_instance 表的增删改查操作
 type McpInstanceRepository struct{}
 

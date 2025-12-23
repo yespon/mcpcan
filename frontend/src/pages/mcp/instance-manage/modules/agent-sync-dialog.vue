@@ -65,29 +65,25 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-zhinengti"></i
                 ></el-icon>
               </div>
               <div class="agent-info flex-sub u-line-1">
                 <div class="agent-name">{{ agent.accessName || t('agent.sync.noAccessName') }}</div>
                 <div class="agent-desc my-1">
-                  {{ t('agent.sync.type')
-                  }}{{
-                    agent.accessType === 'Dify'
-                      ? t('agent.action.community')
-                      : t('agent.action.enterprise')
-                  }}
+                  {{ t('agent.sync.type') }}
+                  {{ accessTypeMap[agent.accessType] }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-if="!dialogInfo.platformList.length" class="empty-state">
+        <div v-if="!dialogInfo.platformList.length && !layout" class="empty-state">
           <el-empty :description="t('agent.sync.emptyDesc')">
-            <el-button link class="base-btn-link" @click="handleJumptoAgent"
-              >去添加智能体平台</el-button
-            >
+            <el-button link class="base-btn-link" @click="handleJumptoAgent">{{
+              t('agent.action.addAgent')
+            }}</el-button>
           </el-empty>
         </div>
       </div>
@@ -130,7 +126,7 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-mingmingkongjian"></i
                 ></el-icon>
               </div>
@@ -183,7 +179,7 @@
                     class="selected-badge"
                   ></div>
                   <div class="agent-icon">
-                    <el-icon class="cursor-pointer" size="48" color="var(--ep-purple-color)"
+                    <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
                       ><i class="icon iconfont MCP-zhinengti"></i
                     ></el-icon>
                   </div>
@@ -252,6 +248,37 @@
       </div>
     </template>
   </el-dialog>
+  <el-dialog
+    v-model="dialogInfo.cookieVisible"
+    width="650px"
+    :close-on-click-modal="false"
+    :show-close="false"
+    align-center
+  >
+    <el-form-item label="cookie" prop="cookie" class="mt-6">
+      <el-input
+        v-model.trim="dialogInfo.cookie"
+        type="textarea"
+        :autosize="{ minRows: 16, maxRows: 32 }"
+        :placeholder="t('agent.placeholder.cookie')"
+      />
+    </el-form-item>
+    <template #footer>
+      <div class="center">
+        <el-button @click="handleCloseCookie">
+          {{ t('common.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          class="base-btn"
+          :disabled="!dialogInfo.cookie"
+          @click="handleConfirmCookie"
+        >
+          {{ t('agent.action.connection') }}
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -261,11 +288,13 @@ import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
+const layout = useLayout()
 const { taskInfo } = toRefs(useBusinessStoreHook())
 const { jumpToPage } = useRouterHooks()
 const dialogInfo = reactive({
   title: t('agent.sync.dialogTitle'),
   visible: false,
+  cookieVisible: false,
   loading: false,
   loadingText: 'Loading...',
   desc: '',
@@ -277,7 +306,13 @@ const dialogInfo = reactive({
   selectedAgentPlatformId: '',
   selectedNamespaces: [] as string[],
   selectedNamespaceId: '',
+  cookie: '',
 })
+const accessTypeMap: Record<string, string> = {
+  COZE: 'COZE ' + t('agent.action.enterprise'),
+  DifyEnterprise: 'Dify ' + t('agent.action.enterprise'),
+  Dify: 'Dify ' + t('agent.action.community'),
+}
 
 // selected namespace list based on selectedNamespaces ids
 const selectedNamespaceList = computed(() => {
@@ -358,12 +393,24 @@ const handleNextStep = () => {
   dialogInfo.currentStep += 1
   //  step two request space list
   if (dialogInfo.currentStep === 2) {
-    handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    // 增加填写cookie逻辑
+    if (
+      dialogInfo.platformList.find((agent) => agent.accessID === dialogInfo.selectedAgentPlatformId)
+        .accessType === 'COZE'
+    ) {
+      dialogInfo.cookieVisible = true
+    } else {
+      handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    }
   }
   // step three default select first namespace
   if (dialogInfo.currentStep === 3) {
     dialogInfo.selectedNamespaceId = selectedNamespaceList.value[0]?.tenantID || ''
   }
+}
+// confirm cookie and get namespace list
+const handleConfirmCookie = () => {
+  handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
 }
 
 // select agent platformshuaxin
@@ -390,7 +437,19 @@ const toggleNamespaceSelection = (namespaceId: string) => {
 // handle get agent platform list
 const handleGetAgentPlatform = async () => {
   const { list } = await AgentAPI.list({ page: 1, pageSize: 1000 })
-  dialogInfo.platformList = list || []
+  dialogInfo.platformList = (list || []).filter(
+    (agent: any) =>
+      agent.accessType === 'Dify' ||
+      agent.accessType === 'DifyEnterprise' ||
+      agent.accessType === 'QAgent' ||
+      agent.accessType === 'COZE',
+  )
+  // normalize QAgent to Dify for kymo
+  dialogInfo.platformList.forEach((agent: any) => {
+    if (agent.accessType === 'QAgent') {
+      agent.accessType = 'Dify'
+    }
+  })
 }
 
 // handle get namespace list
@@ -401,6 +460,12 @@ const handleGetNamespaceList = async (accessID: string) => {
     const { userSpaces } = await AgentAPI.getNamespaces({
       accessID,
       instancesIDs: dialogInfo.instanceList.map((item) => item.instanceId),
+      cookie:
+        dialogInfo.platformList.find(
+          (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+        ).accessType === 'COZE'
+          ? dialogInfo.cookie
+          : '',
     })
 
     // handle data structure to render
@@ -419,6 +484,7 @@ const handleGetNamespaceList = async (accessID: string) => {
       }))
     })
     dialogInfo.namespaceList = userSpaces || []
+    dialogInfo.cookieVisible = false
   } finally {
     dialogInfo.loading = false
   }
@@ -432,10 +498,10 @@ const handleConfirmSync = async () => {
       desc: dialogInfo.desc,
       intelligentAccessID: dialogInfo.selectedAgentPlatformId,
       insertIntelligentInfos: filteredNamespaceList.value.map((namespace: any) => ({
-        difySpaceID: namespace.tenantID,
-        difyUserID: namespace.userID,
-        difySpaceName: namespace.tenantName,
-        difyUserName: namespace.userName,
+        spaceID: namespace.tenantID,
+        userID: namespace.userID,
+        spaceName: namespace.tenantName,
+        userName: namespace.userName,
         headers: Object.fromEntries(
           namespace.headers.map((item: any) => [
             item.instanceId,
@@ -453,6 +519,12 @@ const handleConfirmSync = async () => {
       })),
       mcpInstanceIDs: dialogInfo.instanceList.map((item) => item.instanceId),
       domain: window.location.origin,
+      cookie:
+        dialogInfo.platformList.find(
+          (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+        ).accessType === 'COZE'
+          ? dialogInfo.cookie
+          : '',
     }
 
     await AgentAPI.createSyncTask(params)
@@ -463,6 +535,11 @@ const handleConfirmSync = async () => {
   } finally {
     dialogInfo.loading = false
   }
+}
+const handleCloseCookie = () => {
+  dialogInfo.currentStep--
+  dialogInfo.cookieVisible = false
+  dialogInfo.cookie = ''
 }
 
 // init dialog data
@@ -483,18 +560,18 @@ defineExpose({
 
 <style scoped lang="scss">
 :deep(.is-finish .el-step__icon) {
-  border-color: var(--ep-purple-color);
-  color: var(--ep-purple-color);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 :deep(.is-finish .el-step__line) {
-  border-color: var(--ep-purple-color);
-  color: var(--ep-purple-color);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 :deep(.el-step__title.is-finish) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 :deep(.el-step__description.is-finish) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 
 .step-content {
@@ -515,7 +592,7 @@ defineExpose({
   }
 }
 .count-highlight {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
   font-weight: 600;
   margin: 0 4px;
 }
@@ -553,12 +630,12 @@ defineExpose({
   height: 100px;
 
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   &.active {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
     background: var(--ep-bg-purple-color);
     box-shadow: 0 0 12px rgba(124, 77, 255, 0.15);
   }
@@ -571,7 +648,7 @@ defineExpose({
     height: 0px;
     border-style: solid;
     border-width: 0 40px 40px 0;
-    border-color: transparent var(--ep-purple-color) transparent transparent;
+    border-color: transparent var(--el-color-primary) transparent transparent;
     border-top-right-radius: 6px;
   }
 
@@ -620,7 +697,7 @@ defineExpose({
   min-height: 400px;
 }
 :deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
-  color: var(--ep-purple-color);
+  color: var(--el-color-primary);
 }
 </style>
 

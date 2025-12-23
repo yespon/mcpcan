@@ -11,6 +11,7 @@ import (
 
 // Config represents configuration structure
 type Config struct {
+	RunMode     string                `mapstructure:"runMode"`
 	ServiceName string                `mapstructure:"-"`
 	VersionInfo *version.VersionInfo  `mapstructure:"-"`
 	Server      ServerConfig          `mapstructure:"server"`

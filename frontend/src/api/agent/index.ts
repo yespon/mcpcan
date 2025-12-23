@@ -6,7 +6,7 @@ export const AgentAPI = {
   // agent list
   list(params: TableData | null) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access/list`,
+      url: `/market/intelligent_access/list`,
       method: 'GET',
       params,
     })
@@ -14,7 +14,7 @@ export const AgentAPI = {
   // create agent
   create(data: CreateAgentRequest) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access`,
+      url: `/market/intelligent_access`,
       method: 'POST',
       data,
     })
@@ -22,7 +22,7 @@ export const AgentAPI = {
   // connection test
   connectionTest(data: CreateAgentRequest) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access/test-connection`,
+      url: `/market/intelligent_access/test-connection`,
       method: 'POST',
       data,
     })
@@ -30,7 +30,7 @@ export const AgentAPI = {
   // delete agent platform
   delete(accessID: string) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access/delete`,
+      url: `/market/intelligent_access/delete`,
       method: 'DELETE',
       data: { accessID },
     })
@@ -38,7 +38,7 @@ export const AgentAPI = {
   // update agent platform
   update(data: CreateAgentRequest) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access/edit`,
+      url: `/market/intelligent_access/edit`,
       method: 'PUT',
       data,
     })
@@ -46,7 +46,7 @@ export const AgentAPI = {
   // get namespaces by platform
   getNamespaces(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/intelligent_access/list-dify-user-space`,
+      url: `/market/intelligent_access/list-user-space`,
       method: 'POST',
       data,
     })
@@ -54,7 +54,7 @@ export const AgentAPI = {
   // create a sync task
   createSyncTask(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/mcp_to_intelligent_task`,
+      url: `/market/mcp_to_intelligent_task`,
       method: 'POST',
       data,
     })
@@ -62,7 +62,7 @@ export const AgentAPI = {
   // get task list
   taskList(params: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/mcp_to_intelligent_task/list`,
+      url: `/market/mcp_to_intelligent_task/list`,
       method: 'GET',
       params,
     })
@@ -70,14 +70,14 @@ export const AgentAPI = {
   // get task detail
   taskDetail(id: string) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/mcp_to_intelligent_task/${id}`,
+      url: `/market/mcp_to_intelligent_task/${id}`,
       method: 'GET',
     })
   },
   // cancel task
   cancelTask(id: string) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/mcp_to_intelligent_task/${id}/cancel`,
+      url: `/market/mcp_to_intelligent_task/${id}/cancel`,
       method: 'POST',
     })
   },
@@ -85,13 +85,15 @@ export const AgentAPI = {
 
 export interface CreateAgentRequest {
   accessID?: string
-  accessName: string
-  accessType: string
-  dbHost: string
-  dbPort: number
-  dbUser: string
-  dbPassword: string
-  dbName: string
+  accessName?: string
+  accessType?: string
+  dbHost?: string
+  dbPort?: number
+  dbUser?: string
+  dbPassword?: string
+  dbName?: string
+  enterpriseId?: string
+  subType?: string
 }
 export interface TableData {
   page: number

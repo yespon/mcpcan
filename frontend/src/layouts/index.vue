@@ -1,5 +1,13 @@
 <template>
-  <div class="common-layout">
+  <!-- 如果路由指定隐藏 layout，则只显示内容 -->
+  <div v-if="route.meta.hideLayout" class="empty-layout m-4">
+    <el-config-provider :locale="elLocale">
+      <el-main class="hide-scrollbar main-card w-full h-full">
+        <RouterView></RouterView>
+      </el-main>
+    </el-config-provider>
+  </div>
+  <div v-else class="common-layout">
     <el-container :key="locale">
       <BaseSide v-model="isCollapse" />
       <el-container>
@@ -48,27 +56,37 @@ const { locale } = useI18n()
 const route = useRoute()
 const { isCollapse, language } = toRefs(useSystemStoreHook())
 const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
-
-onMounted(() => {})
 </script>
 <style lang="scss" scoped>
+.empty-layout {
+  // width: 100%;
+  // height: 100%;
+  .main-card {
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 0px 8px 0px;
+  }
+}
+
 .common-layout {
   width: 100vm;
   height: 100vh;
   .el-header {
     border-bottom: 1px solid var(--el-menu-border-color);
+
     &.tag-view {
       padding: 0;
       border: 0;
       height: auto;
     }
   }
+
   .el-container {
     height: 100%;
   }
+
   .el-main {
     height: calc(100vh - 94px);
     background: var(--ep-bg-color);
+
     &.p-0 {
       padding: 0 !important;
     }

@@ -10,6 +10,14 @@ enum IntelligentAccessType {
   Unknown = 0;
   DifyEnterprise = 1;
   Dify = 2;
+  QAgent = 3;
+  COZE = 4;
+}
+
+enum SubType {
+  UnknownSubType = 0;
+  Team = 1;
+  Person = 2;
 }
 
 message IntelligentAccess {
@@ -23,6 +31,9 @@ message IntelligentAccess {
     string dbName = 8;
     int64 createTime = 9;
     int64 updateTime = 10;
+
+    string subType = 11;
+    string enterpriseID = 12;
 }
 
 message CreateRequest {
@@ -33,6 +44,9 @@ message CreateRequest {
     string dbUser = 5;
     string dbPassword = 6;
     string dbName = 7;
+
+    string subType = 8;
+    string enterpriseID = 9;
 }
 
 message CreateResponse {
@@ -47,6 +61,9 @@ message UpdateRequest {
     string dbUser = 6;
     string dbPassword = 7;
     string dbName = 8;
+
+    string subType = 9;
+    string enterpriseID = 10;
 }
 
 message UpdateResponse {
@@ -86,9 +103,10 @@ message TestConnectionResponse {
   string message = 2;
 }
 
-message ListDifyUserSpaceRequest {
+message ListUserSpaceRequest {
     int64 accessID = 1;
     repeated string instancesIDs = 2;
+    string cookie = 3;
 }
 
 message HeaderInfo {
@@ -99,7 +117,7 @@ message HeaderInfo {
 }
 
 
-message DifyUserSpace {
+message UserSpace {
   string userID = 1;
   string tenantID = 2;
   string userName = 3;
@@ -110,8 +128,8 @@ message DifyUserSpace {
   map<string, HeaderInfo> headers = 6;
 }
 
-message ListDifyUserSpaceResponse {
-  repeated DifyUserSpace userSpaces = 1;
+message ListUserSpaceResponse {
+  repeated UserSpace userSpaces = 1;
 }
 
 service IntelligentAccessService {
@@ -149,9 +167,9 @@ service IntelligentAccessService {
         };
     }
 
-    rpc ListDifyUserSpace(ListDifyUserSpaceRequest) returns (ListDifyUserSpaceResponse) {
+    rpc ListUserSpace(ListUserSpaceRequest) returns (ListUserSpaceResponse) {
       option (google.api.http) = {
-        post: "/intelligent_access/list-dify-user-space"
+        post: "/intelligent_access/list-user-space"
         body: "*"
       };
     }

@@ -7,6 +7,10 @@ type IntelligentAccess struct {
 	ID         int64  `gorm:"primaryKey;autoIncrement;column:access_id;comment:接入信息ID"`
 	AccessName string `gorm:"type:varchar(255);not null;column:access_name;comment:名称"`
 	AccessType string `gorm:"type:varchar(255);not null;column:access_type;comment:类型: COZE, DifyEnterprise"`
+
+	SubType      string `gorm:"type:varchar(255);not null;column:sub_type;comment:接入类型: Team, Personal"`
+	EnterpriseID string `gorm:"type:varchar(255);not null;column:enterprise_id;comment:企业ID"`
+
 	DbHost     string `gorm:"type:varchar(255);column:db_host;comment:dify数据库地址"`
 	DbPort     int    `gorm:"type:int;column:db_port;comment:dify数据库端口"`
 	DbUser     string `gorm:"type:varchar(32);column:db_user;comment:dify数据库帐号"`

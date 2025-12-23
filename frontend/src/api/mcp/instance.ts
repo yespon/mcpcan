@@ -6,7 +6,7 @@ export const InstanceAPI = {
   // 实例列表
   list(data: TableData) {
     return request<TableData, List<InstanceResult>>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/list`,
+      url: `/market/instance/list`,
       method: 'POST',
       data,
     })
@@ -14,7 +14,7 @@ export const InstanceAPI = {
   // 创建实例
   create(data: any) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/create`,
+      url: `/market/instance/create`,
       method: 'POST',
       data,
     })
@@ -22,7 +22,7 @@ export const InstanceAPI = {
   // 创建实例
   createByOpenAPI(data: any) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/create`,
+      url: `/market/instance/openapi/create`,
       method: 'POST',
       data,
     })
@@ -30,7 +30,7 @@ export const InstanceAPI = {
   // 实例详情
   detail(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/${data.instanceId}`,
+      url: `/market/instance/${data.instanceId}`,
       method: 'GET',
       data,
     })
@@ -38,7 +38,7 @@ export const InstanceAPI = {
   // 编辑实例
   edit(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/edit`,
+      url: `/market/instance/edit`,
       method: 'PUT',
       data,
     })
@@ -46,7 +46,7 @@ export const InstanceAPI = {
   // 编辑实例
   editByOpenAPI(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/openapi/edit`,
+      url: `/market/instance/openapi/edit`,
       method: 'PUT',
       data,
     })
@@ -54,7 +54,7 @@ export const InstanceAPI = {
   // 获取实例日志
   logs(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/logs`,
+      url: `/market/instance/logs`,
       method: 'POST',
       data,
     })
@@ -62,7 +62,7 @@ export const InstanceAPI = {
   // token网关日志
   logsByToken(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/gateway-log/find`,
+      url: `/market/gateway-log/find`,
       method: 'POST',
       data,
     })
@@ -70,7 +70,7 @@ export const InstanceAPI = {
   // 停止实例
   stop(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/disabled`,
+      url: `/market/instance/disabled`,
       method: 'PUT',
       data,
     })
@@ -78,7 +78,7 @@ export const InstanceAPI = {
   // 启动实例
   restart(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/restart`,
+      url: `/market/instance/restart`,
       method: 'PUT',
       data,
     })
@@ -86,28 +86,28 @@ export const InstanceAPI = {
   // 实例状态
   status(instanceId: string) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/status/${instanceId}`,
+      url: `/market/instance/status/${instanceId}`,
       method: 'GET',
     })
   },
   // 删除实例
   delete(instanceId: string) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/${instanceId}`,
+      url: `/market/instance/${instanceId}`,
       method: 'DELETE',
     })
   },
   // 实例数据统计
   count() {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/dashboard/statistical`,
+      url: `/market/dashboard/statistical`,
       method: 'GET',
     })
   },
   // change token status
   updateTokenStatus(data: { instanceId: string; enabledToken: boolean }) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/token/control`,
+      url: `/market/instance/token/control`,
       method: 'PUT',
       data,
     })
@@ -122,7 +122,7 @@ export const InstanceAPI = {
     }>
   }) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/token/edit`,
+      url: `/market/instance/token/edit`,
       method: 'PUT',
       data,
     })
@@ -133,7 +133,7 @@ export const TokenAPI = {
   // token list api
   list(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/token/list`,
+      url: `/market/instance/token/list`,
       method: 'POST',
       data,
     })
@@ -141,7 +141,7 @@ export const TokenAPI = {
   // delete token api
   delete(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/token/delete`,
+      url: `/market/instance/token/delete`,
       method: 'POST',
       data,
     })
@@ -149,7 +149,7 @@ export const TokenAPI = {
   //edit token api
   edit(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/instance/token/edit`,
+      url: `/market/instance/token/edit`,
       method: 'PUT',
       data,
     })

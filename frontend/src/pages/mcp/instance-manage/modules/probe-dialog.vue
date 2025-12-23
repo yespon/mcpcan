@@ -182,7 +182,7 @@ defineExpose({
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 8px;
-  background: #000000;
+  background: var(--ep-bg-color);
   border-radius: 8px;
   padding: 16px;
 }

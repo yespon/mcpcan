@@ -37,45 +37,6 @@ type Config struct {
 	RetryInterval       time.Duration `validate:"required"`
 }
 
-// InitHook represents a function to be called after initial DB setup.
-type InitHook func()
-
-// HookManager manages registered initialization hooks.
-type HookManager struct {
-	hooks []InitHook
-	mu    sync.RWMutex
-}
-
-var hookManager = NewHookManager()
-
-// NewHookManager creates a new HookManager.
-func NewHookManager() *HookManager {
-	return &HookManager{
-		hooks: make([]InitHook, 0),
-	}
-}
-
-// Register adds an initialization hook to the manager.
-func (m *HookManager) Register(hook InitHook) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.hooks = append(m.hooks, hook)
-}
-
-// CallHooks executes all registered initialization hooks.
-func (m *HookManager) CallHooks() {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	for _, hook := range m.hooks {
-		hook()
-	}
-}
-
-// RegisterInit registers an initialization hook for DB setup.
-func RegisterInit(initHook InitHook) {
-	hookManager.Register(initHook)
-}
-
 // InitDB initializes the database connection once and starts health checking.
 func InitDB(config *Config) error {
 	if config == nil {
@@ -143,14 +104,13 @@ func initConnection(config *Config) error {
 	// Set pool parameters.
 	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Hour * 1)
+	sqlDB.SetConnMaxIdleTime(time.Minute * 5)
 
 	// Persist config for future reconnect attempts.
 	mu.Lock()
 	conf = config
 	mu.Unlock()
-
-	// Call all initialization hooks (only on initial setup).
-	hookManager.CallHooks()
 
 	return nil
 }
@@ -243,9 +203,6 @@ func reconnect(maxRetries int, retryInterval time.Duration) error {
 				_ = oldSQL.Close()
 			}
 		}
-
-		// Re-run initialization hooks to ensure schema and indexes exist after reconnect.
-		hookManager.CallHooks()
 
 		return nil
 	}

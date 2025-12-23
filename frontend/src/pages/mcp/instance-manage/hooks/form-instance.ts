@@ -14,7 +14,7 @@ export const useInstanceFormHooks = () => {
   const { t } = useI18n()
   const { jumpBack, jumpToPage } = useRouterHooks()
   const router = useRouter()
-  const { query } = useRoute()
+  const { query, meta } = useRoute()
   const selectVisible = ref(false)
   const originForm = ref<any>()
   const { userInfo } = useUserStore()
@@ -212,6 +212,7 @@ export const useInstanceFormHooks = () => {
   return {
     query,
     router,
+    meta,
     jumpBack,
     jumpToPage,
     userInfo,

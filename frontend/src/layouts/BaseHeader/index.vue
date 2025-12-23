@@ -220,7 +220,7 @@ const handleLoginOut = () => {
 }
 :deep(.el-dropdown-menu__item):not(.is-disabled):focus,
 :deep(.el-dropdown-menu__item):not(.is-disabled):hover {
-  color: var(--ep-purple-color) !important;
+  color: var(--el-color-primary) !important;
   background-color: var(--ep-bg-purple-color) !important;
 }
 .user-avatar {

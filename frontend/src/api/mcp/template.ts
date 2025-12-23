@@ -5,7 +5,7 @@ export const TemplateAPI = {
   // 模板列表
   list(data: TableData) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/template/list`,
+      url: `/market/template/list`,
       method: 'POST',
       data,
     })
@@ -13,7 +13,7 @@ export const TemplateAPI = {
   // 创建模板
   create(data: any) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/template/create`,
+      url: `/market/template/create`,
       method: 'POST',
       data,
     })
@@ -21,14 +21,14 @@ export const TemplateAPI = {
   // 删除模板
   delete(templateId: string) {
     return request<any, List>({
-      url: `${baseConfig.baseUrlVersion}/market/template/${templateId}`,
+      url: `/market/template/${templateId}`,
       method: 'DELETE',
     })
   },
   // 模板详情
   detail(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/template/${data.id}`,
+      url: `/market/template/${data.id}`,
       method: 'GET',
       data,
     })
@@ -36,7 +36,7 @@ export const TemplateAPI = {
   // 编辑模板
   edit(data: any) {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/template/edit`,
+      url: `/market/template/edit`,
       method: 'PUT',
       data,
     })
@@ -44,7 +44,7 @@ export const TemplateAPI = {
   // 可用案例
   cases() {
     return request<any, any>({
-      url: `${baseConfig.baseUrlVersion}/market/dashboard/available-cases`,
+      url: `/market/dashboard/available-cases`,
       method: 'GET',
       data: {},
     })

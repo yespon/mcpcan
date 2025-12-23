@@ -6,12 +6,13 @@ import { ElMessage, ElNotification } from 'element-plus'
 import router from '@/router'
 import baseConfig from '@/config/base_config.ts'
 import { t } from '@/utils/i18n'
+import { isEmbeddedInParent } from '@/utils/system'
 
 /**
  * 创建 HTTP 请求实例
  */
 const request = axios.create({
-  baseURL: baseConfig.SERVER_BASE_URL,
+  baseURL: baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE,
   timeout: 60000,
   headers: { 'Content-Type': 'application/json;' },
   // headers: { 'Content-Type': 'application/json;charset=utf-8' },
@@ -24,6 +25,7 @@ interface ApiResponse<T = any> {
   code: number
   data: T
   message: string
+  status: number
 }
 
 /**
@@ -78,7 +80,7 @@ request.interceptors.response.use(
   async (error: any) => {
     console.error('Response interceptor error:', error)
 
-    const { config, response } = error
+    const { config, response, status } = error
 
     // 网络错误或服务器无响应
     if (!response) {
@@ -87,17 +89,19 @@ request.interceptors.response.use(
     }
 
     const { code, message } = response.data as ApiResponse
-
+    // if (status === 401) {
+    //   window.top && (window.top.location.href = '/#/login')
+    //   // Fallback to self navigation
+    //   window.open('/#/login', '_self')
+    // }
     switch (code) {
-      case 403:
+      case 1001:
         // Access Token 过期，尝试刷新
         return refreshTokenAndRetry(config)
-
       case 401:
         // Refresh Token 过期，跳转登录页
         await redirectToLogin(t('request.authFail') as string)
         return Promise.reject(new Error(message || 'Refresh Token Invalid'))
-
       default:
         ElMessage.error(message || (t('request.error') as string))
         return Promise.reject(new Error(message || 'Request Error'))
@@ -179,7 +183,12 @@ async function redirectToLogin(message?: string): Promise<void> {
     // 跳转到登录页，保留当前路由用于登录后跳转
     const currentPath = router.currentRoute.value.fullPath
     await useUserStoreHook().resetUserState()
-    await router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
+    // if (isEmbeddedInParent()) {
+    //   // 如果嵌入在父级项目中，发送消息给父页面请求导航到登录页
+    //   const parentWindow = window.parent || window.top
+    //   parentWindow.open('/login?redirect=' + encodeURIComponent(currentPath), '_self')
+    // }
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`)
   } catch (error) {
     console.error('Redirect to login error:', error)
   }

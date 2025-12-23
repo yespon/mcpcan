@@ -1,11 +1,17 @@
 <template>
   <div v-loading="pageInfo.loading">
-    <div class="page-title">
+    <div class="page-title flex justify-between items-center">
       {{
         pageInfo.formData.templateId
           ? t('mcp.template.pageDesc.editTitle')
           : t('mcp.template.pageDesc.createTitle')
       }}
+      <el-button v-if="layout" @click="handleBack" class="link-hover">
+        <el-icon class="mr-2">
+          <i class="icon iconfont MCP-fanhui"></i>
+        </el-icon>
+        {{ t('common.back') }}
+      </el-button>
     </div>
     <div class="page-title base-info">{{ t('mcp.instance.formData.baseInfo') }}</div>
     <el-form
@@ -475,8 +481,10 @@ import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index'
 import { cloneDeep } from 'lodash-es'
 
 const { t } = useI18n()
+const layout = useLayout()
 const {
   jumpToPage,
+  jumpBack,
   router,
   query,
   pageInfo,
@@ -619,7 +627,8 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  router.push('/template-manage')
+  // router.push('/template-manage')
+  jumpBack()
 }
 /**
  * Handle confirm
@@ -678,7 +687,7 @@ const handleSaveTemplate = async () => {
         })
         pageInfo.value.visible = false
         ElMessage.success(
-          pageInfo.value.formData.templateId ? t('action.edit') : t('action.success'),
+          pageInfo.value.formData.templateId ? t('action.edit') : t('action.create'),
         )
         return data
         // router.push('/template-manage')
@@ -720,6 +729,10 @@ const handleGetTemplateDetail = async () => {
     : []
   pageInfo.value.formData.volumeMounts = data.volumeMounts || []
   handleMcpProtocolChange(originForm.value.mcpProtocol)
+}
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**
@@ -778,7 +791,7 @@ onMounted(init)
   background: rgba(255, 255, 255, 0.08);
   padding: 24px;
   &:hover {
-    border-color: var(--ep-purple-color);
+    border-color: var(--el-color-primary);
   }
   .package-logo {
     font-size: 65px;

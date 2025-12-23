@@ -11,6 +11,7 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/internal/gateway/config"
 	"github.com/kymo-mcp/mcpcan/pkg/database"
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
@@ -62,7 +63,7 @@ func New() (*App, error) {
 // Initialize initializes all application components
 func (a *App) Initialize() error {
 	// Initialize database
-	if err := database.Init(&a.config.Database.MySQL); err != nil {
+	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
@@ -83,6 +84,23 @@ func (a *App) Initialize() error {
 
 	a.logger.Info("Application initialization completed")
 	return nil
+}
+
+// loadMysql initializes MySQL database connection and loads necessary tables
+func (a *App) loadMysql() error {
+	// 当运行模式不是 kymo 时，加载逻辑中使用的表
+	tableInitializers := []func() (string, error){
+		func() (string, error) {
+			mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), nil
+		},
+	}
+
+	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
 
 // initializeHTTPServer initializes HTTP server
