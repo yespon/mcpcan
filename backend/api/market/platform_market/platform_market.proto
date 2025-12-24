@@ -16,49 +16,83 @@ service Market {
 }
 
 message ListMcpServerRequest {
+  // @inject_tag: json:"page" form:"page" uri:"page" desc:"Page number"
   int32 page = 1;
+  // @inject_tag: json:"pageSize" form:"pageSize" uri:"pageSize" desc:"Page size"
   int32 page_size = 2;
+  // @inject_tag: json:"name" form:"name" uri:"name" desc:"Name"
   string name = 3;
+  // @inject_tag: json:"categoryName" form:"categoryName" uri:"categoryName" desc:"Category name"
   string category_name = 4;
 }
 
 message ListMcpServerReply {
+  // @inject_tag: json:"total" desc:"Total count"
   int64 total = 1;
+  // @inject_tag: json:"list" desc:"List"
   repeated McpServer list = 2;
 }
 
 message McpServer {
+  // @inject_tag: json:"id" desc:"ID"
   int64 id = 1;
+  // @inject_tag: json:"name" desc:"Name"
   string name = 2;
+  // @inject_tag: json:"nameEn" desc:"English name"
   string name_en = 3;
+  // @inject_tag: json:"categoryIds" desc:"Category ID list"
   repeated Category category_ids = 4;
+  // @inject_tag: json:"description" desc:"Description"
   string description = 5;
+  // @inject_tag: json:"descriptionEn" desc:"English description"
   string description_en = 6;
+  // @inject_tag: json:"status" desc:"Status"
   int32 status = 7;
+  // @inject_tag: json:"publishTime" desc:"Publish time"
   int64 publish_time = 8;
+  // @inject_tag: json:"createTime" desc:"Create time"
   int64 create_time = 9;
+  // @inject_tag: json:"updateTime" desc:"Update time"
   int64 update_time = 10;
+  // @inject_tag: json:"configTemplate" desc:"Config template"
   string config_template = 11;
+  // @inject_tag: json:"deployMode" desc:"Deploy mode"
   int32 deploy_mode = 12;
+  // @inject_tag: json:"mcpProtocol" desc:"MCP protocol"
   int32 mcp_protocol = 13;
+  // @inject_tag: json:"imageUrl" desc:"Image URL"
   string image_url = 14;
+  // @inject_tag: json:"initScript" desc:"Init script"
   string init_script = 15;
+  // @inject_tag: json:"tags" desc:"Tags"
   repeated string tags = 16;
+  // @inject_tag: json:"githubStargazersCount" desc:"Github Stargazers count"
   int32 github_stargazers_count = 17;
+  // @inject_tag: json:"githubWatchersCount" desc:"Github Watchers count"
   int32 github_watchers_count = 18;
+  // @inject_tag: json:"githubForksCount" desc:"Github Forks count"
   int32 github_forks_count = 19;
+  // @inject_tag: json:"githubLicenseName" desc:"Github License"
   string github_license_name = 20;
+  // @inject_tag: json:"githubReadme" desc:"Github Readme"
   string github_readme = 21;
+  // @inject_tag: json:"githubDefaultBranch" desc:"Github Default branch"
   string github_default_branch = 22;
+  // @inject_tag: json:"githubDefaultBranchLastTime" desc:"Github Default branch last update time"
   int64 github_default_branch_last_time = 23;
+  // @inject_tag: json:"githubOwner" desc:"Github Owner"
   string github_owner = 24;
+  // @inject_tag: json:"githubOwnerAvatarUrl" desc:"Github Owner avatar URL"
   string github_owner_avatar_url = 25;
+  // @inject_tag: json:"githubRepoUrl" desc:"Github Repo URL"
   string github_repo_url = 26;
 
   message Category {
+    // @inject_tag: json:"id" desc:"ID"
     int64 id = 1;
+    // @inject_tag: json:"name" desc:"Name"
     string name = 2;
+    // @inject_tag: json:"code" desc:"Code"
     string code = 3;
   }
 }
-
