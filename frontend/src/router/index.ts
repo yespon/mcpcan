@@ -153,6 +153,15 @@ const router = createRouter({
           component: () => import('../pages/agent/index.vue'),
         },
         {
+          path: '/market-manage',
+          name: 'marketManage',
+          meta: {
+            title: 'marketManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/market/index.vue'),
+        },
+        {
           path: '/debug-tools',
           name: 'debugTools',
           meta: {

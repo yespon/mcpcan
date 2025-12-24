@@ -100,6 +100,7 @@ const menuList = shallowRef([
   { title: t('sideMenu.codeList'), icon: 'MCP-daimaguanli', index: '/code-list' },
   { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian', index: '/api-docs-list' },
   { title: t('sideMenu.agentManage'), icon: 'MCP-zhinengti', index: '/agent-manage' },
+  { title: t('sideMenu.marketManage'), icon: 'MCP-shichangcaidan', index: '/market-manage' },
 ])
 
 const handleToHome = () => {
