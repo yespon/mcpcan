@@ -162,6 +162,14 @@ const router = createRouter({
           component: () => import('../pages/market/index.vue'),
         },
         {
+          path: '/market-detail',
+          name: 'marketDetail',
+          meta: {
+            title: 'marketDetail',
+          },
+          component: () => import('../pages/market/market-detail.vue'),
+        },
+        {
           path: '/debug-tools',
           name: 'debugTools',
           meta: {

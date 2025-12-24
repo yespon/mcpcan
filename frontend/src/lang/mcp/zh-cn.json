@@ -110,7 +110,7 @@
       "pageDesc": {
         "createTitle": "创建实例",
         "editTitle": "编辑实例",
-        "list": "MCP实例列表",
+        "list": "MCP实例资源",
         "desc": "管理你的实例列表以及提供URL链接",
         "total": "实例总数",
         "confirmEdit": "实例编辑之后将重启；确定编辑？",

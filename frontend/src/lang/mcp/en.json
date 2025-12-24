@@ -110,7 +110,7 @@
       "pageDesc": {
         "createTitle": "Create a instance",
         "editTitle": "Edite the instance",
-        "list": "MCP Instance List",
+        "list": "MCP Instance resource",
         "desc": "Manage your instance list and provide URL links",
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",

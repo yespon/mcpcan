@@ -94,13 +94,13 @@ const handleChangeCollapse = () => {
 
 const menuList = shallowRef([
   { title: t('sideMenu.home'), icon: 'MCP-shouye1', index: '/home' },
-  { title: t('sideMenu.templateManage'), icon: 'MCP-MCPmoban', index: '/template-manage' },
   { title: t('sideMenu.instanceManage'), icon: 'MCP-MCPshili', index: '/instance-manage' },
+  { title: t('sideMenu.marketManage'), icon: 'MCP-shichangcaidan', index: '/market-manage' },
+  { title: t('sideMenu.templateManage'), icon: 'MCP-MCPmoban', index: '/template-manage' },
   { title: t('sideMenu.runEnviroment'), icon: 'MCP-huanjingguanli', index: '/working-environment' },
   { title: t('sideMenu.codeList'), icon: 'MCP-daimaguanli', index: '/code-list' },
   { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian', index: '/api-docs-list' },
   { title: t('sideMenu.agentManage'), icon: 'MCP-zhinengti', index: '/agent-manage' },
-  { title: t('sideMenu.marketManage'), icon: 'MCP-shichangcaidan', index: '/market-manage' },
 ])
 
 const handleToHome = () => {
