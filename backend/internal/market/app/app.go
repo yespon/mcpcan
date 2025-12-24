@@ -358,6 +358,12 @@ func (a *App) setupHttpServer() {
 		a.ginEngine.GET(fmt.Sprintf("/%s/market/config", routerPrefix), marketService.GetMarketConfig)
 	}
 
+	// Register platform market management interface
+	platformMarketService := service.NewPlatformMarketService()
+	if platformMarketService != nil {
+		a.ginEngine.GET(fmt.Sprintf("/%s/market/platform/list", routerPrefix), platformMarketService.ListMcpServer)
+	}
+
 	// Register gateway log interface
 	gatewayLogService := service.NewGatewayLogService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/gateway-log/find", routerPrefix), gatewayLogService.FindHandler)

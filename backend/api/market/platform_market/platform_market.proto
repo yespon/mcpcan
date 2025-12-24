@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package market.v1;
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/platform_market;marketv1";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+service Market {
+  rpc ListMcpServer (ListMcpServerRequest) returns (ListMcpServerReply) {
+    option (google.api.http) = {
+      get: "/market/platform/list"
+    };
+  }
+}
+
+message ListMcpServerRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string name = 3;
+  string category_name = 4;
+}
+
+message ListMcpServerReply {
+  int64 total = 1;
+  repeated McpServer list = 2;
+}
+
+message McpServer {
+  int64 id = 1;
+  string name = 2;
+  string name_en = 3;
+  repeated Category category_ids = 4;
+  string description = 5;
+  string description_en = 6;
+  int32 status = 7;
+  int64 publish_time = 8;
+  int64 create_time = 9;
+  int64 update_time = 10;
+  string config_template = 11;
+  int32 deploy_mode = 12;
+  int32 mcp_protocol = 13;
+  string image_url = 14;
+  string init_script = 15;
+  repeated string tags = 16;
+  int32 github_stargazers_count = 17;
+  int32 github_watchers_count = 18;
+  int32 github_forks_count = 19;
+  string github_license_name = 20;
+  string github_readme = 21;
+  string github_default_branch = 22;
+  int64 github_default_branch_last_time = 23;
+  string github_owner = 24;
+  string github_owner_avatar_url = 25;
+  string github_repo_url = 26;
+
+  message Category {
+    int64 id = 1;
+    string name = 2;
+    string code = 3;
+  }
+}
+
