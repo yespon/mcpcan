@@ -16,6 +16,7 @@
           fit="contain"
           width="80"
           height="20"
+          :key="formModel.accessType"
         />
         <span class="text-purple">{{
           formModel.accessType === 'Dify'

@@ -116,7 +116,7 @@ const handleToHome = () => {
   height: 100%;
 }
 .el-menu-vertical-demo:not(.el-menu--collapse) {
-  width: 160px;
+  width: 180px;
   min-height: 400px;
 }
 .el-menu-item.is-disabled {

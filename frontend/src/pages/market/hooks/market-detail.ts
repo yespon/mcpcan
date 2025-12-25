@@ -1,4 +1,8 @@
+import { useRouterHooks } from '@/utils/url'
+
 export const useMarketDetailHooks = () => {
   const { t } = useI18n()
-  return { t }
+  const { jumpBack, jumpToPage } = useRouterHooks()
+
+  return { t, jumpBack }
 }
