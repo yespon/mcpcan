@@ -77,7 +77,7 @@ const (
 	// 自定义
 	SourceTypeCustom SourceType = "custom"
 	// openapi
-	OpenapiTypeCustom SourceType = "openapi"
+	SourceTypeOpenapi SourceType = "openapi"
 )
 
 // McpInstance MCP 实例数据库模型
