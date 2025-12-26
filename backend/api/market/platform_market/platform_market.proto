@@ -10,7 +10,7 @@ import "google/api/annotations.proto";
 service Market {
   rpc ListMcpServer (ListMcpServerRequest) returns (ListMcpServerReply) {
     option (google.api.http) = {
-      get: "/market/platform/list"
+      get: "/platform/list"
     };
   }
 }
