@@ -1,0 +1,38 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Market",
+            "program": "${workspaceFolder}/mcpcan-mainsite/mcpcan/backend/cmd/market/main.go",
+            "request": "launch",
+            "type": "go"
+        },
+        {
+            "name": "Gateway",
+            "program": "${workspaceFolder}/mcpcan-mainsite/mcpcan/backend/cmd/gateway/main.go",
+            "request": "launch",
+            "type": "go"
+        },
+        {
+            "name": "Init",
+            "program": "${workspaceFolder}/mcpcan-mainsite/mcpcan/backend/cmd/init/main.go",
+            "request": "launch",
+            "type": "go"
+        },
+        {
+            "name": "Autherz",
+            "program": "${workspaceFolder}/mcpcan-mainsite/mcpcan/backend/cmd/authz/main.go",
+            "request": "launch",
+            "type": "go"
+        },
+        {
+            "name": "pnpm-web",
+            "program": "${workspaceFolder}/mcpcan-mainsite/mcpcan/frontend/main.js",
+            "request": "launch",
+            "type": "node"
+        }
+    ]
+}
