@@ -64,45 +64,51 @@
         </div>
       </el-splitter-panel>
       <el-splitter-panel size="50%" :min="600" class="p-4">
-        <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
-          <div class="flex flex-col" style="height: 75vh">
-            <el-card class="mb-3">
-              <div class="flex items-center">
-                <mcp-image
-                  :src="openapi"
-                  width="28"
-                  height="28"
-                  border-radius="4"
-                  class="mr-3"
-                ></mcp-image>
-                <div class="flex-sub">
-                  {{ t('mcp.instance.openApi.support') }}
+        <div
+          :class="{
+            'disabled-click': !!formData.templateId && dialogInfo.operation === 'template',
+          }"
+        >
+          <div class="flex-sub link-hover" v-if="!formData.openapiFileID">
+            <div class="flex flex-col" style="height: 75vh">
+              <el-card class="mb-3">
+                <div class="flex items-center">
+                  <mcp-image
+                    :src="openapi"
+                    width="28"
+                    height="28"
+                    border-radius="4"
+                    class="mr-3"
+                  ></mcp-image>
+                  <div class="flex-sub">
+                    {{ t('mcp.instance.openApi.support') }}
+                  </div>
                 </div>
-              </div>
-            </el-card>
-            <div
-              class="flex-sub select-api border-rd-1 mt-2 center cursor-pointer"
-              @click="handleSelectDocs"
-            >
-              <div class="text-center">
-                <el-icon class="el-icon--upload" size="67"><Files /></el-icon>
-                <div>{{ t('mcp.instance.openApi.selectDocs') }}</div>
+              </el-card>
+              <div
+                class="flex-sub select-api border-rd-1 mt-2 center cursor-pointer"
+                @click="handleSelectDocs"
+              >
+                <div class="text-center">
+                  <el-icon class="el-icon--upload" size="67"><Files /></el-icon>
+                  <div>{{ t('mcp.instance.openApi.selectDocs') }}</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div v-else class="p-3">
-          <el-tree
-            style="height: 75vh"
-            :data="apiNodeList"
-            show-checkbox
-            node-key="id"
-            :default-expand-all="true"
-            :default-checked-keys="defaultCheckedKeys"
-            ref="apiTreeRef"
-            :render-content="renderContent"
-          />
+          <div v-else class="p-3">
+            <el-tree
+              style="height: 75vh"
+              :data="apiNodeList"
+              show-checkbox
+              node-key="id"
+              :default-expand-all="true"
+              :default-checked-keys="defaultCheckedKeys"
+              ref="apiTreeRef"
+              :render-content="renderContent"
+            />
+          </div>
         </div>
       </el-splitter-panel>
     </el-splitter>
@@ -111,7 +117,12 @@
         <el-button class="mr-4 w-25" @click="dialogInfo.visible = false">{{
           t('common.cancel')
         }}</el-button>
-        <mcp-button class="w-25" @click="handleConfirm">{{ t('common.ok') }}</mcp-button>
+        <mcp-button class="w-25 mr-4" @click="handleConfirm">{{ t('common.save') }}</mcp-button>
+        <mcp-button
+          v-if="!formData.instanceId && !formData.templateId"
+          @click="handleSaveAsTemplate"
+          >{{ t('mcp.instance.action.asTemplate') }}
+        </mcp-button>
       </div>
     </template>
   </el-dialog>
@@ -160,24 +171,29 @@ import { DocsAPI } from '@/api/api-docs'
 import { useMcpStoreHook, useUserStore } from '@/stores'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { getToken } from '@/utils/system'
-import { SourceType, TokenType } from '@/types'
+import { AccessType, McpProtocol, SourceType, TokenType } from '@/types'
 import { ElTooltip } from 'element-plus'
 import TokenForm from './components/token-form.vue'
+import { TemplateAPI } from '@/api/mcp/template'
+import { useRouterHooks } from '@/utils/url'
 
 const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
 const { handleGetEnvList } = useMcpStoreHook()
+const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
 const emit = defineEmits(['on-refresh'])
 const dialogInfo = ref<any>({
   visible: false,
   loading: false,
   title: t('mcp.instance.openApi.importTitle'),
+  operation: '',
 })
 const selectVisible = ref(false)
 const docsList = ref<any>([])
 const formData = ref({
   instanceId: '',
+  templateId: '',
   name: '',
   notes: '',
   iconPath: '',
@@ -521,6 +537,7 @@ const handleUploadAgain = async () => {
   fd.append('file', blob, 'openapi.yaml')
   fd.append('baseOpenapiFileID', formData.value.openapiFileID)
   try {
+    dialogInfo.value.loading = true
     const res = await fetch(action.value, {
       method: 'POST',
       headers: Object.assign({}, headers.value),
@@ -535,6 +552,8 @@ const handleUploadAgain = async () => {
   } catch (err) {
     console.error('upload error', err)
     ElMessage.error(t('action.uploadFail'))
+  } finally {
+    dialogInfo.value.loading = false
   }
 }
 
@@ -542,8 +561,11 @@ const handleUploadAgain = async () => {
  * Handle confirm and submit data
  */
 const handleConfirm = async () => {
+  if (formData.value.templateId && dialogInfo.value.operation === 'template') {
+    handleSaveAsTemplate()
+    return
+  }
   try {
-    dialogInfo.value.loading = true
     // handle selected APIs; assemble the selected paths into a new OpenAPI document and upload
     if (originFileText.value) {
       await handleUploadAgain()
@@ -561,6 +583,7 @@ const handleConfirm = async () => {
             formData.value.tokens[0].headers.map((header: any) => [header.key, header.value]),
           )
         }
+        dialogInfo.value.loading = true
         // 提交数据
         await (formData.value.instanceId
           ? InstanceAPI.editByOpenAPI(formData.value)
@@ -568,6 +591,35 @@ const handleConfirm = async () => {
         dialogInfo.value.visible = false
         ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
         emit('on-refresh')
+        if (dialogInfo.value.operation === 'create') {
+          jumpToPage({
+            url: '/instance-manage',
+            data: {},
+          })
+        }
+      }
+    })
+  } finally {
+    dialogInfo.value.loading = false
+  }
+}
+
+/**
+ * save as a template
+ */
+const handleSaveAsTemplate = async () => {
+  try {
+    dialogInfo.value.loading = true
+    baseInfo.value.validate(async (valid: boolean) => {
+      if (valid) {
+        await (formData.value.templateId ? TemplateAPI.edit : TemplateAPI.create)({
+          ...formData.value,
+          packageId: formData.value.openapiFileID,
+          accessType: AccessType.HOSTING,
+          mcpProtocol: McpProtocol.STEAMABLE_HTTP,
+          sourceType: SourceType.OPENAPI,
+        })
+        ElMessage.success(formData.value.templateId ? t('action.edit') : t('action.create'))
       }
     })
   } finally {
@@ -611,19 +663,78 @@ const handleGetDetail = async (id: string) => {
 }
 
 /**
+ * handle template detail
+ * @param id template id
+ */
+const handleTemplateDetail = async (id: string) => {
+  const data = await TemplateAPI.detail({
+    id,
+  })
+  formData.value = {
+    instanceId: '',
+    templateId: data.templateId,
+    name: data.name,
+    notes: data.notes,
+    iconPath: data.iconPath,
+    openapiBaseUrl: data.openapiBaseUrl,
+    environmentId: data.environmentId,
+    enabledToken: true,
+    openapiFileID: data.packageId,
+    chooseOpenapiFileID: '',
+    sourceType: SourceType.OPENAPI,
+    tokens: [
+      {
+        enabled: true,
+        expireAt: '',
+        headers: [],
+        publishAt: new Date().getTime(),
+        token:
+          'Bearer ' +
+          getToken(
+            JSON.stringify({
+              expireAt: Date.now(),
+              userId: userInfo.userId,
+              username: userInfo.username,
+            }),
+          ),
+        tokenType: TokenType.BEARER,
+        usages: ['default'],
+      },
+    ],
+  }
+  // get openapi file content
+  const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
+    openapiFileId: data.packageId,
+  })
+  // validate file content
+  await handleValidFile(content)
+  // handle default checked keys
+  handleDefaultCheckedKeys(content)
+
+  handleDefaultNodeAPIlist(content)
+}
+
+/**
  * Init dialog data
  */
-const init = async (id: string | null) => {
+const init = async (id?: string, type?: string) => {
   dialogInfo.value.visible = true
   baseInfo.value?.resetFields()
   handleGetAPIlist()
   await handleGetEnvList()
   if (id) {
-    // get detail
-    handleGetDetail(id)
+    // 模板编辑
+    if (type === 'template' || type === 'create') {
+      dialogInfo.value.operation = type
+      handleTemplateDetail(id)
+    } else {
+      // get detail
+      handleGetDetail(id)
+    }
   } else {
     formData.value = {
       instanceId: '',
+      templateId: '',
       name: '',
       notes: '',
       iconPath: '',

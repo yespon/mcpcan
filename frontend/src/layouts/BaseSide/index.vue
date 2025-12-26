@@ -100,6 +100,7 @@ const menuList = shallowRef([
   { title: t('sideMenu.runEnviroment'), icon: 'MCP-huanjingguanli', index: '/working-environment' },
   { title: t('sideMenu.codeList'), icon: 'MCP-daimaguanli', index: '/code-list' },
   { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian', index: '/api-docs-list' },
+  { title: t('sideMenu.resourceManage'), icon: 'MCP-wenjian', index: '/resource-manage' },
   { title: t('sideMenu.agentManage'), icon: 'MCP-zhinengti', index: '/agent-manage' },
 ])
 

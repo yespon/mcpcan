@@ -81,6 +81,9 @@
         </div>
       </template>
     </TablePlus>
+
+    <!-- Create a intance by openAPI docs -->
+    <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
   </div>
 </template>
 
@@ -94,11 +97,13 @@ import { useRouterHooks } from '@/utils/url'
 import instanceLogo from '@/assets/logo/instance.png'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
-import { type TemplateResult } from '@/types/index.ts'
+import { SourceType, type TemplateResult } from '@/types/index.ts'
+import OpenAPIDialog from '../instance-manage/modules/open-api-dialog.vue'
 
 const { t } = useI18n()
 const { tablePlus, columns, requestConfig, pageConfig } = useTemplateTableHooks()
 const { jumpToPage } = useRouterHooks()
+const openAPIDialog = ref()
 const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
 
 /**
@@ -116,6 +121,10 @@ const handleAddTemplate = () => {
  * @param row - item of template
  */
 const handleEditTemplate = (row: TemplateResult) => {
+  if (row.sourceType === SourceType.OPENAPI) {
+    openAPIDialog.value.init(row.templateId, 'template')
+    return
+  }
   jumpToPage({
     url: '/new-template',
     data: {
@@ -159,6 +168,10 @@ const handleDeleteTemplate = (row: TemplateResult) => {
  * Handle create a instance by template
  */
 const handleCreatInstance = (row: TemplateResult) => {
+  if (row.sourceType === SourceType.OPENAPI) {
+    openAPIDialog.value.init(row.templateId, 'create')
+    return
+  }
   jumpToPage({
     url: '/new-instance',
     data: { templateId: row.templateId },

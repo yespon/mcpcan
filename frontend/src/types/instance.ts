@@ -162,4 +162,5 @@ export interface TemplateResult extends InstanceForm {
   name: string
   environmentName: string
   createdAt: string
+  [key: string]: any
 }

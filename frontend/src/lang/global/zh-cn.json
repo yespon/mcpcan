@@ -45,7 +45,6 @@
       }
     }
   },
-
   "sideMenu": {
     "add": "创建",
     "home": "首页",
@@ -63,7 +62,8 @@
     "viewCodePackage": "代码包详情",
     "apiDocsList": "API 文档",
     "agentManage": "智能体平台",
-    "marketManage": "市场管理"
+    "marketManage": "市场管理",
+    "resourceManage": " 资源管理"
   },
   "common": {
     "edit": "编辑",

@@ -475,9 +475,14 @@
     </el-row>
     <div class="action-footer mt-4 flex">
       <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
-      <mcp-button @click="handleConfirm">{{
+      <mcp-button @click="handleConfirm" class="mr-4">{{
         query.instanceId ? t('mcp.instance.action.save') : t('mcp.instance.action.add')
       }}</mcp-button>
+      <mcp-button
+        v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE"
+        @click="handleSaveAsTemplate"
+        >{{ t('mcp.instance.action.asTemplate') }}</mcp-button
+      >
     </div>
   </div>
 </template>
@@ -722,6 +727,51 @@ const handleConfirm = async () => {
   } else {
     // One form failed validation
     ElMessage.warning(t('mcp.template.rules.validForm'))
+  }
+}
+
+/**
+ * save as a template
+ */
+const handleSaveAsTemplate = async () => {
+  try {
+    pageInfo.value.loading = true
+    // valid baseInfo
+    const validateBase = new Promise<boolean>((resolve) => {
+      baseInfo.value.validate((valid: boolean) => resolve(valid))
+    })
+    // valid configInfo
+    const validateConfig = new Promise<boolean>((resolve) => {
+      if (configInfo.value) {
+        configInfo.value.validate((valid: boolean) => resolve(valid))
+      } else {
+        resolve(true)
+      }
+    })
+    const [isBaseValid, isConfigValid] = await Promise.all([validateBase, validateConfig])
+
+    // pass and handle create
+    if (isBaseValid && isConfigValid) {
+      try {
+        pageInfo.value.loading = true
+        const data = await TemplateAPI.create({
+          ...pageInfo.value.formData,
+          environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
+            (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
+            {},
+          ),
+        })
+        pageInfo.value.visible = false
+        ElMessage.success(t('action.create'))
+        return data
+      } finally {
+        pageInfo.value.loading = false
+      }
+    } else {
+      ElMessage.warning(t('mcp.template.rules.validForm'))
+    }
+  } finally {
+    pageInfo.value.loading = false
   }
 }
 

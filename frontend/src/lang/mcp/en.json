@@ -86,6 +86,7 @@
         "add": "Add",
         "save": "Save Instance",
         "create": "Add a new MCP",
+        "asTemplate": "As Template",
         "view": "View",
         "log": "Container Logs",
         "accessLogs": "Access Logs",

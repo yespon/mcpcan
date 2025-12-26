@@ -62,7 +62,8 @@
     "viewCodePackage": "PackageDetails",
     "apiDocsList": "API Docs",
     "agentManage": "Agent Platform",
-    "marketManage": "Market"
+    "marketManage": "Market",
+    "resourceManage": "Resource"
   },
   "common": {
     "edit": "Edit",
