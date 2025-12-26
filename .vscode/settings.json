@@ -16,5 +16,9 @@
   "volar.takeOverMode.enabled": true,
   // TypeScript 配置
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "proto3.includePaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/backend/api"
+  ]
 }
