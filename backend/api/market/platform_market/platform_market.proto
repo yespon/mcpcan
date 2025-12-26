@@ -28,16 +28,16 @@ message ListMcpServerRequest {
 
 message ListMcpServerReply {
   // @inject_tag: json:"total" desc:"Total count"
-  int64 total = 1;
+  string total = 1;
   // @inject_tag: json:"list" desc:"List"
   repeated McpServer list = 2;
 }
 
 message McpServer {
   // @inject_tag: json:"id" desc:"ID"
-  int64 id = 1;
-  // @inject_tag: json:"icon_url" desc:"Icon URL"
-  string icon_url = 2;
+  string id = 1;
+  // @inject_tag: json:"iconUrl" desc:"Icon URL"
+  string iconUrl = 2;
   // @inject_tag: json:"name" desc:"Name"
   string name = 3;
   // @inject_tag: json:"nameEn" desc:"English name"
@@ -51,11 +51,11 @@ message McpServer {
   // @inject_tag: json:"status" desc:"Status"
   int32 status = 8;
   // @inject_tag: json:"publishTime" desc:"Publish time"
-  int64 publish_time = 9;
+  string publish_time = 9;
   // @inject_tag: json:"createTime" desc:"Create time"
-  int64 create_time = 10;
+  string create_time = 10;
   // @inject_tag: json:"updateTime" desc:"Update time"
-  int64 update_time = 11;
+  string update_time = 11;
   // @inject_tag: json:"configTemplate" desc:"Config template"
   string config_template = 12;
   // @inject_tag: json:"deployMode" desc:"Deploy mode"
@@ -81,7 +81,7 @@ message McpServer {
   // @inject_tag: json:"githubDefaultBranch" desc:"Github Default branch"
   string github_default_branch = 23;
   // @inject_tag: json:"githubDefaultBranchLastTime" desc:"Github Default branch last update time"
-  int64 github_default_branch_last_time = 24;
+  string github_default_branch_last_time = 24;
   // @inject_tag: json:"githubOwner" desc:"Github Owner"
   string github_owner = 25;
   // @inject_tag: json:"githubOwnerAvatarUrl" desc:"Github Owner avatar URL"
@@ -91,7 +91,7 @@ message McpServer {
 
   message Category {
     // @inject_tag: json:"id" desc:"ID"
-    int64 id = 1;
+    string id = 1;
     // @inject_tag: json:"name" desc:"Name"
     string name = 2;
     // @inject_tag: json:"code" desc:"Code"
