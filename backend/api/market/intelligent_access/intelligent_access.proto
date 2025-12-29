@@ -12,6 +12,7 @@ enum IntelligentAccessType {
   Dify = 2;
   QAgent = 3;
   COZE = 4;
+  N8N = 5;
 }
 
 enum SubType {
@@ -34,6 +35,10 @@ message IntelligentAccess {
 
     string subType = 11;
     string enterpriseID = 12;
+
+    string BaseUrl = 13;
+    string Username = 14;
+    string Password = 15;
 }
 
 message CreateRequest {
@@ -47,6 +52,10 @@ message CreateRequest {
 
     string subType = 8;
     string enterpriseID = 9;
+
+    string baseUrl = 13;
+    string username = 14;
+    string password = 15;
 }
 
 message CreateResponse {
@@ -64,6 +73,10 @@ message UpdateRequest {
 
     string subType = 9;
     string enterpriseID = 10;
+
+    string baseUrl = 11;
+    string username = 12;
+    string password = 13;
 }
 
 message UpdateResponse {
@@ -132,6 +145,34 @@ message ListUserSpaceResponse {
   repeated UserSpace userSpaces = 1;
 }
 
+message CheckN8NRequest {
+  string baseUrl = 1;
+  string username = 2;
+  string password = 3;
+
+  int64 accessID = 4;
+}
+
+message CheckN8NResponse {
+  bool LoginStatus = 1;
+  bool pluginStatus = 2;
+  string message = 3;
+}
+
+message InstallN8NPluginRequest {
+  string baseUrl = 1;
+  string username = 2;
+  string password = 3;
+
+  int64 accessID = 4;
+}
+
+message InstallN8NPluginResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+
 service IntelligentAccessService {
     rpc Create(CreateRequest) returns (CreateResponse) {
         option (google.api.http) = {
@@ -170,6 +211,19 @@ service IntelligentAccessService {
     rpc ListUserSpace(ListUserSpaceRequest) returns (ListUserSpaceResponse) {
       option (google.api.http) = {
         post: "/intelligent_access/list-user-space"
+        body: "*"
+      };
+    }
+
+    rpc CheckN8N(CheckN8NRequest) returns (CheckN8NResponse) {
+      option (google.api.http) = {
+        post: "/intelligent_access/check-n8n"
+        body: "*"
+      };
+    }
+    rpc InstallN8NPlugin(InstallN8NPluginRequest) returns (InstallN8NPluginResponse) {
+      option (google.api.http) = {
+        post: "/intelligent_access/install-n8n-plugin"
         body: "*"
       };
     }

@@ -90,9 +90,40 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "accessID": 4,
-  "instancesIDs": ["d5744f35-260f-4808-918c-b602ac9793a1"],
-  "cookie": ""
+  "accessID": 8,
+  "instancesIDs": ["3696c011-1085-407f-893c-1b46449fb50e"]
+}
+
+
+### 检测N8N平台
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/check-n8n
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 8
+}
+
+### N8N安装插件
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/install-n8n-plugin
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 8
+}
+
+### 创建N8N平台信息
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessName": "n8n_test",
+  "accessType": "N8N",
+  "baseUrl": "http://localhost:5678",
+  "username": "kakjzzw@gmail.com",
+  "password": "1"
 }
 
 

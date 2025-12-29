@@ -385,6 +385,8 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.PUT(fmt.Sprintf("/%s/intelligent_access/edit", routerPrefix), intelligentAccessService.UpdateHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/test-connection", routerPrefix), intelligentAccessService.TestConnectionHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-user-space", routerPrefix), intelligentAccessService.ListUserSpaceHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/install-n8n-plugin", routerPrefix), intelligentAccessService.InstallN8NPluginHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/check-n8n", routerPrefix), intelligentAccessService.CheckN8NHandler)
 
 	mcpToIntelligentTaskService := service.NewMcpToIntelligentTaskService(context.Background())
 	// Register mcp to intelligent task management interface
