@@ -18,6 +18,7 @@ export const useInstanceFormHooks = () => {
   const selectVisible = ref(false)
   const originForm = ref<any>()
   const { userInfo } = useUserStore()
+  const { currentMCP } = useMcpStoreHook()
 
   const pageInfo = ref<any>({
     visible: false,
@@ -227,5 +228,6 @@ export const useInstanceFormHooks = () => {
     selectedPvc,
     disabledReadOnly,
     selectVisible,
+    currentMCP,
   }
 }

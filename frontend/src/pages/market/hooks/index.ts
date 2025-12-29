@@ -3,22 +3,53 @@ export const useMarketListHooks = () => {
   const loading = ref(false)
   const searchInputRef = ref()
   const keyword = ref('')
-  const activeType = ref<string>('')
-  const typeMap = ref([
-    { label: '开发工具', value: 'dev-tools', icon: 'MCP-kaifagongju' },
-    { label: '效率工具', value: 'productivity-tools', icon: 'MCP-xiaoshuaigongju' },
-    { label: '实用工具', value: 'utilities', icon: 'MCP-shiyonggongjuji' },
-    { label: '信息检索', value: 'information-search', icon: 'MCP-xinxijiansuo' },
-    { label: '媒体生成', value: 'media-generation', icon: 'MCP-meiti' },
-    { label: '商业服务', value: 'business-services', icon: 'MCP-shangyefuwu' },
-    { label: '科学教育', value: 'science-education', icon: 'MCP-kexuejiaoyu' },
-    { label: '股票金融', value: 'finance', icon: 'MCP-financialStatements' },
+  const categoryName = ref<string>('')
+  const typeMap = computed(() => [
+    { label: t('market.type.test'), value: 'test', icon: 'MCP-ceshi' },
+    {
+      label: t('market.type.browser-automation'),
+      value: 'browser-automation',
+      icon: 'MCP-liulanqi',
+    },
+    { label: t('market.type.search'), value: 'search', icon: 'MCP-xinxijiansuo' },
+    { label: t('market.type.communication'), value: 'communication', icon: 'MCP-jiaoliu' },
+    { label: t('market.type.developer-tools'), value: 'developer-tools', icon: 'MCP-kaifagongju' },
+    {
+      label: t('market.type.entertainment-and-media'),
+      value: 'entertainment-and-media',
+      icon: 'MCP-meiti',
+    },
+    { label: t('market.type.file-systems'), value: 'file-systems', icon: 'MCP-wenjian1' },
+    { label: t('market.type.finance'), value: 'finance', icon: 'MCP-financialStatements' },
+    {
+      label: t('market.type.knowledge-and-memory'),
+      value: 'knowledge-and-memory',
+      icon: 'MCP-zhishi',
+    },
+    { label: t('market.type.location-services'), value: 'location-services', icon: 'MCP-position' },
+    { label: t('market.type.art-and-culture'), value: 'art-and-culture', icon: 'MCP-yishu' },
+    {
+      label: t('market.type.research-and-data'),
+      value: 'research-and-data',
+      icon: 'MCP-kexuejiaoyu',
+    },
+    {
+      label: t('market.type.calendar-management'),
+      value: 'calendar-management',
+      icon: 'MCP-richeng',
+    },
+    {
+      label: t('market.type.efficiency-tools'),
+      value: 'efficiency-tools',
+      icon: 'MCP-xiaoshuaigongju',
+    },
+    { label: t('market.type.other'), value: 'other', icon: 'MCP-qita' },
   ])
   const pagerConfig = reactive({
     total: 0,
     page: 1,
-    pageSize: 8,
+    pageSize: 12,
   })
 
-  return { t, loading, typeMap, activeType, keyword, searchInputRef, pagerConfig }
+  return { t, loading, typeMap, categoryName, keyword, searchInputRef, pagerConfig }
 }

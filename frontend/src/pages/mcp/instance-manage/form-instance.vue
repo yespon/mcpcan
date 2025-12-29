@@ -478,8 +478,9 @@
       <mcp-button @click="handleConfirm" class="mr-4">{{
         query.instanceId ? t('mcp.instance.action.save') : t('mcp.instance.action.add')
       }}</mcp-button>
+      <!-- v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE" -->
       <mcp-button
-        v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE"
+        v-if="pageInfo.formData.sourceType === SourceType.CUSTOM"
         @click="handleSaveAsTemplate"
         >{{ t('mcp.instance.action.asTemplate') }}</mcp-button
       >
@@ -505,7 +506,7 @@ import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts
 import { cloneDeep } from 'lodash-es'
 import TokenForm from './modules/components/token-form.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const layout = useLayout()
 const {
   query,
@@ -523,6 +524,7 @@ const {
   selectedPvc,
   disabledReadOnly,
   selectVisible,
+  currentMCP,
 } = useInstanceFormHooks()
 
 const { packageList, envList, nodeList, pvcList, sourceOptions, accessTypeOptions } =
@@ -654,8 +656,11 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  // router.push('/instance-manage')
-  jumpBack()
+  // jumpBack()
+  jumpToPage({
+    url: '/instance-manage',
+    data: {},
+  })
 }
 /**
  * Handle confirm save
@@ -840,6 +845,45 @@ const handleGetTemplateDetail = async () => {
   ]
 }
 
+const handleInitMarketInstance = async () => {
+  pageInfo.value.formData = {
+    sourceType: SourceType.MARKET,
+    name: locale.value === 'zh-cn' ? currentMCP.name : currentMCP.nameEn,
+    accessType: AccessType.HOSTING,
+    mcpProtocol: McpProtocol.STDIO,
+    imgAddress: InstanceData.value.IMGADDRESS,
+    notes: locale.value === 'zh-cn' ? currentMCP.description : currentMCP.descriptionEn,
+    mcpServers: JsonFormatter.format(currentMCP.configTemplate),
+    iconPath: currentMCP.githubOwnerAvatarUrl,
+    packageId: '',
+    environmentId: '',
+    port: InstanceData.value.PORT,
+    environmentVariables: [],
+    volumeMounts: [],
+    initScript: InstanceData.value.INITSCRIPT,
+    command: '',
+    enabledToken: true,
+    tokens: [
+      {
+        enabled: true,
+        expireAt: '',
+        publishAt: new Date().getTime(),
+        headers: [{ key: 'Authorization', value: '' }],
+        token:
+          'Bearer ' +
+          getToken(
+            JSON.stringify({
+              expireAt: Date.now(),
+              userId: userInfo.userId,
+              username: userInfo.username,
+            }),
+          ),
+        usages: ['default'],
+      },
+    ],
+  }
+}
+
 // back last class page
 const handleBack = () => {
   jumpBack()
@@ -855,13 +899,20 @@ const init = async () => {
     loadingInstance = ElLoading.service({ fullscreen: true, text: t('status.loading') + '...' })
     await handleGetEnvList()
     handleGetPackageList()
+    // create By template
     if (query.templateId) {
       await handleGetTemplateDetail()
     }
+    // create by market
+    if (query.from === 'market') {
+      await handleInitMarketInstance()
+    }
+
+    // edit instance
     if (query.instanceId) {
       handleGetDetail()
     } else {
-      // 默认选中第一个环境变量
+      // 默认选中第一个环境变量;所以上诉均没有return
       handleChangeEnvironmentId(envList.value[0]?.id)
     }
   } finally {
