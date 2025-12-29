@@ -36,9 +36,9 @@ message IntelligentAccess {
     string subType = 11;
     string enterpriseID = 12;
 
-    string BaseUrl = 13;
-    string Username = 14;
-    string Password = 15;
+    string baseUrl = 13;
+    string username = 14;
+    string password = 15;
 }
 
 message CreateRequest {
@@ -154,7 +154,7 @@ message CheckN8NRequest {
 }
 
 message CheckN8NResponse {
-  bool LoginStatus = 1;
+  bool loginStatus = 1;
   bool pluginStatus = 2;
   string message = 3;
 }
