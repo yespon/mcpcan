@@ -275,11 +275,7 @@ func (s *IntelligentAccessService) CheckN8NHandler(c *gin.Context) {
 
 	cookie, err := n8n.GetCookieFromLogin(req.BaseUrl, req.Username, req.Password)
 	if err != nil {
-		common.GinSuccess(c, &pb.CheckN8NResponse{
-			LoginStatus:  false,
-			PluginStatus: false,
-			Message:      fmt.Sprintf("failed to get cookie from login: %s", err.Error()),
-		})
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get cookie from login: %s", err.Error()))
 		return
 	}
 
