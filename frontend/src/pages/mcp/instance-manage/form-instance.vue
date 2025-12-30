@@ -824,28 +824,38 @@ const handleGetTemplateDetail = async () => {
   pageInfo.value.formData.sourceType = SourceType.TEMPLATE
 
   // default open token
+  let tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   pageInfo.value.formData.enabledToken = true
   pageInfo.value.formData.tokens = [
     {
       expireAt: '',
       enabled: true,
       publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: '' }],
-      token:
-        'Bearer ' +
-        getToken(
-          JSON.stringify({
-            expireAt: Date.now(),
-            userId: userInfo.userId,
-            username: userInfo.username,
-          }),
-        ),
+      headers: [{ key: 'Authorization', value: tokenValue }],
+      token: tokenValue,
       usages: ['default'],
     },
   ]
 }
 
 const handleInitMarketInstance = async () => {
+  let tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   pageInfo.value.formData = {
     sourceType: SourceType.MARKET,
     name: locale.value === 'zh-cn' ? currentMCP.name : currentMCP.nameEn,
@@ -868,16 +878,8 @@ const handleInitMarketInstance = async () => {
         enabled: true,
         expireAt: '',
         publishAt: new Date().getTime(),
-        headers: [{ key: 'Authorization', value: '' }],
-        token:
-          'Bearer ' +
-          getToken(
-            JSON.stringify({
-              expireAt: Date.now(),
-              userId: userInfo.userId,
-              username: userInfo.username,
-            }),
-          ),
+        headers: [{ key: 'Authorization', value: tokenValue }],
+        token: tokenValue,
         usages: ['default'],
       },
     ],

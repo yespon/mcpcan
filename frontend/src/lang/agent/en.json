@@ -23,6 +23,7 @@
       "create": "Create Agent",
       "community": "Community",
       "enterprise": "Enterprise",
+      "n8n": "N8N",
       "successConnection": "Connection Test Successful",
       "failConnectionTips": "Platform connection failed; do you still want to save?",
       "connection": "Connect Now",
@@ -38,7 +39,11 @@
       "dbUser": "Username",
       "dbPassword": "Password",
       "dbName": "Database name",
-      "loadingText": "Connecting to service..."
+      "loadingText": "Connecting to service...",
+      "installingPlugin": "Installing plugin...",
+      "baseUrl": "Platform URL",
+      "username": "UserName",
+      "password": "Password"
     },
     "placeholder": {
       "accessName": "Please enter access name",
@@ -52,7 +57,10 @@
       "dbUser": "Please enter database user",
       "dbPassword": "Please enter database password",
       "dbName": "Please enter database name",
-      "cookie": "Please enter cookie; Use cookie to connect and sync agent platform namespaces"
+      "cookie": "Please enter cookie; Use cookie to connect and sync agent platform namespaces",
+      "baseUrl": "Please enter platform URL",
+      "username": "Please enter userName",
+      "password": "Please enter password"
     },
     "sync": {
       "platform": "Platform: ",

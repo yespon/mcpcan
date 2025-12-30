@@ -1,5 +1,6 @@
 import { AgentAPI } from '@/api/agent/index'
 import { timestampToDate } from '@/utils/system'
+import { kymo, dify, coze, n8n } from '@/utils/logo.ts'
 
 export const useAgentTableHooks = () => {
   const { t } = useI18n()
@@ -7,6 +8,11 @@ export const useAgentTableHooks = () => {
   const pageInfo = ref({
     loading: false,
     loadingText: t('agent.pageDesc.connectionDesc'),
+  })
+  const logoIcon = ref<any>({
+    Dify: kymo,
+    COZE: coze,
+    N8N: n8n,
   })
   const columns = ref<any>([
     {
@@ -71,5 +77,5 @@ export const useAgentTableHooks = () => {
     pageSize: 10,
   })
 
-  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo, AgentAPI }
+  return { t, columns, requestConfig, tablePlus, pageConfig, pageInfo, AgentAPI, logoIcon }
 }

@@ -81,6 +81,22 @@ export const AgentAPI = {
       method: 'POST',
     })
   },
+  // check N8N
+  checkN8n(data: CreateAgentRequest) {
+    return request<any, any>({
+      url: `/market/intelligent_access/check-n8n`,
+      method: 'POST',
+      data,
+    })
+  },
+  // install N8N plugin
+  installPlugin(data: CreateAgentRequest) {
+    return request<any, any>({
+      url: `/market/intelligent_access/install-n8n-plugin`,
+      method: 'POST',
+      data,
+    })
+  },
 }
 
 export interface CreateAgentRequest {
@@ -94,6 +110,9 @@ export interface CreateAgentRequest {
   dbName?: string
   enterpriseId?: string
   subType?: string
+  baseUrl?: string
+  username?: string
+  password?: string
 }
 export interface TableData {
   page: number

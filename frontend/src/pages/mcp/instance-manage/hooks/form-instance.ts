@@ -20,6 +20,15 @@ export const useInstanceFormHooks = () => {
   const { userInfo } = useUserStore()
   const { currentMCP } = useMcpStoreHook()
 
+  const tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   const pageInfo = ref<any>({
     visible: false,
     loading: false,
@@ -46,16 +55,8 @@ export const useInstanceFormHooks = () => {
           enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
-          headers: [{ key: 'Authorization', value: '' }],
-          token:
-            'Bearer ' +
-            getToken(
-              JSON.stringify({
-                expireAt: Date.now(),
-                userId: userInfo.userId,
-                username: userInfo.username,
-              }),
-            ),
+          headers: [{ key: 'Authorization', value: tokenValue }],
+          token: tokenValue,
           usages: ['default'],
         },
       ],

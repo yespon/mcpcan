@@ -23,6 +23,7 @@
       "create": "创建智能体平台",
       "community": "社区版",
       "enterprise": "商业版",
+      "n8n": "N8N",
       "successConnection": "测试连接成功",
       "failConnectionTips": "平台链接失败；是否任然保存？",
       "connection": "立即链接",
@@ -38,7 +39,11 @@
       "dbUser": "用户名",
       "dbPassword": "密码",
       "dbName": "数据库名称",
-      "loadingText": "服务连接中..."
+      "loadingText": "服务连接中...",
+      "installingPlugin": "正在安装插件...",
+      "baseUrl": "平台地址",
+      "username": "用户名",
+      "password": "密码"
     },
     "placeholder": {
       "accessName": "请输入接入名称",
@@ -52,7 +57,10 @@
       "dbUser": "请输入用户名",
       "dbPassword": "请输入密码",
       "dbName": "请输入数据库名称",
-      "cookie": "请输入cookie; 通过cookie连接可同步的智能体平台命名空间"
+      "cookie": "请输入cookie; 通过cookie连接可同步的智能体平台命名空间",
+      "baseUrl": "请输入平台地址",
+      "username": "请输入用户名",
+      "password": "请输入密码"
     },
     "sync": {
       "platform": "平台：",

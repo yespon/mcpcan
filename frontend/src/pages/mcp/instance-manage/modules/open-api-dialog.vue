@@ -207,7 +207,7 @@ const formData = ref({
     {
       enabled: true,
       expireAt: '',
-      headers: [],
+      headers: [{ key: 'Authorization', value: '' }],
       publishAt: new Date().getTime(),
       token:
         'Bearer ' +
@@ -670,6 +670,15 @@ const handleTemplateDetail = async (id: string) => {
   const data = await TemplateAPI.detail({
     id,
   })
+  const tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   formData.value = {
     instanceId: '',
     templateId: data.templateId,
@@ -686,17 +695,9 @@ const handleTemplateDetail = async (id: string) => {
       {
         enabled: true,
         expireAt: '',
-        headers: [],
+        headers: [{ key: 'Authorization', value: tokenValue }],
         publishAt: new Date().getTime(),
-        token:
-          'Bearer ' +
-          getToken(
-            JSON.stringify({
-              expireAt: Date.now(),
-              userId: userInfo.userId,
-              username: userInfo.username,
-            }),
-          ),
+        token: tokenValue,
         tokenType: TokenType.BEARER,
         usages: ['default'],
       },
@@ -732,6 +733,15 @@ const init = async (id?: string, type?: string) => {
       handleGetDetail(id)
     }
   } else {
+    const tokenValue =
+      'Bearer ' +
+      getToken(
+        JSON.stringify({
+          expireAt: Date.now(),
+          userId: userInfo.userId,
+          username: userInfo.username,
+        }),
+      )
     formData.value = {
       instanceId: '',
       templateId: '',
@@ -748,17 +758,9 @@ const init = async (id?: string, type?: string) => {
         {
           enabled: true,
           expireAt: '',
-          headers: [],
+          headers: [{ key: 'Authorization', value: tokenValue }],
           publishAt: new Date().getTime(),
-          token:
-            'Bearer ' +
-            getToken(
-              JSON.stringify({
-                expireAt: Date.now(),
-                userId: userInfo.userId,
-                username: userInfo.username,
-              }),
-            ),
+          token: tokenValue,
           tokenType: TokenType.BEARER,
           usages: ['default'],
         },
