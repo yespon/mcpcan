@@ -8,7 +8,8 @@
       "connectionDesc": "正在尝试连接....",
       "deleteDesc": "确定要删除该智能体平台吗？删除后将无法恢复。",
       "platFormSync": "智能体平台同步",
-      "mustSelectMCP": "请选择需要同步的实例"
+      "mustSelectMCP": "请选择需要同步的实例",
+      "boxtips": "检测到平台尚未安装“n8n-nodes-mcp”插件？"
     },
     "columns": {
       "accessName": "平台名称",
@@ -27,7 +28,9 @@
       "successConnection": "测试连接成功",
       "failConnectionTips": "平台链接失败；是否任然保存？",
       "connection": "立即链接",
-      "addAgent": "去添加智能体平台"
+      "addAgent": "去添加智能体平台",
+      "authInstall": "自动安装",
+      "manualInstall": "手动安装"
     },
     "formData": {
       "accessName": "接入名称",

@@ -346,12 +346,12 @@ const handleSaveN8n = async () => {
       username: formModel.value.username!,
       password: formModel.value.password!,
     })
-    // 未安装插件
+    // don't install plugin
     if (loginStatus && !pluginStatus) {
-      // 确认安装插件
-      ElMessageBox.confirm('检测到平台尚未安装插件？', t('common.warn'), {
-        confirmButtonText: '自动安装',
-        cancelButtonText: '手动安装',
+      // confirm install plugin
+      ElMessageBox.confirm(t('agent.pageDesc.boxtips'), t('common.warn'), {
+        confirmButtonText: t('agent.action.authInstall'),
+        cancelButtonText: t('agent.action.manualInstall'),
         type: 'warning',
         customClass: 'tips-box',
         center: true,
@@ -384,7 +384,7 @@ const handleSaveN8n = async () => {
         username: formModel.value.username!,
         password: formModel.value.password!,
       }
-      // 登录成功并已安装插件
+      // login and plugin success
       await (formModel.value.accessID
         ? AgentAPI.update({
             accessID: formModel.value.accessID,

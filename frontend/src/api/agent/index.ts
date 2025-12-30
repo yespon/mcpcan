@@ -95,6 +95,7 @@ export const AgentAPI = {
       url: `/market/intelligent_access/install-n8n-plugin`,
       method: 'POST',
       data,
+      timeout: 300000,
     })
   },
 }
