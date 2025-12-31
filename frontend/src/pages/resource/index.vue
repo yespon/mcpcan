@@ -7,7 +7,7 @@
             <el-icon>
               <i class="icon iconfont MCP-daimaguanli"></i>
             </el-icon>
-            <span class="ml-2">代码包</span>
+            <span class="ml-2">{{ t('sideMenu.package') }}</span>
           </span>
         </template>
         <Code></Code>
@@ -31,6 +31,7 @@
 import Code from '../script-code/code-list/index.vue'
 import Docs from '../api-docs/docs-list/index.vue'
 
+const { t } = useI18n()
 const activeName = ref('first')
 </script>
 
@@ -63,16 +64,13 @@ const activeName = ref('first')
     height: 40px;
     line-height: 40px;
     border-radius: 6px;
-    color: #64748b;
     transition: all 0.3s;
     margin-bottom: 0;
     border: none;
     font-size: 14px;
     font-weight: 500;
-
     &.is-active {
       background-color: var(--ep-bg-purple-color-deep);
-      // color: var(--el-color-primary);
       box-shadow:
         0 1px 3px 0 rgba(0, 0, 0, 0.1),
         0 1px 2px -1px rgba(0, 0, 0, 0.1);
