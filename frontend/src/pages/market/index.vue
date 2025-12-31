@@ -36,14 +36,21 @@
       </div>
       <div class="flex-1">
         <template v-if="marketList.length">
-          <div class="grid grid-cols-12 gap-4">
-            <McpCard
-              class="col-span-3"
+          <el-row :gutter="20">
+            <el-col
               v-for="(card, index) in marketList"
-              :card="card"
               :key="index"
-            ></McpCard>
-          </div>
+              :xs="24"
+              :sm="24"
+              :md="12"
+              :lg="8"
+              :xl="6"
+              class="mb-4"
+            >
+              <McpCard :card="card"></McpCard>
+            </el-col>
+          </el-row>
+
           <div class="mt-8 flex justify-end">
             <el-pagination
               background

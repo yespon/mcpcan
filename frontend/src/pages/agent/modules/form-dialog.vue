@@ -29,13 +29,13 @@
         :label-width="locale === 'en' ? '160px' : '110px'"
       >
         <el-form-item
-          v-if="formModel.accessType === 'COZE'"
+          v-if="formModel.accessType === AgentType.COZE"
           :label="t('agent.formData.subType')"
           prop="subType"
         >
           <el-radio-group v-model="formModel.subType" fill="var(--el-color-primary)">
-            <el-radio-button :label="t('agent.columns.person')" value="Person" />
-            <el-radio-button :label="t('agent.columns.team')" value="Team" />
+            <el-radio-button :label="t('agent.columns.person')" :value="CozeType.PERSON" />
+            <el-radio-button :label="t('agent.columns.team')" :value="CozeType.TEAM" />
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="t('agent.formData.accessName')" prop="accessName">
@@ -47,7 +47,7 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="formModel.accessType === 'COZE' && formModel.subType === 'Team'"
+          v-if="formModel.accessType === AgentType.COZE && formModel.subType === CozeType.TEAM"
           :label="t('agent.formData.enterpriseId')"
           prop="enterpriseID"
         >
@@ -58,7 +58,10 @@
           />
         </el-form-item>
         <template
-          v-if="formModel.accessType === 'DifyEnterprise' || formModel.accessType === 'Dify'"
+          v-if="
+            formModel.accessType === AgentType.DIFY_ENTERPRISE ||
+            formModel.accessType === AgentType.DIFY
+          "
         >
           <el-form-item :label="t('agent.formData.dbHost')" prop="dbHost">
             <el-input v-model="formModel.dbHost" :placeholder="t('agent.placeholder.dbHost')" />
@@ -137,6 +140,7 @@ import { AgentAPI } from '@/api/agent/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import McpImage from '@/components/mcp-image/index.vue'
 import { dify, coze, n8n } from '@/utils/logo.ts'
+import { AgentType, CozeType } from '@/types/agent'
 
 const { t, locale } = useI18n()
 const dialogInfo = ref<{
@@ -176,16 +180,16 @@ const formModel = ref<{
   dbPassword: '',
   dbName: '',
   enterpriseID: '',
-  subType: 'Person',
+  subType: CozeType.PERSON,
   baseUrl: '',
   username: '',
   password: '',
 })
 const platformList = ref([
-  { type: 'Dify', icon: dify, name: t('agent.action.community') },
-  { type: 'COZE', icon: coze, name: t('agent.action.enterprise') },
-  { type: 'DifyEnterprise', icon: dify, name: t('agent.action.enterprise') },
-  { type: 'N8N', icon: n8n, name: t('agent.action.n8n') },
+  { type: AgentType.DIFY, icon: dify, name: t('agent.action.community') },
+  { type: AgentType.COZE, icon: coze, name: t('agent.action.enterprise') },
+  { type: AgentType.DIFY_ENTERPRISE, icon: dify, name: t('agent.action.enterprise') },
+  { type: AgentType.N8N, icon: n8n, name: t('agent.action.n8n') },
 ])
 const currentPlatform = computed(() => {
   return platformList.value.find((item) => item.type === formModel.value.accessType)
@@ -233,9 +237,9 @@ const emit = defineEmits<{
 
 // handle form submit
 const handleSubmit = () => {
-  if (formModel.value.accessType === 'COZE') {
+  if (formModel.value.accessType === AgentType.COZE) {
     handleSaveCoze()
-  } else if (formModel.value.accessType === 'N8N') {
+  } else if (formModel.value.accessType === AgentType.N8N) {
     handleSaveN8n()
   } else {
     handleSaveDify()
@@ -313,7 +317,7 @@ const handleSaveCoze = async () => {
       const params = {
         accessName: formModel.value.accessName,
         accessType: formModel.value.accessType,
-        enterpriseID: formModel.value.subType === 'Team' ? formModel.value.enterpriseID : '',
+        enterpriseID: formModel.value.subType === CozeType.TEAM ? formModel.value.enterpriseID : '',
         subType: formModel.value.subType,
       }
       await (formModel.value.accessID
@@ -380,6 +384,7 @@ const handleSaveN8n = async () => {
     } else if (loginStatus && pluginStatus) {
       const params = {
         accessName: formModel.value.accessName,
+        accessType: formModel.value.accessType,
         baseUrl: formModel.value.baseUrl!,
         username: formModel.value.username!,
         password: formModel.value.password!,
@@ -420,7 +425,7 @@ const init = (accessType: string, row: any) => {
       dbPassword: '',
       dbName: '',
       enterpriseID: '',
-      subType: 'Person',
+      subType: CozeType.PERSON,
     }
   }
 }

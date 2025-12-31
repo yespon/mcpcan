@@ -77,6 +77,6 @@ const handleJumpToDetail = () => {
 
 <style lang="scss" scoped>
 .mcp-card {
-  min-width: 230px;
+  // min-width: 230px;
 }
 </style>

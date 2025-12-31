@@ -1,6 +1,7 @@
 import { AgentAPI } from '@/api/agent/index'
 import { timestampToDate } from '@/utils/system'
-import { kymo, dify, coze, n8n } from '@/utils/logo.ts'
+import { kymo, coze, n8n } from '@/utils/logo.ts'
+import { AgentType } from '@/types/agent'
 
 export const useAgentTableHooks = () => {
   const { t } = useI18n()
@@ -35,13 +36,13 @@ export const useAgentTableHooks = () => {
         props: {
           placeholder: t('agent.columns.accessType'),
           options: [
-            { label: t('agent.action.community'), value: 'Dify' },
-            { label: t('agent.action.enterprise'), value: 'DifyEnterprise' },
+            { label: t('agent.action.community'), value: AgentType.DIFY },
+            { label: t('agent.action.enterprise'), value: AgentType.DIFY_ENTERPRISE },
           ],
         },
       },
       customRender: ({ row }: { row: any }) => {
-        return row.accessType === 'Dify'
+        return row.accessType === AgentType.DIFY
           ? t('agent.action.community')
           : t('agent.action.enterprise')
       },
