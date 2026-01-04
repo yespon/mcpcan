@@ -1,7 +1,12 @@
 <template>
   <el-card class="mcp-card">
     <div class="flex gap-1 items-center">
-      <mcp-image :src="card.githubOwnerAvatarUrl" :key="card.id" width="60" height="60"></mcp-image>
+      <mcp-image
+        :src="card.iconUrl || card.githubOwnerAvatarUrl"
+        :key="card.id"
+        width="60"
+        height="60"
+      ></mcp-image>
       <div class="flex-1">
         <div class="mb-1">{{ locale === 'zh-cn' ? card.name : card.nameEn }}</div>
         <div class="font-size-3 font-bold">{{ card.githubOwner }}</div>

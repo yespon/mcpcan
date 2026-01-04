@@ -80,18 +80,22 @@ const marketList = ref([])
 
 // handle selected type
 const selectType = (value: string) => {
+  pagerConfig.page = 1
   categoryName.value = value
   handleGetMarketList()
 }
 
 // handle clear type
 const clearType = () => {
+  pagerConfig.page = 1
   categoryName.value = ''
   keyword.value = ''
   handleGetMarketList()
 }
 
+// handle Search
 const handleQuery = () => {
+  pagerConfig.page = 1
   handleGetMarketList()
 }
 
