@@ -18,8 +18,11 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/postgres"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
+	"github.com/kymo-mcp/mcpcan/pkg/n8n"
 	_ "github.com/lib/pq"
 )
+
+const N8NPluginName = "n8n-nodes-mcp"
 
 // IntelligentAccessService struct for intelligent access service
 type IntelligentAccessService struct {
@@ -70,6 +73,12 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 			}
 		}
 	}
+	if req.AccessType == pb.IntelligentAccessType_N8N.String() {
+		if req.BaseUrl == "" || req.Username == "" || req.Password == "" {
+			common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
+			return
+		}
+	}
 
 	intelligentAccess := &model.IntelligentAccess{
 		AccessName:   req.AccessName,
@@ -81,6 +90,9 @@ func (s *IntelligentAccessService) CreateHandler(c *gin.Context) {
 		DbName:       req.DbName,
 		SubType:      req.SubType,
 		EnterpriseID: req.EnterpriseID,
+		BaseUrl:      req.BaseUrl,
+		Username:     req.Username,
+		Password:     req.Password,
 	}
 
 	if err := mysql.IntelligentAccessRepo.Create(s.ctx, intelligentAccess); err != nil {
@@ -139,6 +151,16 @@ func (s *IntelligentAccessService) UpdateHandler(c *gin.Context) {
 		dbIntelligentAccess.SubType = req.SubType
 		dbIntelligentAccess.AccessName = req.AccessName
 		dbIntelligentAccess.EnterpriseID = req.EnterpriseID
+	}
+	if dbIntelligentAccess.AccessType == pb.IntelligentAccessType_N8N.String() {
+		if req.BaseUrl == "" || req.Username == "" || req.Password == "" {
+			common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
+			return
+		}
+
+		dbIntelligentAccess.BaseUrl = req.BaseUrl
+		dbIntelligentAccess.Username = req.Username
+		dbIntelligentAccess.Password = req.Password
 	}
 
 	if err := mysql.IntelligentAccessRepo.Update(s.ctx, dbIntelligentAccess); err != nil {
@@ -234,6 +256,96 @@ func (s *IntelligentAccessService) TestConnectionHandler(c *gin.Context) {
 	})
 }
 
+func (s *IntelligentAccessService) CheckN8NHandler(c *gin.Context) {
+	var req pb.CheckN8NRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+		return
+	}
+	if req.AccessID > 0 {
+		intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
+			return
+		}
+		req.BaseUrl = intelligentAccess.BaseUrl
+		req.Username = intelligentAccess.Username
+		req.Password = intelligentAccess.Password
+	}
+
+	cookie, err := n8n.GetCookieFromLogin(req.BaseUrl, req.Username, req.Password)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get cookie from login: %s", err.Error()))
+		return
+	}
+
+	pluginList, err := n8n.GetPluginList(req.BaseUrl, cookie)
+	if err != nil {
+		common.GinSuccess(c, &pb.CheckN8NResponse{
+			LoginStatus:  true,
+			PluginStatus: false,
+			Message:      fmt.Sprintf("failed to get plugin list: %s", err.Error()),
+		})
+		return
+	}
+	for _, plugin := range pluginList.Data {
+		if plugin.PackageName == N8NPluginName {
+			common.GinSuccess(c, &pb.CheckN8NResponse{
+				LoginStatus:  true,
+				PluginStatus: true,
+				Message:      N8NPluginName + " plugin installed",
+			})
+			return
+		}
+	}
+	common.GinSuccess(c, &pb.CheckN8NResponse{
+		LoginStatus:  true,
+		PluginStatus: false,
+		Message:      N8NPluginName + " plugin not installed",
+	})
+}
+
+func (s *IntelligentAccessService) InstallN8NPluginHandler(c *gin.Context) {
+	var req pb.InstallN8NPluginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+		return
+	}
+	if req.AccessID > 0 {
+		intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(s.ctx, req.AccessID)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to find intelligent access: %s", err.Error()))
+			return
+		}
+		req.BaseUrl = intelligentAccess.BaseUrl
+		req.Username = intelligentAccess.Username
+		req.Password = intelligentAccess.Password
+	}
+
+	cookie, err := n8n.GetCookieFromLogin(req.BaseUrl, req.Username, req.Password)
+	if err != nil {
+		common.GinSuccess(c, &pb.InstallN8NPluginResponse{
+			Success: false,
+			Message: "Login error: " + err.Error(),
+		})
+		return
+	}
+
+	_, err = n8n.InstallPackage(req.BaseUrl, N8NPluginName, cookie)
+	if err != nil {
+		common.GinSuccess(c, &pb.InstallN8NPluginResponse{
+			Success: false,
+			Message: "Install n8n plugin failed error: " + err.Error(),
+		})
+		return
+	}
+
+	common.GinSuccess(c, &pb.InstallN8NPluginResponse{
+		Success: true,
+		Message: N8NPluginName + " plugin installed",
+	})
+}
+
 func BuildTemporaryPostgresConnection(host string, port int, user string, password string, database string, test bool) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Shanghai",
 		host, port, user, password, database)
@@ -287,6 +399,18 @@ func (s *IntelligentAccessService) ListUserSpaceHandler(c *gin.Context) {
 	}
 	if intelligentAccess.AccessType == pb.IntelligentAccessType_COZE.String() {
 		pbUserSpaces, err = GetCozeUserSpace(req.Cookie, intelligentAccess)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to query user spaces: %s", err.Error()))
+			return
+		}
+	}
+	if intelligentAccess.AccessType == pb.IntelligentAccessType_N8N.String() {
+		cookie, err := n8n.GetCookieFromLogin(intelligentAccess.BaseUrl, intelligentAccess.Username, intelligentAccess.Password)
+		if err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get n8n cookie: %s", err.Error()))
+			return
+		}
+		pbUserSpaces, err = GetN8NUserSpace(intelligentAccess, cookie)
 		if err != nil {
 			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to query user spaces: %s", err.Error()))
 			return
@@ -390,6 +514,45 @@ func GenerateBearerToken() (string, error) {
 	return fullToken, nil
 }
 
+func GetN8NUserSpace(access *model.IntelligentAccess, cookie string) ([]*pb.UserSpace, error) {
+	projects, err := n8n.GetProjects(access.BaseUrl, cookie)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get n8n projects: %s", err.Error())
+	}
+	var pbUserSpaces []*pb.UserSpace
+	for _, project := range projects.Data {
+		// 判定 Scopes 是否同时存在这三个 credential:create credential:list credential:update 字符串
+		if !containsAll(project.Scopes, "credential:create", "credential:list", "credential:update") {
+			continue
+		}
+
+		pbUserSpaces = append(pbUserSpaces, &pb.UserSpace{
+			UserID:           project.ID,
+			UserName:         project.Name,
+			TenantID:         project.ID,
+			TenantName:       project.Name,
+			EncryptPublicKey: "",
+		})
+	}
+	return pbUserSpaces, nil
+}
+
+func containsAll(arr []string, targets ...string) bool {
+	// 创建查找集合
+	set := make(map[string]struct{})
+	for _, str := range arr {
+		set[str] = struct{}{}
+	}
+
+	// 检查所有目标字符串是否都在集合中
+	for _, target := range targets {
+		if _, exists := set[target]; !exists {
+			return false
+		}
+	}
+	return true
+}
+
 func GetCozeUserSpace(cookie string, access *model.IntelligentAccess) ([]*pb.UserSpace, error) {
 	var organizationID = ""
 	var err error
@@ -469,5 +632,8 @@ func CoverDbAccessToPn(access *model.IntelligentAccess) *pb.IntelligentAccess {
 		UpdateTime:   access.UpdateTime.UnixMilli(),
 		SubType:      access.SubType,
 		EnterpriseID: access.EnterpriseID,
+		BaseUrl:      access.BaseUrl,
+		Username:     access.Username,
+		Password:     access.Password,
 	}
 }

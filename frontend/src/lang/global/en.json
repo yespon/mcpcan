@@ -63,7 +63,8 @@
     "apiDocsList": "API Docs",
     "agentManage": "Agent Platform",
     "marketManage": "Market",
-    "resourceManage": "Resource"
+    "resourceManage": "Resource",
+    "package": "Code-Package"
   },
   "common": {
     "edit": "Edit",

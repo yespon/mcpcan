@@ -39,6 +39,13 @@ export const timestampToDate = (time: number | string, format: string = 'YYYY-MM
     .replace('ss', padZero(second))
 }
 
+// github 数据转换
+export const githubNumber = (num: number | string) => {
+  const n = Number(num)
+  if (!n) return 0
+  return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n
+}
+
 /**
  * 文件大小转换（字节转 KB/MB/GB/TB）
  * @param bytes 原始文件大小（单位：B，支持数字或字符串类型）
@@ -184,8 +191,7 @@ export const initThemeInfo = async () => {
     const systemStore = useSystemStoreHook()
     const theme = await getParentLocalStorageItem('responsive-layout')
     let themeObj = JSON.parse(theme) || {}
-    // Storage.set('theme', themeObj.overallStyle || 'dark')
-    systemStore.themeType = themeObj.overallStyle || 'dark'
+    systemStore.themeType = themeObj.overallStyle || Storage.get('theme')
     document.documentElement.style.setProperty(
       '--el-color-primary',
       themeObj.epThemeColor || '#cdbdff',

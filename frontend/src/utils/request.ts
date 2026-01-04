@@ -45,6 +45,11 @@ request.interceptors.request.use(
     // 添加国际化
     config.headers['accept-language'] = lang[Storage.get('language') as keyof typeof lang]
 
+    // 允许请求配置覆盖默认 timeout
+    if (config.timeout) {
+      config.timeout = config.timeout
+    }
+
     return config
   },
   (error: any) => {

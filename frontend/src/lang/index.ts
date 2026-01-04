@@ -20,10 +20,12 @@ import zhCodePackage from './code-package/zh-cn.json'
 // api docs
 import enApiDocs from './api-docs/en.json'
 import zhApiDocs from './api-docs/zh-cn.json'
-
 // agent
 import enAgent from './agent/en.json'
 import zhCnAgent from './agent/zh-cn.json'
+// market
+import enMarket from './market/en.json'
+import zhCnMarket from './market/zh-cn.json'
 
 const messages = {
   'zh-cn': {
@@ -34,6 +36,7 @@ const messages = {
     ...zhEnvManage,
     ...zhCodePackage,
     ...zhApiDocs,
+    ...zhCnMarket,
   },
   en: {
     ...enGlobal,
@@ -43,6 +46,7 @@ const messages = {
     ...enEnvManage,
     ...enCodePackage,
     ...enApiDocs,
+    ...enMarket,
   },
 }
 

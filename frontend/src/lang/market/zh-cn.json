@@ -1,0 +1,31 @@
+{
+  "market": {
+    "placeholderName": "搜索MCP服务名称或是关键词...",
+    "search": "筛选",
+    "clear": "清除",
+    "type": {
+      "test": "测试",
+      "browser-automation": "浏览器自动化",
+      "search": "搜索工具",
+      "communication": "交流协作",
+      "developer-tools": "开发工具",
+      "entertainment-and-media": "娱乐媒体",
+      "file-systems": "文件系统",
+      "finance": "股票金融",
+      "knowledge-and-memory": "知识记忆",
+      "location-services": "位置服务",
+      "art-and-culture": "文化艺术",
+      "research-and-data": "学术研究",
+      "calendar-management": "日程管理",
+      "efficiency-tools": "效率工具",
+      "other": "其它"
+    },
+    "updateTime": "最新发布时间",
+    "descWhatIsMCP": "你可以使用该 MCP Server 做什么？",
+    "config": "配置",
+    "quickCreate": "快速创建",
+    "action": {
+      "viewDetail": "查看详情"
+    }
+  }
+}

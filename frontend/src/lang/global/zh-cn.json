@@ -63,7 +63,8 @@
     "apiDocsList": "API 文档",
     "agentManage": "智能体平台",
     "marketManage": "市场管理",
-    "resourceManage": " 资源管理"
+    "resourceManage": " 资源管理",
+    "package": "代码包"
   },
   "common": {
     "edit": "编辑",
