@@ -479,11 +479,10 @@
         query.instanceId ? t('mcp.instance.action.save') : t('mcp.instance.action.add')
       }}</mcp-button>
       <!-- v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE" -->
-      <mcp-button
-        v-if="pageInfo.formData.sourceType === SourceType.CUSTOM"
-        @click="handleSaveAsTemplate"
-        >{{ t('mcp.instance.action.asTemplate') }}</mcp-button
-      >
+      <!-- v-if="pageInfo.formData.sourceType === SourceType.CUSTOM" -->
+      <mcp-button @click="handleSaveAsTemplate">{{
+        t('mcp.instance.action.asTemplate')
+      }}</mcp-button>
     </div>
   </div>
 </template>
