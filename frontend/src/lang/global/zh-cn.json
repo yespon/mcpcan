@@ -51,7 +51,7 @@
     "mcpManage": "MCP管理",
     "templateManage": "部署模板",
     "newTemplate": "创建模板",
-    "instanceManage": "服务资源",
+    "instanceManage": "MCP实例",
     "newInstance": "创建实例",
     "envManage": "环境管理",
     "runEnviroment": "运行环境",
@@ -63,7 +63,7 @@
     "apiDocsList": "API 文档",
     "agentManage": "智能体平台",
     "marketManage": "市场管理",
-    "resourceManage": " 资源管理",
+    "resourceManage": " 文件管理",
     "package": "代码包"
   },
   "common": {
