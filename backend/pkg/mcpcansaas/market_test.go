@@ -27,6 +27,7 @@ func TestListMcpServer(t *testing.T) {
 	req := &pm.ListMcpServerRequest{
 		Page:     1,
 		PageSize: 10,
+		Name:     "MarkMap",
 	}
 
 	t.Logf("Sending ListMcpServer request: page=%d, pageSize=%d\n", req.Page, req.PageSize)

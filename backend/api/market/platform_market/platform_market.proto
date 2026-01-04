@@ -37,7 +37,7 @@ message McpServer {
   // @inject_tag: json:"id" desc:"ID"
   string id = 1;
   // @inject_tag: json:"iconUrl" desc:"Icon URL"
-  string iconUrl = 2;
+  string icon_url = 2;
   // @inject_tag: json:"name" desc:"Name"
   string name = 3;
   // @inject_tag: json:"nameEn" desc:"English name"
