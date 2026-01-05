@@ -407,6 +407,25 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/mcp_to_intelligent_task/list", routerPrefix), mcpToIntelligentTaskService.ListHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/mcp_to_intelligent_task/:id/cancel", routerPrefix), mcpToIntelligentTaskService.CancelHandler)
 
+	// Register AI session management interface
+	aiSessionService := service.NewAiSessionService(context.Background())
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.CreateHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.UpdateHandler)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/ai/sessions/:id", routerPrefix), aiSessionService.DeleteHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id", routerPrefix), aiSessionService.GetHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.ListHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/messages", routerPrefix), aiSessionService.GetSessionMessagesHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions/:id/chat", routerPrefix), aiSessionService.ChatHandler)
+
+	// Register AI model access management interface
+	aiModelAccessService := service.NewAiModelAccessService(context.Background())
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.CreateHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.UpdateHandler)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.DeleteHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.GetHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.ListHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/supported", routerPrefix), aiModelAccessService.GetSupportedModelsHandler)
+
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {
 		i18n.SuccessResponse(c, gin.H{"status": "ok"})

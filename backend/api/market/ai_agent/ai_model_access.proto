@@ -68,6 +68,18 @@ message ListModelAccessResponse {
     int64 total = 2;
 }
 
+message ModelProvider {
+    string id = 1;
+    string name = 2;
+    repeated string models = 3;
+}
+
+message GetSupportedModelsRequest {}
+
+message GetSupportedModelsResponse {
+    repeated ModelProvider providers = 1;
+}
+
 service AiModelAccessService {
     rpc Create(CreateModelAccessRequest) returns (CreateModelAccessResponse) {
         option (google.api.http) = {
@@ -94,6 +106,11 @@ service AiModelAccessService {
     rpc List(ListModelAccessRequest) returns (ListModelAccessResponse) {
         option (google.api.http) = {
             get: "/ai/models"
+        };
+    }
+    rpc GetSupportedModels(GetSupportedModelsRequest) returns (GetSupportedModelsResponse) {
+        option (google.api.http) = {
+            get: "/ai/models/supported"
         };
     }
 }

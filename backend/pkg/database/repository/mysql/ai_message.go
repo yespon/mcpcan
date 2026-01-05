@@ -33,14 +33,20 @@ func (r *AiMessageRepository) Create(ctx context.Context, message *model.AiMessa
 // GetLastN 获取最近 N 条消息 (用于构建 Context)
 // 返回按时间正序排列的消息 (旧 -> 新)
 func (r *AiMessageRepository) GetLastN(ctx context.Context, sessionID int64, n int) ([]*model.AiMessage, error) {
+	return r.FindBySessionID(ctx, sessionID, n)
+}
+
+// FindBySessionID 获取会话的消息列表
+// 返回按时间正序排列的消息 (旧 -> 新)
+func (r *AiMessageRepository) FindBySessionID(ctx context.Context, sessionID int64, limit int) ([]*model.AiMessage, error) {
 	var messages []*model.AiMessage
 	// 先按倒序取最近N条
 	err := r.getDB().WithContext(ctx).
 		Where("session_id = ?", sessionID).
 		Order("id desc").
-		Limit(n).
+		Limit(limit).
 		Find(&messages).Error
-	
+
 	if err != nil {
 		return nil, err
 	}

@@ -87,6 +87,16 @@ message GetSessionMessagesResponse {
     repeated AiMessage list = 1;
 }
 
+message ChatRequest {
+    int64 sessionID = 1;
+    string content = 2;
+}
+
+message ChatResponse {
+    string type = 1; // text, tool_start, tool_result, error, done
+    string content = 2;
+}
+
 service AiSessionService {
     rpc Create(CreateSessionRequest) returns (CreateSessionResponse) {
         option (google.api.http) = {
@@ -118,6 +128,12 @@ service AiSessionService {
     rpc GetMessages(GetSessionMessagesRequest) returns (GetSessionMessagesResponse) {
         option (google.api.http) = {
             get: "/ai/sessions/{sessionID}/messages"
+        };
+    }
+    rpc Chat(ChatRequest) returns (stream ChatResponse) {
+        option (google.api.http) = {
+            post: "/ai/sessions/{sessionID}/chat"
+            body: "*"
         };
     }
 }
