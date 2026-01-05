@@ -20,5 +20,10 @@
   "proto3.includePaths": [
     "${workspaceFolder}",
     "${workspaceFolder}/backend/api"
+  ],
+  "protoc.options": [
+    "--proto_path=${workspaceFolder}/backend/third_party",
+    "--proto_path=${workspaceFolder}/backend/api",
+    "--proto_path=${workspaceFolder}/backend"
   ]
 }

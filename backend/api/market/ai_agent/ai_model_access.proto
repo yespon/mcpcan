@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package ai_agent;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/ai_agent";
+
+message AiModelAccess {
+    int64 id = 1;
+    string name = 2;
+    string provider = 3;
+    string apiKey = 4;
+    string baseUrl = 5;
+    string modelName = 6;
+    int64 createTime = 7;
+    int64 updateTime = 8;
+}
+
+message CreateModelAccessRequest {
+    string name = 1;
+    string provider = 2;
+    string apiKey = 3;
+    string baseUrl = 4;
+    string modelName = 5;
+}
+
+message CreateModelAccessResponse {
+    AiModelAccess access = 1;
+}
+
+message UpdateModelAccessRequest {
+    int64 id = 1;
+    string name = 2;
+    string provider = 3;
+    string apiKey = 4;
+    string baseUrl = 5;
+    string modelName = 6;
+}
+
+message UpdateModelAccessResponse {
+    AiModelAccess access = 1;
+}
+
+message DeleteModelAccessRequest {
+    int64 id = 1;
+}
+
+message DeleteModelAccessResponse {
+    bool success = 1;
+}
+
+message GetModelAccessRequest {
+    int64 id = 1;
+}
+
+message GetModelAccessResponse {
+    AiModelAccess access = 1;
+}
+
+message ListModelAccessRequest {
+    int32 page = 1;
+    int32 pageSize = 2;
+}
+
+message ListModelAccessResponse {
+    repeated AiModelAccess list = 1;
+    int64 total = 2;
+}
+
+service AiModelAccessService {
+    rpc Create(CreateModelAccessRequest) returns (CreateModelAccessResponse) {
+        option (google.api.http) = {
+            post: "/ai/models"
+            body: "*"
+        };
+    }
+    rpc Update(UpdateModelAccessRequest) returns (UpdateModelAccessResponse) {
+        option (google.api.http) = {
+            put: "/ai/models"
+            body: "*"
+        };
+    }
+    rpc Delete(DeleteModelAccessRequest) returns (DeleteModelAccessResponse) {
+        option (google.api.http) = {
+            delete: "/ai/models/{id}"
+        };
+    }
+    rpc Get(GetModelAccessRequest) returns (GetModelAccessResponse) {
+        option (google.api.http) = {
+            get: "/ai/models/{id}"
+        };
+    }
+    rpc List(ListModelAccessRequest) returns (ListModelAccessResponse) {
+        option (google.api.http) = {
+            get: "/ai/models"
+        };
+    }
+}
