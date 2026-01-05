@@ -170,6 +170,18 @@ func (a *App) loadMysql() error {
 			return (&model.McpToken{}).TableName(), nil
 		},
 		func() (string, error) {
+			mysql.NewAiSessionRepository()
+			return (&model.AiSession{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewAiMessageRepository()
+			return (&model.AiMessage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewAiModelAccessRepository()
+			return (&model.AiModelAccess{}).TableName(), nil
+		},
+		func() (string, error) {
 			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
 			// Not Kymo environment, initialize the table structure
 			if a.config.RunMode == common.RunModeKymo {

@@ -102,6 +102,18 @@ func (a *App) loadMysql() error {
 			repo := mysql.NewMcpTokenRepository()
 			return (&model.McpToken{}).TableName(), repo.InitTable()
 		},
+		func() (string, error) {
+			repo := mysql.NewAiSessionRepository()
+			return (&model.AiSession{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewAiMessageRepository()
+			return (&model.AiMessage{}).TableName(), repo.InitTable()
+		},
+		func() (string, error) {
+			repo := mysql.NewAiModelAccessRepository()
+			return (&model.AiModelAccess{}).TableName(), repo.InitTable()
+		},
 	}
 
 	// Sys tables - only load when NOT in kymo mode
