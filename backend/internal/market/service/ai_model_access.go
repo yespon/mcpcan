@@ -13,8 +13,6 @@ import (
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
-//go:generate go run ../../../cmd/tools/genmodels/main.go
-
 type AiModelAccessService struct {
 	ctx context.Context
 }
