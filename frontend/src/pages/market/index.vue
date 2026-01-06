@@ -2,7 +2,7 @@
   <div>
     <!-- <div><el-card></el-card></div> -->
     <div v-loading="loading" class="flex gap-4 mt-4">
-      <div class="w-75 type-sticky">
+      <div class="w-75 type-sticky" v-if="false">
         <el-input
           ref="searchInputRef"
           v-model="keyword"
@@ -55,8 +55,7 @@
             <el-pagination
               background
               :total="pagerConfig.total"
-              :page="pagerConfig.page"
-              :limit="pagerConfig.pageSize"
+              :current-page="pagerConfig.page"
               :page-size="pagerConfig.pageSize"
               @current-change="handlePageChange"
             />
@@ -80,14 +79,14 @@ const marketList = ref([])
 
 // handle selected type
 const selectType = (value: string) => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   categoryName.value = value
   handleGetMarketList()
 }
 
 // handle clear type
 const clearType = () => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   categoryName.value = ''
   keyword.value = ''
   handleGetMarketList()
@@ -95,12 +94,12 @@ const clearType = () => {
 
 // handle Search
 const handleQuery = () => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   handleGetMarketList()
 }
 
 const handlePageChange = (newPage: number) => {
-  pagerConfig.page = newPage
+  pagerConfig.value.page = newPage
   handleGetMarketList()
 }
 
@@ -109,13 +108,13 @@ const handleGetMarketList = async () => {
   try {
     loading.value = true
     const { list, total } = await MarketAPI.list({
-      page: pagerConfig.page,
-      pageSize: pagerConfig.pageSize,
+      page: pagerConfig.value.page,
+      pageSize: pagerConfig.value.pageSize,
       name: keyword.value,
       categoryName: categoryName.value,
     })
     marketList.value = list || []
-    pagerConfig.total = Number(total || 0)
+    pagerConfig.value.total = Number(total || 0)
   } finally {
     loading.value = false
   }
@@ -123,7 +122,7 @@ const handleGetMarketList = async () => {
 
 onMounted(() => {
   handleGetMarketList()
-  searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
+  // searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
 </script>
 
