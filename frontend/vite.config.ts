@@ -25,10 +25,10 @@ export default defineConfig({
         changeOrigin: true,
         // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
-      '/api/': {
+      '/api': {
         target: 'https://mcp-dev.itqm.com',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, '/'),
+        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },
@@ -49,9 +49,11 @@ export default defineConfig({
       // 禁用默认导入（若有冲突）
       defaultExportByFilename: false,
       // 会自动导入 vue 中的 ref、reactive、onMounted 等所有 API
-      // 2. 生成声明文件（可选，解决 TypeScript 类型提示问题）
+      // 2. 自动导入 composables 目录下的文件
+      dirs: ['src/composables'],
+      // 3. 生成声明文件（可选，解决 TypeScript 类型提示问题）
       dts: 'src/auto-imports.d.ts', // 生成的声明文件路径，需手动创建空文件
-      // 3. 全局注册的组件（可选，若需自动导入组件）
+      // 4. 全局注册的组件（可选，若需自动导入组件）
       // components: ['vue'],
     }),
   ],

@@ -86,6 +86,7 @@
         "add": "创建实例",
         "save": "保存实例",
         "create": "创建实例",
+        "asTemplate": "另存为模板",
         "view": "查看",
         "log": "容器日志",
         "accessLogs": "访问日志",
@@ -110,7 +111,7 @@
       "pageDesc": {
         "createTitle": "创建实例",
         "editTitle": "编辑实例",
-        "list": "MCP实例列表",
+        "list": "MCP实例资源",
         "desc": "管理你的实例列表以及提供URL链接",
         "total": "实例总数",
         "confirmEdit": "实例编辑之后将重启；确定编辑？",

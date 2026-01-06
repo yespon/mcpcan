@@ -45,6 +45,7 @@ Authorization: {{token}}
   "dbName": "dify"
 }
 
+
 ### 3. 查询智能体平台列表
 GET {{baseUrl}}/{{routerPrefix}}/intelligent_access/list
 Authorization: {{token}}
@@ -59,12 +60,70 @@ Authorization: {{token}}
 }
 
 
-### 5. 查询 Dify 用户空间列表
-POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/list-dify-user-space
+### 5. 创建COZE平台信息
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access
 Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "accessID": 1,
-  "instancesIDs": ["4a10d139-56d3-417f-918e-9a1827eec30f"]
+  "accessName": "coze_test",
+  "accessType": "COZE",
+  "subType": "Personal"
 }
+
+
+### 5. 更新COZE平台信息
+PUT {{baseUrl}}/{{routerPrefix}}/intelligent_access/edit
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 2,
+  "accessName": "coze_test1",
+  "subType": "Team"
+}
+
+
+### 5. 查询 Dify 用户空间列表
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/list-user-space
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 8,
+  "instancesIDs": ["3696c011-1085-407f-893c-1b46449fb50e"]
+}
+
+
+### 检测N8N平台
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/check-n8n
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 8
+}
+
+### N8N安装插件
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access/install-n8n-plugin
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessID": 8
+}
+
+### 创建N8N平台信息
+POST {{baseUrl}}/{{routerPrefix}}/intelligent_access
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "accessName": "n8n_test",
+  "accessType": "N8N",
+  "baseUrl": "http://localhost:5678",
+  "username": "kakjzzw@gmail.com",
+  "password": "1"
+}
+
+

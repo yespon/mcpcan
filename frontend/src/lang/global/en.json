@@ -49,9 +49,9 @@
     "add": "Add",
     "home": "Home",
     "mcpManage": "MCP-Mg",
-    "templateManage": "Temp-Mg",
+    "templateManage": "Template",
     "newTemplate": "AddTemplate",
-    "instanceManage": "Instance-Mg",
+    "instanceManage": "MCP Instance",
     "newInstance": "AddInstance",
     "envManage": "Env-Mg",
     "runEnviroment": "Run-Env",
@@ -61,7 +61,10 @@
     "updateCodePackage": "UpdateCodePackage",
     "viewCodePackage": "PackageDetails",
     "apiDocsList": "API Docs",
-    "agentManage": "Agent Platform"
+    "agentManage": "Agent Platform",
+    "marketManage": "Market",
+    "resourceManage": "File-Manage",
+    "package": "Code-Package"
   },
   "common": {
     "edit": "Edit",

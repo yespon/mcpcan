@@ -4,7 +4,7 @@ import { type PvcResult, type StorageClass } from '@/types/index'
 
 export const usePvcTableHooks = () => {
   const { t } = useI18n()
-  const { query } = useRoute()
+  const { query, meta } = useRoute()
   const storageClassOptions = ref<StorageClass[]>([])
   const tablePlus = ref()
   const columns = computed<any>(() => {
@@ -103,5 +103,6 @@ export const usePvcTableHooks = () => {
     pageConfig,
     newPvcDialog,
     query,
+    meta,
   }
 }

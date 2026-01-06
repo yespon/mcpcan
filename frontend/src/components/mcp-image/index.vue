@@ -36,9 +36,10 @@ const props = defineProps({
     default: 'cover',
   },
 })
+const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
 
 const originImgUrl = computed(() => {
-  return props.src ? baseConfig.SERVER_BASE_URL + props.src : ''
+  return props.src ? baseUrl + baseConfig.SERVER_BASE_URL + props.src : ''
 })
 
 const currentImgUrl = ref(originImgUrl.value)

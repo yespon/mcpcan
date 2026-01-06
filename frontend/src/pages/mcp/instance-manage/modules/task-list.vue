@@ -72,8 +72,10 @@
               }}
             </span>
             <span class="task-expand-icon">
-              <el-icon size="18" color="#fff" v-if="task.expanded"><ArrowUp /></el-icon>
-              <el-icon size="18" color="#fff" v-else><ArrowDown /></el-icon>
+              <el-icon size="18" color="var(--el-color-primary)" v-if="task.expanded"
+                ><ArrowUp
+              /></el-icon>
+              <el-icon size="18" color="var(--el-color-primary)" v-else><ArrowDown /></el-icon>
             </span>
           </div>
           <transition name="fade">
@@ -100,12 +102,7 @@
                   >
                     <div class="font-bold text-lg">
                       {{ log.mcpInstanceName
-                      }}<el-tag
-                        :type="log.status ? 'success' : 'danger'"
-                        size="small"
-                        effect="dark"
-                        class="mx-2"
-                      >
+                      }}<el-tag :type="log.status ? 'success' : 'danger'" size="small" class="mx-2">
                         {{ log.status ? t('status.success') : t('status.fail') }}
                       </el-tag>
                       <span class="font-500 font-size-4">
@@ -119,7 +116,7 @@
                       </span>
                     </div>
                     <div class="flex items-center">
-                      <el-icon size="16" color="#fff">
+                      <el-icon size="16" color="var(--el-color-primary)">
                         <component :is="(log._expanded ?? false) ? ArrowUp : ArrowDown" />
                       </el-icon>
                     </div>
@@ -148,18 +145,17 @@
                               :active="active"
                               :size-dependencies="[
                                 item.errorLog,
-                                item.insertIntelligentInfo?.difySpaceName,
+                                item.insertIntelligentInfo?.spaceName,
                               ]"
                               class="py-1"
                             >
                               <div class="sync-space-item">
                                 <span class="font-bold">{{
-                                  item.insertIntelligentInfo?.difySpaceName || '-'
+                                  item.insertIntelligentInfo?.spaceName || '-'
                                 }}</span>
                                 <el-tag
                                   :type="item.status ? 'success' : 'danger'"
                                   size="small"
-                                  effect="plain"
                                   class="mx-2"
                                 >
                                   {{ item.status ? t('status.success') : t('status.fail') }}
@@ -250,30 +246,32 @@ const handleGetTaskDetail = async (baseTask: any, updateProgress?: boolean) => {
         // 保持每个 log 的 _expanded 状态：按 mcpInstanceID 进行匹配合并
         const prevLogs = Array.isArray(item.logs) ? item.logs : []
         const prevMap = new Map(prevLogs.map((l: any) => [l.mcpInstanceID, l]))
-        const mergedLogs = Array.isArray(detail.installLogs)
-          ? detail.installLogs.map((newLog: any) => {
-              const oldLog: any = prevMap.get(newLog.mcpInstanceID) as any
-              if (oldLog && Object.prototype.hasOwnProperty.call(oldLog, '_expanded')) {
-                // 使用 Reflect.set 以确保响应性
-                Reflect.set(newLog as any, '_expanded', (oldLog as any)._expanded)
-              } else {
-                Reflect.set(newLog as any, '_expanded', false)
-              }
-              return newLog
-            })
-          : detail.installLogs
-        // 唯一ID处理；用于虚拟列表渲染
-        mergedLogs.forEach((log: any) => {
-          log.insertIntelligentLogs.forEach((info: any) => {
-            Reflect.set(
-              info as any,
-              'id',
-              info.insertIntelligentInfo?.difySpaceID ||
-                Date.now().toString() + Math.random().toString(),
-            )
+        if (Array.isArray(detail.installLogs)) {
+          const mergedLogs = detail.installLogs.map((newLog: any) => {
+            const oldLog: any = prevMap.get(newLog.mcpInstanceID) as any
+            if (oldLog && Object.prototype.hasOwnProperty.call(oldLog, '_expanded')) {
+              // 使用 Reflect.set 以确保响应性
+              Reflect.set(newLog as any, '_expanded', (oldLog as any)._expanded)
+            } else {
+              Reflect.set(newLog as any, '_expanded', false)
+            }
+            return newLog
           })
-        })
-        item.logs = mergedLogs
+          // 唯一ID处理；用于虚拟列表渲染
+          mergedLogs.forEach((log: any) => {
+            log.insertIntelligentLogs.forEach((info: any) => {
+              Reflect.set(
+                info as any,
+                'id',
+                info.insertIntelligentInfo?.spaceID ||
+                  Date.now().toString() + Math.random().toString(),
+              )
+            })
+          })
+          item.logs = mergedLogs
+        } else {
+          item.logs = detail.installLogs
+        }
         // calculate progress
         const total = detail.insertIntelligentInfos.length * detail.mcpInstanceIDs.length
         let done = 0
@@ -367,12 +365,11 @@ watch(
   padding: 0 12px 8px 12px;
 }
 .task-item {
-  background: #444;
   border-radius: 12px;
   margin-bottom: 18px;
   box-shadow: 0 2px 8px var(--ep-bg-purple-color);
   transition: box-shadow 0.2s;
-  border: 2px solid #222;
+  border: 2px solid var(--el-color-primary);
   &:hover {
     box-shadow: 0 4px 16px #0006;
     border-color: var(--ep-bg-purple-color-deep);
@@ -424,10 +421,10 @@ watch(
   align-items: center;
 }
 .task-detail {
-  background: #333;
+  // background: #333;
   border-radius: 0 0 12px 12px;
   padding: 12px 12px 12px 24px;
-  color: #fff;
+  // color: #fff;
   font-size: 15px;
   border-top: 1px solid #222;
   animation: fadeIn 0.2s;
@@ -462,7 +459,7 @@ watch(
 
 <style scoped lang="scss">
 .sync-error-maincard {
-  background: #3a1a1a;
+  background: var(--ep-bg-purple-color-deep);
   border: 1.5px solid #f56c6c;
   color: #f56c6c;
   border-radius: 8px;
@@ -493,7 +490,7 @@ watch(
 
 <style scoped lang="scss">
 .task-mcp-card {
-  background: #23233a;
+  // background: #23233a;
   border-radius: 10px;
   box-shadow: 0 2px 8px #0002;
   // padding: 16px 18px 12px 18px;
@@ -520,7 +517,7 @@ watch(
   margin-bottom: 4px;
   padding: 4px 0 4px 8px;
   border-left: 3px solid #7c4dff33;
-  background: #2d2d44;
+  background: var(--ep-bg-purple-color-deep);
   border-radius: 4px;
   font-size: 14px;
 }

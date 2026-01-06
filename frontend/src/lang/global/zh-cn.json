@@ -45,14 +45,13 @@
       }
     }
   },
-
   "sideMenu": {
     "add": "创建",
     "home": "首页",
     "mcpManage": "MCP管理",
-    "templateManage": "模板管理",
+    "templateManage": "部署模板",
     "newTemplate": "创建模板",
-    "instanceManage": "实例管理",
+    "instanceManage": "MCP实例",
     "newInstance": "创建实例",
     "envManage": "环境管理",
     "runEnviroment": "运行环境",
@@ -62,7 +61,10 @@
     "updateCodePackage": "上传代码包",
     "viewCodePackage": "代码包详情",
     "apiDocsList": "API 文档",
-    "agentManage": "智能体平台"
+    "agentManage": "智能体平台",
+    "marketManage": "市场管理",
+    "resourceManage": " 文件管理",
+    "package": "代码包"
   },
   "common": {
     "edit": "编辑",

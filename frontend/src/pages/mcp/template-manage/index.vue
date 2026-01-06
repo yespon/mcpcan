@@ -36,7 +36,12 @@
       </template>
       <template #name="{ row }">
         <div class="flex align-center">
-          <mcp-image :src="row.iconPath" width="32" height="32" :key="row.templateId"></mcp-image>
+          <mcp-image
+            :src="baseUrl + row.iconPath"
+            width="32"
+            height="32"
+            :key="row.templateId"
+          ></mcp-image>
           <el-tooltip effect="dark" placement="top" class="ml-6" :raw-content="true">
             <div class="flex-sub ml-2 ellipsis-two">{{ row.name }}</div>
             <template #content>
@@ -76,6 +81,9 @@
         </div>
       </template>
     </TablePlus>
+
+    <!-- Create a intance by openAPI docs -->
+    <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
   </div>
 </template>
 
@@ -89,11 +97,15 @@ import { useRouterHooks } from '@/utils/url'
 import instanceLogo from '@/assets/logo/instance.png'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
-import { type TemplateResult } from '@/types/index.ts'
+import { SourceType, type TemplateResult } from '@/types/index.ts'
+import OpenAPIDialog from '../instance-manage/modules/open-api-dialog.vue'
 
 const { t } = useI18n()
 const { tablePlus, columns, requestConfig, pageConfig } = useTemplateTableHooks()
 const { jumpToPage } = useRouterHooks()
+const openAPIDialog = ref()
+const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
+
 /**
  * Handle create a tamplate
  */
@@ -109,6 +121,10 @@ const handleAddTemplate = () => {
  * @param row - item of template
  */
 const handleEditTemplate = (row: TemplateResult) => {
+  if (row.sourceType === SourceType.OPENAPI) {
+    openAPIDialog.value.init(row.templateId, 'template')
+    return
+  }
   jumpToPage({
     url: '/new-template',
     data: {
@@ -152,6 +168,10 @@ const handleDeleteTemplate = (row: TemplateResult) => {
  * Handle create a instance by template
  */
 const handleCreatInstance = (row: TemplateResult) => {
+  if (row.sourceType === SourceType.OPENAPI) {
+    openAPIDialog.value.init(row.templateId, 'create')
+    return
+  }
   jumpToPage({
     url: '/new-instance',
     data: { templateId: row.templateId },

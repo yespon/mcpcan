@@ -6,7 +6,7 @@ export const useTemplateFormHooks = () => {
   const { t } = useI18n()
   const { jumpBack, jumpToPage } = useRouterHooks()
   const router = useRouter()
-  const { query } = useRoute()
+  const { query, meta } = useRoute()
   const selectVisible = ref(false)
   const originForm = ref<any>()
   const pageInfo = ref<any>({
@@ -180,6 +180,7 @@ export const useTemplateFormHooks = () => {
     jumpToPage,
     router,
     query,
+    meta,
     pageInfo,
     originForm,
     placeholderServer,

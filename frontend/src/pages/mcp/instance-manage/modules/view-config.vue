@@ -328,10 +328,10 @@ const tokenFormConfig = ref([
     props: {
       placeholder: t('mcp.instance.token.tagTypePlaceholder'),
       options: [
-        { label: 'dify_user_id', value: 'dify_user_id' },
-        { label: 'dify_user_name', value: 'dify_user_name' },
-        { label: 'dify_space_id', value: 'dify_space_id' },
-        { label: 'dify_space_name', value: 'dify_space_name' },
+        { label: 'user_id', value: 'user_id' },
+        { label: 'user_name', value: 'user_name' },
+        { label: 'space_id', value: 'space_id' },
+        { label: 'space_name', value: 'space_name' },
         { label: 'intelligent_access_id', value: 'intelligent_access_id' },
         { label: 'intelligent_access_name', value: 'intelligent_access_name' },
         { label: 'intelligent_access_type', value: 'intelligent_access_type' },
@@ -474,10 +474,10 @@ const showDeleteBtn = computed(() => {
   return (token: any) => {
     if (
       [
-        'dify_user_id',
-        'dify_user_name',
-        'dify_space_id',
-        'dify_space_name',
+        'user_id',
+        'user_name',
+        'space_id',
+        'space_name',
         'intelligent_access_id',
         'intelligent_access_name',
         'intelligent_access_type',

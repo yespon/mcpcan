@@ -363,6 +363,12 @@ func (a *App) setupHttpServer() {
 		a.ginEngine.GET(fmt.Sprintf("/%s/market/config", routerPrefix), marketService.GetMarketConfig)
 	}
 
+	// Register platform market management interface
+	platformMarketService := service.NewPlatformMarketService()
+	if platformMarketService != nil {
+		a.ginEngine.GET(fmt.Sprintf("/%s/platform/list", routerPrefix), platformMarketService.ListMcpServer)
+	}
+
 	// Register gateway log interface
 	gatewayLogService := service.NewGatewayLogService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/gateway-log/find", routerPrefix), gatewayLogService.FindHandler)
@@ -383,7 +389,9 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.DELETE(fmt.Sprintf("/%s/intelligent_access/delete", routerPrefix), intelligentAccessService.DeleteHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/intelligent_access/edit", routerPrefix), intelligentAccessService.UpdateHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/test-connection", routerPrefix), intelligentAccessService.TestConnectionHandler)
-	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-dify-user-space", routerPrefix), intelligentAccessService.ListDifyUserSpaceHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/list-user-space", routerPrefix), intelligentAccessService.ListUserSpaceHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/install-n8n-plugin", routerPrefix), intelligentAccessService.InstallN8NPluginHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/intelligent_access/check-n8n", routerPrefix), intelligentAccessService.CheckN8NHandler)
 
 	mcpToIntelligentTaskService := service.NewMcpToIntelligentTaskService(context.Background())
 	// Register mcp to intelligent task management interface

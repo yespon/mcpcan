@@ -1,5 +1,13 @@
 <template>
-  <div class="token-log-page p-4">
+  <div class="token-log-page">
+    <div class="mb-4">
+      <el-link v-if="layout" link @click="handleBack" class="link-hover" underline="never">
+        <el-icon class="mr-2">
+          <i class="icon iconfont MCP-fanhui"></i>
+        </el-icon>
+        {{ t('common.back') }}
+      </el-link>
+    </div>
     <!-- search bar -->
     <div class="filter-bar mb-4 p-3 border-rd-2">
       <!-- level -->
@@ -55,47 +63,6 @@
           </el-select>
         </div>
 
-        <!-- Token list -->
-        <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label">Token：</span>
-          <el-select
-            v-model="selectedToken"
-            :placeholder="t('mcp.instance.log.token')"
-            size="small"
-            clearable
-            filterable
-            @change="handleGetLogs"
-            style="width: 400px"
-            :disabled="!selectedInstanceId"
-          >
-            <el-option
-              v-for="(tokenItem, index) in tokenList"
-              :key="index"
-              :label="`${tokenItem.token.substring(0, 30)}... (${tokenItem.usages.join(', ')})`"
-              :value="tokenItem.token"
-            />
-          </el-select>
-        </div>
-      </div>
-
-      <!-- Trace ID + refresh button -->
-      <div class="grid grid-cols-12">
-        <div class="col-span-6 flex items-center gap-3 mb-3">
-          <span class="font-bold filter-label">Trace ID：</span>
-          <el-input
-            v-model="traceId"
-            placeholder="请输入 Trace ID"
-            size="small"
-            clearable
-            @clear="handleGetLogs"
-            @keyup.enter="handleGetLogs"
-            style="width: 400px"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </div>
         <!-- time range -->
         <div class="col-span-6 flex items-center justify-between gap-3 mb-3">
           <div class="flex items-center gap-3">
@@ -118,6 +85,47 @@
             <el-icon><Refresh /></el-icon>
             {{ t('common.refresh') }}
           </el-button>
+        </div>
+      </div>
+
+      <!-- Trace ID + refresh button -->
+      <div class="grid grid-cols-12">
+        <div class="col-span-6 flex items-center gap-3 mb-3">
+          <span class="font-bold filter-label">Trace ID：</span>
+          <el-input
+            v-model="traceId"
+            placeholder="请输入 Trace ID"
+            size="small"
+            clearable
+            @clear="handleGetLogs"
+            @keyup.enter="handleGetLogs"
+            style="width: 400px"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
+        <!-- Token list -->
+        <div class="col-span-6 flex items-center gap-3 mb-3">
+          <span class="font-bold filter-label">Token：</span>
+          <el-select
+            v-model="selectedToken"
+            :placeholder="t('mcp.instance.log.token')"
+            size="small"
+            clearable
+            filterable
+            @change="handleGetLogs"
+            style="width: 400px"
+            :disabled="!selectedInstanceId"
+          >
+            <el-option
+              v-for="(tokenItem, index) in tokenList"
+              :key="index"
+              :label="`${tokenItem.token.substring(0, 30)}... (${tokenItem.usages.join(', ')})`"
+              :value="tokenItem.token"
+            />
+          </el-select>
         </div>
       </div>
     </div>
@@ -158,6 +166,7 @@
 import { InstanceAPI } from '@/api/mcp/instance'
 import { Refresh, Search, CaretRight, Warning } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useRouterHooks } from '@/utils/url'
 
 interface LogItem {
   id: number
@@ -183,12 +192,14 @@ interface TokenItem {
 }
 
 const route = useRoute()
+const layout = useLayout()
 const logList = ref<LogItem[]>([])
 const loading = ref(false)
 const dateRange = ref<[Date, Date] | null>(null)
 const level = ref<string | number>('')
 const traceId = ref('')
 const { t } = useI18n()
+const { jumpBack } = useRouterHooks()
 
 const instanceList = ref<InstanceItem[]>([])
 const tokenList = ref<TokenItem[]>([])
@@ -393,6 +404,11 @@ const handleGetLogs = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 const init = async () => {

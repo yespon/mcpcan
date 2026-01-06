@@ -34,7 +34,6 @@ config/*
 config-*
 !config-example
 
-
 # cmd
 cmd/**/__debug_*
 cmd/**/data/
@@ -44,6 +43,7 @@ cmd/**/logs/
 .idea
 .DS_Store
 .vscode
+__debug_bin*
 
 
 

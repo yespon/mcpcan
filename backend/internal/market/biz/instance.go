@@ -10,7 +10,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kymo-mcp/mcpcan/internal/market/config"
+	"github.com/google/uuid"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
+	"github.com/kymo-mcp/mcpcan/pkg/container"
 	"github.com/kymo-mcp/mcpcan/pkg/container"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
@@ -619,6 +622,7 @@ func (biz *InstanceBiz) GetInstance(instanceID string) (*model.McpInstance, erro
 
 // DisableInstance disable instance
 func (biz *InstanceBiz) DisableInstance(ctx context.Context, instanceID string) (string, error) {
+func (biz *InstanceBiz) DisableInstance(ctx context.Context, instanceID string) (string, error) {
 	instance, err := biz.GetInstance(instanceID)
 	if err != nil {
 		return "", err
@@ -1005,10 +1009,29 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to get openapi file information")
 	}
 
+	_, err := mysql.McpOpenapiPackageRepo.FindByOpenapiFileID(ctx, req.OpenapiFileID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get openapi file information: %s", err)
+	}
+	chooseOpenapiFileInfo, err := mysql.McpOpenapiPackageRepo.FindByOpenapiFileID(ctx, req.ChooseOpenapiFileID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get choose openapi file information: %s", err)
+	}
+	if chooseOpenapiFileInfo.BaseOpenapiFileID != req.OpenapiFileID {
+		return nil, fmt.Errorf("failed to get openapi file information")
+	}
+
 	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
+
+	// Check runtime type and adjust service name for Docker
+	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
+	if err == nil && entry.GetRuntimeType() == container.RuntimeDocker {
+		containerOptions.ServiceName = containerOptions.ContainerName
+	}
+
 
 	// Check runtime type and adjust service name for Docker
 	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
@@ -1096,6 +1119,13 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
+
+	// Check runtime type and adjust service name for Docker
+	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
+	if err == nil && entry.GetRuntimeType() == container.RuntimeDocker {
+		newContainerCreateOptions.ServiceName = newContainerCreateOptions.ContainerName
+	}
+
 
 	// Check runtime type and adjust service name for Docker
 	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
@@ -1198,13 +1228,43 @@ func (biz *InstanceBiz) CreatePublicProxyPath(instanceID string, mcpProtocol mod
 	addr := ""
 	switch mcpProtocol {
 	case model.McpProtocolSSE:
+	switch mcpProtocol {
+	case model.McpProtocolSSE:
 		addr = fmt.Sprintf("/%s/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID, mcpProtocol.String())
 	case model.McpProtocolStreamableHttp:
+	case model.McpProtocolStreamableHttp:
 		addr = fmt.Sprintf("/%s/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID, "mcp")
+	default:
 	default:
 		addr = fmt.Sprintf("/%s/%s", strings.Trim(common.GetGatewayRoutePrefix(), "/"), instanceID)
 	}
 	return addr
+}
+
+// CreateInstanceRecord creates an instance record in database
+func (biz *InstanceBiz) CreateInstanceRecord(ctx context.Context, instance *model.McpInstance) error {
+	if instance.InstanceName == "" {
+		return fmt.Errorf("instance name cannot be empty")
+	}
+	// Check if name already exists
+	existingInstance, err := mysql.McpInstanceRepo.FindByName(biz.ctx, instance.InstanceName)
+	if err == nil && existingInstance != nil {
+		return fmt.Errorf("instance name %s already exists", instance.InstanceName)
+	}
+	// Update instance cache
+	biz.UpdateInstanceCache(instance.InstanceID, instance)
+	return mysql.McpInstanceRepo.Create(biz.ctx, instance)
+}
+
+// UpdateInstanceStatusToPending updates instance status to pending
+func (biz *InstanceBiz) UpdateInstanceStatusToPending(ctx context.Context, instance *model.McpInstance) error {
+	instance.Status = model.InstanceStatusActive
+	instance.ContainerStatus = model.ContainerStatusPending
+	instance.ContainerLastMessage = "Instance is restarting"
+	if err := mysql.McpInstanceRepo.Update(ctx, instance); err != nil {
+		return fmt.Errorf("failed to update instance status: %v", err)
+	}
+	return nil
 }
 
 // CreateInstanceRecord creates an instance record in database

@@ -34,7 +34,7 @@
     </div>
 
     <!-- count data model -->
-    <el-row v-if="!meta.hideLayout" justify="space-around">
+    <el-row v-if="!layout" justify="space-around">
       <el-col :span="6" class="center" v-for="(dataCount, index) in dataCountList" :key="index">
         <GlareHover
           width="338px"
@@ -276,7 +276,7 @@
       <template #options="{ option }">
         <div class="flex justify-between">
           <div class="flex align-center w-full">
-            <el-image :src="option.iconPath" style="width: 32px; height: 32px"></el-image>
+            <mcp-image :src="option.iconPath" width="32" height="32"></mcp-image>
             <el-tooltip effect="dark" placement="top" class="ml-2" :raw-content="true">
               <div class="flex-sub ml-2 ellipsis-one">{{ option.name }}</div>
               <template #content>
@@ -319,6 +319,7 @@ import AgentSyncDialog from './modules/agent-sync-dialog.vue'
 import TaskList from './modules/task-list.vue'
 
 const { t } = useI18n()
+const layout = useLayout()
 const {
   load,
   query,
@@ -344,6 +345,8 @@ const {
   agentSyncDialog,
   meta,
 } = useInstanceTableHooks()
+
+const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
 
 /**
  * Handle create a instance by template list
@@ -385,6 +388,13 @@ const handleEabledToken = async (row: InstanceResult) => {
  * @param templateId - selected of templateId
  */
 const handleConfirmSelect = (templateId: string) => {
+  if (
+    templateList.value.find((item: any) => item.templateId === templateId).sourceType ===
+    SourceType.OPENAPI
+  ) {
+    openAPIDialog.value.init(templateId, 'create')
+    return
+  }
   jumpToPage({
     url: '/new-instance',
     data: { templateId },
@@ -444,7 +454,7 @@ const handleViewLog = (row: InstanceResult) => {
     data: {
       instanceId: row.instanceId,
     },
-    isOpen: true,
+    // isOpen: !meta.hideLayout,
   })
 }
 

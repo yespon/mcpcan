@@ -1,9 +1,9 @@
 @font-face {
   font-family: "iconfont"; /* Project id 5029591 */
-  src: url('iconfont.woff2?t=1764487572860') format('woff2'),
-       url('iconfont.woff?t=1764487572860') format('woff'),
-       url('iconfont.ttf?t=1764487572860') format('truetype'),
-       url('iconfont.svg?t=1764487572860#iconfont') format('svg');
+  src: url('iconfont.woff2?t=1766971861637') format('woff2'),
+       url('iconfont.woff?t=1766971861637') format('woff'),
+       url('iconfont.ttf?t=1766971861637') format('truetype'),
+       url('iconfont.svg?t=1766971861637#iconfont') format('svg');
 }
 
 .iconfont {
@@ -12,6 +12,82 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.MCP-richeng:before {
+  content: "\e626";
+}
+
+.MCP-wenjian1:before {
+  content: "\e631";
+}
+
+.MCP-zhishi:before {
+  content: "\e7a4";
+}
+
+.MCP-yishu:before {
+  content: "\e608";
+}
+
+.MCP-liulanqi:before {
+  content: "\e605";
+}
+
+.MCP-jiaoliu:before {
+  content: "\e6b8";
+}
+
+.MCP-qita:before {
+  content: "\e662";
+}
+
+.MCP-position:before {
+  content: "\e60b";
+}
+
+.MCP-ceshi:before {
+  content: "\e8ad";
+}
+
+.MCP-financialStatements:before {
+  content: "\e683";
+}
+
+.MCP-meiti:before {
+  content: "\e636";
+}
+
+.MCP-xinxijiansuo:before {
+  content: "\e6c4";
+}
+
+.MCP-shangyefuwu:before {
+  content: "\e7c3";
+}
+
+.MCP-kaifagongju:before {
+  content: "\e7bc";
+}
+
+.MCP-xiaoshuaigongju:before {
+  content: "\e6ed";
+}
+
+.MCP-fork:before {
+  content: "\e9f5";
+}
+
+.MCP-shiyonggongjuji:before {
+  content: "\e65a";
+}
+
+.MCP-kexuejiaoyu:before {
+  content: "\e714";
+}
+
+.MCP-shichangcaidan:before {
+  content: "\e60d";
 }
 
 .MCP-mingmingkongjian:before {

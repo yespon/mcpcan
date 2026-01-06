@@ -8,34 +8,50 @@
       "connectionDesc": "Connection in progress....",
       "deleteDesc": "Are you sure you want to delete this agent platform? This action cannot be undone.",
       "platFormSync": "Agent Platform Sync",
-      "mustSelectMCP": "Please select the instances to sync"
+      "mustSelectMCP": "Please select the instances to sync",
+      "boxtips": "Detected that the platform has not installed the “n8n-nodes-mcp” plugin?"
     },
     "columns": {
       "accessName": "Name",
       "accessType": "Database Type",
       "dbHost": "Database Host",
       "createdAt": "Created At",
-      "updatedAt": "Updated At"
+      "updatedAt": "Updated At",
+      "person": "Personal",
+      "team": "Team"
     },
     "action": {
       "create": "Create Agent",
       "community": "Community",
       "enterprise": "Enterprise",
+      "n8n": "N8N",
       "successConnection": "Connection Test Successful",
-      "failConnectionTips": "Platform connection failed; do you still want to save?"
+      "failConnectionTips": "Platform connection failed; do you still want to save?",
+      "connection": "Connect Now",
+      "addAgent": "Add Agent Platform",
+      "authInstall": "Automatic Install",
+      "manualInstall": "Manual Install"
     },
     "formData": {
       "accessName": "Access name",
+      "subType": "Access type",
+      "enterpriseId": "Team/Enterprise ID",
       "accessType": "Access Type",
       "dbHost": "Database address",
       "dbPort": "Port",
       "dbUser": "Username",
       "dbPassword": "Password",
       "dbName": "Database name",
-      "loadingText": "Connecting to service..."
+      "loadingText": "Connecting to service...",
+      "installingPlugin": "Installing plugin...",
+      "baseUrl": "Platform URL",
+      "username": "UserName",
+      "password": "Password"
     },
     "placeholder": {
       "accessName": "Please enter access name",
+      "subType": "Please select access type",
+      "enterpriseId": "Please enter team/enterprise ID",
       "accessNameLength": "Please enter access name, length 2-64 characters",
       "accessType": "Please select access type",
       "dbHost": "Please enter database host",
@@ -43,7 +59,11 @@
       "dbPortLength": "Port range 1-65535",
       "dbUser": "Please enter database user",
       "dbPassword": "Please enter database password",
-      "dbName": "Please enter database name"
+      "dbName": "Please enter database name",
+      "cookie": "Please enter cookie; Use cookie to connect and sync agent platform namespaces",
+      "baseUrl": "Please enter platform URL",
+      "username": "Please enter userName",
+      "password": "Please enter password"
     },
     "sync": {
       "platform": "Platform: ",

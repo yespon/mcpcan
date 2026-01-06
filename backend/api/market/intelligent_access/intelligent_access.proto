@@ -10,6 +10,15 @@ enum IntelligentAccessType {
   Unknown = 0;
   DifyEnterprise = 1;
   Dify = 2;
+  QAgent = 3;
+  COZE = 4;
+  N8N = 5;
+}
+
+enum SubType {
+  UnknownSubType = 0;
+  Team = 1;
+  Person = 2;
 }
 
 message IntelligentAccess {
@@ -23,6 +32,13 @@ message IntelligentAccess {
     string dbName = 8;
     int64 createTime = 9;
     int64 updateTime = 10;
+
+    string subType = 11;
+    string enterpriseID = 12;
+
+    string baseUrl = 13;
+    string username = 14;
+    string password = 15;
 }
 
 message CreateRequest {
@@ -33,6 +49,13 @@ message CreateRequest {
     string dbUser = 5;
     string dbPassword = 6;
     string dbName = 7;
+
+    string subType = 8;
+    string enterpriseID = 9;
+
+    string baseUrl = 13;
+    string username = 14;
+    string password = 15;
 }
 
 message CreateResponse {
@@ -47,6 +70,13 @@ message UpdateRequest {
     string dbUser = 6;
     string dbPassword = 7;
     string dbName = 8;
+
+    string subType = 9;
+    string enterpriseID = 10;
+
+    string baseUrl = 11;
+    string username = 12;
+    string password = 13;
 }
 
 message UpdateResponse {
@@ -86,9 +116,10 @@ message TestConnectionResponse {
   string message = 2;
 }
 
-message ListDifyUserSpaceRequest {
+message ListUserSpaceRequest {
     int64 accessID = 1;
     repeated string instancesIDs = 2;
+    string cookie = 3;
 }
 
 message HeaderInfo {
@@ -99,7 +130,7 @@ message HeaderInfo {
 }
 
 
-message DifyUserSpace {
+message UserSpace {
   string userID = 1;
   string tenantID = 2;
   string userName = 3;
@@ -110,9 +141,37 @@ message DifyUserSpace {
   map<string, HeaderInfo> headers = 6;
 }
 
-message ListDifyUserSpaceResponse {
-  repeated DifyUserSpace userSpaces = 1;
+message ListUserSpaceResponse {
+  repeated UserSpace userSpaces = 1;
 }
+
+message CheckN8NRequest {
+  string baseUrl = 1;
+  string username = 2;
+  string password = 3;
+
+  int64 accessID = 4;
+}
+
+message CheckN8NResponse {
+  bool loginStatus = 1;
+  bool pluginStatus = 2;
+  string message = 3;
+}
+
+message InstallN8NPluginRequest {
+  string baseUrl = 1;
+  string username = 2;
+  string password = 3;
+
+  int64 accessID = 4;
+}
+
+message InstallN8NPluginResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 
 service IntelligentAccessService {
     rpc Create(CreateRequest) returns (CreateResponse) {
@@ -149,9 +208,22 @@ service IntelligentAccessService {
         };
     }
 
-    rpc ListDifyUserSpace(ListDifyUserSpaceRequest) returns (ListDifyUserSpaceResponse) {
+    rpc ListUserSpace(ListUserSpaceRequest) returns (ListUserSpaceResponse) {
       option (google.api.http) = {
-        post: "/intelligent_access/list-dify-user-space"
+        post: "/intelligent_access/list-user-space"
+        body: "*"
+      };
+    }
+
+    rpc CheckN8N(CheckN8NRequest) returns (CheckN8NResponse) {
+      option (google.api.http) = {
+        post: "/intelligent_access/check-n8n"
+        body: "*"
+      };
+    }
+    rpc InstallN8NPlugin(InstallN8NPluginRequest) returns (InstallN8NPluginResponse) {
+      option (google.api.http) = {
+        post: "/intelligent_access/install-n8n-plugin"
         body: "*"
       };
     }

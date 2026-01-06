@@ -32,10 +32,10 @@ html.dark {
   // --ep-bg-purple-color-deep: #ccbbff80;
   // --ep-pager-border: #ccbbff;
   // --el-color-primary-hover: #cdbdff80;
-  --ep-btn-color-top: #a083f7;
-  --ep-btn-color-bottom: #2a029f;
-  --ep-btn-color-disabled-top: #8d6fe6;
-  --ep-btn-color-disabled-bottom: #8d6fe6;
+  // --ep-btn-color-top: #a083f7;
+  // --ep-btn-color-bottom: #2a029f;
+  // --ep-btn-color-disabled-top: #8d6fe6;
+  // --ep-btn-color-disabled-bottom: #8d6fe6;
   --ep-pager-bg: #ccbbff3d;
   --ep-bg-grey: #ffffff29;
   --ep-home-glass: #d8d8d84d;
@@ -286,4 +286,9 @@ code {
   &:hover {
     color: var(--el-color-primary-hover) !important;
   }
+}
+.disabled-click {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
 }

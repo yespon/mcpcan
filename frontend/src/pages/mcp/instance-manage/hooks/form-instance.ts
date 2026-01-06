@@ -14,11 +14,21 @@ export const useInstanceFormHooks = () => {
   const { t } = useI18n()
   const { jumpBack, jumpToPage } = useRouterHooks()
   const router = useRouter()
-  const { query } = useRoute()
+  const { query, meta } = useRoute()
   const selectVisible = ref(false)
   const originForm = ref<any>()
   const { userInfo } = useUserStore()
+  const { currentMCP } = useMcpStoreHook()
 
+  const tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   const pageInfo = ref<any>({
     visible: false,
     loading: false,
@@ -45,16 +55,8 @@ export const useInstanceFormHooks = () => {
           enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
-          headers: [{ key: 'Authorization', value: '' }],
-          token:
-            'Bearer ' +
-            getToken(
-              JSON.stringify({
-                expireAt: Date.now(),
-                userId: userInfo.userId,
-                username: userInfo.username,
-              }),
-            ),
+          headers: [{ key: 'Authorization', value: tokenValue }],
+          token: tokenValue,
           usages: ['default'],
         },
       ],
@@ -212,6 +214,7 @@ export const useInstanceFormHooks = () => {
   return {
     query,
     router,
+    meta,
     jumpBack,
     jumpToPage,
     userInfo,
@@ -226,5 +229,6 @@ export const useInstanceFormHooks = () => {
     selectedPvc,
     disabledReadOnly,
     selectVisible,
+    currentMCP,
   }
 }

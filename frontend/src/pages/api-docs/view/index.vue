@@ -1,7 +1,14 @@
 <template>
   <div>
     <div class="title flex justify-between">
-      <div class="font-bold text-5">{{ t('api.pageDesc.detail') }} - {{ query.name }}</div>
+      <div class="font-bold text-5">
+        <el-link v-if="layout" link @click="handleBack" class="link-hover mr-4" underline="never">
+          <el-icon class="mr-2">
+            <i class="icon iconfont MCP-fanhui"></i>
+          </el-icon>
+          {{ t('common.back') }} </el-link
+        >{{ t('api.pageDesc.detail') }} - {{ query.name }}
+      </div>
       <div>
         <GlareHover
           width="auto"
@@ -43,11 +50,14 @@
 <script setup lang="ts">
 import { DocsAPI } from '@/api/api-docs/index'
 import GlareHover from '@/components/Animation/GlareHover.vue'
+import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
 const $route = useRoute()
+const layout = useLayout()
 const { query } = $route
 const currentContent = ref('')
+const { jumpBack } = useRouterHooks()
 
 /**
  * Handle download code package
@@ -69,6 +79,10 @@ const handleDownload = async () => {
 const handleGetContent = async () => {
   const { content } = await DocsAPI.fileContent({ openapiFileId: query.id })
   currentContent.value = content
+}
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**

@@ -69,6 +69,10 @@ const DefaultMcpType = "sse"
 
 type SourceType string
 
+func (sourceType SourceType) String() string {
+	return string(sourceType)
+}
+
 const (
 	// MCP 市场
 	SourceTypeMarket SourceType = "market"
@@ -77,7 +81,7 @@ const (
 	// 自定义
 	SourceTypeCustom SourceType = "custom"
 	// openapi
-	OpenapiTypeCustom SourceType = "openapi"
+	SourceTypeOpenapi SourceType = "openapi"
 )
 
 // McpInstance MCP 实例数据库模型
@@ -92,7 +96,7 @@ type McpInstance struct {
 	Status                 InstanceStatus  `gorm:"size:20;not null;default:active;comment:实例状态 (活跃-active/不活跃-inactive)" json:"status"`
 	PackageID              string          `gorm:"size:100;not null;comment:实例所属套餐ID" json:"packageID"`
 	EnvironmentID          uint            `gorm:"default:0;comment:环境ID" json:"environmentID"`
-	SourceType             SourceType      `gorm:"size:20;not null;comment:实例来源 (MCP 市场-market/实例模版-template/自定义-custom)" json:"sourceType"`
+	SourceType             SourceType      `gorm:"size:20;not null;comment:实例来源 (MCP 市场-market/实例模版-template/自定义-custom/openapi)" json:"sourceType"`
 	McpServerID            string          `gorm:"size:100;not null;comment:MCP 服务器ID" json:"mcpServerID"`
 	TemplateID             uint            `gorm:"size:100;not null;comment:实例模版ID" json:"templateID"`
 	EnabledToken           bool            `gorm:"not null;default:false;comment:是否启用令牌" json:"enabledToken"`

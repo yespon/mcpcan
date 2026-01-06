@@ -85,7 +85,7 @@ const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
 
   .el-main {
     height: calc(100vh - 94px);
-    background: var(--ep-bg-color);
+    // background: var(--ep-bg-color);
 
     &.p-0 {
       padding: 0 !important;

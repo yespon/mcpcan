@@ -30,7 +30,7 @@
               <el-image :src="envLogo" style="width: 20px; height: 20px"></el-image>
               <span class="desc">{{ t('env.run.pageDesc.total') }}：{{ pageConfig.total }}</span>
             </div>
-            <div id="envSearch"></div>
+            <div id="envSearch" v-show="false"></div>
           </div>
         </template>
         <template #createdAt="{ row }">{{ timestampToDate(row.createdAt) }} </template>

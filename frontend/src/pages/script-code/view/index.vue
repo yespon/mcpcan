@@ -1,7 +1,15 @@
 <template>
   <div>
     <div class="title flex justify-between">
-      <div class="font-bold text-5">{{ t('code.detail') }} - {{ query.name }}</div>
+      <div class="font-bold text-5">
+        <el-link v-if="layout" link @click="handleBack" class="link-hover mr-4" underline="never">
+          <el-icon class="mr-2">
+            <i class="icon iconfont MCP-fanhui"></i>
+          </el-icon>
+          {{ t('common.back') }}
+        </el-link>
+        {{ t('code.detail') }} - {{ query.name }}
+      </div>
       <div>
         <GlareHover
           width="auto"
@@ -87,6 +95,7 @@ import {
 import { CodeAPI } from '@/api/code/index'
 import Files from '../modules/files.vue'
 import GlareHover from '@/components/Animation/GlareHover.vue'
+import { useRouterHooks } from '@/utils/url'
 
 defineOptions({
   name: 'CodePackageView',
@@ -95,11 +104,13 @@ defineOptions({
 const { t } = useI18n()
 const $route = useRoute()
 const { query } = $route
+const layout = useLayout()
 const contentLoading = ref(false)
 const currentContent = ref('')
 const currentDir = ref<any>({})
 const fileTree = ref<any>([])
 const imageSrc = ref('')
+const { jumpBack } = useRouterHooks()
 
 /**
  * file tree config
@@ -330,6 +341,11 @@ const handleGetContent = async (filePath: string) => {
 const handleGetFileTree = async () => {
   const data = await CodeAPI.fileTree({ packageId: query.id })
   fileTree.value = convertToTreeData([data.fileStructure])
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**

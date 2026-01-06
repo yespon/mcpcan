@@ -3,6 +3,12 @@
     <el-container>
       <el-header class="p-0 flex align-center">
         <div class="log-title flex text-grey mb-2">
+          <el-link v-if="layout" link @click="handleBack" class="link-hover mr-4" underline="never">
+            <el-icon class="mr-2">
+              <i class="icon iconfont MCP-fanhui"></i>
+            </el-icon>
+            {{ t('common.back') }}
+          </el-link>
           <div>{{ t('mcp.instance.log.instanceId') }}:{{ pageInfo.loginfo.instanceId }}</div>
         </div>
       </el-header>
@@ -28,10 +34,14 @@ import { RefreshRight, Download } from '@element-plus/icons-vue'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { downloadData } from '@/utils/files'
 import { ElMessage } from 'element-plus'
+import { useRouterHooks } from '@/utils/url'
 // import { timestampToDate } from '@/utils/system'
 
 const { t } = useI18n()
 const { query } = useRoute()
+const layout = useLayout()
+const { jumpBack } = useRouterHooks()
+
 const pageInfo = ref({
   title: t('mcp.instance.log.title'),
   visible: false,
@@ -58,23 +68,29 @@ const handleRefresh = () => {
 /**
  * Handle download logs
  */
-const handleDownload = () => {
+const handleDownload = async () => {
   try {
     const { instanceName, instanceId, logs } = pageInfo.value.loginfo
-    downloadData({
+    await downloadData({
       fileName: `${instanceName}_${instanceId}_logs_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`,
       data: logs,
     })
+    ElMessage.success(t('action.download'))
   } finally {
-    ElMessage.success('action.download')
   }
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**
  * Handle close page
  */
 const handleClose = () => {
-  window.close()
+  jumpBack()
+  // window.close()
 }
 
 /**

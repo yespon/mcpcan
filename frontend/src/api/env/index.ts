@@ -7,7 +7,7 @@ export const EnvAPI = {
     return request<any, List>({
       url: `/market/environments`,
       method: 'GET',
-      data,
+      params: data,
     })
   },
   // 命名空间列表

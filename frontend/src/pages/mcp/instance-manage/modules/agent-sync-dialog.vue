@@ -65,29 +65,36 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
+                <el-icon
+                  v-if="!logoIcon[agent.accessType]"
+                  class="cursor-pointer"
+                  size="48"
+                  color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-zhinengti"></i
                 ></el-icon>
+                <McpImage
+                  v-else
+                  :src="logoIcon[agent.accessType]"
+                  fit="contain"
+                  width="50"
+                  height="20"
+                />
               </div>
               <div class="agent-info flex-sub u-line-1">
                 <div class="agent-name">{{ agent.accessName || t('agent.sync.noAccessName') }}</div>
                 <div class="agent-desc my-1">
-                  {{ t('agent.sync.type')
-                  }}{{
-                    agent.accessType === 'Dify'
-                      ? t('agent.action.community')
-                      : t('agent.action.enterprise')
-                  }}
+                  {{ t('agent.sync.type') }}
+                  {{ accessTypeMap[agent.accessType] }}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-if="!dialogInfo.platformList.length" class="empty-state">
+        <div v-if="!dialogInfo.platformList.length && !layout" class="empty-state">
           <el-empty :description="t('agent.sync.emptyDesc')">
-            <el-button link class="base-btn-link" @click="handleJumptoAgent"
-              >去添加智能体平台</el-button
-            >
+            <el-button link class="base-btn-link" @click="handleJumptoAgent">{{
+              t('agent.action.addAgent')
+            }}</el-button>
           </el-empty>
         </div>
       </div>
@@ -252,20 +259,56 @@
       </div>
     </template>
   </el-dialog>
+  <el-dialog
+    v-model="dialogInfo.cookieVisible"
+    width="650px"
+    :close-on-click-modal="false"
+    :show-close="false"
+    align-center
+  >
+    <el-form-item label="cookie" prop="cookie" class="mt-6">
+      <el-input
+        v-model.trim="dialogInfo.cookie"
+        type="textarea"
+        :autosize="{ minRows: 16, maxRows: 32 }"
+        :placeholder="t('agent.placeholder.cookie')"
+      />
+    </el-form-item>
+    <template #footer>
+      <div class="center">
+        <el-button @click="handleCloseCookie">
+          {{ t('common.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          class="base-btn"
+          :disabled="!dialogInfo.cookie"
+          @click="handleConfirmCookie"
+        >
+          {{ t('agent.action.connection') }}
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { AgentAPI } from '@/api/agent'
+import McpImage from '@/components/mcp-image/index.vue'
 import TokenFormSync from './components/token-form-sync.vue'
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { useRouterHooks } from '@/utils/url'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { kymo, coze, n8n } from '@/utils/logo.ts'
 
 const { t } = useI18n()
+const layout = useLayout()
 const { taskInfo } = toRefs(useBusinessStoreHook())
 const { jumpToPage } = useRouterHooks()
 const dialogInfo = reactive({
   title: t('agent.sync.dialogTitle'),
   visible: false,
+  cookieVisible: false,
   loading: false,
   loadingText: 'Loading...',
   desc: '',
@@ -277,6 +320,18 @@ const dialogInfo = reactive({
   selectedAgentPlatformId: '',
   selectedNamespaces: [] as string[],
   selectedNamespaceId: '',
+  cookie: '',
+})
+const accessTypeMap: Record<string, string> = {
+  COZE: 'COZE ' + t('agent.action.enterprise'),
+  DifyEnterprise: 'Dify ' + t('agent.action.enterprise'),
+  Dify: 'Dify ' + t('agent.action.community'),
+}
+const logoIcon = ref<any>({
+  Dify: kymo,
+  COZE: coze,
+  N8N: n8n,
+  DifyEnterprise: kymo,
 })
 
 // selected namespace list based on selectedNamespaces ids
@@ -342,6 +397,15 @@ const isNamespaceIndeterminate = computed(() => {
   )
 })
 
+// current Platform
+const currentPlatform = computed(() => {
+  return (
+    dialogInfo.platformList.find(
+      (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+    ) || {}
+  )
+})
+
 const handleJumptoAgent = () => {
   jumpToPage({
     url: '/agent-manage',
@@ -354,16 +418,74 @@ const handleCheckAllNamespace = (val: boolean) => {
 }
 
 // next step
-const handleNextStep = () => {
+const handleNextStep = async () => {
   dialogInfo.currentStep += 1
   //  step two request space list
   if (dialogInfo.currentStep === 2) {
-    handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    // 增加填写cookie逻辑
+    if (currentPlatform.value.accessType === 'COZE') {
+      dialogInfo.cookieVisible = true
+    } else if (currentPlatform.value.accessType === 'N8N') {
+      handleStepN8N()
+    } else {
+      handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    }
   }
   // step three default select first namespace
   if (dialogInfo.currentStep === 3) {
     dialogInfo.selectedNamespaceId = selectedNamespaceList.value[0]?.tenantID || ''
   }
+}
+
+const handleStepN8N = async () => {
+  try {
+    dialogInfo.loading = true
+    const { loginStatus, message, pluginStatus } = await AgentAPI.checkN8n({
+      accessID: currentPlatform.value.accessID,
+    })
+    // don't install plugin
+    if (loginStatus && !pluginStatus) {
+      // confirm install plugin
+      ElMessageBox.confirm(t('agent.pageDesc.boxtips'), t('common.warn'), {
+        confirmButtonText: t('agent.action.authInstall'),
+        cancelButtonText: t('agent.action.manualInstall'),
+        type: 'warning',
+        customClass: 'tips-box',
+        center: true,
+        showClose: false,
+        confirmButtonClass: 'is-plain el-button--danger danger-btn',
+        customStyle: {
+          width: '517px',
+          height: '247px',
+        },
+      })
+        .then(async () => {
+          try {
+            dialogInfo.loading = true
+            const { success } = await AgentAPI.installPlugin({
+              accessID: currentPlatform.value.accessID,
+            })
+            if (success) {
+              handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+            }
+          } finally {
+            dialogInfo.loading = false
+          }
+        })
+        .catch(() => {
+          handleStepN8N()
+        })
+    } else if (loginStatus && pluginStatus) {
+      handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    }
+  } finally {
+    dialogInfo.loading = false
+  }
+}
+
+// confirm cookie and get namespace list
+const handleConfirmCookie = () => {
+  handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
 }
 
 // select agent platformshuaxin
@@ -390,7 +512,16 @@ const toggleNamespaceSelection = (namespaceId: string) => {
 // handle get agent platform list
 const handleGetAgentPlatform = async () => {
   const { list } = await AgentAPI.list({ page: 1, pageSize: 1000 })
-  dialogInfo.platformList = list || []
+  const accessTypeList = ['Dify', 'DifyEnterprise', 'QAgent', 'COZE', 'N8N']
+  dialogInfo.platformList = (list || []).filter((agent: any) => {
+    return accessTypeList.some((type) => type === agent.accessType)
+  })
+  // normalize QAgent to Dify for kymo
+  dialogInfo.platformList.forEach((agent: any) => {
+    if (agent.accessType === 'QAgent') {
+      agent.accessType = 'Dify'
+    }
+  })
 }
 
 // handle get namespace list
@@ -401,6 +532,12 @@ const handleGetNamespaceList = async (accessID: string) => {
     const { userSpaces } = await AgentAPI.getNamespaces({
       accessID,
       instancesIDs: dialogInfo.instanceList.map((item) => item.instanceId),
+      cookie:
+        dialogInfo.platformList.find(
+          (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+        ).accessType === 'COZE'
+          ? dialogInfo.cookie
+          : '',
     })
 
     // handle data structure to render
@@ -419,6 +556,7 @@ const handleGetNamespaceList = async (accessID: string) => {
       }))
     })
     dialogInfo.namespaceList = userSpaces || []
+    dialogInfo.cookieVisible = false
   } finally {
     dialogInfo.loading = false
   }
@@ -432,10 +570,10 @@ const handleConfirmSync = async () => {
       desc: dialogInfo.desc,
       intelligentAccessID: dialogInfo.selectedAgentPlatformId,
       insertIntelligentInfos: filteredNamespaceList.value.map((namespace: any) => ({
-        difySpaceID: namespace.tenantID,
-        difyUserID: namespace.userID,
-        difySpaceName: namespace.tenantName,
-        difyUserName: namespace.userName,
+        spaceID: namespace.tenantID,
+        userID: namespace.userID,
+        spaceName: namespace.tenantName,
+        userName: namespace.userName,
         headers: Object.fromEntries(
           namespace.headers.map((item: any) => [
             item.instanceId,
@@ -452,7 +590,13 @@ const handleConfirmSync = async () => {
         ),
       })),
       mcpInstanceIDs: dialogInfo.instanceList.map((item) => item.instanceId),
-      domain: window.location.origin + (window as any).__APP_CONFIG__?.PUBLIC_PATH,
+      domain: window.location.origin,
+      cookie:
+        dialogInfo.platformList.find(
+          (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+        ).accessType === 'COZE'
+          ? dialogInfo.cookie
+          : '',
     }
 
     await AgentAPI.createSyncTask(params)
@@ -463,6 +607,11 @@ const handleConfirmSync = async () => {
   } finally {
     dialogInfo.loading = false
   }
+}
+const handleCloseCookie = () => {
+  dialogInfo.currentStep--
+  dialogInfo.cookieVisible = false
+  dialogInfo.cookie = ''
 }
 
 // init dialog data

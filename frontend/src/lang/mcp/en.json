@@ -86,6 +86,7 @@
         "add": "Add",
         "save": "Save Instance",
         "create": "Add a new MCP",
+        "asTemplate": "As Template",
         "view": "View",
         "log": "Container Logs",
         "accessLogs": "Access Logs",
@@ -110,7 +111,7 @@
       "pageDesc": {
         "createTitle": "Create a instance",
         "editTitle": "Edite the instance",
-        "list": "MCP Instance List",
+        "list": "MCP Instance resource",
         "desc": "Manage your instance list and provide URL links",
         "total": "Total",
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",

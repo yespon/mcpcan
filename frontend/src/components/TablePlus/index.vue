@@ -223,6 +223,7 @@ const props = withDefaults(
     queryFormatter?: Function
     showPage?: boolean
     showViewMode?: boolean
+    defaultViewMode?: 'card' | 'table'
     multiple?: boolean
     rowKey?: string
   }>(),
@@ -362,6 +363,7 @@ onMounted(() => {
   initFormData()
   // 搜索图标按钮注册搜索事件
   searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
+  viewMode.value = props.defaultViewMode || 'table'
 })
 
 // 提供方法：获取/设置已选项

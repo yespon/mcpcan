@@ -45,6 +45,11 @@ request.interceptors.request.use(
     // 添加国际化
     config.headers['accept-language'] = lang[Storage.get('language') as keyof typeof lang]
 
+    // 允许请求配置覆盖默认 timeout
+    if (config.timeout) {
+      config.timeout = config.timeout
+    }
+
     return config
   },
   (error: any) => {
@@ -80,7 +85,7 @@ request.interceptors.response.use(
   async (error: any) => {
     console.error('Response interceptor error:', error)
 
-    const { config, response } = error
+    const { config, response, status } = error
 
     // 网络错误或服务器无响应
     if (!response) {
@@ -89,6 +94,11 @@ request.interceptors.response.use(
     }
 
     const { code, message } = response.data as ApiResponse
+    // if (status === 401) {
+    //   window.top && (window.top.location.href = '/#/login')
+    //   // Fallback to self navigation
+    //   window.open('/#/login', '_self')
+    // }
     switch (code) {
       case 1001:
         // Access Token 过期，尝试刷新

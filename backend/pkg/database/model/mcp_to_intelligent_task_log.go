@@ -13,13 +13,19 @@ type McpToIntelligentTaskLog struct {
 	IntelligentAccessID   int64  `gorm:"type:bigint;not null;column:intelligent_access_id;comment:智能体平台ID"`
 	IntelligentAccessName string `gorm:"type:varchar(255);not null;column:intelligent_access_name;comment:智能体平台名称"`
 
-	DifySpaceID   string `gorm:"type:varchar(255);not null;column:dify_space_id;comment:dify空间ID"`
-	DifyUserID    string `gorm:"type:varchar(255);not null;column:dify_user_id;comment:dify用户ID"`
-	DifySpaceName string `gorm:"type:varchar(255);not null;column:dify_space_name;comment:dify空间名称"`
-	DifyUserName  string `gorm:"type:varchar(255);not null;column:dify_user_name;comment:dify用户名称"`
+	SpaceID   string `gorm:"type:varchar(255);not null;column:space_id;comment:空间ID"`
+	UserID    string `gorm:"type:varchar(255);not null;column:user_id;comment:用户ID"`
+	SpaceName string `gorm:"type:varchar(255);not null;column:space_name;comment:空间名称"`
+	UserName  string `gorm:"type:varchar(255);not null;column:user_name;comment:用户名称"`
 
 	CreatedAt time.Time `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
+
+	// 废弃字段
+	DifySpaceID   string `gorm:"type:varchar(255);;column:dify_space_id;comment:dify空间ID"`
+	DifyUserID    string `gorm:"type:varchar(255);;column:dify_user_id;comment:dify用户ID"`
+	DifySpaceName string `gorm:"type:varchar(255);;column:dify_space_name;comment:dify空间名称"`
+	DifyUserName  string `gorm:"type:varchar(255);;column:dify_user_name;comment:dify用户名称"`
 }
 
 // TableName 指定 GORM 使用的表名

@@ -1,7 +1,7 @@
 <template>
   <div class="common-layout">
     <el-container class="h-full">
-      <el-header class="p-0 flex align-center">
+      <el-header class="p-0 flex align-center justify-between">
         <div class="title">
           <div>{{ t('code.action.upload') }}</div>
           <div class="flex desc align-end">
@@ -9,6 +9,12 @@
             <div class="ml-2">TAR {{ t('code.desc.compressed') }} (.tar, .tar.gz)</div>
           </div>
         </div>
+        <el-button v-if="layout" @click="handleBack" class="link-hover">
+          <el-icon class="mr-2">
+            <i class="icon iconfont MCP-fanhui"></i>
+          </el-icon>
+          {{ t('common.back') }}
+        </el-button>
       </el-header>
       <el-main>
         <div class="flex flex-direction h-full">
@@ -50,10 +56,13 @@ import { UploadFilled } from '@element-plus/icons-vue'
 import baseConfig from '@/config/base_config.ts'
 import { ElMessage } from 'element-plus'
 import { Storage } from '@/utils/storage'
+import { useRouterHooks } from '@/utils/url'
 
 const { t } = useI18n()
+const layout = useLayout()
+const { jumpBack } = useRouterHooks()
 const action = ref(
-  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASEn + '/market/code/upload',
+  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/code/upload',
 )
 const headers = ref({
   Authorization: `Bearer ${Storage.get('token')}`,
@@ -63,6 +72,10 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
     return
   }
   ElMessage.success(t('action.upload'))
+}
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 </script>
 

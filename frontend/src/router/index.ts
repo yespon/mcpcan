@@ -144,6 +144,15 @@ const router = createRouter({
           component: () => import('../pages/api-docs/view/index.vue'),
         },
         {
+          path: '/resource-manage',
+          name: 'resourceManage',
+          meta: {
+            title: 'resourceManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/resource/index.vue'),
+        },
+        {
           path: '/agent-manage',
           name: 'agentManage',
           meta: {
@@ -151,6 +160,23 @@ const router = createRouter({
             isMenu: true,
           },
           component: () => import('../pages/agent/index.vue'),
+        },
+        {
+          path: '/market-manage',
+          name: 'marketManage',
+          meta: {
+            title: 'marketManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/market/index.vue'),
+        },
+        {
+          path: '/market-detail',
+          name: 'marketDetail',
+          meta: {
+            title: 'marketDetail',
+          },
+          component: () => import('../pages/market/market-detail.vue'),
         },
         {
           path: '/debug-tools',

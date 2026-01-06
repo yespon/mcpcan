@@ -39,6 +39,13 @@ export const timestampToDate = (time: number | string, format: string = 'YYYY-MM
     .replace('ss', padZero(second))
 }
 
+// github 数据转换
+export const githubNumber = (num: number | string) => {
+  const n = Number(num)
+  if (!n) return 0
+  return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n
+}
+
 /**
  * 文件大小转换（字节转 KB/MB/GB/TB）
  * @param bytes 原始文件大小（单位：B，支持数字或字符串类型）
@@ -184,8 +191,7 @@ export const initThemeInfo = async () => {
     const systemStore = useSystemStoreHook()
     const theme = await getParentLocalStorageItem('responsive-layout')
     let themeObj = JSON.parse(theme) || {}
-    // Storage.set('theme', themeObj.overallStyle || 'dark')
-    systemStore.themeType = themeObj.overallStyle || 'dark'
+    systemStore.themeType = themeObj.overallStyle || Storage.get('theme')
     document.documentElement.style.setProperty(
       '--el-color-primary',
       themeObj.epThemeColor || '#cdbdff',
@@ -210,23 +216,22 @@ export const initThemeInfo = async () => {
     )
 
     // 按钮颜色
-    // document.documentElement.style.setProperty(
-    //   '--ep-btn-color-top',
-    //   adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
-    // )
-    // document.documentElement.style.setProperty(
-    //   '--ep-btn-color-bottom',
-    //   adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
-    // )
-    // document.documentElement.style.setProperty(
-    //   '--ep-btn-color-disabled-top',
-    //   adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
-    // )
-    // document.documentElement.style.setProperty(
-    //   '--ep-btn-color-disabled-bottom',
-    //   adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
-    // )
-    console.log('初始化主题信息', themeObj.epThemeColor)
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-top',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #a083f7', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-bottom',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #2a029f', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-top',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    )
+    document.documentElement.style.setProperty(
+      '--ep-btn-color-disabled-bottom',
+      adjustHexByDeltas(themeObj.epThemeColor || ' #8d6fe6', 1, 2, 0),
+    )
   } catch {}
 }
 
@@ -234,13 +239,28 @@ export const initThemeInfo = async () => {
 export const initAuthInfo = async () => {
   try {
     // normalize possible sync/async return from getParentLocalStorageItem
-    console.log('localStorage', window.localStorage)
     const token = await getParentLocalStorageItem('ELADMIN-TOEKN')
     const userInfo = await getParentLocalStorageItem('user-info')
-    console.log('从父项目获取 token ', token, userInfo)
-    console.log('从父项目获取用户信息 ', userInfo)
+    // 清洗并解析 token，处理可能带引号或其他包装情况
+    function cleanToken(raw: any) {
+      if (!raw && raw !== 0) return ''
+      let s = String(raw)
+      s = s.trim()
+      // 移除外层双引号或单引号
+      if ((s.startsWith('\"') && s.endsWith('\"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.slice(1, -1)
+      }
+      // 常见格式：Bearer <token> 或 "Bearer <token>"
+      if (s.toLowerCase().startsWith('bearer ')) {
+        return s.split(' ')[1] || ''
+      }
+      // 可能直接就是 token
+      return s
+    }
+
     if (typeof token === 'string' && token) {
-      Storage.set('token', token.split(' ')[1] || '')
+      const parsed = cleanToken(token)
+      Storage.set('token', parsed || '')
     }
     if (userInfo) {
       Storage.set('userInfo', userInfo)
@@ -248,4 +268,13 @@ export const initAuthInfo = async () => {
   } catch (err) {
     console.warn('init parent token failed', err)
   }
+}
+
+// 监听localStorage变化
+export const watchStorage = (key: string, callback: (value: any) => void) => {
+  window.addEventListener('storage', (event) => {
+    if (event.key === key) {
+      callback(event.newValue)
+    }
+  })
 }

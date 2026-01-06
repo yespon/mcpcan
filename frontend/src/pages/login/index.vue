@@ -83,7 +83,7 @@ onMounted(init)
   justify-content: center;
   background: linear-gradient(180deg, #202021 0%, #000000 100%);
   width: 100%;
-  height: 100%;
+  height: 100vh;
 }
 
 .action-bar {

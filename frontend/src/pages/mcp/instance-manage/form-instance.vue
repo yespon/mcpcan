@@ -1,11 +1,17 @@
 <template>
   <div v-loading="pageInfo.loading">
-    <div class="page-title">
+    <div class="page-title flex justify-between items-center">
       {{
         query.instanceId
           ? t('mcp.instance.pageDesc.editTitle')
           : t('mcp.instance.pageDesc.createTitle')
       }}
+      <el-button v-if="layout" @click="handleBack" class="link-hover">
+        <el-icon class="mr-2">
+          <i class="icon iconfont MCP-fanhui"></i>
+        </el-icon>
+        {{ t('common.back') }}
+      </el-button>
     </div>
     <div class="page-title base-info">{{ t('mcp.instance.formData.baseInfo') }}</div>
     <el-form
@@ -469,8 +475,13 @@
     </el-row>
     <div class="action-footer mt-4 flex">
       <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
-      <mcp-button @click="handleConfirm">{{
+      <mcp-button @click="handleConfirm" class="mr-4">{{
         query.instanceId ? t('mcp.instance.action.save') : t('mcp.instance.action.add')
+      }}</mcp-button>
+      <!-- v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE" -->
+      <!-- v-if="pageInfo.formData.sourceType === SourceType.CUSTOM" -->
+      <mcp-button @click="handleSaveAsTemplate">{{
+        t('mcp.instance.action.asTemplate')
       }}</mcp-button>
     </div>
   </div>
@@ -494,10 +505,10 @@ import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts
 import { cloneDeep } from 'lodash-es'
 import TokenForm from './modules/components/token-form.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const layout = useLayout()
 const {
   query,
-  router,
   jumpToPage,
   jumpBack,
   userInfo,
@@ -512,6 +523,7 @@ const {
   selectedPvc,
   disabledReadOnly,
   selectVisible,
+  currentMCP,
 } = useInstanceFormHooks()
 
 const { packageList, envList, nodeList, pvcList, sourceOptions, accessTypeOptions } =
@@ -643,8 +655,11 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  // router.push('/instance-manage')
-  jumpBack()
+  // jumpBack()
+  jumpToPage({
+    url: '/instance-manage',
+    data: {},
+  })
 }
 /**
  * Handle confirm save
@@ -720,6 +735,51 @@ const handleConfirm = async () => {
 }
 
 /**
+ * save as a template
+ */
+const handleSaveAsTemplate = async () => {
+  try {
+    pageInfo.value.loading = true
+    // valid baseInfo
+    const validateBase = new Promise<boolean>((resolve) => {
+      baseInfo.value.validate((valid: boolean) => resolve(valid))
+    })
+    // valid configInfo
+    const validateConfig = new Promise<boolean>((resolve) => {
+      if (configInfo.value) {
+        configInfo.value.validate((valid: boolean) => resolve(valid))
+      } else {
+        resolve(true)
+      }
+    })
+    const [isBaseValid, isConfigValid] = await Promise.all([validateBase, validateConfig])
+
+    // pass and handle create
+    if (isBaseValid && isConfigValid) {
+      try {
+        pageInfo.value.loading = true
+        const data = await TemplateAPI.create({
+          ...pageInfo.value.formData,
+          environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
+            (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
+            {},
+          ),
+        })
+        pageInfo.value.visible = false
+        ElMessage.success(t('action.create'))
+        return data
+      } finally {
+        pageInfo.value.loading = false
+      }
+    } else {
+      ElMessage.warning(t('mcp.template.rules.validForm'))
+    }
+  } finally {
+    pageInfo.value.loading = false
+  }
+}
+
+/**
  * Handle change environment event
  */
 const handleChangeEnvironmentId = async (e: number | undefined) => {
@@ -763,25 +823,71 @@ const handleGetTemplateDetail = async () => {
   pageInfo.value.formData.sourceType = SourceType.TEMPLATE
 
   // default open token
+  let tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
   pageInfo.value.formData.enabledToken = true
   pageInfo.value.formData.tokens = [
     {
       expireAt: '',
       enabled: true,
       publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: '' }],
-      token:
-        'Bearer ' +
-        getToken(
-          JSON.stringify({
-            expireAt: Date.now(),
-            userId: userInfo.userId,
-            username: userInfo.username,
-          }),
-        ),
+      headers: [{ key: 'Authorization', value: tokenValue }],
+      token: tokenValue,
       usages: ['default'],
     },
   ]
+}
+
+const handleInitMarketInstance = async () => {
+  let tokenValue =
+    'Bearer ' +
+    getToken(
+      JSON.stringify({
+        expireAt: Date.now(),
+        userId: userInfo.userId,
+        username: userInfo.username,
+      }),
+    )
+  pageInfo.value.formData = {
+    sourceType: SourceType.MARKET,
+    name: locale.value === 'zh-cn' ? currentMCP.name : currentMCP.nameEn,
+    accessType: AccessType.HOSTING,
+    mcpProtocol: McpProtocol.STDIO,
+    imgAddress: InstanceData.value.IMGADDRESS,
+    notes: locale.value === 'zh-cn' ? currentMCP.description : currentMCP.descriptionEn,
+    mcpServers: JsonFormatter.format(currentMCP.configTemplate),
+    iconPath: currentMCP.githubOwnerAvatarUrl,
+    packageId: '',
+    environmentId: '',
+    port: InstanceData.value.PORT,
+    environmentVariables: [],
+    volumeMounts: [],
+    initScript: InstanceData.value.INITSCRIPT,
+    command: '',
+    enabledToken: true,
+    tokens: [
+      {
+        enabled: true,
+        expireAt: '',
+        publishAt: new Date().getTime(),
+        headers: [{ key: 'Authorization', value: tokenValue }],
+        token: tokenValue,
+        usages: ['default'],
+      },
+    ],
+  }
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 /**
@@ -794,13 +900,20 @@ const init = async () => {
     loadingInstance = ElLoading.service({ fullscreen: true, text: t('status.loading') + '...' })
     await handleGetEnvList()
     handleGetPackageList()
+    // create By template
     if (query.templateId) {
       await handleGetTemplateDetail()
     }
+    // create by market
+    if (query.from === 'market') {
+      await handleInitMarketInstance()
+    }
+
+    // edit instance
     if (query.instanceId) {
       handleGetDetail()
     } else {
-      // 默认选中第一个环境变量
+      // 默认选中第一个环境变量;所以上诉均没有return
       handleChangeEnvironmentId(envList.value[0]?.id)
     }
   } finally {

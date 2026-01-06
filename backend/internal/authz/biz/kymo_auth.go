@@ -3,8 +3,10 @@ package biz
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/i18n"
@@ -42,8 +44,7 @@ type KymoError struct {
 }
 
 const (
-	// KymoAuthURL = "https://ai-dev.itqm.cn/intelligent-api/auth/info" // dev url
-	KymoAuthURL = "http://intelligent-api-svc:8000/auth/info" // prod url
+	KymoAuthURL = "http://%s/auth/info" // prod url
 )
 
 func mapHTTPToI18nCode(status int) int {
@@ -74,7 +75,13 @@ func mapHTTPToI18nCode(status int) int {
 }
 
 func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token string, headers map[string]string, cookies []*http.Cookie) (*ValidateResult, *KymoError, int) {
-	req, _ := http.NewRequest("GET", KymoAuthURL, nil)
+	svc := os.Getenv("KYMO_API_SVC")
+	if svc == "" {
+		logger.Error("KYMO_API_SVC is empty")
+		svc = "intelligent-api-svc:8000"
+	}
+	kymoURL := fmt.Sprintf(KymoAuthURL, svc)
+	req, _ := http.NewRequest("GET", kymoURL, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	for k, v := range headers {
 		if v != "" {
@@ -88,7 +95,7 @@ func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token strin
 		req.AddCookie(ck)
 	}
 
-	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", KymoAuthURL), zap.Any("headers", req.Header), zap.Any("cookies", cookies))
+	logger.Info("ValidateTokenExternalKymo Request", zap.String("url", kymoURL), zap.Any("headers", req.Header), zap.Any("cookies", cookies))
 
 	cli := &http.Client{Timeout: 5 * time.Second}
 	resp, err := cli.Do(req)
@@ -98,7 +105,7 @@ func (uc *AuthUseBiz) ValidateTokenExternalKymo(ctx context.Context, token strin
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 
-	logger.Info("ValidateTokenExternalKymo Response", zap.String("url", KymoAuthURL), zap.Any("headers", resp.Header), zap.ByteString("body", body))
+	logger.Info("ValidateTokenExternalKymo Response", zap.String("url", kymoURL), zap.Any("headers", resp.Header), zap.ByteString("body", body))
 
 	if resp.StatusCode != http.StatusOK {
 		var upstream struct {
