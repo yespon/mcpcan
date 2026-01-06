@@ -103,6 +103,7 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 			Description: template.Notes,
 			CreatedAt:   template.CreatedAt.Unix(),
 			IconPath:    template.IconPath,
+			SourceType:  template.SourceType.String(),
 		}
 		cases = append(cases, caseInfo)
 	}
