@@ -19,7 +19,6 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "proto3.includePaths": [
     "${workspaceFolder}",
-    "${workspaceFolder}/mcpcan/backend/api",
     "${workspaceFolder}/backend/third_party",
     "${workspaceFolder}/backend/api",
     "${workspaceFolder}/backend"
