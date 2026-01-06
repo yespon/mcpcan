@@ -47,7 +47,7 @@ export const useMarketListHooks = () => {
     },
     { label: t('market.type.other'), value: 'other', icon: 'MCP-qita' },
   ])
-  const pagerConfig = reactive({
+  const pagerConfig = useStorage('market-list-pager', {
     total: 0,
     page: 1,
     pageSize: 12,

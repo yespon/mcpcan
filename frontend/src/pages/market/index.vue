@@ -80,14 +80,14 @@ const marketList = ref([])
 
 // handle selected type
 const selectType = (value: string) => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   categoryName.value = value
   handleGetMarketList()
 }
 
 // handle clear type
 const clearType = () => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   categoryName.value = ''
   keyword.value = ''
   handleGetMarketList()
@@ -95,12 +95,12 @@ const clearType = () => {
 
 // handle Search
 const handleQuery = () => {
-  pagerConfig.page = 1
+  pagerConfig.value.page = 1
   handleGetMarketList()
 }
 
 const handlePageChange = (newPage: number) => {
-  pagerConfig.page = newPage
+  pagerConfig.value.page = newPage
   handleGetMarketList()
 }
 
@@ -109,13 +109,13 @@ const handleGetMarketList = async () => {
   try {
     loading.value = true
     const { list, total } = await MarketAPI.list({
-      page: pagerConfig.page,
-      pageSize: pagerConfig.pageSize,
+      page: pagerConfig.value.page,
+      pageSize: pagerConfig.value.pageSize,
       name: keyword.value,
       categoryName: categoryName.value,
     })
     marketList.value = list || []
-    pagerConfig.total = Number(total || 0)
+    pagerConfig.value.total = Number(total || 0)
   } finally {
     loading.value = false
   }
