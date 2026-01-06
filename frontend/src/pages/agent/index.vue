@@ -137,8 +137,10 @@
                 width="50"
                 height="20"
               />
-              <div class="flex-sub ml-2 ellipsis-two">
-                {{ row.accessType === AgentType.N8N ? AgentType.N8N : '' }}
+              <div v-if="row.accessType === AgentType.N8N" class="flex-sub ml-2 ellipsis-two">
+                {{ AgentType.N8N }}
+              </div>
+              <div v-else class="flex-sub ml-2 ellipsis-two">
                 {{
                   row.accessType === AgentType.DIFY
                     ? t('agent.action.community')
