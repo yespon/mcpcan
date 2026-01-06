@@ -3,6 +3,7 @@ syntax = "proto3";
 package dashboard;
 
 import "google/api/annotations.proto";
+import "market/instance/instance.proto";
 
 option go_package = "github.com/kymo-mcp/mcpcan/api/market/dashboard";
 
@@ -52,7 +53,7 @@ message CaseInfo {
   // @inject_tag: json:"iconPath" desc:"图标路径"
   string iconPath = 5;
   // @inject_tag: json:"sourceType" desc:"案例来源类型"
-  string sourceType = 6;
+  instance.SourceType sourceType = 6;
 }
 
 // DashboardService 仪表板服务
