@@ -34,9 +34,7 @@
             <div>{{ githubNumber(card.githubStargazersCount) }}</div>
           </div>
         </div>
-        <el-button type="primary" @click="handleJumpToDetail">{{
-          t('market.action.viewDetail')
-        }}</el-button>
+        <mcp-button @click="handleJumpToDetail">{{ t('market.action.viewDetail') }}</mcp-button>
       </div>
     </template>
   </el-card>
@@ -47,6 +45,7 @@ import { useRouterHooks } from '@/utils/url'
 import { useMcpStore } from '@/stores/modules/mcp-store'
 import { githubNumber } from '@/utils/system'
 import baseConfig from '@/config/base_config.ts'
+import McpButton from '@/components/mcp-button/index.vue'
 
 const { jumpToPage } = useRouterHooks()
 const { t, locale } = useI18n()
