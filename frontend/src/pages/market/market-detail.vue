@@ -110,14 +110,9 @@
         </el-card>
 
         <!-- Action Button -->
-        <el-button
-          type="primary"
-          size="large"
-          class="!w-full !h-12 !text-base !rounded-lg !font-medium"
-          @click="handleCreate"
-        >
-          {{ t('market.quickCreate') }}
-        </el-button>
+        <mcp-button @click="handleCreate" size="large" class="w-full">{{
+          t('market.quickCreate')
+        }}</mcp-button>
       </div>
     </div>
   </div>
@@ -129,6 +124,7 @@ import { timestampToDate, githubNumber } from '@/utils/system'
 import { JsonFormatter } from '@/utils/json'
 import MarkdownIt from 'markdown-it'
 import baseConfig from '@/config/base_config.ts'
+import McpButton from '@/components/mcp-button/index.vue'
 
 const layout = useLayout()
 const { t, locale, jumpBack, jumpToPage, currentMCP } = useMarketDetailHooks()
