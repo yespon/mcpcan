@@ -90,6 +90,7 @@ func (s *PlatformMarketService) ListMcpServer(c *gin.Context) {
 			Id:                          item.Id,
 			Name:                        item.Name,
 			NameEn:                      item.NameEn,
+			IconUrl:                     item.IconUrl,
 			CategoryIds:                 categories,
 			Description:                 item.Description,
 			DescriptionEn:               item.DescriptionEn,

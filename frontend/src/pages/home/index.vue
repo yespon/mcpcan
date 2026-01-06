@@ -91,7 +91,7 @@
             <el-col :span="6" v-for="itemCase in caseList" :key="itemCase.id">
               <div
                 class="center flex-sub flex-direction case-card link-hover cursor-pointer"
-                @click="handleToTemplateForm(itemCase.templateId)"
+                @click="handleToTemplateForm(itemCase)"
               >
                 <el-tooltip class="box-item" effect="dark" placement="top">
                   <div class="flex align-center w-full">
@@ -123,6 +123,8 @@
         </div>
       </div>
     </AnimatedContent>
+    <!-- Create or edit a intance by openAPI docs -->
+    <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
   </div>
 </template>
 
@@ -135,10 +137,13 @@ import { bigmodel, modelscope, higress, mcpso, smithery } from '@/utils/logo'
 import AnimatedContent from '@/components/Animation/AnimatedContent.vue'
 import Global from '@/components/Animation/global.vue'
 import McpImage from '@/components/mcp-image/index.vue'
+import OpenAPIDialog from '../mcp/instance-manage/modules/open-api-dialog.vue'
+import { SourceType } from '@/types'
 
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
 const loading = ref(false)
+const openAPIDialog = ref<any>(null)
 const instanceCount = ref<any>({
   totalEnvironments: 0,
 })
@@ -206,11 +211,16 @@ const handleToTemplate = () => {
 /**
  * jump to create instance page
  */
-const handleToTemplateForm = (templateId: string) => {
-  jumpToPage({
-    url: '/new-instance',
-    data: { templateId },
-  })
+const handleToTemplateForm = (itemCase: any) => {
+  if (itemCase.sourceType === SourceType.OPENAPI) {
+    // openAPI
+    openAPIDialog.value.init(itemCase.templateId, 'template')
+  } else {
+    jumpToPage({
+      url: '/new-instance',
+      data: { templateId: itemCase.templateId },
+    })
+  }
 }
 
 /**

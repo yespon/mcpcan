@@ -144,6 +144,15 @@ const router = createRouter({
           component: () => import('../pages/api-docs/view/index.vue'),
         },
         {
+          path: '/resource-manage',
+          name: 'resourceManage',
+          meta: {
+            title: 'resourceManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/resource/index.vue'),
+        },
+        {
           path: '/agent-manage',
           name: 'agentManage',
           meta: {

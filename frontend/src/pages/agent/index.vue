@@ -9,19 +9,29 @@
         <mcp-button :icon="Plus">{{ t('agent.action.create') }}</mcp-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="community" @click="handleNewAgent('Dify')">
+            <el-dropdown-item command="community" @click="handleNewAgent(AgentType.DIFY)">
               <div class="flex align-center">
-                <McpImage :src="dify" fit="contain" width="80" height="20" />
+                <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
                 {{ t('agent.action.community') }}
               </div>
             </el-dropdown-item>
-            <el-dropdown-item command="business" @click="handleNewAgent('DifyEnterprise')">
-              <McpImage :src="dify" fit="contain" width="80" height="20" />
+            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.DIFY_ENTERPRISE)">
+              <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
               {{ t('agent.action.enterprise') }}
             </el-dropdown-item>
-            <el-dropdown-item command="business" @click="handleNewAgent('COZE')">
-              <McpImage :src="coze" fit="contain" width="80" height="20" />
-              {{ t('agent.action.enterprise') }}
+            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.COZE)">
+              <McpImage
+                :src="coze"
+                fit="contain"
+                width="20"
+                height="20"
+                borderRadius="4"
+                style="background-color: #fff; margin-right: 10px"
+              />Coze{{ t('agent.action.enterprise') }}
+            </el-dropdown-item>
+            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.N8N)">
+              <McpImage :src="n8n" fit="contain" width="20" height="20" />
+              <span class="ml-2">{{ t('agent.action.n8n') }}</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -77,7 +87,10 @@
               <el-icon class="link-hover cursor-pointer"><More /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item v-if="row.accessType !== 'COZE'" @click="handleConnection(row)">
+                  <el-dropdown-item
+                    v-if="row.accessType !== AgentType.COZE"
+                    @click="handleConnection(row)"
+                  >
                     {{ t('common.connection') }}
                   </el-dropdown-item>
                   <el-dropdown-item @click="handleDelete(row)">
@@ -102,7 +115,7 @@
                         {{ t('common.edit') }}
                       </el-dropdown-item>
                       <el-dropdown-item
-                        v-if="row.accessType !== 'COZE'"
+                        v-if="row.accessType !== AgentType.COZE"
                         @click="handleConnection(row)"
                       >
                         {{ t('common.connection') }}
@@ -119,13 +132,20 @@
             </template>
             <div class="center">
               <McpImage
-                :src="row.accessType === 'Dify' ? kymo : row.accessType === 'COZE' ? coze : dify"
+                :src="logoIcon[row.accessType] || dify"
                 fit="contain"
-                width="80"
+                width="50"
                 height="20"
               />
-              <div class="flex-sub ml-2 ellipsis-two">
-                {{ row.accessType === 'Dify' ? '社区版' : '商业版' }}
+              <div v-if="row.accessType === AgentType.N8N" class="flex-sub ml-2 ellipsis-two">
+                {{ AgentType.N8N }}
+              </div>
+              <div v-else class="flex-sub ml-2 ellipsis-two">
+                {{
+                  row.accessType === AgentType.DIFY
+                    ? t('agent.action.community')
+                    : t('agent.action.enterprise')
+                }}
               </div>
             </div>
           </el-card>
@@ -144,14 +164,12 @@ import TablePlus from '@/components/TablePlus/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import FormAgent from './modules/form-dialog.vue'
-import { kymo, dify, coze } from '@/utils/logo.ts'
+import { kymo, dify, coze, n8n } from '@/utils/logo.ts'
 import agentLogo from '@/assets/logo/instance.png'
 import { useAgentTableHooks } from './index.ts'
+import { AgentType } from '@/types/agent'
 
-defineOptions({
-  name: 'AgentPage',
-})
-const { t, tablePlus, columns, pageInfo, requestConfig, pageConfig, AgentAPI } =
+const { t, tablePlus, columns, pageInfo, requestConfig, pageConfig, AgentAPI, logoIcon } =
   useAgentTableHooks()
 // view model：'card' or 'table'
 const formAgent = ref()
@@ -169,8 +187,17 @@ const handleFormSuccess = () => {
 const handleConnection = async (row: any) => {
   try {
     pageInfo.value.loading = true
-    await AgentAPI.connectionTest(row)
-    ElMessage.success(t('agent.action.successConnection'))
+    if (row.accessType === AgentType.N8N) {
+      const { loginStatus } = await AgentAPI.checkN8n({
+        accessID: row.accessID,
+      })
+      if (loginStatus) {
+        ElMessage.success(t('agent.action.successConnection'))
+      }
+    } else {
+      await AgentAPI.connectionTest(row)
+      ElMessage.success(t('agent.action.successConnection'))
+    }
   } catch (error) {
     console.error('Failed to test connection:', error)
   } finally {

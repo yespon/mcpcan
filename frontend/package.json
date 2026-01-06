@@ -21,6 +21,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
     "@types/lodash-es": "^4.17.12",
+    "@types/markdown-it": "^14.1.2",
     "@vueuse/core": "^13.6.0",
     "axios": "^1.12.2",
     "cobe": "^0.6.5",
@@ -30,6 +31,7 @@
     "js-yaml": "^4.1.0",
     "jsrsasign": "^10.9.0",
     "lodash-es": "^4.17.21",
+    "markdown-it": "^14.1.0",
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
     "pinia": "^3.0.3",

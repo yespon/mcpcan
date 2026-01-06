@@ -71,3 +71,33 @@ Authorization: {{token}}
   ],
   "cookie": ""
 }
+
+### 1. 创建同步到n8n任务
+POST {{baseUrl}}/{{routerPrefix}}/mcp_to_intelligent_task
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "desc": "同步到n8n",
+  "domain": "https://mcp-dev.itqm.com",
+  "intelligentAccessID": 8,
+  "insertIntelligentInfos": [
+    {
+      "userID": "XtyKeNFWGOkGxGtR",
+      "spaceID": "XtyKeNFWGOkGxGtR",
+      "userName": "kakj kakj <kakjzzw@gmail.com>",
+      "spaceName": "kakj kakj <kakjzzw@gmail.com>",
+      "headers": {
+        "3696c011-1085-407f-893c-1b46449fb50e": {
+          "token": "Bearer NWUyZGNhZjEtYTJhMy00MjBlLThmYzctZWYwZDA2ODRlNTQweyJleHBpcmVfYXQiOiIxNzY3MDgzNjE2MDAwIiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6ImFkbWluIn0=",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJleHAiOjE3NjYxMzM2MjgsImlhdCI6MTc2NjA0NzIyOH0.VoUCdkGd8kZ0pwzbvOSxf3UbIvR6BA-nSzh8buESGQc"
+          }
+        }
+      }
+    }
+  ],
+  "mcpInstanceIDs": [
+    "3696c011-1085-407f-893c-1b46449fb50e"
+  ]
+}

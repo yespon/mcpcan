@@ -12,6 +12,7 @@ import openapi from '@/assets/logo/openapi.png'
 import kymo from '@/assets/logo/kymo.png'
 import dify from '@/assets/logo/dify-logo.png'
 import coze from '@/assets/logo/coze-logo.png'
+import n8n from '@/assets/logo/n8n.png'
 
 export {
   instanceTotal,
@@ -27,4 +28,5 @@ export {
   kymo,
   dify,
   coze,
+  n8n,
 }

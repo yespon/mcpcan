@@ -25,10 +25,10 @@ export default defineConfig({
         changeOrigin: true,
         // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
-      '/api/': {
+      '/api': {
         target: 'https://mcp-dev.itqm.com',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, '/'),
+        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },

@@ -1,0 +1,31 @@
+{
+  "market": {
+    "placeholderName": "Please enter the name of the MCP service or keywords to search...",
+    "search": "Search",
+    "clear": "Clear",
+    "type": {
+      "test": "Test",
+      "browser-automation": "Browser Automation",
+      "search": "Search Tool",
+      "communication": "Chat and Collaboration",
+      "developer-tools": "Development Tool",
+      "entertainment-and-media": "Entertainment and Media",
+      "file-systems": "File System",
+      "finance": "Finance",
+      "knowledge-and-memory": "Knowledge and Memory",
+      "location-services": "Location Services",
+      "art-and-culture": "Art and Culture",
+      "research-and-data": "Academic Research",
+      "calendar-management": "Calendar Management",
+      "efficiency-tools": "Efficiency Tools",
+      "other": "Other"
+    },
+    "updateTime": "Latest Release Time",
+    "descWhatIsMCP": "What can you do with this MCP Server?",
+    "config": "Config",
+    "quickCreate": " Quick Create",
+    "action": {
+      "viewDetail": "View Details"
+    }
+  }
+}

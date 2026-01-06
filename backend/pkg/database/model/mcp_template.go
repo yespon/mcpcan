@@ -25,6 +25,8 @@ type McpTemplate struct {
 	Notes                string          `gorm:"type:text;comment:备注" json:"notes"`
 	ServicePath          string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`
 	IconPath             string          `gorm:"size:100;not null;default:'';comment:MCP 图标路径" json:"iconPath"`
+	OpenapiBaseUrl       string          `gorm:"size:500;not null;default:'';comment:MCP 访问基础路径" json:"openapiBaseUrl"`
+	SourceType           SourceType      `gorm:"size:20;not null;comment:模版来源 (自定义-custom/openapi)" json:"sourceType"`
 	CreatedAt            time.Time       `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt            time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }

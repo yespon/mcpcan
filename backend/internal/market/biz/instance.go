@@ -184,7 +184,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		PackageID:              chooseOpenapiFileInfo.OpenapiFileID,
 		ContainerStatus:        model.ContainerStatusPending,
 		EnvironmentID:          uint(req.EnvironmentId),
-		SourceType:             model.OpenapiTypeCustom,
+		SourceType:             model.SourceTypeOpenapi,
 		McpServerID:            "",
 		TemplateID:             0,
 		EnabledToken:           req.EnabledToken,

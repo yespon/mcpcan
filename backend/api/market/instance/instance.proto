@@ -533,6 +533,10 @@ message TemplateCreateRequest {
   McpProtocol mcpProtocol = 18;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"
   string iconPath = 19;
+  // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"
+  string openapiBaseUrl = 20;
+  // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type"
+  SourceType sourceType = 21;
 }
 
 // TemplateCreateResp template create response
@@ -593,6 +597,10 @@ message TemplateDetailResp {
   string environmentName = 23;
   // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
   string servicePath = 24;
+  // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"
+  string openapiBaseUrl = 25;
+  // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type (custom/openapi)"
+  SourceType sourceType = 26;
 }
 
 // TemplateEditRequest template edit request
@@ -633,6 +641,8 @@ message TemplateEditRequest {
   McpProtocol mcpProtocol = 19;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"
   string iconPath = 20;
+  // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"
+  string openapiBaseUrl = 25;
 }
 
 // TemplateEditResp template edit response

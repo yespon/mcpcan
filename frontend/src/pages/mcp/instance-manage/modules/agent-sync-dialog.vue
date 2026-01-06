@@ -65,9 +65,20 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
+                <el-icon
+                  v-if="!logoIcon[agent.accessType]"
+                  class="cursor-pointer"
+                  size="48"
+                  color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-zhinengti"></i
                 ></el-icon>
+                <McpImage
+                  v-else
+                  :src="logoIcon[agent.accessType]"
+                  fit="contain"
+                  width="50"
+                  height="20"
+                />
               </div>
               <div class="agent-info flex-sub u-line-1">
                 <div class="agent-name">{{ agent.accessName || t('agent.sync.noAccessName') }}</div>
@@ -283,9 +294,12 @@
 
 <script setup lang="ts">
 import { AgentAPI } from '@/api/agent'
+import McpImage from '@/components/mcp-image/index.vue'
 import TokenFormSync from './components/token-form-sync.vue'
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { useRouterHooks } from '@/utils/url'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { kymo, coze, n8n } from '@/utils/logo.ts'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -313,6 +327,12 @@ const accessTypeMap: Record<string, string> = {
   DifyEnterprise: 'Dify ' + t('agent.action.enterprise'),
   Dify: 'Dify ' + t('agent.action.community'),
 }
+const logoIcon = ref<any>({
+  Dify: kymo,
+  COZE: coze,
+  N8N: n8n,
+  DifyEnterprise: kymo,
+})
 
 // selected namespace list based on selectedNamespaces ids
 const selectedNamespaceList = computed(() => {
@@ -377,6 +397,15 @@ const isNamespaceIndeterminate = computed(() => {
   )
 })
 
+// current Platform
+const currentPlatform = computed(() => {
+  return (
+    dialogInfo.platformList.find(
+      (agent) => agent.accessID === dialogInfo.selectedAgentPlatformId,
+    ) || {}
+  )
+})
+
 const handleJumptoAgent = () => {
   jumpToPage({
     url: '/agent-manage',
@@ -389,16 +418,15 @@ const handleCheckAllNamespace = (val: boolean) => {
 }
 
 // next step
-const handleNextStep = () => {
+const handleNextStep = async () => {
   dialogInfo.currentStep += 1
   //  step two request space list
   if (dialogInfo.currentStep === 2) {
     // 增加填写cookie逻辑
-    if (
-      dialogInfo.platformList.find((agent) => agent.accessID === dialogInfo.selectedAgentPlatformId)
-        .accessType === 'COZE'
-    ) {
+    if (currentPlatform.value.accessType === 'COZE') {
       dialogInfo.cookieVisible = true
+    } else if (currentPlatform.value.accessType === 'N8N') {
+      handleStepN8N()
     } else {
       handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
     }
@@ -408,6 +436,53 @@ const handleNextStep = () => {
     dialogInfo.selectedNamespaceId = selectedNamespaceList.value[0]?.tenantID || ''
   }
 }
+
+const handleStepN8N = async () => {
+  try {
+    dialogInfo.loading = true
+    const { loginStatus, message, pluginStatus } = await AgentAPI.checkN8n({
+      accessID: currentPlatform.value.accessID,
+    })
+    // don't install plugin
+    if (loginStatus && !pluginStatus) {
+      // confirm install plugin
+      ElMessageBox.confirm(t('agent.pageDesc.boxtips'), t('common.warn'), {
+        confirmButtonText: t('agent.action.authInstall'),
+        cancelButtonText: t('agent.action.manualInstall'),
+        type: 'warning',
+        customClass: 'tips-box',
+        center: true,
+        showClose: false,
+        confirmButtonClass: 'is-plain el-button--danger danger-btn',
+        customStyle: {
+          width: '517px',
+          height: '247px',
+        },
+      })
+        .then(async () => {
+          try {
+            dialogInfo.loading = true
+            const { success } = await AgentAPI.installPlugin({
+              accessID: currentPlatform.value.accessID,
+            })
+            if (success) {
+              handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+            }
+          } finally {
+            dialogInfo.loading = false
+          }
+        })
+        .catch(() => {
+          handleStepN8N()
+        })
+    } else if (loginStatus && pluginStatus) {
+      handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
+    }
+  } finally {
+    dialogInfo.loading = false
+  }
+}
+
 // confirm cookie and get namespace list
 const handleConfirmCookie = () => {
   handleGetNamespaceList(dialogInfo.selectedAgentPlatformId)
@@ -437,13 +512,10 @@ const toggleNamespaceSelection = (namespaceId: string) => {
 // handle get agent platform list
 const handleGetAgentPlatform = async () => {
   const { list } = await AgentAPI.list({ page: 1, pageSize: 1000 })
-  dialogInfo.platformList = (list || []).filter(
-    (agent: any) =>
-      agent.accessType === 'Dify' ||
-      agent.accessType === 'DifyEnterprise' ||
-      agent.accessType === 'QAgent' ||
-      agent.accessType === 'COZE',
-  )
+  const accessTypeList = ['Dify', 'DifyEnterprise', 'QAgent', 'COZE', 'N8N']
+  dialogInfo.platformList = (list || []).filter((agent: any) => {
+    return accessTypeList.some((type) => type === agent.accessType)
+  })
   // normalize QAgent to Dify for kymo
   dialogInfo.platformList.forEach((agent: any) => {
     if (agent.accessType === 'QAgent') {

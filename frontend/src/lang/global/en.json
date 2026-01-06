@@ -51,7 +51,7 @@
     "mcpManage": "MCP-Mg",
     "templateManage": "Template",
     "newTemplate": "AddTemplate",
-    "instanceManage": "Instance",
+    "instanceManage": "MCP Instance",
     "newInstance": "AddInstance",
     "envManage": "Env-Mg",
     "runEnviroment": "Run-Env",
@@ -62,7 +62,9 @@
     "viewCodePackage": "PackageDetails",
     "apiDocsList": "API Docs",
     "agentManage": "Agent Platform",
-    "marketManage": "Market"
+    "marketManage": "Market",
+    "resourceManage": "File-Manage",
+    "package": "Code-Package"
   },
   "common": {
     "edit": "Edit",

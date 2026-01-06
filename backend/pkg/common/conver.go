@@ -95,7 +95,7 @@ func ConvertToProtoSourceType(sourceType model.SourceType) (instancepb.SourceTyp
 		return instancepb.SourceType_TEMPLATE, nil
 	case model.SourceTypeCustom:
 		return instancepb.SourceType_CUSTOM, nil
-	case model.OpenapiTypeCustom:
+	case model.SourceTypeOpenapi:
 		return instancepb.SourceType_OPENAPI, nil
 	default:
 		return instancepb.SourceType_SourceTypeUnknown, fmt.Errorf("unknown source type: %v", sourceType)
@@ -175,5 +175,20 @@ func ConvertToProtoPackageType(packageType model.PackageType) (codepb.PackageTyp
 		return codepb.PackageType_PackageTypeMcpb, nil
 	default:
 		return codepb.PackageType_PackageTypeUnspecified, fmt.Errorf("unknown package type: %v", packageType)
+	}
+}
+
+func ConvertSourceType(sourceType model.SourceType) instancepb.SourceType {
+	switch sourceType {
+	case model.SourceTypeMarket:
+		return instancepb.SourceType_MARKET
+	case model.SourceTypeTemplate:
+		return instancepb.SourceType_TEMPLATE
+	case model.SourceTypeCustom:
+		return instancepb.SourceType_CUSTOM
+	case model.SourceTypeOpenapi:
+		return instancepb.SourceType_OPENAPI
+	default:
+		return instancepb.SourceType_SourceTypeUnknown
 	}
 }

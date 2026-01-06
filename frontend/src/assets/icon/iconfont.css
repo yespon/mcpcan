@@ -1,9 +1,9 @@
 @font-face {
   font-family: "iconfont"; /* Project id 5029591 */
-  src: url('iconfont.woff2?t=1766633373159') format('woff2'),
-       url('iconfont.woff?t=1766633373159') format('woff'),
-       url('iconfont.ttf?t=1766633373159') format('truetype'),
-       url('iconfont.svg?t=1766633373159#iconfont') format('svg');
+  src: url('iconfont.woff2?t=1766971861637') format('woff2'),
+       url('iconfont.woff?t=1766971861637') format('woff'),
+       url('iconfont.ttf?t=1766971861637') format('truetype'),
+       url('iconfont.svg?t=1766971861637#iconfont') format('svg');
 }
 
 .iconfont {
@@ -12,6 +12,42 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.MCP-richeng:before {
+  content: "\e626";
+}
+
+.MCP-wenjian1:before {
+  content: "\e631";
+}
+
+.MCP-zhishi:before {
+  content: "\e7a4";
+}
+
+.MCP-yishu:before {
+  content: "\e608";
+}
+
+.MCP-liulanqi:before {
+  content: "\e605";
+}
+
+.MCP-jiaoliu:before {
+  content: "\e6b8";
+}
+
+.MCP-qita:before {
+  content: "\e662";
+}
+
+.MCP-position:before {
+  content: "\e60b";
+}
+
+.MCP-ceshi:before {
+  content: "\e8ad";
 }
 
 .MCP-financialStatements:before {
