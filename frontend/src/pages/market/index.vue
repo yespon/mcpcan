@@ -123,7 +123,7 @@ const handleGetMarketList = async () => {
 
 onMounted(() => {
   handleGetMarketList()
-  searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
+  // searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
 </script>
 
