@@ -2,7 +2,7 @@
   <div>
     <!-- <div><el-card></el-card></div> -->
     <div v-loading="loading" class="flex gap-4 mt-4">
-      <div class="w-75 type-sticky">
+      <div class="w-75 type-sticky" v-if="false">
         <el-input
           ref="searchInputRef"
           v-model="keyword"
