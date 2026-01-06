@@ -671,6 +671,20 @@ onBeforeUnmount(() => {
   }
 })
 
+onActivated(() => {
+  init()
+  if (!timer.value) {
+    timer.value = setInterval(init, 30000)
+  }
+})
+
+onDeactivated(() => {
+  if (timer.value) {
+    clearInterval(timer.value)
+    timer.value = 0
+  }
+})
+
 onMounted(() => {
   init()
   if (timer.value) {
