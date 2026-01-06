@@ -1,12 +1,7 @@
 <template>
   <el-card class="mcp-card">
     <div class="flex gap-1 items-center">
-      <mcp-image
-        :src="card.iconUrl || card.githubOwnerAvatarUrl"
-        :key="card.id"
-        width="60"
-        height="60"
-      ></mcp-image>
+      <mcp-image :src="iconUrl(card)" :key="card.id" width="60" height="60"></mcp-image>
       <div class="flex-1">
         <div class="mb-1">{{ locale === 'zh-cn' ? card.name : card.nameEn }}</div>
         <div class="font-size-3 font-bold">{{ card.githubOwner }}</div>
@@ -51,6 +46,7 @@ import McpImage from '@/components/mcp-image/index.vue'
 import { useRouterHooks } from '@/utils/url'
 import { useMcpStore } from '@/stores/modules/mcp-store'
 import { githubNumber } from '@/utils/system'
+import baseConfig from '@/config/base_config.ts'
 
 const { jumpToPage } = useRouterHooks()
 const { t, locale } = useI18n()
@@ -61,6 +57,17 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+})
+const iconUrl = computed(() => {
+  return (card: any) => {
+    if (card.iconUrl) {
+      return baseConfig.MAIN_SITE_URL + card.iconUrl
+    } else if (card.githubOwnerAvatarUrl) {
+      return card.githubOwnerAvatarUrl
+    } else {
+      return ''
+    }
+  }
 })
 
 const translationTag = (code: string) => {

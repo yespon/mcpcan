@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div><el-card></el-card></div>
+    <!-- <div><el-card></el-card></div> -->
     <div v-loading="loading" class="flex gap-4 mt-4">
       <div class="w-75 type-sticky">
         <el-input
