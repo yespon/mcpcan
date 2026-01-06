@@ -11,8 +11,9 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-	"github.com/sashabaranov/go-openai"
 )
+
+//go:generate go run ../../../cmd/tools/genmodels/main.go
 
 type AiModelAccessService struct {
 	ctx context.Context
@@ -188,15 +189,8 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 
 // GetSupportedModelsHandler gets supported models
 func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
-	// 1. OpenAI Models (Referencing go-openai constants)
-	openAIModels := []string{
-		openai.GPT4o,
-		openai.GPT4oMini,
-		openai.GPT4Turbo,
-		openai.GPT4,
-		openai.GPT3Dot5Turbo,
-		openai.GPT3Dot5Turbo16K,
-	}
+	// 1. OpenAI Models (Generated from go-openai)
+	openAIModels := SupportedOpenAIModels
 
 	// 2. DeepSeek Models (Manual)
 	deepSeekModels := []string{

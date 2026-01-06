@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 
@@ -14,7 +13,8 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-	"github.com/sashabaranov/go-openai"
+	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai" // Register OpenAI provider
 )
 
 // AiSessionService struct for ai session service
@@ -310,35 +310,32 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 		return
 	}
 
-	// 4. Init OpenAI Client
-	config := openai.DefaultConfig(modelAccess.ApiKey)
-	if modelAccess.BaseUrl != "" {
-		config.BaseURL = modelAccess.BaseUrl
+	// 4. Init LLM Provider
+	providerType := llm.ProviderOpenAI
+	if modelAccess.Provider != "" {
+		providerType = llm.ProviderType(modelAccess.Provider)
 	}
-	client := openai.NewClientWithConfig(config)
+
+	provider, err := llm.NewProvider(providerType, llm.ProviderConfig{
+		BaseURL: modelAccess.BaseUrl,
+		APIKey:  modelAccess.ApiKey,
+	})
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to init provider: %s", err.Error()))
+		return
+	}
 
 	// 5. Construct Messages
-	var messages []openai.ChatCompletionMessage
-	// Add System Prompt if needed (optional, maybe from session config?)
-
+	var messages []llm.Message
 	// Add History
 	for _, msg := range historyMessages {
-		role := openai.ChatMessageRoleUser
-		if msg.Role == "assistant" {
-			role = openai.ChatMessageRoleAssistant
-		} else if msg.Role == "system" {
-			role = openai.ChatMessageRoleSystem
-		} else if msg.Role == "tool" {
-			role = openai.ChatMessageRoleTool
-		}
-
-		m := openai.ChatCompletionMessage{
-			Role:    role,
+		m := llm.Message{
+			Role:    msg.Role,
 			Content: msg.Content,
 		}
 		// Handle ToolCalls if any
 		if msg.ToolCalls != "" && msg.ToolCalls != "[]" && msg.ToolCalls != "null" {
-			var toolCalls []openai.ToolCall
+			var toolCalls []llm.ToolCall
 			if err := json.Unmarshal([]byte(msg.ToolCalls), &toolCalls); err == nil {
 				m.ToolCalls = toolCalls
 			}
@@ -350,8 +347,8 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	}
 
 	// Add Current User Message
-	messages = append(messages, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleUser,
+	messages = append(messages, llm.Message{
+		Role:    "user",
 		Content: req.Content,
 	})
 
@@ -362,23 +359,16 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	stream, err := client.CreateChatCompletionStream(
-		s.ctx,
-		openai.ChatCompletionRequest{
-			Model:    modelAccess.ModelName,
-			Messages: messages,
-			Stream:   true,
-			StreamOptions: &openai.StreamOptions{
-				IncludeUsage: true,
-			},
-			// Tools: ... (Phase 4)
-		},
-	)
+	stream, err := provider.StreamChat(s.ctx, llm.ChatRequest{
+		Model:    modelAccess.ModelName,
+		Messages: messages,
+		Stream:   true,
+		// Tools: ... (Phase 4)
+	})
 	if err != nil {
 		s.sendSSE(c, "error", fmt.Sprintf("failed to create stream: %v", err))
 		return
 	}
-	defer stream.Close()
 
 	// Save User Message
 	userMsg := &model.AiMessage{
@@ -393,32 +383,28 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	}
 
 	var fullContent string
-	var usage *openai.Usage
+	var usage *llm.Usage
 
 	// 7. Stream Loop
-	for {
-		response, err := stream.Recv()
-		if err == io.EOF {
-			s.sendSSE(c, "done", "")
-			break
-		}
-		if err != nil {
-			s.sendSSE(c, "error", err.Error())
+	for resp := range stream {
+		if resp.Error != nil {
+			s.sendSSE(c, "error", resp.Error.Error())
+			// Keep going? No, usually break.
+			// But check if it's EOF? Generic provider should handle EOF and close channel.
+			// If we get an error here, it's a real error.
 			break
 		}
 
-		if response.Usage != nil {
-			usage = response.Usage
+		if resp.Usage != nil {
+			usage = resp.Usage
 		}
 
-		if len(response.Choices) > 0 {
-			content := response.Choices[0].Delta.Content
-			if content != "" {
-				fullContent += content
-				s.sendSSE(c, "text", content)
-			}
+		if resp.Content != "" {
+			fullContent += resp.Content
+			s.sendSSE(c, "text", resp.Content)
 		}
 	}
+	s.sendSSE(c, "done", "")
 
 	// Save Assistant Message
 	if fullContent != "" {
@@ -432,14 +418,6 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 			assistantMsg.PromptTokens = usage.PromptTokens
 			assistantMsg.CompletionTokens = usage.CompletionTokens
 			assistantMsg.TotalTokens = usage.TotalTokens
-			
-			// Also update user message with prompt tokens?
-			// Usually Usage is total for the request.
-			// We can attribute PromptTokens to userMsg and CompletionTokens to assistantMsg.
-			// But userMsg is already saved. We could update it.
-			// For simplicity, store all in assistant message or split.
-			// The model has these fields on every message.
-			// Let's put everything on assistant message for now as it captures the "turn".
 		}
 		if err := mysql.AiMessageRepo.Create(s.ctx, assistantMsg); err != nil {
 			fmt.Printf("failed to save assistant message: %v\n", err)
