@@ -419,7 +419,7 @@ const configUrl = computed(() => {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].url
   }
-  return `${window.location.origin}${dialogInfo.value.instanceInfo.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${dialogInfo.value.instanceInfo.publicProxyPath}`
 })
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {

@@ -343,6 +343,7 @@ const {
   timer,
   selection,
   agentSyncDialog,
+  meta,
 } = useInstanceTableHooks()
 
 const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''

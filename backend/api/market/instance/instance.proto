@@ -383,7 +383,7 @@ message RestartResp {
 
 // VolumeMount volume mount configuration
 message VolumeMount {
-  // @inject_tag: json:"type" desc:"Volume type: hostPath, pvc"
+  // @inject_tag: json:"type" desc:"Volume type: hostPath, pvc, volume"
   string type = 1;
   // @inject_tag: json:"mountPath" desc:"Mount path"
   string mountPath = 2;
@@ -397,6 +397,8 @@ message VolumeMount {
   string hostPath = 6;
   // @inject_tag: json:"nodeName" desc:"Node name (required for hostPath type)"
   string nodeName = 7;
+  // @inject_tag: json:"volumeName" desc:"Volume name (required for volume type)"
+  string volumeName = 8;
 }
 
 // ContainerDeleteRequest container deletion request
@@ -786,6 +788,30 @@ message UpdateOpenapiRequest {
   string openapiBaseUrl = 7;
 }
 
+message ListToolsRequest {
+    // @inject_tag: json:"instanceID" form:"instanceID" uri:"instanceID" desc:"Instance ID"
+    string instanceID = 1;
+    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
+    string domain = 2;
+}
+
+message ListToolsResp {
+}
+
+message CallToolRequest {
+    // @inject_tag: json:"instanceID" form:"instanceID" uri:"instanceID" desc:"Instance ID"
+    string instanceID = 1;
+    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
+    string domain = 2;
+    // @inject_tag: json:"toolName" form:"toolName" desc:"Tool name"
+    string toolName = 3;
+    // @inject_tag: json:"arguments" form:"arguments" desc:"Tool arguments"
+    string arguments = 4;
+}
+
+message CallToolResp {
+}
+
 // InstanceService instance management service
 service InstanceService {
   // Create instance
@@ -927,6 +953,22 @@ service InstanceService {
   rpc OpenapiUpdate(UpdateOpenapiRequest) returns (EditResp) {
     option (google.api.http) = {
       put:  "/instance/openapi/edit",
+      body: "*",
+    };
+  }
+
+  // list tools
+  rpc ListTools(ListToolsRequest) returns (ListToolsResp) {
+    option (google.api.http) = {
+      post:  "/instance/list-tools",
+      body: "*",
+    };
+  }
+
+  // call tools
+  rpc CallTool(CallToolRequest) returns (CallToolResp) {
+    option (google.api.http) = {
+      post:  "/instance/call-tools",
       body: "*",
     };
   }

@@ -27,6 +27,8 @@ const (
 	MountTypeHostPath MountType = "hostPath"
 	// MountTypePVC PVC 类型挂载
 	MountTypePVC MountType = "pvc"
+	// MountTypeVolume Docker Volume 类型挂载
+	MountTypeVolume MountType = "volume"
 	// MountTypeConfigMap ConfigMap 类型挂载
 	MountTypeConfigMap MountType = "configMap"
 )
@@ -45,6 +47,9 @@ type UnifiedMount struct {
 
 	// PVC 专用字段
 	PVCName string `json:"pvcName,omitempty"` // PVC 名称（PVC 类型使用）
+
+	// Volume 专用字段 (Docker)
+	VolumeName string `json:"volumeName,omitempty"` // Volume 名称（Volume 类型使用）
 
 	// ConfigMap 专用字段
 	ConfigMapName string `json:"configMapName,omitempty"` // ConfigMap 名称（ConfigMap 类型使用）

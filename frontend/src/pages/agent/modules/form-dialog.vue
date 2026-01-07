@@ -1,12 +1,6 @@
 <template>
-  <el-dialog
-    v-model="dialogInfo.visible"
-    :title="dialogInfo.title"
-    :show-close="false"
-    :close-on-click-modal="false"
-    width="680px"
-    top="20vh"
-  >
+  <el-dialog v-model="dialogInfo.visible" :title="dialogInfo.title" :show-close="false" :close-on-click-modal="false"
+    width="680px" top="20vh">
     <template #header>
       <div class="flex items-center w-full">
         <span>{{ dialogInfo.title }}</span
@@ -39,12 +33,8 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="t('agent.formData.accessName')" prop="accessName">
-          <el-input
-            v-model="formModel.accessName"
-            :placeholder="t('agent.placeholder.accessName')"
-            maxlength="64"
-            show-word-limit
-          />
+          <el-input v-model="formModel.accessName" :placeholder="t('agent.placeholder.accessName')" maxlength="64"
+            show-word-limit />
         </el-form-item>
         <el-form-item
           v-if="formModel.accessType === AgentType.COZE && formModel.subType === CozeType.TEAM"
@@ -127,7 +117,7 @@
         <el-button @click="handleCancel" class="mr-2">{{ t('common.cancel') }}</el-button>
         <mcp-button @click="handleSubmit" :loading="dialogInfo.loading">{{
           t('common.save')
-        }}</mcp-button>
+          }}</mcp-button>
       </div>
     </template>
   </el-dialog>

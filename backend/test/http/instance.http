@@ -43,3 +43,27 @@ Authorization: {{token}}
 POST {{baseUrl}}/{{routerPrefix}}/instance/list
 Content-Type: application/json
 Authorization: {{token}}
+
+
+### list tools
+POST {{baseUrl}}/{{routerPrefix}}/instance/list-tools
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "instanceID": "6b4a8b52-c7c6-4f9a-9423-af6eb928216b",
+  "domain": "https://mcp-dev.itqm.com/"
+}
+
+### call tools
+POST {{baseUrl}}/{{routerPrefix}}/instance/call-tools
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "instanceID": "6b4a8b52-c7c6-4f9a-9423-af6eb928216b",
+  "domain": "https://mcp-dev.itqm.com/",
+  "toolName": "CodeService_DeleteCodePackage",
+  "arguments": "{\"packageId\": \"1\"}"
+}
+

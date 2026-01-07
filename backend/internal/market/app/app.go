@@ -307,13 +307,20 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/token/delete", routerPrefix), instanceService.TokenDeleteHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/openapi/create", routerPrefix), instanceService.CreateOpenapiHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/list-tools", routerPrefix), instanceService.ListToolsHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/call-tools", routerPrefix), instanceService.CallToolHandler)
 
 	// Create resource management service instance
-	resourceService := service.NewResourceService(context.Background())
+	resourceService := service.NewResourceService()
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/pvcs", routerPrefix), resourceService.ListPVCsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/resources/pvcs", routerPrefix), resourceService.CreatePVCHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/nodes", routerPrefix), resourceService.ListNodesHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/resources/storage-classes", routerPrefix), resourceService.ListStorageClassesHandler)
+	// Register Docker volume management interface
+	a.ginEngine.GET(fmt.Sprintf("/%s/resources/docker/volumes", routerPrefix), resourceService.ListDockerVolumesHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/create", routerPrefix), resourceService.CreateDockerVolumeHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/find", routerPrefix), resourceService.FindDockerVolumeHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/resources/docker/volumes/remove", routerPrefix), resourceService.RemoveDockerVolumeHandler)
 
 	// Create environment management service instance
 	environmentService := service.NewEnvironmentService()
