@@ -347,115 +347,196 @@
                         :placeholder="t('mcp.instance.formData.volumeType')"
                         style="width: 200px"
                       >
-                        <el-option label="HostPath" value="HostPath" />
-                        <el-option label="PVC" value="PVC" />
+                        <el-option label="HostPath" value="hostPath" />
+                        <el-option
+                          v-if="currentEnvironment.environment === 'kubernetes'"
+                          label="PVC"
+                          value="pvc"
+                        />
+                        <el-option
+                          v-if="currentEnvironment.environment === 'docker'"
+                          label="Volume"
+                          value="volume"
+                        />
                       </el-select>
                     </div>
-                    <template v-if="volume.type === 'HostPath'">
-                      <div class="flex align-end">
-                        <div>
+                    <template v-if="currentEnvironment.environment === 'kubernetes'">
+                      <template v-if="volume.type === 'HostPath'">
+                        <div class="flex align-end">
                           <div>
-                            <span class="text-red">*</span>{{ t('mcp.instance.formData.nodeName') }}
-                          </div>
-                          <el-select
-                            v-model="volume.nodeName"
-                            :placeholder="t('mcp.instance.formData.nodeName')"
-                            style="width: 200px"
-                          >
-                            <el-option
-                              v-for="(node, index) in nodeList"
-                              :key="index"
-                              :label="node.name"
-                              :value="node.name"
-                            />
-                          </el-select>
-                        </div>
-                        <el-button class="mr-2 ml-2" :icon="RefreshRight" />
-                        <div>
-                          <div>
-                            <span class="text-red">*</span>{{ t('mcp.instance.formData.hostPath') }}
-                          </div>
-                          <el-input
-                            v-model="volume.hostPath"
-                            :placeholder="t('mcp.instance.formData.hostPath')"
-                          />
-                        </div>
-                      </div>
-                      <div class="flex align-end">
-                        <div class="mr-2">
-                          <div>
-                            <span class="text-red">*</span
-                            >{{ t('mcp.instance.formData.mountPath') }}
-                          </div>
-                          <el-input
-                            v-model="volume.mountPath"
-                            :placeholder="t('mcp.instance.formData.mountPath')"
-                            style="width: 200px"
-                          />
-                        </div>
-                        <div>
-                          <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                          <el-switch v-model="volume.readOnly" />
-                        </div>
-                      </div>
-                    </template>
-
-                    <template v-if="volume.type === 'PVC'">
-                      <div class="flex align-end">
-                        <div>
-                          <div>
-                            <span class="text-red">*</span>{{ t('mcp.instance.formData.pvcName') }}
-                          </div>
-                          <el-select
-                            v-model="volume.pvcName"
-                            placeholder="PVC"
-                            style="width: 200px"
-                            @change="handlePvcChange($event, volume)"
-                          >
-                            <el-option
-                              v-for="(pvc, index) in pvcList"
-                              :key="index"
-                              :value="pvc.name"
-                              :disabled="disabledPvcNode(pvc)"
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.nodeName') }}
+                            </div>
+                            <el-select
+                              v-model="volume.nodeName"
+                              :placeholder="t('mcp.instance.formData.nodeName')"
+                              style="width: 200px"
                             >
-                              <span>{{ pvc.name }}</span>
-                              <el-tag v-if="disabledPvcNode(pvc)" color="orange">
-                                {{ t('mcp.template.formData.isBind') }}
-                              </el-tag>
-                            </el-option>
-                          </el-select>
-                        </div>
-                        <el-button class="mr-2 ml-2" :icon="RefreshRight" />
-                        <div class="mr-2">
-                          <div>
-                            <span class="text-red">*</span
-                            >{{ t('mcp.instance.formData.mountPath') }}
+                              <el-option
+                                v-for="(node, index) in nodeList"
+                                :key="index"
+                                :label="node.name"
+                                :value="node.name"
+                              />
+                            </el-select>
                           </div>
-                          <el-input
-                            v-model="volume.mountPath"
-                            :placeholder="t('mcp.instance.formData.mountPath')"
-                          />
+                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
+                          <div>
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.hostPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.hostPath"
+                              :placeholder="t('mcp.instance.formData.hostPath')"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                          <el-switch
-                            v-model="volume.readOnly"
-                            :disabled="disabledReadOnly(volume.pvcName)"
-                          />
+                        <div class="flex align-end">
+                          <div class="mr-2">
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.mountPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.mountPath"
+                              :placeholder="t('mcp.instance.formData.mountPath')"
+                              style="width: 200px"
+                            />
+                          </div>
+                          <div>
+                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                            <el-switch v-model="volume.readOnly" />
+                          </div>
                         </div>
-                      </div>
-                      <el-space v-if="!selectedPvc(volume.pvcName)">
-                        <el-text type="secondary">
-                          {{ t('mcp.template.formData.accessModes') }}:
-                          {{ selectedPvc(volume.pvcName).accessModes?.join(', ') }}
-                        </el-text>
-                        <template v-if="selectedPvc(volume.pvcName).pods?.length > 0">
+                      </template>
+
+                      <template v-if="volume.type === 'pvc'">
+                        <div class="flex align-end">
+                          <div>
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.pvcName') }}
+                            </div>
+                            <el-select
+                              v-model="volume.pvcName"
+                              placeholder="PVC"
+                              style="width: 200px"
+                              @change="handlePvcChange($event, volume)"
+                            >
+                              <el-option
+                                v-for="(pvc, index) in pvcList"
+                                :key="index"
+                                :value="pvc.name"
+                                :disabled="disabledPvcNode(pvc)"
+                              >
+                                <span>{{ pvc.name }}</span>
+                                <el-tag v-if="disabledPvcNode(pvc)" color="orange">
+                                  {{ t('mcp.template.formData.isBind') }}
+                                </el-tag>
+                              </el-option>
+                            </el-select>
+                          </div>
+                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
+                          <div class="mr-2">
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.mountPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.mountPath"
+                              :placeholder="t('mcp.instance.formData.mountPath')"
+                            />
+                          </div>
+                          <div>
+                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                            <el-switch
+                              v-model="volume.readOnly"
+                              :disabled="disabledReadOnly(volume.pvcName)"
+                            />
+                          </div>
+                        </div>
+                        <el-space v-if="!selectedPvc(volume.pvcName)">
                           <el-text type="secondary">
-                            {{ t('mcp.template.formData.pods') }}:
-                            {{ selectedPvc(volume.pvcName).pods.join(', ') }}
+                            {{ t('mcp.template.formData.accessModes') }}:
+                            {{ selectedPvc(volume.pvcName).accessModes?.join(', ') }}
                           </el-text>
-                        </template>
-                      </el-space>
+                          <template v-if="selectedPvc(volume.pvcName).pods?.length > 0">
+                            <el-text type="secondary">
+                              {{ t('mcp.template.formData.pods') }}:
+                              {{ selectedPvc(volume.pvcName).pods.join(', ') }}
+                            </el-text>
+                          </template>
+                        </el-space>
+                      </template>
+                    </template>
+                    <template v-if="currentEnvironment.environment === 'docker'">
+                      <template v-if="volume.type === 'hostPath'">
+                        <div class="flex align-end">
+                          <div class="mr-2">
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.hostPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.hostPath"
+                              :placeholder="t('mcp.instance.formData.hostPath')"
+                            />
+                          </div>
+                          <div class="mr-2">
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.mountPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.mountPath"
+                              :placeholder="t('mcp.instance.formData.mountPath')"
+                              style="width: 200px"
+                            />
+                          </div>
+                          <div>
+                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                            <el-switch v-model="volume.readOnly" />
+                          </div>
+                        </div>
+                      </template>
+
+                      <template v-if="volume.type === 'volume'">
+                        <div class="flex align-end">
+                          <div>
+                            <div><span class="text-red">*</span>{{ 'volumeName' }}</div>
+                            <el-select
+                              v-model="volume.volumeName"
+                              placeholder="volumeName"
+                              style="width: 200px"
+                            >
+                              <el-option
+                                v-for="(pvc, index) in volumeList"
+                                :key="index"
+                                :value="pvc.name"
+                              >
+                                <span>{{ pvc.name }}</span>
+                              </el-option>
+                            </el-select>
+                          </div>
+                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
+                          <div class="mr-2">
+                            <div>
+                              <span class="text-red">*</span
+                              >{{ t('mcp.instance.formData.mountPath') }}
+                            </div>
+                            <el-input
+                              v-model="volume.mountPath"
+                              :placeholder="t('mcp.instance.formData.mountPath')"
+                            />
+                          </div>
+                          <div>
+                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                            <el-switch v-model="volume.readOnly" />
+                          </div>
+                        </div>
+                      </template>
                     </template>
                   </el-card>
                 </el-col>
@@ -526,10 +607,15 @@ const {
   currentMCP,
 } = useInstanceFormHooks()
 
-const { packageList, envList, nodeList, pvcList, sourceOptions, accessTypeOptions } =
+const { packageList, envList, nodeList, pvcList, volumeList, sourceOptions, accessTypeOptions } =
   toRefs(useMcpStoreHook())
-const { handleGetPackageList, handleGetEnvList, handleGetNodeList, handleGetPvcList } =
-  useMcpStoreHook()
+const {
+  handleGetPackageList,
+  handleGetEnvList,
+  handleGetNodeList,
+  handleGetPvcList,
+  handleGetVolumeList,
+} = useMcpStoreHook()
 
 // MCP protocol options
 const mcpProtocolOptions = computed(() => {
@@ -551,6 +637,13 @@ const currentPackage = computed(() => {
       (item: { id: string }) => item.id === pageInfo.value.formData.packageId,
     ) || { name: '', size: '', createdAt: '' }
   )
+})
+
+/**
+ * Current environment
+ */
+const currentEnvironment = computed(() => {
+  return envList.value?.find((item: any) => item.id === pageInfo.value.formData.environmentId) || {}
 })
 
 const handleFormat = () => {
@@ -617,6 +710,7 @@ const handleAddVolume = () => {
     hostPath: '',
     mountPath: '',
     pvcName: '',
+    volumeName: '',
     readOnly: false,
   })
 }
@@ -784,8 +878,12 @@ const handleSaveAsTemplate = async () => {
  */
 const handleChangeEnvironmentId = async (e: number | undefined) => {
   pageInfo.value.formData.environmentId = e
-  handleGetNodeList(pageInfo.value.formData.environmentId)
-  handleGetPvcList(pageInfo.value.formData.environmentId)
+  if (envList.value.find((item) => item.id === e)?.environment === 'docker') {
+    handleGetVolumeList(pageInfo.value.formData.environmentId)
+  } else {
+    handleGetNodeList(pageInfo.value.formData.environmentId)
+    handleGetPvcList(pageInfo.value.formData.environmentId)
+  }
 }
 
 /**

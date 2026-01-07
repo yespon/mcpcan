@@ -15,6 +15,7 @@
         "edit": "编辑",
         "pvc": "PVC管理",
         "node": "节点管理",
+        "volume": "卷管理",
         "delete": "删除",
         "connectionSuccess": "连接测试成功",
         "deleteBox": "确定删除该运行环境?"
@@ -95,6 +96,22 @@
       "externalIp": "外部IP",
       "creationTime": "创建时间",
       "operatingSystem": "操作系统"
+    },
+    "volume": {
+      "name": "卷名称",
+      "status": "状态",
+      "driver": "驱动",
+      "mountpoint": "挂载点",
+      "scope": "作用域",
+      "title": "卷管理列表",
+      "desc": "卷管理用于管理容器环境中的存储卷",
+      "add": "创建新的卷",
+      "total": "卷总数",
+      "addLabel": "添加新的标签",
+      "confirm": "确认删除该卷",
+      "rules": {
+        "name": "请输入卷名称"
+      }
     }
   }
 }

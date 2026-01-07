@@ -94,6 +94,14 @@ const router = createRouter({
           component: () => import('../pages/environment/node-manage/index.vue'),
         },
         {
+          path: '/volume-manage',
+          name: 'volumeManage',
+          meta: {
+            title: 'volumeManage',
+          },
+          component: () => import('../pages/environment/volume-manage/index.vue'),
+        },
+        {
           path: '/code-list',
           name: 'codeList',
           meta: {
