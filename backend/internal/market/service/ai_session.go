@@ -5,16 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
+	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
-	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai" // Register OpenAI provider
 )
 
 // AiSessionService struct for ai session service
@@ -37,34 +35,11 @@ func (s *AiSessionService) CreateHandler(c *gin.Context) {
 		return
 	}
 
-	if req.Name == "" {
-		common.GinError(c, i18nresp.CodeBadRequest, "session name is required")
-		return
-	}
-	if req.ModelAccessID == 0 {
-		common.GinError(c, i18nresp.CodeBadRequest, "model access id is required")
-		return
-	}
-
-	// Validate ModelAccessID exists
-	if _, err := mysql.AiModelAccessRepo.FindByID(s.ctx, req.ModelAccessID); err != nil {
-		common.GinError(c, i18nresp.CodeBadRequest, "invalid model access id")
-		return
-	}
-
 	// TODO: Get current user ID from context
-	// userID := c.GetInt64("user_id")
-	userID := int64(1) // Mock user ID for now
+	userID := int64(1)
 
-	session := &model.AiSession{
-		UserID:        userID,
-		Name:          req.Name,
-		ModelAccessID: req.ModelAccessID,
-		MaxContext:    int(req.MaxContext),
-		ToolsConfig:   json.RawMessage(req.ToolsConfig),
-	}
-
-	if err := mysql.AiSessionRepo.Create(s.ctx, session); err != nil {
+	session, err := biz.GAiSessionBiz.Create(c.Request.Context(), &req, userID)
+	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create ai session: %s", err.Error()))
 		return
 	}
@@ -83,32 +58,8 @@ func (s *AiSessionService) UpdateHandler(c *gin.Context) {
 		return
 	}
 
-	session, err := mysql.AiSessionRepo.FindByID(s.ctx, req.Id)
+	session, err := biz.GAiSessionBiz.Update(c.Request.Context(), &req)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeNotFound, "session not found")
-		return
-	}
-
-	// Update fields if provided
-	if req.Name != "" {
-		session.Name = req.Name
-	}
-	if req.ModelAccessID != 0 {
-		// Validate ModelAccessID exists
-		if _, err := mysql.AiModelAccessRepo.FindByID(s.ctx, req.ModelAccessID); err != nil {
-			common.GinError(c, i18nresp.CodeBadRequest, "invalid model access id")
-			return
-		}
-		session.ModelAccessID = req.ModelAccessID
-	}
-	if req.ToolsConfig != "" {
-		session.ToolsConfig = json.RawMessage(req.ToolsConfig)
-	}
-	if req.MaxContext != 0 {
-		session.MaxContext = int(req.MaxContext)
-	}
-
-	if err := mysql.AiSessionRepo.Update(s.ctx, session); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update ai session: %s", err.Error()))
 		return
 	}
@@ -128,7 +79,7 @@ func (s *AiSessionService) DeleteHandler(c *gin.Context) {
 		return
 	}
 
-	if err := mysql.AiSessionRepo.Delete(s.ctx, id); err != nil {
+	if err := biz.GAiSessionBiz.Delete(c.Request.Context(), id); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to delete ai session: %s", err.Error()))
 		return
 	}
@@ -148,7 +99,7 @@ func (s *AiSessionService) GetHandler(c *gin.Context) {
 		return
 	}
 
-	session, err := mysql.AiSessionRepo.FindByID(s.ctx, id)
+	session, err := biz.GAiSessionBiz.Get(c.Request.Context(), id)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeNotFound, "session not found")
 		return
@@ -171,38 +122,15 @@ func (s *AiSessionService) ListHandler(c *gin.Context) {
 	// TODO: Get UserID
 	userID := int64(1)
 
-	sessions, err := mysql.AiSessionRepo.FindByUserID(s.ctx, userID)
+	sessions, total, err := biz.GAiSessionBiz.List(c.Request.Context(), userID, int(req.Page), int(req.PageSize))
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list ai sessions: %s", err.Error()))
 		return
 	}
 
-	// Manual pagination
-	total := int64(len(sessions))
-	page := int(req.Page)
-	if page <= 0 {
-		page = 1
-	}
-	pageSize := int(req.PageSize)
-	if pageSize <= 0 {
-		pageSize = 10
-	}
-
-	start := (page - 1) * pageSize
-	end := start + pageSize
-	if start > int(total) {
-		start = int(total)
-	}
-	if end > int(total) {
-		end = int(total)
-	}
-
 	var pbSessions []*pb.AiSession
-	if start < int(total) {
-		slicedSessions := sessions[start:end]
-		for _, session := range slicedSessions {
-			pbSessions = append(pbSessions, s.convertModelToProto(session))
-		}
+	for _, session := range sessions {
+		pbSessions = append(pbSessions, s.convertModelToProto(session))
 	}
 
 	resp := &pb.ListSessionsResponse{
@@ -231,11 +159,8 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeBadRequest, "session id is required")
 		return
 	}
-	if req.Limit <= 0 {
-		req.Limit = 20
-	}
 
-	messages, err := mysql.AiMessageRepo.FindBySessionID(s.ctx, req.SessionID, int(req.Limit))
+	messages, err := biz.GAiSessionBiz.GetMessages(c.Request.Context(), req.SessionID, int(req.Limit))
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get session messages: %s", err.Error()))
 		return
@@ -285,113 +210,26 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 		return
 	}
 
-	// 1. Load Session
-	session, err := mysql.AiSessionRepo.FindByID(s.ctx, req.SessionID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeNotFound, "session not found")
-		return
-	}
-
-	// 2. Load Model Access
-	modelAccess, err := mysql.AiModelAccessRepo.FindByID(s.ctx, session.ModelAccessID)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "model access config not found")
-		return
-	}
-
-	// 3. Load History
-	limit := session.MaxContext
-	if limit <= 0 {
-		limit = 20
-	}
-	historyMessages, err := mysql.AiMessageRepo.GetLastN(s.ctx, req.SessionID, limit)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "failed to load history")
-		return
-	}
-
-	// 4. Init LLM Provider
-	providerType := llm.ProviderOpenAI
-	if modelAccess.Provider != "" {
-		providerType = llm.ProviderType(modelAccess.Provider)
-	}
-
-	provider, err := llm.NewProvider(providerType, llm.ProviderConfig{
-		BaseURL: modelAccess.BaseUrl,
-		APIKey:  modelAccess.ApiKey,
-	})
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to init provider: %s", err.Error()))
-		return
-	}
-
-	// 5. Construct Messages
-	var messages []llm.Message
-	// Add History
-	for _, msg := range historyMessages {
-		m := llm.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
-		}
-		// Handle ToolCalls if any
-		if msg.ToolCalls != "" && msg.ToolCalls != "[]" && msg.ToolCalls != "null" {
-			var toolCalls []llm.ToolCall
-			if err := json.Unmarshal([]byte(msg.ToolCalls), &toolCalls); err == nil {
-				m.ToolCalls = toolCalls
-			}
-		}
-		if msg.ToolCallID != "" {
-			m.ToolCallID = msg.ToolCallID
-		}
-		messages = append(messages, m)
-	}
-
-	// Add Current User Message
-	messages = append(messages, llm.Message{
-		Role:    "user",
-		Content: req.Content,
-	})
-
-	// 6. Create Stream
 	// Set headers for SSE
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	stream, err := provider.StreamChat(s.ctx, llm.ChatRequest{
-		Model:    modelAccess.ModelName,
-		Messages: messages,
-		Stream:   true,
-		// Tools: ... (Phase 4)
-	})
+	// Call Biz
+	stream, err := biz.GAiSessionBiz.Chat(c.Request.Context(), req.SessionID, req.Content)
 	if err != nil {
-		s.sendSSE(c, "error", fmt.Sprintf("failed to create stream: %v", err))
+		s.sendSSE(c, "error", fmt.Sprintf("failed to start chat: %v", err))
 		return
-	}
-
-	// Save User Message
-	userMsg := &model.AiMessage{
-		SessionID:  req.SessionID,
-		Role:       "user",
-		Content:    req.Content,
-		CreateTime: time.Now(),
-	}
-	if err := mysql.AiMessageRepo.Create(s.ctx, userMsg); err != nil {
-		// Log error but continue
-		fmt.Printf("failed to save user message: %v\n", err)
 	}
 
 	var fullContent string
 	var usage *llm.Usage
 
-	// 7. Stream Loop
+	// Stream Loop
 	for resp := range stream {
 		if resp.Error != nil {
 			s.sendSSE(c, "error", resp.Error.Error())
-			// Keep going? No, usually break.
-			// But check if it's EOF? Generic provider should handle EOF and close channel.
-			// If we get an error here, it's a real error.
 			break
 		}
 
@@ -412,14 +250,13 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 			SessionID:  req.SessionID,
 			Role:       "assistant",
 			Content:    fullContent,
-			CreateTime: time.Now(),
 		}
 		if usage != nil {
 			assistantMsg.PromptTokens = usage.PromptTokens
 			assistantMsg.CompletionTokens = usage.CompletionTokens
 			assistantMsg.TotalTokens = usage.TotalTokens
 		}
-		if err := mysql.AiMessageRepo.Create(s.ctx, assistantMsg); err != nil {
+		if err := biz.GAiSessionBiz.SaveMessage(c.Request.Context(), assistantMsg); err != nil {
 			fmt.Printf("failed to save assistant message: %v\n", err)
 		}
 	}

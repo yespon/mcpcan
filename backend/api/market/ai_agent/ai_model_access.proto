@@ -80,6 +80,16 @@ message GetSupportedModelsResponse {
     repeated ModelProvider providers = 1;
 }
 
+message TestConnectionRequest {
+    int64 id = 1;
+}
+
+message TestConnectionResponse {
+    bool success = 1;
+    string message = 2;
+    int64 latencyMs = 3;
+}
+
 service AiModelAccessService {
     rpc Create(CreateModelAccessRequest) returns (CreateModelAccessResponse) {
         option (google.api.http) = {
@@ -111,6 +121,11 @@ service AiModelAccessService {
     rpc GetSupportedModels(GetSupportedModelsRequest) returns (GetSupportedModelsResponse) {
         option (google.api.http) = {
             get: "/ai/models/supported"
+        };
+    }
+    rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {
+        option (google.api.http) = {
+            post: "/ai/models/{id}/test"
         };
     }
 }

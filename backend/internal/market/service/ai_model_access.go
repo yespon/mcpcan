@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
+	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
@@ -23,6 +23,23 @@ func NewAiModelAccessService(ctx context.Context) *AiModelAccessService {
 	}
 }
 
+// TestConnectionHandler tests connection to the model
+func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
+	var req biz.TestConnectionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+		return
+	}
+
+	resp, err := biz.GAiModelAccessBiz.TestConnection(c.Request.Context(), &req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
 // CreateHandler creates a new ai model access
 func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
 	var req pb.CreateModelAccessRequest
@@ -34,16 +51,8 @@ func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
 	// TODO: Get user id from context
 	userID := int64(1)
 
-	modelAccess := &model.AiModelAccess{
-		UserID:    userID,
-		Name:      req.Name,
-		Provider:  req.Provider,
-		ApiKey:    req.ApiKey,
-		BaseUrl:   req.BaseUrl,
-		ModelName: req.ModelName,
-	}
-
-	if err := mysql.AiModelAccessRepo.Create(s.ctx, modelAccess); err != nil {
+	modelAccess, err := biz.GAiModelAccessBiz.Create(c.Request.Context(), &req, userID)
+	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to create ai model access: %s", err.Error()))
 		return
 	}
@@ -62,29 +71,8 @@ func (s *AiModelAccessService) UpdateHandler(c *gin.Context) {
 		return
 	}
 
-	modelAccess, err := mysql.AiModelAccessRepo.FindByID(s.ctx, req.Id)
+	modelAccess, err := biz.GAiModelAccessBiz.Update(c.Request.Context(), &req)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeNotFound, "model access not found")
-		return
-	}
-
-	if req.Name != "" {
-		modelAccess.Name = req.Name
-	}
-	if req.Provider != "" {
-		modelAccess.Provider = req.Provider
-	}
-	if req.ApiKey != "" {
-		modelAccess.ApiKey = req.ApiKey
-	}
-	if req.BaseUrl != "" {
-		modelAccess.BaseUrl = req.BaseUrl
-	}
-	if req.ModelName != "" {
-		modelAccess.ModelName = req.ModelName
-	}
-
-	if err := mysql.AiModelAccessRepo.Update(s.ctx, modelAccess); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to update ai model access: %s", err.Error()))
 		return
 	}
@@ -104,7 +92,7 @@ func (s *AiModelAccessService) DeleteHandler(c *gin.Context) {
 		return
 	}
 
-	if err := mysql.AiModelAccessRepo.Delete(s.ctx, id); err != nil {
+	if err := biz.GAiModelAccessBiz.Delete(c.Request.Context(), id); err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to delete ai model access: %s", err.Error()))
 		return
 	}
@@ -124,7 +112,7 @@ func (s *AiModelAccessService) GetHandler(c *gin.Context) {
 		return
 	}
 
-	modelAccess, err := mysql.AiModelAccessRepo.FindByID(s.ctx, id)
+	modelAccess, err := biz.GAiModelAccessBiz.Get(c.Request.Context(), id)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeNotFound, "model access not found")
 		return
@@ -147,34 +135,14 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 	// TODO: Get user id from context
 	userID := int64(1)
 
-	accesses, err := mysql.AiModelAccessRepo.FindByUserID(s.ctx, userID)
+	accesses, total, err := biz.GAiModelAccessBiz.List(c.Request.Context(), userID, int(req.Page), int(req.PageSize))
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list ai model accesses: %s", err.Error()))
 		return
 	}
 
-	// Manual pagination
-	total := int64(len(accesses))
-	page := int(req.Page)
-	if page <= 0 {
-		page = 1
-	}
-	pageSize := int(req.PageSize)
-	if pageSize <= 0 {
-		pageSize = 10
-	}
-
-	start := (page - 1) * pageSize
-	end := start + pageSize
-	if start > int(total) {
-		start = int(total)
-	}
-	if end > int(total) {
-		end = int(total)
-	}
-
 	var pbAccesses []*pb.AiModelAccess
-	for _, access := range accesses[start:end] {
+	for _, access := range accesses {
 		pbAccesses = append(pbAccesses, s.convertModelToProto(access))
 	}
 
@@ -196,7 +164,22 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 		"deepseek-coder",
 	}
 
-	// 3. Construct Response
+	// 3. Aliyun Qwen
+	qwenModels := []string{
+		"qwen-plus",
+		"qwen-max",
+		"qwen-turbo",
+		"qwen-long",
+	}
+
+	// 4. Volcengine Doubao
+	doubaoModels := []string{
+		"Doubao-pro-32k",
+		"Doubao-lite-32k",
+		// Note: User needs to input Endpoint ID actually
+	}
+
+	// 5. Construct Response
 	resp := &pb.GetSupportedModelsResponse{
 		Providers: []*pb.ModelProvider{
 			{
@@ -209,7 +192,16 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 				Name:   "DeepSeek",
 				Models: deepSeekModels,
 			},
-			// Add more providers here (e.g. Moonshot, Qwen)
+			{
+				Id:     "qwen",
+				Name:   "Aliyun Qwen",
+				Models: qwenModels,
+			},
+			{
+				Id:     "doubao",
+				Name:   "Volcengine Doubao",
+				Models: doubaoModels,
+			},
 		},
 	}
 
@@ -217,11 +209,19 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 }
 
 func (s *AiModelAccessService) convertModelToProto(m *model.AiModelAccess) *pb.AiModelAccess {
+	// Mask API Key
+	maskedKey := m.ApiKey
+	if len(maskedKey) > 8 {
+		maskedKey = maskedKey[:3] + "****" + maskedKey[len(maskedKey)-4:]
+	} else if len(maskedKey) > 0 {
+		maskedKey = "****"
+	}
+
 	return &pb.AiModelAccess{
 		Id:         m.ID,
 		Name:       m.Name,
 		Provider:   m.Provider,
-		ApiKey:     m.ApiKey,
+		ApiKey:     maskedKey,
 		BaseUrl:    m.BaseUrl,
 		ModelName:  m.ModelName,
 		CreateTime: m.CreateTime.Unix(),
