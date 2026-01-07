@@ -1,20 +1,14 @@
 package container
 
 import (
-	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"path/filepath"
 	"strings"
 	"time"
@@ -30,27 +24,14 @@ type DockerRuntime struct {
 	networkName string         // Docker network name
 	client      *client.Client // Docker client
 	config      DockerConfig   // Docker configuration
-	networkName string         // Docker network name
-	client      *client.Client // Docker client
-	config      DockerConfig   // Docker configuration
 }
 
 // NewDockerRuntime creates Docker runtime
 func NewDockerRuntime(config DockerConfig) *DockerRuntime {
 	networkName := config.Network
-func NewDockerRuntime(config DockerConfig) *DockerRuntime {
-	networkName := config.Network
 	if networkName == "" {
 		networkName = "bridge" // default network
 	}
-
-	cli, err := initDockerClient(config)
-	if err != nil {
-		// Log warning but do not fail, to maintain backward compatibility with existing logic
-		// that relies on os/exec and doesn't strictly require the client yet.
-		fmt.Printf("Warning: Failed to initialize Docker client: %v\n", err)
-	}
-
 
 	cli, err := initDockerClient(config)
 	if err != nil {
@@ -165,118 +146,10 @@ func initDockerClient(config DockerConfig) (*client.Client, error) {
 // GetClient returns the Docker client
 func (dr *DockerRuntime) GetClient() *client.Client {
 	return dr.client
-		client:      cli,
-		config:      config,
-	}
-}
-
-// initDockerClient initializes the Docker client with TLS support and fallback
-func initDockerClient(config DockerConfig) (*client.Client, error) {
-	ctx := context.Background()
-	var cli *client.Client
-	var err error
-	var httpClient *http.Client
-
-	hostURL := config.DockerHost
-	certDir := config.DockerCertPath
-	useTLS := config.DockerUseTLS
-
-	// Configure HTTP/TLS Client if needed
-	if useTLS {
-		options := tls.Config{InsecureSkipVerify: true}
-
-		// Attempt to load certificates if directory is provided
-		if certDir != "" {
-			certPath := filepath.Join(certDir, "cert.pem")
-			keyPath := filepath.Join(certDir, "key.pem")
-			caPath := filepath.Join(certDir, "ca.pem")
-
-			cert, errCert := tls.LoadX509KeyPair(certPath, keyPath)
-			caCert, errCA := os.ReadFile(caPath)
-
-			if errCert == nil && errCA == nil {
-				caCertPool := x509.NewCertPool()
-				caCertPool.AppendCertsFromPEM(caCert)
-				options.Certificates = []tls.Certificate{cert}
-				options.RootCAs = caCertPool
-				options.InsecureSkipVerify = false
-			}
-		} else if config.DockerCertData != "" && config.DockerKeyData != "" && config.DockerCAData != "" {
-			// Load from data strings
-			cert, errCert := tls.X509KeyPair([]byte(config.DockerCertData), []byte(config.DockerKeyData))
-			if errCert == nil {
-				caCertPool := x509.NewCertPool()
-				if caCertPool.AppendCertsFromPEM([]byte(config.DockerCAData)) {
-					options.Certificates = []tls.Certificate{cert}
-					options.RootCAs = caCertPool
-					options.InsecureSkipVerify = false
-				}
-			} else {
-				fmt.Printf("Warning: Failed to load Docker certificates from data: %v\n", errCert)
-			}
-		}
-
-		httpClient = &http.Client{
-			Transport: &http.Transport{TLSClientConfig: &options},
-		}
-	}
-
-	// Build client options
-	opts := []client.Opt{
-		client.WithAPIVersionNegotiation(),
-	}
-
-	if hostURL != "" {
-		opts = append(opts, client.WithHost(hostURL))
-	}
-	if httpClient != nil {
-		opts = append(opts, client.WithHTTPClient(httpClient))
-	}
-
-	// If no specific config, use FromEnv
-	if hostURL == "" && !useTLS {
-		opts = append(opts, client.FromEnv)
-	}
-
-	// Create Client
-	cli, err = client.NewClientWithOpts(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Test connection (Ping)
-	_, errPing := cli.Ping(ctx)
-	if errPing != nil {
-		// If connection fails and we were trying a specific host, fallback to local
-		if hostURL != "" || useTLS {
-			fmt.Printf("⚠️ Connection to Docker failed (%s): %v. Falling back to local socket (client.FromEnv)...\n", hostURL, errPing)
-			cli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-			if err != nil {
-				return nil, fmt.Errorf("failed to create local Docker client fallback: %w", err)
-			}
-			// Verify fallback
-			if _, err := cli.Ping(ctx); err != nil {
-				return nil, fmt.Errorf("failed to connect to local Docker fallback: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("failed to connect to Docker: %w", errPing)
-		}
-	}
-
-	return cli, nil
-}
-
-// GetClient returns the Docker client
-func (dr *DockerRuntime) GetClient() *client.Client {
-	return dr.client
 }
 
 // GetContainerManager gets container manager
 func (dr *DockerRuntime) GetContainerManager() ContainerManager {
-	return &DockerContainerManager{
-		networkName: dr.networkName,
-		config:      dr.config,
-	}
 	return &DockerContainerManager{
 		networkName: dr.networkName,
 		config:      dr.config,
@@ -306,36 +179,10 @@ func (dr *DockerRuntime) GetRuntimeType() ContainerRuntime {
 type DockerContainerManager struct {
 	networkName string
 	config      DockerConfig
-	config      DockerConfig
 }
 
-// DockerContainerInfo Docker container information structure (matching docker inspect output)
 // DockerContainerInfo Docker container information structure (matching docker inspect output)
 type DockerContainerInfo struct {
-	ID              string                `json:"Id"`
-	Name            string                `json:"Name"`
-	State           DockerState           `json:"State"`
-	NetworkSettings DockerNetworkSettings `json:"NetworkSettings"`
-	Config          DockerConfigInfo      `json:"Config"`
-	Created         string                `json:"Created"`
-}
-
-type DockerState struct {
-	Status string `json:"Status"`
-}
-
-type DockerNetworkSettings struct {
-	Ports    map[string][]interface{}     `json:"Ports"`
-	Networks map[string]DockerNetworkInfo `json:"Networks"`
-}
-
-type DockerNetworkInfo struct {
-	IPAddress string `json:"IPAddress"`
-}
-
-type DockerConfigInfo struct {
-	Labels map[string]string `json:"Labels"`
-	Image  string            `json:"Image"`
 	ID              string                `json:"Id"`
 	Name            string                `json:"Name"`
 	State           DockerState           `json:"State"`
@@ -399,24 +246,9 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 			policy = "no"
 		}
 
-		// Convert to lowercase to support "Always" etc.
-		policy := strings.ToLower(options.RestartPolicy)
-
-		// Map K8s style policies to Docker style if needed
-		switch policy {
-		case "always":
-			policy = "always"
-		case "onfailure":
-			policy = "on-failure"
-		case "never":
-			policy = "no"
-		}
-
 		// Validate restart policy
 		validPolicies := []string{"no", "on-failure", "always", "unless-stopped"}
 		isValid := false
-		for _, p := range validPolicies {
-			if policy == p {
 		for _, p := range validPolicies {
 			if policy == p {
 				isValid = true
@@ -426,7 +258,6 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		if !isValid {
 			return "", fmt.Errorf("invalid restart policy: %s", options.RestartPolicy)
 		}
-		args = append(args, "--restart", policy)
 		args = append(args, "--restart", policy)
 	}
 
@@ -440,9 +271,7 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	}
 
 	// Expose port (no host mapping)
-	// Expose port (no host mapping)
 	if options.Port > 0 {
-		args = append(args, "--expose", fmt.Sprintf("%d", options.Port))
 		args = append(args, "--expose", fmt.Sprintf("%d", options.Port))
 	}
 
@@ -481,13 +310,21 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	// Set health check
 	if options.ReadinessProbe != nil {
 		if options.ReadinessProbe.HTTPGet != nil {
-			healthCmd := fmt.Sprintf("curl -f http://localhost:%d%s || exit 1",
-				options.ReadinessProbe.HTTPGet.Port,
-				options.ReadinessProbe.HTTPGet.Path)
-			args = append(args, "--health-cmd", healthCmd)
-			args = append(args, "--health-interval", "30s")
-			args = append(args, "--health-timeout", "3s")
-			args = append(args, "--health-retries", "3")
+			port := options.ReadinessProbe.HTTPGet.Port.IntValue()
+			if port == 0 && options.ReadinessProbe.HTTPGet.Port.StrVal != "" {
+				// Try to parse string port
+				fmt.Sscanf(options.ReadinessProbe.HTTPGet.Port.StrVal, "%d", &port)
+			}
+			
+			if port > 0 {
+				healthCmd := fmt.Sprintf("curl -f http://localhost:%d%s || exit 1",
+					port,
+					options.ReadinessProbe.HTTPGet.Path)
+				args = append(args, "--health-cmd", healthCmd)
+				args = append(args, "--health-interval", "30s")
+				args = append(args, "--health-timeout", "3s")
+				args = append(args, "--health-retries", "3")
+			}
 		}
 	}
 
@@ -510,25 +347,11 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	if dcm.config.DockerHost != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
 	}
-	cmd.Env = os.Environ()
-	if dcm.config.DockerHost != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
-	}
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to create Docker container: %w", err)
 	}
 
-	// Parse output to get container ID
-	// When image is not found locally, docker run outputs pull progress.
-	// The container ID is always the last line of the output.
-	outStr := strings.TrimSpace(string(output))
-	lines := strings.Split(outStr, "\n")
-	if len(lines) > 0 {
-		return strings.TrimSpace(lines[len(lines)-1]), nil
-	}
-
-	return outStr, nil
 	// Parse output to get container ID
 	// When image is not found locally, docker run outputs pull progress.
 	// The container ID is always the last line of the output.
@@ -545,10 +368,6 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName string) error {
 	// Stop container
 	stopCmd := exec.CommandContext(ctx, "docker", "stop", containerName)
-	stopCmd.Env = os.Environ()
-	if dcm.config.DockerHost != "" {
-		stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
-	}
 	stopCmd.Env = os.Environ()
 	if dcm.config.DockerHost != "" {
 		stopCmd.Env = append(stopCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
@@ -702,13 +521,7 @@ func (dcm *DockerContainerManager) GetLogs(ctx context.Context, containerName st
 		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
 	}
 	output, err := cmd.CombinedOutput()
-	cmd.Env = os.Environ()
-	if dcm.config.DockerHost != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
-	}
-	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to get Docker container logs: %w, output: %s", err, string(output))
 		return "", fmt.Errorf("failed to get Docker container logs: %w, output: %s", err, string(output))
 	}
 
@@ -736,12 +549,6 @@ func (dcm *DockerContainerManager) GetWarningEvents(ctx context.Context, contain
 	return events, nil
 }
 
-// getContainerIP gets container IP address
-func (dcm *DockerContainerManager) getContainerIP(ctx context.Context, containerName string) (string, error) {
-	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", containerName)
-	output, err := cmd.Output()
-	return strings.TrimSpace(string(output)), err
-}
 
 // DockerServiceManager Docker service manager implementation (Docker doesn't have native service concept, using network aliases to simulate)
 type DockerServiceManager struct {
@@ -750,7 +557,6 @@ type DockerServiceManager struct {
 
 // Create creates service (implemented through network aliases in Docker)
 func (dsm *DockerServiceManager) Create(ctx context.Context, serviceName string, port int32, selector map[string]string) (*ServiceInfo, error) {
-	// Docker uses network alias for service discovery, so no extra resource creation needed
 	// Docker uses network alias for service discovery, so no extra resource creation needed
 	return &ServiceInfo{
 		Name:      serviceName,
@@ -762,7 +568,6 @@ func (dsm *DockerServiceManager) Create(ctx context.Context, serviceName string,
 
 // Delete deletes service
 func (dsm *DockerServiceManager) Delete(ctx context.Context, serviceName string) error {
-	// Docker uses network alias, cleanup is handled when container is deleted
 	// Docker uses network alias, cleanup is handled when container is deleted
 	return nil
 }
@@ -795,45 +600,6 @@ func (dsm *DockerServiceManager) Get(ctx context.Context, serviceName string) (*
 	var portsMap map[string][]interface{}
 	if err := json.Unmarshal(output, &portsMap); err != nil {
 		return nil, fmt.Errorf("failed to parse container ports: %w", err)
-	// Infer container name from service name
-	// 1. Try direct usage (new behavior: ServiceName == ContainerName)
-	containerName := serviceName
-
-	// Inspect container to verify existence and get ports
-	cmd := exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", containerName)
-	output, err := cmd.Output()
-	if err != nil {
-		// 2. If failed, try legacy conversion (mcp-instance-xxx-service -> mcp-instance-xxx-container)
-		if strings.HasSuffix(serviceName, "-service") {
-			legacyName := strings.Replace(serviceName, "-service", "-container", 1)
-			cmd = exec.CommandContext(ctx, "docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", legacyName)
-			output, err = cmd.Output()
-			if err == nil {
-				containerName = legacyName
-			} else {
-				return nil, fmt.Errorf("service (container) not found: %w", err)
-			}
-		} else {
-			return nil, fmt.Errorf("service (container) not found: %w", err)
-		}
-	}
-
-	var portsMap map[string][]interface{}
-	if err := json.Unmarshal(output, &portsMap); err != nil {
-		return nil, fmt.Errorf("failed to parse container ports: %w", err)
-	}
-
-	var ports []int32
-	for k := range portsMap {
-		// k is like "80/tcp"
-		parts := strings.Split(k, "/")
-		if len(parts) > 0 {
-			var p int
-			fmt.Sscanf(parts[0], "%d", &p)
-			if p > 0 {
-				ports = append(ports, int32(p))
-			}
-		}
 	}
 
 	var ports []int32
@@ -854,8 +620,6 @@ func (dsm *DockerServiceManager) Get(ctx context.Context, serviceName string) (*
 		ClusterIP: "docker-network",
 		Ports:     ports,
 		Labels:    make(map[string]string),
-		Ports:     ports,
-		Labels:    make(map[string]string),
 	}, nil
 }
 
@@ -872,12 +636,12 @@ func (dsm *DockerServiceManager) Restart(ctx context.Context, options ContainerC
 	}
 
 	// Delete existing service
-	if err := dsm.Delete(ctx, options.ServiceName); err != nil {
+	if err = dsm.Delete(ctx, options.ServiceName); err != nil {
 		return fmt.Errorf("failed to delete existing service: %w", err)
 	}
 
 	// Wait for service to be completely deleted
-	if err := dsm.waitForServiceDeletion(ctx, options.ServiceName); err != nil {
+	if err = dsm.waitForServiceDeletion(ctx, options.ServiceName); err != nil {
 		return fmt.Errorf("failed to wait for service deletion completion: %w", err)
 	}
 
