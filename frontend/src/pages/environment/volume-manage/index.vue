@@ -107,7 +107,7 @@ const handleDeleteVolume = (row: any) => {
       try {
         await VolumeAPI.delete({
           name: row.name,
-          environmentId: query.environmentId,
+          environmentId: Number(query.environmentId),
         })
         ElMessage.success(t('action.delete'))
         tablePlus.value.initData()

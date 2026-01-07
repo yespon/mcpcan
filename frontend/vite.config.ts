@@ -18,15 +18,15 @@ export default defineConfig({
     //   key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
     // },
     // 可选配置
-    // port: 443, // HTTPS 默认端口
+    port: 3000, // HTTPS 默认端口
     proxy: {
-      '/api/authz': {
-        target: 'https://mcp-dev.itqm.com',
-        changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
-      },
+      // '/api/authz': {
+      //   target: 'https://mcp-dev.itqm.com',
+      //   changeOrigin: true,
+      //   // rewrite: (path: string) => path.replace(/^\/api/, ''),
+      // },
       '/api': {
-        target: 'https://mcp-dev.itqm.com',
+        target: 'http://localhost:80',
         changeOrigin: true,
         // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
