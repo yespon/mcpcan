@@ -307,6 +307,8 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/token/delete", routerPrefix), instanceService.TokenDeleteHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/instance/openapi/create", routerPrefix), instanceService.CreateOpenapiHandler)
 	a.ginEngine.PUT(fmt.Sprintf("/%s/instance/openapi/edit", routerPrefix), instanceService.UpdateOpenapiHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/list-tools", routerPrefix), instanceService.ListToolsHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/instance/call-tools", routerPrefix), instanceService.CallToolHandler)
 
 	// Create resource management service instance
 	resourceService := service.NewResourceService()
