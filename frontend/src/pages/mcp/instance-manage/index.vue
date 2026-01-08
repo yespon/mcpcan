@@ -675,7 +675,7 @@ onBeforeUnmount(() => {
 onActivated(() => {
   init()
   if (!timer.value) {
-    timer.value = setInterval(init, 3000)
+    timer.value = setInterval(init, 30000)
   }
 })
 
@@ -691,7 +691,7 @@ onMounted(() => {
   if (timer.value) {
     return
   } else {
-    timer.value = setInterval(init, 3000)
+    timer.value = setInterval(init, 30000)
   }
 })
 </script>
