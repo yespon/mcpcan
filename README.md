@@ -61,7 +61,7 @@ To view our official website address, simply click <a href="https://www.mcpcan.c
 
 ## 👨‍🚀 Quick Start
 
-For detailed deployment instructions, please refer to our [Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
+For detailed deployment instructions, please refer to our [Deployment Guide](https://www.mcpcan.com/docs/en/guide/install).
 
 ### 1. Get Deployment Repository
 
@@ -98,7 +98,7 @@ After successful installation, access `http://localhost` (or `http://<Your Publi
 
 **Helm Installation**
 
-Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://www.mcpcan.com/docs/en/guide/helm-deploy).
+Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
 
 ## 🚀 Components
 
