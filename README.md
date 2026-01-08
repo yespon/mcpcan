@@ -68,46 +68,37 @@ For detailed deployment instructions, please refer to our [Deployment Guide](htt
 ```bash
 # GitHub (International)
 git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy
+cd mcpcan-deploy/docker-compose/
 
 # Gitee (Recommended for China)
 git clone https://gitee.com/kymomcp/mcpcan-deploy.git
-cd mcpcan-deploy
+cd mcpcan-deploy/docker-compose/
 ```
 
-### 2. Installation
+### 2. Start Services
 
-**Quick Installation (Recommended)**
+**Docker Compose Quick Start (Recommended)**
 
-Suitable for clean Linux servers. Automatically installs k3s, ingress-nginx, Helm, and deploys the MCPCAN platform.
+Suitable for local development, testing, and lightweight production deployments.
 
 ```bash
-# Standard installation (International mirrors)
-./scripts/install-fast.sh
+# 1. Initialize configuration
+cp example.env .env
+# (Optional) Modify .env file for settings like REGISTRY_PREFIX to switch between global/CN mirrors
 
-# Accelerated installation (China mirrors)
-./scripts/install-fast.sh --cn
+# 2. Generate final configuration
+chmod +x replace.sh
+./replace.sh
+
+# 3. Start services
+docker compose up -d
 ```
 
-After successful installation, access `http://<Your Public IP>` to start using.
+After successful installation, access `http://localhost` (or `http://<Your Public IP>`) to start using.
 
-**Custom Installation (Helm)**
+**Helm Installation**
 
-Suitable for scenarios requiring custom domain, HTTPS, or modifying default configurations.
-
-```bash
-# 1. Install dependencies (skip if k3s/Helm is already installed)
-./scripts/install-run-environment.sh       # International mirrors
-# ./scripts/install-run-environment.sh --cn  # China mirrors
-
-# 2. Copy and modify configuration
-cp helm/values.yaml helm/values-custom.yaml
-# Edit helm/values-custom.yaml to set global.domain and other parameters
-
-# 3. Install platform
-helm install mcpcan ./helm -f helm/values-custom.yaml \
-  --namespace mcpcan --create-namespace --timeout 600s --wait
-```
+Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://www.mcpcan.com/docs/en/guide/helm-deploy).
 
 ## 🚀 Components
 
