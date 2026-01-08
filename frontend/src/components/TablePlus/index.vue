@@ -161,7 +161,7 @@
         </slot>
       </el-col>
     </el-row>
-    <div v-if="list.length === 0" class="mt-8">
+    <div v-if="!list.length" class="mt-8">
       <el-empty :image-size="200" :description="t('status.noData')" />
     </div>
   </div>
@@ -349,7 +349,7 @@ const initData = async () => {
       ...props.requestConfig.searchQuery.model,
     })
 
-    list.value = data.list
+    list.value = data.list || []
     _pagerConfig.value.total = Number(data.total) || data.list?.length || 0
     emit('update:pageConfig', _pagerConfig.value)
   } catch (error) {
