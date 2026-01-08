@@ -424,8 +424,10 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.DELETE(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.DeleteHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.GetHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.ListHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/available", routerPrefix), aiModelAccessService.GetAvailableModelsHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/supported", routerPrefix), aiModelAccessService.GetSupportedModelsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/test", routerPrefix), aiModelAccessService.TestConnectionHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/:id/test", routerPrefix), aiModelAccessService.TestConnectionWithIdHandler)
 
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {

@@ -30,7 +30,11 @@ func NewAiModelAccessBiz(ctx context.Context) *AiModelAccessBiz {
 
 // Temporary structs until buf generate works
 type TestConnectionRequest struct {
-	ID int64 `json:"id"`
+	ID        int64  `json:"id"`
+	Provider  string `json:"provider"`
+	BaseUrl   string `json:"baseUrl"`
+	ApiKey    string `json:"apiKey"`
+	ModelName string `json:"modelName"`
 }
 
 type TestConnectionResponse struct {
@@ -118,21 +122,41 @@ func (b *AiModelAccessBiz) List(ctx context.Context, userID int64, page, pageSiz
 }
 
 func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnectionRequest) (*TestConnectionResponse, error) {
-	// 1. Get Model Access
-	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ID)
-	if err != nil {
-		return nil, fmt.Errorf("model access not found")
+	var (
+		providerStr string
+		baseUrl     string
+		apiKey      string
+		modelName   string
+	)
+
+	// 1. Determine config source
+	if req.ID > 0 {
+		// Load from DB
+		modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ID)
+		if err != nil {
+			return nil, fmt.Errorf("model access not found")
+		}
+		providerStr = modelAccess.Provider
+		baseUrl = modelAccess.BaseUrl
+		apiKey = modelAccess.ApiKey
+		modelName = modelAccess.ModelName
+	} else {
+		// Use request params
+		providerStr = req.Provider
+		baseUrl = req.BaseUrl
+		apiKey = req.ApiKey
+		modelName = req.ModelName
 	}
 
 	// 2. Init Provider
 	providerType := llm.ProviderOpenAI
-	if modelAccess.Provider != "" {
-		providerType = llm.ProviderType(modelAccess.Provider)
+	if providerStr != "" {
+		providerType = llm.ProviderType(providerStr)
 	}
 
 	config := llm.ProviderConfig{
-		BaseURL: modelAccess.BaseUrl,
-		APIKey:  modelAccess.ApiKey,
+		BaseURL: baseUrl,
+		APIKey:  apiKey,
 	}
 
 	provider, err := llm.NewProvider(providerType, config)
@@ -145,7 +169,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 
 	// 3. Test Connection
 	chatReq := llm.ChatRequest{
-		Model: modelAccess.ModelName,
+		Model: modelName,
 		Messages: []llm.Message{
 			{Role: "user", Content: "Hi"},
 		},

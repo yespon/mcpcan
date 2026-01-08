@@ -226,6 +226,11 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	var fullContent string
 	var usage *llm.Usage
 
+	// Map to aggregate tool calls: Index -> ToolCall
+	toolCallsMap := make(map[int]*llm.ToolCall)
+	// Order tracking
+	toolCallIndices := []int{}
+
 	// Stream Loop
 	for resp := range stream {
 		if resp.Error != nil {
@@ -241,24 +246,69 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 			fullContent += resp.Content
 			s.sendSSE(c, "text", resp.Content)
 		}
+
+		if len(resp.ToolCalls) > 0 {
+			for _, tc := range resp.ToolCalls {
+				if _, exists := toolCallsMap[tc.Index]; !exists {
+					toolCallsMap[tc.Index] = &llm.ToolCall{
+						Index: tc.Index,
+						ID:    tc.ID,
+						Type:  tc.Type,
+						Function: llm.ToolCallFunction{
+							Name:      "",
+							Arguments: "",
+						},
+					}
+					toolCallIndices = append(toolCallIndices, tc.Index)
+				}
+
+				existing := toolCallsMap[tc.Index]
+				if tc.ID != "" {
+					existing.ID = tc.ID
+				}
+				if tc.Type != "" {
+					existing.Type = tc.Type
+				}
+				if tc.Function.Name != "" {
+					existing.Function.Name += tc.Function.Name
+				}
+				if tc.Function.Arguments != "" {
+					existing.Function.Arguments += tc.Function.Arguments
+				}
+			}
+		}
 	}
 	s.sendSSE(c, "done", "")
 
-	// Save Assistant Message
-	if fullContent != "" {
-		assistantMsg := &model.AiMessage{
-			SessionID:  req.SessionID,
-			Role:       "assistant",
-			Content:    fullContent,
+	// Construct final message
+	assistantMsg := &model.AiMessage{
+		SessionID: req.SessionID,
+		Role:      "assistant",
+		Content:   fullContent,
+	}
+
+	// Handle Tool Calls Saving
+	if len(toolCallIndices) > 0 {
+		var finalToolCalls []llm.ToolCall
+		for _, idx := range toolCallIndices {
+			finalToolCalls = append(finalToolCalls, *toolCallsMap[idx])
 		}
-		if usage != nil {
-			assistantMsg.PromptTokens = usage.PromptTokens
-			assistantMsg.CompletionTokens = usage.CompletionTokens
-			assistantMsg.TotalTokens = usage.TotalTokens
+		
+		toolCallsJSON, err := json.Marshal(finalToolCalls)
+		if err == nil {
+			assistantMsg.ToolCalls = string(toolCallsJSON)
+		} else {
+			fmt.Printf("failed to marshal tool calls: %v\n", err)
 		}
-		if err := biz.GAiSessionBiz.SaveMessage(c.Request.Context(), assistantMsg); err != nil {
-			fmt.Printf("failed to save assistant message: %v\n", err)
-		}
+	}
+
+	if usage != nil {
+		assistantMsg.PromptTokens = usage.PromptTokens
+		assistantMsg.CompletionTokens = usage.CompletionTokens
+		assistantMsg.TotalTokens = usage.TotalTokens
+	}
+	if err := biz.GAiSessionBiz.SaveMessage(c.Request.Context(), assistantMsg); err != nil {
+		fmt.Printf("failed to save assistant message: %v\n", err)
 	}
 }
 

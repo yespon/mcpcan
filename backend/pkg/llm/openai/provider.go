@@ -134,9 +134,14 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 				// For this iteration, we focus on text content mostly as per Phase 1/2 goals.
 				if len(choice.Delta.ToolCalls) > 0 {
 					for _, tc := range choice.Delta.ToolCalls {
+						idx := 0
+						if tc.Index != nil {
+							idx = *tc.Index
+						}
 						toolCall := llm.ToolCall{
-							ID:   tc.ID,
-							Type: string(tc.Type),
+							Index: idx,
+							ID:    tc.ID,
+							Type:  string(tc.Type),
 							Function: llm.ToolCallFunction{
 								Name:      tc.Function.Name,
 								Arguments: tc.Function.Arguments,

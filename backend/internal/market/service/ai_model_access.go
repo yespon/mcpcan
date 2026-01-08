@@ -11,6 +11,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
+	"github.com/kymo-mcp/mcpcan/pkg/llm"
 )
 
 type AiModelAccessService struct {
@@ -29,6 +30,28 @@ func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
+	}
+
+	resp, err := biz.GAiModelAccessBiz.TestConnection(c.Request.Context(), &req)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+// TestConnectionWithIdHandler tests connection to an existing model by ID
+func (s *AiModelAccessService) TestConnectionWithIdHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, "invalid model access id")
+		return
+	}
+
+	req := biz.TestConnectionRequest{
+		ID: id,
 	}
 
 	resp, err := biz.GAiModelAccessBiz.TestConnection(c.Request.Context(), &req)
@@ -153,31 +176,43 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 	i18nresp.SuccessResponse(c, resp)
 }
 
+// GetAvailableModelsHandler gets available models for selection (no pagination)
+func (s *AiModelAccessService) GetAvailableModelsHandler(c *gin.Context) {
+	// TODO: Get user id from context
+	userID := int64(1)
+
+	// Fetch all (use a large limit)
+	accesses, _, err := biz.GAiModelAccessBiz.List(c.Request.Context(), userID, 1, 1000)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list ai model accesses: %s", err.Error()))
+		return
+	}
+
+	var pbAccesses []*pb.AiModelAccess
+	for _, access := range accesses {
+		pbAccesses = append(pbAccesses, s.convertModelToProto(access))
+	}
+
+	resp := &pb.ListModelAccessResponse{
+		List:  pbAccesses,
+		Total: int64(len(pbAccesses)),
+	}
+	i18nresp.SuccessResponse(c, resp)
+}
+
 // GetSupportedModelsHandler gets supported models
 func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 	// 1. OpenAI Models (Generated from go-openai)
-	openAIModels := SupportedOpenAIModels
+	openAIModels := llm.SupportedOpenAIModels
 
-	// 2. DeepSeek Models (Manual)
-	deepSeekModels := []string{
-		"deepseek-chat",
-		"deepseek-coder",
-	}
+	// 2. DeepSeek Models
+	deepSeekModels := llm.DeepSeekModels
 
 	// 3. Aliyun Qwen
-	qwenModels := []string{
-		"qwen-plus",
-		"qwen-max",
-		"qwen-turbo",
-		"qwen-long",
-	}
+	qwenModels := llm.QwenModels
 
 	// 4. Volcengine Doubao
-	doubaoModels := []string{
-		"Doubao-pro-32k",
-		"Doubao-lite-32k",
-		// Note: User needs to input Endpoint ID actually
-	}
+	doubaoModels := llm.DoubaoModels
 
 	// 5. Construct Response
 	resp := &pb.GetSupportedModelsResponse{

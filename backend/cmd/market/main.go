@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/kymo-mcp/mcpcan/internal/market/app"
+	"github.com/kymo-mcp/mcpcan/pkg/llm"
 )
 
 func main() {
@@ -20,6 +21,9 @@ func main() {
 		fmt.Printf("Failed to initialize application: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Log supported models info
+	fmt.Printf("Supported OpenAI Models: %d\n", len(llm.SupportedOpenAIModels))
 
 	// Run application
 	if err := appInstance.Run(); err != nil {

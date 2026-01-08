@@ -31,6 +31,7 @@ type Message struct {
 
 // ToolCall represents a tool call request from LLM
 type ToolCall struct {
+	Index    int              `json:"index,omitempty"` // Added for streaming aggregation
 	ID       string           `json:"id"`
 	Type     string           `json:"type"`
 	Function ToolCallFunction `json:"function"`
