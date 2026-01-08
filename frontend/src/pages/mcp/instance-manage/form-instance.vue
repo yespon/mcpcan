@@ -222,6 +222,7 @@
                 v-model="pageInfo.formData.environmentId"
                 :placeholder="t('mcp.instance.formData.environmentId')"
                 @change="handleChangeEnvironmentId"
+                disabled
               >
                 <el-option
                   v-for="(env, index) in envList"

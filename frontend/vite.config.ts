@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import path from 'node:path'
-import { defineConfig } from 'vite'
+// import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
@@ -62,6 +63,14 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '~/': `${path.resolve(__dirname, 'src')}/`,
+    },
+  },
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
     },
   },
 })

@@ -64,7 +64,7 @@ export const useInstanceFormHooks = () => {
     rules: {
       name: [
         { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
-        { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+        // { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
       ],
       accessType: [
         { required: true, message: t('mcp.template.rules.deployType'), trigger: 'change' },

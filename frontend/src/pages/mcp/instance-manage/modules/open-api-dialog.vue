@@ -225,7 +225,7 @@ const formData = ref({
 const rules = ref({
   name: [
     { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
-    { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+    // { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
   ],
   openapiBaseUrl: [
     { required: true, message: t('mcp.instance.rules.openapiBaseUrl'), trigger: 'blur' },
