@@ -7,93 +7,136 @@ import "google/api/annotations.proto";
 option go_package = "github.com/kymo-mcp/mcpcan/api/market/ai_agent";
 
 message AiSession {
+    // @inject_tag: json:"id" desc:"ID"
     int64 id = 1;
+    // @inject_tag: json:"name" desc:"Name"
     string name = 2;
+    // @inject_tag: json:"modelAccessID" desc:"Model Access ID"
     int64 modelAccessID = 3;
+    // @inject_tag: json:"toolsConfig" desc:"Tools Config (JSON)"
     string toolsConfig = 4; // JSON string
+    // @inject_tag: json:"maxContext" desc:"Max Context"
     int32 maxContext = 5;
+    // @inject_tag: json:"createTime" desc:"Create Time"
     int64 createTime = 6;
+    // @inject_tag: json:"updateTime" desc:"Update Time"
     int64 updateTime = 7;
 }
 
 message AiMessage {
+    // @inject_tag: json:"id" desc:"ID"
     int64 id = 1;
+    // @inject_tag: json:"sessionID" desc:"Session ID"
     int64 sessionID = 2;
+    // @inject_tag: json:"role" desc:"Role"
     string role = 3;
+    // @inject_tag: json:"content" desc:"Content"
     string content = 4;
+    // @inject_tag: json:"toolCalls" desc:"Tool Calls"
     string toolCalls = 5;
+    // @inject_tag: json:"toolCallID" desc:"Tool Call ID"
     string toolCallID = 6;
+    // @inject_tag: json:"promptTokens" desc:"Prompt Tokens"
     int32 promptTokens = 7;
+    // @inject_tag: json:"completionTokens" desc:"Completion Tokens"
     int32 completionTokens = 8;
+    // @inject_tag: json:"totalTokens" desc:"Total Tokens"
     int32 totalTokens = 9;
+    // @inject_tag: json:"createTime" desc:"Create Time"
     int64 createTime = 10;
 }
 
 message CreateSessionRequest {
+    // @inject_tag: json:"name" form:"name" desc:"Name"
     string name = 1;
+    // @inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"
     int64 modelAccessID = 2;
+    // @inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config (JSON)"
     string toolsConfig = 3;
+    // @inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"
     int32 maxContext = 4;
 }
 
 message CreateSessionResponse {
+    // @inject_tag: json:"session" desc:"Session"
     AiSession session = 1;
 }
 
 message UpdateSessionRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
     int64 id = 1;
+    // @inject_tag: json:"name" form:"name" desc:"Name"
     string name = 2;
+    // @inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config"
     string toolsConfig = 3;
+    // @inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"
     int32 maxContext = 4;
+    // @inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"
     int64 modelAccessID = 5;
 }
 
 message UpdateSessionResponse {
+    // @inject_tag: json:"session" desc:"Session"
     AiSession session = 1;
 }
 
 message DeleteSessionRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
     int64 id = 1;
 }
 
 message DeleteSessionResponse {
+    // @inject_tag: json:"success" desc:"Success"
     bool success = 1;
 }
 
 message GetSessionRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
     int64 id = 1;
 }
 
 message GetSessionResponse {
+    // @inject_tag: json:"session" desc:"Session"
     AiSession session = 1;
 }
 
 message ListSessionsRequest {
+    // @inject_tag: json:"page" form:"page" desc:"Page number"
     int32 page = 1;
+    // @inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"
     int32 pageSize = 2;
 }
 
 message ListSessionsResponse {
+    // @inject_tag: json:"list" desc:"List"
     repeated AiSession list = 1;
+    // @inject_tag: json:"total" desc:"Total"
     int64 total = 2;
 }
 
 message GetSessionMessagesRequest {
+    // @inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"
     int64 sessionID = 1;
+    // @inject_tag: json:"limit" form:"limit" desc:"Limit (Last N)"
     int32 limit = 2; // Last N
 }
 
 message GetSessionMessagesResponse {
+    // @inject_tag: json:"list" desc:"List"
     repeated AiMessage list = 1;
 }
 
 message ChatRequest {
+    // @inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"
     int64 sessionID = 1;
+    // @inject_tag: json:"content" form:"content" desc:"Content"
     string content = 2;
 }
 
 message ChatResponse {
+    // @inject_tag: json:"type" desc:"Type"
     string type = 1; // text, tool_start, tool_result, error, done
+    // @inject_tag: json:"content" desc:"Content"
     string content = 2;
 }
 

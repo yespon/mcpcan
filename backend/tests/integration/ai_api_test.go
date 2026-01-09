@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 )
 
 // Package integration provides integration tests for the AI API endpoints.
@@ -43,6 +45,7 @@ func loadEnv() {
 		"backend/tests/integration/.env",
 		"tests/integration/.env",
 		"../.env", // If running from integration dir
+		"/Users/nolan/go/src/mcpcan/backend/tests/integration/.env", // Absolute path fallback
 	}
 
 	var envFile string
@@ -103,140 +106,14 @@ func getEnv(key, fallback string) string {
 
 // --- Struct Definitions ---
 
-// Common API Response
+// Common API Response Wrapper
 type APIResponse struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
 
-// Model Access Structs
-type AiModelAccess struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	Provider  string `json:"provider"`
-	ApiKey    string `json:"apiKey"`
-	BaseUrl   string `json:"baseUrl"`
-	ModelName string `json:"modelName"`
-}
-
-type CreateModelAccessRequest struct {
-	Name      string `json:"name"`
-	Provider  string `json:"provider"`
-	ApiKey    string `json:"apiKey"`
-	BaseUrl   string `json:"baseUrl"`
-	ModelName string `json:"modelName"`
-}
-
-type CreateModelAccessResponse struct {
-	Access AiModelAccess `json:"access"`
-}
-
-type UpdateModelAccessRequest struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name,omitempty"`
-	Provider  string `json:"provider,omitempty"`
-	ApiKey    string `json:"apiKey,omitempty"`
-	BaseUrl   string `json:"baseUrl,omitempty"`
-	ModelName string `json:"modelName,omitempty"`
-}
-
-type UpdateModelAccessResponse struct {
-	Access AiModelAccess `json:"access"`
-}
-
-type GetModelAccessResponse struct {
-	Access AiModelAccess `json:"access"`
-}
-
-type ListModelAccessResponse struct {
-	List  []AiModelAccess `json:"list"`
-	Total int64           `json:"total"`
-}
-
-type TestConnectionRequest struct {
-	ID        int64  `json:"id,omitempty"`
-	Provider  string `json:"provider,omitempty"`
-	BaseUrl   string `json:"baseUrl,omitempty"`
-	ApiKey    string `json:"apiKey,omitempty"`
-	ModelName string `json:"modelName,omitempty"`
-}
-
-type TestConnectionResponse struct {
-	Success   bool   `json:"success"`
-	Message   string `json:"message"`
-	LatencyMs int64  `json:"latencyMs"`
-}
-
-type ModelProvider struct {
-	ID     string   `json:"id"`
-	Name   string   `json:"name"`
-	Models []string `json:"models"`
-}
-
-type GetSupportedModelsResponse struct {
-	Providers []ModelProvider `json:"providers"`
-}
-
-// Session Structs
-type AiSession struct {
-	Id            int64  `json:"id"`
-	Name          string `json:"name"`
-	ModelAccessId int64  `json:"modelAccessId"`
-	ToolsConfig   string `json:"toolsConfig"`
-	MaxContext    int32  `json:"maxContext"`
-}
-
-type CreateSessionRequest struct {
-	Name          string   `json:"name"`
-	ModelAccessId int64    `json:"modelAccessId"`
-	ToolsConfig   []string `json:"toolsConfig"`
-	MaxContext    int      `json:"maxContext"`
-}
-
-type CreateSessionResponse struct {
-	Session AiSession `json:"session"`
-}
-
-type UpdateSessionRequest struct {
-	Id            int64    `json:"id"`
-	Name          string   `json:"name,omitempty"`
-	ToolsConfig   []string `json:"toolsConfig,omitempty"`
-	MaxContext    int      `json:"maxContext,omitempty"`
-	ModelAccessId int64    `json:"modelAccessId,omitempty"`
-}
-
-type UpdateSessionResponse struct {
-	Session AiSession `json:"session"`
-}
-
-type GetSessionResponse struct {
-	Session AiSession `json:"session"`
-}
-
-type ListSessionsResponse struct {
-	List  []AiSession `json:"list"`
-	Total int64       `json:"total"`
-}
-
-type AiMessage struct {
-	Id               int64  `json:"id"`
-	SessionID        int64  `json:"sessionId"`
-	Role             string `json:"role"`
-	Content          string `json:"content"`
-	PromptTokens     int32  `json:"promptTokens"`
-	CompletionTokens int32  `json:"completionTokens"`
-	TotalTokens      int32  `json:"totalTokens"`
-}
-
-type GetSessionMessagesResponse struct {
-	List []AiMessage `json:"list"`
-}
-
-type ChatRequest struct {
-	SessionID int64  `json:"sessionId"` // Often in path, but included here just in case
-	Message   string `json:"content"`
-}
+// Note: Other structs are now imported from "github.com/kymo-mcp/mcpcan/api/market/ai_agent" (as pb)
 
 // --- Helper Functions ---
 
@@ -288,7 +165,7 @@ func makeRequest(t *testing.T, method, path string, body interface{}, response i
 			if err := json.Unmarshal(respBody, &apiResp); err != nil {
 				t.Fatalf("Failed to unmarshal API response wrapper: %v, body: %s", err, string(respBody))
 			}
-			if apiResp.Code != 200 {
+			if apiResp.Code > 0 {
 				t.Fatalf("API Error Code %d: %s", apiResp.Code, apiResp.Message)
 			}
 		} else {
@@ -302,14 +179,14 @@ func makeRequest(t *testing.T, method, path string, body interface{}, response i
 
 // Helper to create a model access for other tests
 func createTestModelAccess(t *testing.T) int64 {
-	req := CreateModelAccessRequest{
+	req := pb.CreateModelAccessRequest{
 		Name:      "Test Helper Doubao",
 		Provider:  TestProvider,
 		ApiKey:    TestApiKey,
 		BaseUrl:   TestBaseURL,
 		ModelName: TestModelName,
 	}
-	var resp CreateModelAccessResponse
+	var resp pb.CreateModelAccessResponse
 	makeRequest(t, "POST", "/ai/models", req, &resp)
 	return resp.Access.Id
 }
@@ -326,17 +203,19 @@ func deleteTestModelAccess(t *testing.T, id int64) {
 	resp, err := client.Do(req)
 	if err == nil {
 		resp.Body.Close()
+	} else {
+		t.Logf("Warning: Failed to delete model access %d: %v", id, err)
 	}
 }
 
 // Helper to create a session
 func createTestSession(t *testing.T, modelID int64) int64 {
-	req := CreateSessionRequest{
+	req := pb.CreateSessionRequest{
 		Name:          "Test Helper Session",
-		ModelAccessId: modelID,
+		ModelAccessID: modelID,
 		MaxContext:    10,
 	}
-	var resp CreateSessionResponse
+	var resp pb.CreateSessionResponse
 	makeRequest(t, "POST", "/ai/sessions", req, &resp)
 	return resp.Session.Id
 }
@@ -353,6 +232,8 @@ func deleteTestSession(t *testing.T, id int64) {
 	resp, err := client.Do(req)
 	if err == nil {
 		resp.Body.Close()
+	} else {
+		t.Logf("Warning: Failed to delete session %d: %v", id, err)
 	}
 }
 
@@ -361,7 +242,7 @@ func deleteTestSession(t *testing.T, id int64) {
 // 1. GET /ai/models/supported
 // Description: Retrieves the list of supported AI providers and models.
 func TestGetSupportedModels(t *testing.T) {
-	var resp GetSupportedModelsResponse
+	var resp pb.GetSupportedModelsResponse
 	makeRequest(t, "GET", "/ai/models/supported", nil, &resp)
 
 	if len(resp.Providers) == 0 {
@@ -369,7 +250,7 @@ func TestGetSupportedModels(t *testing.T) {
 	}
 	found := false
 	for _, p := range resp.Providers {
-		if p.ID == TestProvider {
+		if p.Id == TestProvider {
 			found = true
 			break
 		}
@@ -378,19 +259,20 @@ func TestGetSupportedModels(t *testing.T) {
 		t.Errorf("Expected provider %s to be supported", TestProvider)
 	}
 	t.Logf("Found %d providers", len(resp.Providers))
+	// fmt.Printf("Providers: %+v\n", resp.Providers)
 }
 
 // 2. POST /ai/models
 // Description: Creates a new AI model access configuration.
 func TestCreateModelAccess(t *testing.T) {
-	req := CreateModelAccessRequest{
+	req := pb.CreateModelAccessRequest{
 		Name:      "Integration Test Create",
 		Provider:  TestProvider,
 		ApiKey:    TestApiKey,
 		BaseUrl:   TestBaseURL,
 		ModelName: TestModelName,
 	}
-	var resp CreateModelAccessResponse
+	var resp pb.CreateModelAccessResponse
 	makeRequest(t, "POST", "/ai/models", req, &resp)
 
 	if resp.Access.Id == 0 {
@@ -409,7 +291,7 @@ func TestListModelAccess(t *testing.T) {
 	id := createTestModelAccess(t)
 	defer deleteTestModelAccess(t, id)
 
-	var resp ListModelAccessResponse
+	var resp pb.ListModelAccessResponse
 	makeRequest(t, "GET", "/ai/models?page=1&pageSize=10", nil, &resp)
 
 	t.Logf("Total Models: %d", resp.Total)
@@ -425,7 +307,7 @@ func TestGetModelAccess(t *testing.T) {
 	defer deleteTestModelAccess(t, id)
 
 	path := fmt.Sprintf("/ai/models/%d", id)
-	var resp GetModelAccessResponse
+	var resp pb.GetModelAccessResponse
 	makeRequest(t, "GET", path, nil, &resp)
 
 	if resp.Access.Id != id {
@@ -440,11 +322,11 @@ func TestUpdateModelAccess(t *testing.T) {
 	id := createTestModelAccess(t)
 	defer deleteTestModelAccess(t, id)
 
-	req := UpdateModelAccessRequest{
+	req := pb.UpdateModelAccessRequest{
 		Id:   id,
 		Name: "Updated Name Integration Test",
 	}
-	var resp UpdateModelAccessResponse
+	var resp pb.UpdateModelAccessResponse
 	makeRequest(t, "PUT", "/ai/models", req, &resp)
 
 	if resp.Access.Name != "Updated Name Integration Test" {
@@ -457,7 +339,7 @@ func TestUpdateModelAccess(t *testing.T) {
 func TestDeleteModelAccess(t *testing.T) {
 	// Create one specifically to delete
 	id := createTestModelAccess(t)
-	
+
 	path := fmt.Sprintf("/ai/models/%d", id)
 	makeRequest(t, "DELETE", path, nil, nil)
 
@@ -471,7 +353,7 @@ func TestDeleteModelAccess(t *testing.T) {
 		return
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode == http.StatusOK {
 		// If backend returns 200 with error code in body
 		body, _ := io.ReadAll(resp.Body)
@@ -493,7 +375,7 @@ func TestGetAvailableModels(t *testing.T) {
 	id := createTestModelAccess(t)
 	defer deleteTestModelAccess(t, id)
 
-	var resp ListModelAccessResponse
+	var resp pb.GetAvailableModelsResponse
 	makeRequest(t, "GET", "/ai/models/available", nil, &resp)
 
 	if len(resp.List) == 0 {
@@ -508,7 +390,7 @@ func TestTestConnectionByID(t *testing.T) {
 	id := createTestModelAccess(t)
 	defer deleteTestModelAccess(t, id)
 
-	var resp TestConnectionResponse
+	var resp pb.TestConnectionResponse
 	path := fmt.Sprintf("/ai/models/%d/test", id)
 	makeRequest(t, "POST", path, nil, &resp)
 
@@ -521,13 +403,13 @@ func TestTestConnectionByID(t *testing.T) {
 // 9. POST /ai/models/test
 // Description: Tests connection using provided credentials directly (without saving).
 func TestTestConnectionDirect(t *testing.T) {
-	req := TestConnectionRequest{
+	req := pb.TestConnectionRequest{
 		Provider:  TestProvider,
 		ApiKey:    TestApiKey,
 		BaseUrl:   TestBaseURL,
 		ModelName: TestModelName,
 	}
-	var resp TestConnectionResponse
+	var resp pb.TestConnectionResponse
 	makeRequest(t, "POST", "/ai/models/test", req, &resp)
 
 	t.Logf("Connection Test (Direct): Success=%v, Message=%s, Latency=%dms", resp.Success, resp.Message, resp.LatencyMs)
@@ -542,12 +424,12 @@ func TestCreateSession(t *testing.T) {
 	modelID := createTestModelAccess(t)
 	defer deleteTestModelAccess(t, modelID)
 
-	req := CreateSessionRequest{
+	req := pb.CreateSessionRequest{
 		Name:          "Integration Test Session",
-		ModelAccessId: modelID,
+		ModelAccessID: modelID,
 		MaxContext:    10,
 	}
-	var resp CreateSessionResponse
+	var resp pb.CreateSessionResponse
 	makeRequest(t, "POST", "/ai/sessions", req, &resp)
 
 	if resp.Session.Id == 0 {
@@ -567,7 +449,7 @@ func TestListSessions(t *testing.T) {
 	sessionID := createTestSession(t, modelID)
 	defer deleteTestSession(t, sessionID)
 
-	var resp ListSessionsResponse
+	var resp pb.ListSessionsResponse
 	makeRequest(t, "GET", "/ai/sessions?page=1&pageSize=10", nil, &resp)
 
 	if len(resp.List) == 0 {
@@ -585,7 +467,7 @@ func TestGetSession(t *testing.T) {
 	defer deleteTestSession(t, sessionID)
 
 	path := fmt.Sprintf("/ai/sessions/%d", sessionID)
-	var resp GetSessionResponse
+	var resp pb.GetSessionResponse
 	makeRequest(t, "GET", path, nil, &resp)
 
 	if resp.Session.Id != sessionID {
@@ -601,11 +483,11 @@ func TestUpdateSession(t *testing.T) {
 	sessionID := createTestSession(t, modelID)
 	defer deleteTestSession(t, sessionID)
 
-	req := UpdateSessionRequest{
+	req := pb.UpdateSessionRequest{
 		Id:   sessionID,
 		Name: "Updated Session Name",
 	}
-	var resp UpdateSessionResponse
+	var resp pb.UpdateSessionResponse
 	makeRequest(t, "PUT", "/ai/sessions", req, &resp)
 
 	if resp.Session.Name != "Updated Session Name" {
@@ -656,7 +538,11 @@ func TestChatSSEInitiation(t *testing.T) {
 
 	path := fmt.Sprintf("/ai/sessions/%d/chat", sessionID)
 	url := baseURL + path
-	reqBody, _ := json.Marshal(ChatRequest{Message: "Hello, this is an integration test."})
+	// Use Content instead of Message, and SessionID
+	reqBody, _ := json.Marshal(pb.ChatRequest{
+		SessionID: sessionID,
+		Content:   "Hello, this is an integration test.",
+	})
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -669,11 +555,11 @@ func TestChatSSEInitiation(t *testing.T) {
 	} else {
 		defer resp.Body.Close()
 		t.Logf("Chat SSE Status: %d", resp.StatusCode)
-		
+
 		// Basic check if we got a stream
 		contentType := resp.Header.Get("Content-Type")
 		t.Logf("Content-Type: %s", contentType)
-		
+
 		// Read first chunk to verify connectivity
 		buf := make([]byte, 1024)
 		n, _ := resp.Body.Read(buf)
@@ -693,7 +579,7 @@ func TestGetSessionMessages(t *testing.T) {
 
 	// Note: Without sending a chat first, this might be empty, but should still succeed
 	path := fmt.Sprintf("/ai/sessions/%d/messages", sessionID)
-	var resp GetSessionMessagesResponse
+	var resp pb.GetSessionMessagesResponse
 	makeRequest(t, "GET", path, nil, &resp)
 
 	t.Logf("Retrieved %d messages", len(resp.List))
