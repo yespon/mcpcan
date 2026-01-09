@@ -41,8 +41,8 @@
 }
 
 @property --page-ease {
-  syntax: '<easing-function>'; /* 变量类型：曲线函数 */
-  inherits: false; /* 不继承父元素值 */
+  syntax: '*'; /* 变量类型：曲线函数 */
+  inherits: true; /* 允许继承，确保 JS 设置的值能传递给伪元素 */
   initial-value: linear(
     0,
     0.324 9.1%,

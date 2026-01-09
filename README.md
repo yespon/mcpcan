@@ -1,11 +1,11 @@
 <div align="center">
-  <img width="1872" height="932" alt="image" src="image.png" />
+  <img width="1872" height="932" alt="image" src="images/image.png" />
+
 </div>
 
 <div align="center">
 
 # MCP CAN
-
 
 The open source integration platform for MCP Server.</br>
 MCPCAN uses containers for flexible deployment of MCP services, resolving potential system configuration conflicts. It supports multi-protocol compatibility and conversion, enabling seamless integration between different MCP service architectures. It also provides visual monitoring, security authentication, and one-stop deployment capabilities.</br>
@@ -15,13 +15,8 @@ MCPCAN uses containers for flexible deployment of MCP services, resolving potent
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
   <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge" alt="Apache 2.0"/>
-  <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge" alt="Apache 2.0"/>
 </div>
 <p align="center">
-   <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
-   <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a><br>
-   <a href="https://www.mcpcan.com/docs/en/guide/welcome
-   "><u>Document</a></u>
    <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
    <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a><br>
    <a href="https://www.mcpcan.com/docs/en/guide/welcome
@@ -60,58 +55,50 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 ## ✨ Demo and Official Website
 
 For the best demo experience, try directly <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a>.<br>
-[MP4]<br>
+</video>
+Watch our demo video on Bilibili: <a href="https://www.bilibili.com/video/BV1htBXBbECr?t=3.2">BV1htBXBbECr</a><br>
 To view our official website address, simply click <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>.
 
 ## 👨‍🚀 Quick Start
 
-For detailed deployment instructions, please refer to our [Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
+For detailed deployment instructions, please refer to our [Deployment Guide](https://www.mcpcan.com/docs/en/guide/install).
 
 ### 1. Get Deployment Repository
 
 ```bash
 # GitHub (International)
 git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy
+cd mcpcan-deploy/docker-compose/
 
 # Gitee (Recommended for China)
 git clone https://gitee.com/kymomcp/mcpcan-deploy.git
-cd mcpcan-deploy
+cd mcpcan-deploy/docker-compose/
 ```
 
-### 2. Installation
+### 2. Start Services
 
-**Quick Installation (Recommended)**
+**Docker Compose Quick Start (Recommended)**
 
-Suitable for clean Linux servers. Automatically installs k3s, ingress-nginx, Helm, and deploys the MCPCAN platform.
+Suitable for local development, testing, and lightweight production deployments.
 
 ```bash
-# Standard installation (International mirrors)
-./scripts/install-fast.sh
+# 1. Initialize configuration
+cp example.env .env
+# (Optional) Modify .env file for settings like REGISTRY_PREFIX to switch between global/CN mirrors
 
-# Accelerated installation (China mirrors)
-./scripts/install-fast.sh --cn
+# 2. Generate final configuration
+chmod +x replace.sh
+./replace.sh
+
+# 3. Start services
+docker compose up -d
 ```
 
-After successful installation, access `http://<Your Public IP>` to start using.
+After successful installation, access `http://localhost` (or `http://<Your Public IP>`) to start using.
 
-**Custom Installation (Helm)**
+**Helm Installation**
 
-Suitable for scenarios requiring custom domain, HTTPS, or modifying default configurations.
-
-```bash
-# 1. Install dependencies (skip if k3s/Helm is already installed)
-./scripts/install-run-environment.sh       # International mirrors
-# ./scripts/install-run-environment.sh --cn  # China mirrors
-
-# 2. Copy and modify configuration
-cp helm/values.yaml helm/values-custom.yaml
-# Edit helm/values-custom.yaml to set global.domain and other parameters
-
-# 3. Install platform
-helm install mcpcan ./helm -f helm/values-custom.yaml \
-  --namespace mcpcan --create-namespace --timeout 600s --wait
-```
+Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
 
 ## 🚀 Components
 
@@ -179,7 +166,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 - 🐛 [Issue Tracker](https://github.com/Kymo-MCP/mcpcan/issues)
 - 📧 [Mailing List](mailto:opensource@kymo.cn)
 - 🌐 WeChat<br>
-  <img src="35c3c9b9cd5a5c89ca7e4e554e4292ba.jpg" alt="alt text" width="170">
+  <img src="images/WeChat group QR code.jpg" alt="alt text" width="170">
 
 ## 💕 Acknowledgments
 

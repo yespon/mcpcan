@@ -15,6 +15,7 @@
         "edit": "Edit",
         "pvc": "PVC",
         "node": "Node",
+        "volume": "Volume",
         "delete": "Delete",
         "connectionSuccess": "Success",
         "deleteBox": "Are you sure to delete this runtime environment?"
@@ -95,6 +96,22 @@
       "externalIp": "ExternalIp",
       "creationTime": "CreationTime",
       "operatingSystem": "OperatingSystem"
+    },
+    "volume": {
+      "name": "Name",
+      "status": "Status",
+      "driver": "Driver",
+      "mountpoint": "MountPoint",
+      "scope": "Scope",
+      "title": "Volume Management List",
+      "desc": "Volume management is used to manage storage volumes in container environments",
+      "add": "New",
+      "total": "Total",
+      "addLabel": "New Label",
+      "confirm": "Are you sure to delete this volume?",
+      "rules": {
+        "name": "Please enter the volume name"
+      }
     }
   }
 }

@@ -10,6 +10,14 @@
     </div>
     <el-alert v-else-if="showNav" :title="t('desc.demoTips')" type="warning" :closable="false" />
     <div class="flex align-center flex-1 justify-end">
+      <el-tooltip class="box-item" effect="dark" :content="t('desc.docs')" placement="bottom">
+        <el-icon
+          class="cursor-pointer mr-6 link-hover"
+          @click="handleJumpToPage(docs, { isOpen: true })"
+        >
+          <Document />
+        </el-icon>
+      </el-tooltip>
       <el-icon
         class="cursor-pointer mr-6 link-hover"
         @click="handleJumpToPage(github, { isOpen: true })"
@@ -23,11 +31,7 @@
       >
         <i class="icon iconfont MCP-ying"></i>
       </el-icon>
-      <el-icon
-        v-if="locale === 'en'"
-        class="cursor-pointer mr-6 link-hover"
-        @click="handleLanguageChange('zh-cn')"
-      >
+      <el-icon v-else class="cursor-pointer mr-6 link-hover" @click="handleLanguageChange('zh-cn')">
         <i class="icon iconfont MCP-zhong"></i>
       </el-icon>
       <el-icon
@@ -125,7 +129,7 @@
 </template>
 <script lang="ts" setup>
 import { useSystemStoreHook } from '@/stores/modules/system-store'
-import { Sunny, Moon, UserFilled } from '@element-plus/icons-vue'
+import { Sunny, Moon, UserFilled, Document } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
 import { useRouterHooks } from '@/utils/url'
 import GlareHover from '@/components/Animation/GlareHover.vue'
@@ -137,6 +141,7 @@ const { userInfo } = useUserStore()
 const { jumpBack, jumpToPage } = useRouterHooks()
 const github = 'https://github.com/kymo-mcp/mcpcan'
 const issues = 'https://github.com/kymo-mcp/mcpcan/issues'
+const docs = 'https://www.mcpcan.com/docs/en/guide/welcome'
 const route = useRoute()
 const router = useRouter()
 const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'

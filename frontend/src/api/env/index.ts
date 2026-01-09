@@ -112,3 +112,30 @@ export const NodeAPI = {
     })
   },
 }
+
+export const VolumeAPI = {
+  // Volume列表
+  list(params: TableData | null) {
+    return request<any, List>({
+      url: `/market/resources/docker/volumes`,
+      method: 'GET',
+      params,
+    })
+  },
+  // 创建Volume
+  createVolume(data: any) {
+    return request<any, any>({
+      url: `/market/resources/docker/volumes/create`,
+      method: 'POST',
+      data,
+    })
+  },
+  // 删除卷
+  delete(data: any) {
+    return request({
+      url: `/market/resources/docker/volumes/remove`,
+      method: 'POST',
+      data,
+    })
+  },
+}

@@ -134,7 +134,7 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'accessType',
       label: t('mcp.instance.form.accessType'),
-      props: { width: '100px' },
+      props: { width: '120px' },
       searchConfig: {
         component: 'el-select',
         label: t('mcp.instance.form.accessType'),
@@ -170,17 +170,17 @@ export const useInstanceTableHooks = () => {
     {
       dataIndex: 'enabledToken',
       label: t('mcp.instance.enabledToken'),
-      props: { width: '120px' },
+      props: { width: '160px' },
       headSlot: 'enabledTokenHeader',
     },
     {
       dataIndex: 'publicProxyConfig',
-      props: { width: '120px' },
+      props: { width: '160px' },
       label: t('mcp.instance.publicProxyConfig'),
     },
     {
       dataIndex: 'status',
-      props: { width: '120px' },
+      props: { width: '140px' },
       label: t('mcp.instance.status'),
       searchConfig: {
         component: 'el-select',
@@ -203,13 +203,13 @@ export const useInstanceTableHooks = () => {
         },
       },
     },
-    {
-      dataIndex: 'environmentName',
-      label: t('mcp.instance.env'),
-      customRender: ({ row }: { row: InstanceResult }) => {
-        return row.accessType === AccessType.HOSTING ? row.environmentName : '--'
-      },
-    },
+    // {
+    //   dataIndex: 'environmentName',
+    //   label: t('mcp.instance.env'),
+    //   customRender: ({ row }: { row: InstanceResult }) => {
+    //     return row.accessType === AccessType.HOSTING ? row.environmentName : '--'
+    //   },
+    // },
     {
       dataIndex: 'notes',
       label: t('mcp.template.notes'),

@@ -146,6 +146,82 @@ message StorageClassInfo {
     repeated string mountOptions = 7;
 }
 
+// DockerVolumeInfo Docker 卷信息结构
+message DockerVolumeInfo {
+    // @inject_tag: json:"name" desc:"卷名称"
+    string name = 1;
+    // @inject_tag: json:"driver" desc:"驱动"
+    string driver = 2;
+    // @inject_tag: json:"mountpoint" desc:"挂载点"
+    string mountpoint = 3;
+    // @inject_tag: json:"labels" desc:"标签"
+    map<string, string> labels = 4;
+    // @inject_tag: json:"options" desc:"选项"
+    map<string, string> options = 5;
+    // @inject_tag: json:"scope" desc:"作用域"
+    string scope = 6;
+    // @inject_tag: json:"createdAt" desc:"创建时间"
+    string createdAt = 7;
+    // @inject_tag: json:"status" desc:"状态信息"
+    map<string, string> status = 8;
+}
+
+// ListDockerVolumesRequest
+message ListDockerVolumesRequest {
+    // @inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"
+    int32 environmentId = 1;
+}
+
+// ListDockerVolumesResponse
+message ListDockerVolumesResponse {
+    // @inject_tag: json:"list" desc:"Docker 卷列表"
+    repeated DockerVolumeInfo list = 1;
+}
+
+// CreateDockerVolumeRequest
+message CreateDockerVolumeRequest {
+    // @inject_tag: json:"environmentId" form:"environmentId" desc:"环境ID"
+    int32 environmentId = 1;
+    // @inject_tag: json:"name" form:"name" desc:"卷名称"
+    string name = 2;
+    // @inject_tag: json:"labels" form:"labels" desc:"标签"
+    map<string, string> labels = 3;
+}
+
+// CreateDockerVolumeResponse
+message CreateDockerVolumeResponse {
+    // @inject_tag: json:"volume" desc:"创建的卷信息"
+    DockerVolumeInfo volume = 1;
+}
+
+// FindDockerVolumeRequest
+message FindDockerVolumeRequest {
+    // @inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"
+    int32 environmentId = 1;
+    // @inject_tag: json:"name" form:"name" desc:"卷名称"
+    string name = 2;
+}
+
+// FindDockerVolumeResponse
+message FindDockerVolumeResponse {
+    // @inject_tag: json:"volume" desc:"卷信息"
+    DockerVolumeInfo volume = 1;
+}
+
+// RemoveDockerVolumeRequest
+message RemoveDockerVolumeRequest {
+    // @inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"
+    int32 environmentId = 1;
+    // @inject_tag: json:"name" form:"name" desc:"卷名称"
+    string name = 2;
+}
+
+// RemoveDockerVolumeResponse
+message RemoveDockerVolumeResponse {
+    // @inject_tag: json:"success" desc:"是否成功"
+    bool success = 1;
+}
+
 // ResourceService 资源管理服务
 service ResourceService {
     // 创建 PVC 资源
@@ -176,4 +252,36 @@ service ResourceService {
             get: "/resources/storage-classes"
         };
     }
+
+    // 查询 Docker 卷列表
+    rpc ListDockerVolumes(ListDockerVolumesRequest) returns (ListDockerVolumesResponse) {
+        option (google.api.http) = {
+            get: "/resources/docker/volumes"
+        };
+    }
+
+    // 创建 Docker 卷
+    rpc CreateDockerVolume(CreateDockerVolumeRequest) returns (CreateDockerVolumeResponse) {
+        option (google.api.http) = {
+            post: "/resources/docker/volumes/create"
+            body: "*"
+        };
+    }
+
+    // 查看 Docker 卷详情
+    rpc FindDockerVolume(FindDockerVolumeRequest) returns (FindDockerVolumeResponse) {
+        option (google.api.http) = {
+            post: "/resources/docker/volumes/get"
+            body: "*"
+        };
+    }
+
+    // 删除 Docker 卷
+    rpc RemoveDockerVolume(RemoveDockerVolumeRequest) returns (RemoveDockerVolumeResponse) {
+        option (google.api.http) = {
+            post: "/resources/docker/volumes/remove"
+            body: "*"
+        };
+    }
+
 }

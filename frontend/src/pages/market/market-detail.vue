@@ -7,31 +7,29 @@
         <div
           class="w-24 h-24 rounded-2xl border border-gray-200 flex items-center justify-center bg-white shadow-sm overflow-hidden p-2"
         >
-          <img
-            :src="currentMCP.githubOwnerAvatarUrl || '@/assets/logo.png'"
-            alt="Logo"
-            class="w-full h-full object-contain"
-          />
+          <img :src="iconUrl(currentMCP)" alt="Logo" class="w-full h-full object-contain" />
         </div>
 
         <!-- Content -->
         <div class="flex flex-col justify-between py-1">
-          <h1 class="text-3xl font-bold leading-tight">{{ currentMCP.name }}</h1>
+          <h1 class="text-3xl font-bold leading-tight">
+            {{ locale === 'zh-cn' ? currentMCP.name : currentMCP.nameEn }}
+          </h1>
 
           <div class="flex items-center gap-3 text-gray-500 text-sm mt-1">
             <span class="font-bold text-base">{{ currentMCP.githubOwner }}</span>
             <span class="w-1 h-1 rounded-full bg-gray-400"></span>
             <span>{{ t('market.updateTime') }}: {{ timestampToDate(currentMCP.updateTime) }}</span>
           </div>
-          <div class="flex items-center gap-8 mt-3">
+          <div class="flex items-center gap-4 mt-3">
             <el-tag
               type="primary"
               effect="dark"
-              class="!border-none px-5 py-1.5 text-sm"
+              class="!border-none px-2 py-1.5 text-sm"
               v-for="(type, index) in currentMCP.categoryIds"
               :key="index"
             >
-              {{ type.name }}
+              {{ translationTag(type.code) }}
             </el-tag>
             <div class="flex items-center gap-2 text-gray-600">
               <el-icon class="cursor-pointer">
@@ -112,14 +110,9 @@
         </el-card>
 
         <!-- Action Button -->
-        <el-button
-          type="primary"
-          size="large"
-          class="!w-full !h-12 !text-base !rounded-lg !font-medium"
-          @click="handleCreate"
-        >
-          {{ t('market.quickCreate') }}
-        </el-button>
+        <mcp-button @click="handleCreate" size="large" class="w-full">{{
+          t('market.quickCreate')
+        }}</mcp-button>
       </div>
     </div>
   </div>
@@ -130,6 +123,8 @@ import { useMarketDetailHooks } from './hooks/market-detail.ts'
 import { timestampToDate, githubNumber } from '@/utils/system'
 import { JsonFormatter } from '@/utils/json'
 import MarkdownIt from 'markdown-it'
+import baseConfig from '@/config/base_config.ts'
+import McpButton from '@/components/mcp-button/index.vue'
 
 const layout = useLayout()
 const { t, locale, jumpBack, jumpToPage, currentMCP } = useMarketDetailHooks()
@@ -142,7 +137,20 @@ const md = new MarkdownIt({
 const renderedReadme = computed(() => {
   return md.render(currentMCP.githubReadme || '')
 })
-
+const translationTag = (code: string) => {
+  return t('market.type.' + code)
+}
+const iconUrl = computed(() => {
+  return (card: any) => {
+    if (card.iconUrl) {
+      return baseConfig.MAIN_SITE_URL + card.iconUrl
+    } else if (card.githubOwnerAvatarUrl) {
+      return card.githubOwnerAvatarUrl
+    } else {
+      return '@/assets/logo.png'
+    }
+  }
+})
 // back last class page
 const handleBack = () => {
   jumpBack()

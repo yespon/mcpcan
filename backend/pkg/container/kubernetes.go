@@ -39,6 +39,11 @@ func (kr *KubernetesRuntime) GetServiceManager() ServiceManager {
 	return &KubernetesServiceManager{Entry: kr.Entry}
 }
 
+// GetVolumeManager gets volume manager
+func (kr *KubernetesRuntime) GetVolumeManager() VolumeManager {
+	return &KubernetesVolumeManager{Entry: kr.Entry}
+}
+
 // GetRuntimeType gets runtime type
 func (kr *KubernetesRuntime) GetRuntimeType() ContainerRuntime {
 	return RuntimeKubernetes
@@ -108,9 +113,8 @@ func (kcm *KubernetesContainerManager) Create(ctx context.Context, options Conta
 	// Create deployment
 	deploymentName, err := kcm.Entry.Client.Deployment().Create(deploymentOptions)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create Deployment: %w", err)
 	}
-
 	return deploymentName, nil
 }
 
@@ -233,16 +237,6 @@ func (kcm *KubernetesContainerManager) waitForDeploymentDeletion(ctx context.Con
 	return fmt.Errorf("waiting for deployment deletion timed out, exceeded %d seconds", maxRetries)
 }
 
-// isNotFoundError checks if it's a NotFound error
-func isNotFoundError(err error) bool {
-	if err == nil {
-		return false
-	}
-	// Check if error message contains "not found" keyword
-	errMsg := strings.ToLower(err.Error())
-	return strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "notfound")
-}
-
 // GetInfo gets container information
 func (kcm *KubernetesContainerManager) GetInfo(ctx context.Context, containerName string) (*ContainerInfo, error) {
 	deployment, err := kcm.Entry.Client.Deployment().Get(containerName)
@@ -250,36 +244,33 @@ func (kcm *KubernetesContainerManager) GetInfo(ctx context.Context, containerNam
 		return nil, fmt.Errorf("failed to get Deployment information: %w", err)
 	}
 
-	// Extract port information
-	var ports []int32
-	if deployment.Spec.Template.Spec.Containers != nil && len(deployment.Spec.Template.Spec.Containers) > 0 {
-		container := deployment.Spec.Template.Spec.Containers[0]
-		for _, port := range container.Ports {
-			ports = append(ports, port.ContainerPort)
-		}
+	pods, err := kcm.Entry.Client.Deployment().GetPods(deployment.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Pod list: %w", err)
 	}
 
-	// Determine status
 	status := "Unknown"
-	if deployment.Status.ReadyReplicas > 0 {
-		status = "Running"
-	} else if deployment.Status.Replicas > 0 {
-		status = "Pending"
-	} else {
-		status = "Stopped"
+	ip := ""
+
+	if len(pods) > 0 {
+		// Take the first Pod as status reference
+		pod := pods[0]
+		status = string(pod.Status.Phase)
+		ip = pod.Status.PodIP
 	}
 
-	// Get Pod IP (take the first running Pod IP)
-	podIPs, _ := kcm.Entry.Client.Deployment().GetPodIPs(containerName)
-	var podIP string
-	if len(podIPs) > 0 {
-		podIP = podIPs[0] // take the first IP
+	// Extract ports
+	var ports []int32
+	if len(deployment.Spec.Template.Spec.Containers) > 0 {
+		for _, p := range deployment.Spec.Template.Spec.Containers[0].Ports {
+			ports = append(ports, p.ContainerPort)
+		}
 	}
 
 	return &ContainerInfo{
 		Name:      deployment.Name,
 		Status:    status,
-		IP:        podIP,
+		IP:        ip,
 		Ports:     ports,
 		Labels:    deployment.Labels,
 		CreatedAt: deployment.CreationTimestamp.Format(time.RFC3339),
@@ -287,105 +278,87 @@ func (kcm *KubernetesContainerManager) GetInfo(ctx context.Context, containerNam
 }
 
 // IsReady checks if container is ready
+// IsReady checks if container is ready
 func (kcm *KubernetesContainerManager) IsReady(ctx context.Context, containerName string) (bool, string, error) {
-	ready, err := kcm.Entry.Client.Deployment().IsReady(containerName)
+
+	deployment, err := kcm.Entry.Client.Deployment().Get(containerName)
 	if err != nil {
-		return false, "check failed", err
+		return false, "", err
 	}
 
-	if ready {
-		return true, "ready", nil
-	} else {
-		return false, "not ready", nil
+	if deployment.Status.ReadyReplicas == deployment.Status.Replicas && deployment.Status.Replicas > 0 {
+		return true, "Running", nil
 	}
+
+	return false, fmt.Sprintf("Ready: %d/%d", deployment.Status.ReadyReplicas, deployment.Status.Replicas), nil
 }
 
 // GetEvents gets container events
 func (kcm *KubernetesContainerManager) GetEvents(ctx context.Context, containerName string) ([]ContainerEvent, error) {
-	// Use DeploymentManager to get complete Deployment-related events
-	// including Deployment, ReplicaSet and Pod events
-	events, err := kcm.Entry.Client.Deployment().GetEvents(containerName)
+	deployment, err := kcm.Entry.Client.Deployment().Get(containerName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Deployment events: %w", err)
+		return nil, err
+	}
+	pods, err := kcm.Entry.Client.Deployment().GetPods(deployment.Name)
+	if err != nil {
+		return nil, err
 	}
 
-	// Convert to generic event format
-	var containerEvents []ContainerEvent
-	for _, event := range events {
-		containerEvents = append(containerEvents, ContainerEvent{
-			Type:      event.Type,
-			Reason:    event.Reason,
-			Message:   event.Message,
-			Timestamp: event.FirstTimestamp.Unix(),
+	if len(pods) == 0 {
+		return []ContainerEvent{}, nil
+	}
+
+	k8sEvents, err := kcm.Entry.Pod.GetEvents(pods[0].Name, string(pods[0].UID))
+	if err != nil {
+		return nil, err
+	}
+
+	var events []ContainerEvent
+	for _, e := range k8sEvents {
+		events = append(events, ContainerEvent{
+			Type:      e.Type,
+			Reason:    e.Reason,
+			Message:   e.Message,
+			Timestamp: e.Timestamp.Unix(),
 		})
 	}
 
-	return containerEvents, nil
+	return events, nil
 }
 
 // GetLogs gets container logs
 func (kcm *KubernetesContainerManager) GetLogs(ctx context.Context, containerName string, lines int64) (string, error) {
-	// Get Pod list through Deployment name
-	pods, err := kcm.Entry.Client.Deployment().GetPods(containerName)
+	deployment, err := kcm.Entry.Client.Deployment().Get(containerName)
 	if err != nil {
-		return "", fmt.Errorf("failed to get Pod list for Deployment: %w", err)
+		return "", err
+	}
+	pods, err := kcm.Entry.Client.Deployment().GetPods(deployment.Name)
+	if err != nil {
+		return "", err
 	}
 
 	if len(pods) == 0 {
-		return "", fmt.Errorf("no Pod found for Deployment %s", containerName)
+		return "", fmt.Errorf("no pods found for deployment %s", containerName)
 	}
 
-	// Get logs from the first running Pod
-	for _, pod := range pods {
-		if pod.Status.Phase == corev1.PodRunning {
-			logs, err := kcm.Entry.Client.Pod().GetLogs(pod.Name, lines)
-			if err == nil {
-				return logs, nil
-			}
-			continue // try next Pod
-		}
-	}
-
-	// If no running Pod, try to get logs from the latest Pod
-	var latestPod *corev1.Pod
-	for i := range pods {
-		if latestPod == nil || pods[i].CreationTimestamp.After(latestPod.CreationTimestamp.Time) {
-			latestPod = &pods[i]
-		}
-	}
-
-	if latestPod != nil {
-		logs, err := kcm.Entry.Client.Pod().GetLogs(latestPod.Name, lines)
-		if err != nil {
-			return "", fmt.Errorf("failed to get Pod %s logs: %w", latestPod.Name, err)
-		}
-		return logs, nil
-	}
-
-	return "", fmt.Errorf("no available Pod found")
+	return kcm.Entry.Pod.GetLogs(pods[0].Name, lines)
 }
 
 // GetWarningEvents gets container warning events
 func (kcm *KubernetesContainerManager) GetWarningEvents(ctx context.Context, containerName string) ([]ContainerEvent, error) {
-	// Use DeploymentManager to get Deployment-related warning events
-	// including Deployment, ReplicaSet and Pod warning events
-	events, err := kcm.Entry.Client.Deployment().GetWarningEvents(containerName)
+	events, err := kcm.GetEvents(ctx, containerName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Deployment warning events: %w", err)
+		return nil, err
 	}
 
-	// Convert to generic event format
-	var containerEvents []ContainerEvent
-	for _, event := range events {
-		containerEvents = append(containerEvents, ContainerEvent{
-			Type:      event.Type,
-			Reason:    event.Reason,
-			Message:   event.Message,
-			Timestamp: event.FirstTimestamp.Unix(),
-		})
+	var warnings []ContainerEvent
+	for _, e := range events {
+		if e.Type == "Warning" {
+			warnings = append(warnings, e)
+		}
 	}
 
-	return containerEvents, nil
+	return warnings, nil
 }
 
 // KubernetesServiceManager Kubernetes service manager implementation
@@ -519,4 +492,39 @@ func (ksm *KubernetesServiceManager) waitForServiceDeletion(ctx context.Context,
 		time.Sleep(retryInterval)
 	}
 	return fmt.Errorf("waiting for service deletion timed out, exceeded %d seconds", maxRetries)
+}
+
+// KubernetesVolumeManager Kubernetes volume manager implementation
+type KubernetesVolumeManager struct {
+	Entry *k8s.Entry
+}
+
+func (kvm *KubernetesVolumeManager) List(ctx context.Context) ([]VolumeInfo, error) {
+	return nil, fmt.Errorf("not implemented for Kubernetes")
+}
+
+func (kvm *KubernetesVolumeManager) Create(ctx context.Context, name string, driver string, labels map[string]string, options map[string]string) (VolumeInfo, error) {
+	return VolumeInfo{}, fmt.Errorf("not implemented for Kubernetes")
+}
+
+func (kvm *KubernetesVolumeManager) Inspect(ctx context.Context, name string) (VolumeInfo, error) {
+	return VolumeInfo{}, fmt.Errorf("not implemented for Kubernetes")
+}
+
+func (kvm *KubernetesVolumeManager) Remove(ctx context.Context, name string) error {
+	return fmt.Errorf("not implemented for Kubernetes")
+}
+
+func (kvm *KubernetesVolumeManager) Prune(ctx context.Context) (int, error) {
+	return 0, fmt.Errorf("not implemented for Kubernetes")
+}
+
+// isNotFoundError checks if it's a NotFound error
+func isNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// Check if error message contains "not found" keyword
+	errMsg := strings.ToLower(err.Error())
+	return strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "notfound")
 }

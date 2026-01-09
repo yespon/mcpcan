@@ -65,9 +65,20 @@
                 class="selected-badge"
               ></div>
               <div class="agent-icon">
-                <el-icon class="cursor-pointer" size="48" color="var(--el-color-primary)"
+                <el-icon
+                  v-if="!logoIcon[agent.accessType]"
+                  class="cursor-pointer"
+                  size="48"
+                  color="var(--el-color-primary)"
                   ><i class="icon iconfont MCP-zhinengti"></i
                 ></el-icon>
+                <McpImage
+                  v-else
+                  :src="logoIcon[agent.accessType]"
+                  fit="contain"
+                  width="50"
+                  height="20"
+                />
               </div>
               <div class="agent-info flex-sub u-line-1">
                 <div class="agent-name">{{ agent.accessName || t('agent.sync.noAccessName') }}</div>
@@ -283,10 +294,12 @@
 
 <script setup lang="ts">
 import { AgentAPI } from '@/api/agent'
+import McpImage from '@/components/mcp-image/index.vue'
 import TokenFormSync from './components/token-form-sync.vue'
 import { useBusinessStoreHook } from '@/stores/modules/business-store'
 import { useRouterHooks } from '@/utils/url'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { kymo, coze, n8n } from '@/utils/logo.ts'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -314,6 +327,12 @@ const accessTypeMap: Record<string, string> = {
   DifyEnterprise: 'Dify ' + t('agent.action.enterprise'),
   Dify: 'Dify ' + t('agent.action.community'),
 }
+const logoIcon = ref<any>({
+  Dify: kymo,
+  COZE: coze,
+  N8N: n8n,
+  DifyEnterprise: kymo,
+})
 
 // selected namespace list based on selectedNamespaces ids
 const selectedNamespaceList = computed(() => {

@@ -343,6 +343,7 @@ const {
   timer,
   selection,
   agentSyncDialog,
+  meta,
 } = useInstanceTableHooks()
 
 const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
@@ -668,6 +669,20 @@ const init = () => {
 onBeforeUnmount(() => {
   if (timer.value) {
     clearInterval(timer.value)
+  }
+})
+
+onActivated(() => {
+  init()
+  if (!timer.value) {
+    timer.value = setInterval(init, 30000)
+  }
+})
+
+onDeactivated(() => {
+  if (timer.value) {
+    clearInterval(timer.value)
+    timer.value = 0
   }
 })
 

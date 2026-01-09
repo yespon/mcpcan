@@ -11,17 +11,23 @@
           <el-dropdown-menu>
             <el-dropdown-item command="community" @click="handleNewAgent(AgentType.DIFY)">
               <div class="flex align-center">
-                <McpImage :src="dify" fit="contain" width="80" height="20" />
+                <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
                 {{ t('agent.action.community') }}
               </div>
             </el-dropdown-item>
             <el-dropdown-item command="business" @click="handleNewAgent(AgentType.DIFY_ENTERPRISE)">
-              <McpImage :src="dify" fit="contain" width="80" height="20" />
+              <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
               {{ t('agent.action.enterprise') }}
             </el-dropdown-item>
             <el-dropdown-item command="business" @click="handleNewAgent(AgentType.COZE)">
-              <McpImage :src="coze" fit="contain" width="80" height="20" />
-              {{ t('agent.action.enterprise') }}
+              <McpImage
+                :src="coze"
+                fit="contain"
+                width="20"
+                height="20"
+                borderRadius="4"
+                style="background-color: #fff; margin-right: 10px"
+              />Coze{{ t('agent.action.enterprise') }}
             </el-dropdown-item>
             <el-dropdown-item command="business" @click="handleNewAgent(AgentType.N8N)">
               <McpImage :src="n8n" fit="contain" width="20" height="20" />
@@ -128,11 +134,13 @@
               <McpImage
                 :src="logoIcon[row.accessType] || dify"
                 fit="contain"
-                width="80"
+                width="50"
                 height="20"
               />
-              <div class="flex-sub ml-2 ellipsis-two">
-                {{ row.accessType === AgentType.N8N ? AgentType.N8N : '' }}
+              <div v-if="row.accessType === AgentType.N8N" class="flex-sub ml-2 ellipsis-two">
+                {{ AgentType.N8N }}
+              </div>
+              <div v-else class="flex-sub ml-2 ellipsis-two">
                 {{
                   row.accessType === AgentType.DIFY
                     ? t('agent.action.community')

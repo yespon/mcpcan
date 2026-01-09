@@ -201,7 +201,7 @@
             </el-form-item>
           </el-col>
           <!-- 选择环境 -->
-          <el-col :span="12">
+          <el-col :span="12" v-if="false">
             <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
               <el-select
                 v-model="pageInfo.formData.environmentId"

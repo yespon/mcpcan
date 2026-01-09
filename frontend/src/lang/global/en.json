@@ -51,7 +51,7 @@
     "mcpManage": "MCP-Mg",
     "templateManage": "Template",
     "newTemplate": "AddTemplate",
-    "instanceManage": "Instance",
+    "instanceManage": "MCP Instance",
     "newInstance": "AddInstance",
     "envManage": "Env-Mg",
     "runEnviroment": "Run-Env",
@@ -63,7 +63,7 @@
     "apiDocsList": "API Docs",
     "agentManage": "Agent Platform",
     "marketManage": "Market",
-    "resourceManage": "Resource",
+    "resourceManage": "File-Manage",
     "package": "Code-Package"
   },
   "common": {
@@ -124,7 +124,8 @@
     "env": "Environment",
     "tools": "Support tools",
     "baseCommand": "Basic commands",
-    "demoTips": "The data of the Demo site is for display purposes and will be reset after 24 hours. Please pay attention to saving your data"
+    "demoTips": "The data of the Demo site is for display purposes and will be reset after 24 hours. Please pay attention to saving your data",
+    "docs": "Documentation"
   },
   "request": {
     "error": "error",

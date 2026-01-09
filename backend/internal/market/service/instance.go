@@ -10,10 +10,9 @@ import (
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
-	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
+	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
 // InstanceService struct for instance service
@@ -930,4 +929,41 @@ func (s *InstanceService) checkSaveOpenapiInstanceRequest(name string, openapiFi
 		return fmt.Errorf("openapi type instance requires choose openapi file ID")
 	}
 	return nil
+}
+
+func (s *InstanceService) ListToolsHandler(c *gin.Context) {
+	var req instancepb.ListToolsRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	tools, err := biz.GInstanceBiz.ListTools(c.Request.Context(), req.InstanceID, req.Domain)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list tools: %s", err.Error()))
+		return
+	}
+
+	common.GinSuccess(c, tools)
+}
+
+func (s *InstanceService) CallToolHandler(c *gin.Context) {
+	var req instancepb.CallToolRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	var args any
+	if req.Arguments != "" {
+		if err := json.Unmarshal([]byte(req.Arguments), &args); err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to unmarshal arguments: %s", err.Error()))
+			return
+		}
+	}
+
+	resp, err := biz.GInstanceBiz.CallTool(c.Request.Context(), req.InstanceID, req.ToolName, args, req.Domain)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to call tool: %s", err.Error()))
+		return
+	}
+
+	common.GinSuccess(c, resp)
 }

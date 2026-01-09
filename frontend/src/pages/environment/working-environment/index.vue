@@ -63,11 +63,19 @@
                   <el-dropdown-item command="handleConnection">
                     {{ t('env.run.action.connection') }}
                   </el-dropdown-item>
-                  <el-dropdown-item command="handleJumpToPvc">
-                    {{ t('env.run.action.pvc') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleJumpToNode">
-                    {{ t('env.run.action.node') }}
+                  <template v-if="row.environment === 'kubernetes'">
+                    <el-dropdown-item command="handleJumpToPvc">
+                      {{ t('env.run.action.pvc') }}
+                    </el-dropdown-item>
+                    <el-dropdown-item command="handleJumpToNode">
+                      {{ t('env.run.action.node') }}
+                    </el-dropdown-item>
+                  </template>
+                  <el-dropdown-item
+                    command="handleJumpToVolume"
+                    v-if="row.environment === 'docker'"
+                  >
+                    {{ t('env.run.action.volume') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleDelete" v-if="false">
                     <el-button type="danger" link>
@@ -176,6 +184,20 @@ const handleJumpToNode = (row: any) => {
 }
 
 /**
+ * jump to volume manage
+ * @param row - current env data
+ */
+const handleJumpToVolume = (row: any) => {
+  jumpToPage({
+    url: '/volume-manage',
+    data: {
+      environmentId: row.id,
+      name: row.name,
+    },
+  })
+}
+
+/**
  * delete
  * @param row - item of env
  */
@@ -220,6 +242,9 @@ const handleCommand = (callback: string, row: any) => {
       break
     case 'handleJumpToNode':
       handleJumpToNode(row)
+      break
+    case 'handleJumpToVolume':
+      handleJumpToVolume(row)
       break
     case 'handleDelete':
       handleDelete(row)

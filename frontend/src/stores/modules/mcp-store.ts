@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { store } from '@/stores'
-import { EnvAPI, PvcAPI, NodeAPI } from '@/api/env'
+import { EnvAPI, PvcAPI, NodeAPI, VolumeAPI } from '@/api/env'
 import { CodeAPI } from '@/api/code'
 import { SourceType, AccessType, McpProtocol } from '@/types/instance'
 import { type Code, type EnvResult, type nodeResult } from '@/types/index'
@@ -11,6 +11,7 @@ export const useMcpStore = defineStore('mcp', () => {
   const envList = ref<EnvResult[]>([])
   const nodeList = ref<nodeResult[]>([])
   const pvcList = ref<any[]>([])
+  const volumeList = ref<any[]>([])
   const currentMCP = useStorage('currentMCP', {} as any)
 
   // source of instance list
@@ -65,11 +66,20 @@ export const useMcpStore = defineStore('mcp', () => {
     pvcList.value = data.list
   }
 
+  /**
+   * Handle get volume list
+   */
+  const handleGetVolumeList = async (environmentId: string) => {
+    const data = await VolumeAPI.list({ environmentId })
+    volumeList.value = data.list
+  }
+
   return {
     packageList,
     envList,
     nodeList,
     pvcList,
+    volumeList,
     sourceOptions,
     accessTypeOptions,
     mcpProtocolOptions,
@@ -78,6 +88,7 @@ export const useMcpStore = defineStore('mcp', () => {
     handleGetEnvList,
     handleGetNodeList,
     handleGetPvcList,
+    handleGetVolumeList,
   }
 })
 

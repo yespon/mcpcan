@@ -15,21 +15,19 @@ services:
 
 database:
   mysql:
-    host: "mysql-svc"
-    port: 3306
-    database: mcp_dev
-    username: mcp_user
-    password: dev-password
+    host: localhost
+    port: 31306
+    database: mcpcan
+    username: mcpcan-user
+    password: a6ApqYJIycJJjl
   redis:
-    host: "redis-svc"
-    port: 6379
-    password: "dev-redis-password"
-    db: 0
+    host: localhost
+    port: 31379
+    password: dHaARm88OXXN6e
 
 log:
   level: debug
   format: text
-
 
 # 代码包存放路径
 code:
@@ -47,6 +45,3 @@ storage:
   codePath: ./data/code-package
   # static 存放路径
   staticPath: ./data/static
-
-
-

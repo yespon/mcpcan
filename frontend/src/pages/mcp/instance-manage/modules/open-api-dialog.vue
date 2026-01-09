@@ -118,9 +118,8 @@
           t('common.cancel')
         }}</el-button>
         <mcp-button class="w-25 mr-4" @click="handleConfirm">{{ t('common.save') }}</mcp-button>
-        <mcp-button
-          v-if="!formData.instanceId && !formData.templateId"
-          @click="handleSaveAsTemplate"
+        <!-- v-if="!formData.instanceId && !formData.templateId" -->
+        <mcp-button @click="handleSaveAsTemplate"
           >{{ t('mcp.instance.action.asTemplate') }}
         </mcp-button>
       </div>
@@ -226,7 +225,7 @@ const formData = ref({
 const rules = ref({
   name: [
     { required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' },
-    { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
+    // { type: 'string', max: 40, message: t('mcp.instance.rules.nameMax40'), trigger: 'blur' },
   ],
   openapiBaseUrl: [
     { required: true, message: t('mcp.instance.rules.openapiBaseUrl'), trigger: 'blur' },

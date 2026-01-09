@@ -5,15 +5,15 @@ secret: "dev-app-secret"
 
 database:
   mysql:
-    host: "mysql-svc"
-    port: 3306
-    database: mcp_dev
-    username: mcp_user
-    password: dev-password
+    host: localhost
+    port: 31306
+    database: mcpcan
+    username: mcpcan-user
+    password: a6ApqYJIycJJjl
   redis:
-    host: "redis-svc"
-    port: 6379
-    password: "dev-redis-password"
+    host: localhost
+    port: 31379
+    password: dHaARm88OXXN6e
     db: 0
 
 log:
@@ -27,4 +27,3 @@ storage:
   codePath: ./data/code-package
   # static 存放路径
   staticPath: ./data/static
-

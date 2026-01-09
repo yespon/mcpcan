@@ -69,6 +69,10 @@ const DefaultMcpType = "sse"
 
 type SourceType string
 
+func (sourceType SourceType) String() string {
+	return string(sourceType)
+}
+
 const (
 	// MCP 市场
 	SourceTypeMarket SourceType = "market"

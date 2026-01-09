@@ -113,6 +113,32 @@ type ContainerManager interface {
 	GetLogs(ctx context.Context, containerName string, lines int64) (string, error)
 }
 
+// VolumeInfo volume information
+type VolumeInfo struct {
+	Name       string                 `json:"name"`
+	Driver     string                 `json:"driver"`
+	Mountpoint string                 `json:"mountpoint"`
+	Labels     map[string]string      `json:"labels"`
+	Options    map[string]string      `json:"options"`
+	Scope      string                 `json:"scope"`
+	CreatedAt  string                 `json:"createdAt"`
+	Status     map[string]interface{} `json:"status"`
+}
+
+// VolumeManager volume manager interface
+type VolumeManager interface {
+	// List lists volumes
+	List(ctx context.Context) ([]VolumeInfo, error)
+	// Create creates a volume
+	Create(ctx context.Context, name string, driver string, labels map[string]string, options map[string]string) (VolumeInfo, error)
+	// Inspect inspects a volume
+	Inspect(ctx context.Context, name string) (VolumeInfo, error)
+	// Remove removes a volume
+	Remove(ctx context.Context, name string) error
+	// Prune removes unused volumes
+	Prune(ctx context.Context) (int, error)
+}
+
 // ServiceManager service manager interface
 type ServiceManager interface {
 	// Create creates a service
@@ -131,6 +157,8 @@ type Runtime interface {
 	GetContainerManager() ContainerManager
 	// GetServiceManager gets service manager
 	GetServiceManager() ServiceManager
+	// GetVolumeManager gets volume manager
+	GetVolumeManager() VolumeManager
 	// GetRuntimeType gets runtime type
 	GetRuntimeType() ContainerRuntime
 }

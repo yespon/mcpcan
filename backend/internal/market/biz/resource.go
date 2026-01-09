@@ -132,3 +132,84 @@ func (biz *ResourceBiz) getK8sEntryByEnvironmentID(environmentID uint) (*k8s.Ent
 
 	return nil, fmt.Errorf("K8s runtime type assertion failed")
 }
+
+// ListDockerVolumes gets Docker volume list by environment ID
+func (biz *ResourceBiz) ListDockerVolumes(environmentID uint) ([]container.VolumeInfo, error) {
+	entry, err := GContainerBiz.GetRuntimeEntry(biz.ctx, environmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime := entry.GetRuntime()
+	// Check if it's Docker runtime
+	if runtime.GetRuntimeType() != container.RuntimeDocker {
+		return nil, fmt.Errorf("environment is not Docker runtime")
+	}
+
+	return runtime.GetVolumeManager().List(biz.ctx)
+}
+
+// CreateDockerVolume creates Docker volume
+func (biz *ResourceBiz) CreateDockerVolume(environmentID uint, name string, labels map[string]string) (container.VolumeInfo, error) {
+	driver := "local"
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	options := make(map[string]string)
+	entry, err := GContainerBiz.GetRuntimeEntry(biz.ctx, environmentID)
+	if err != nil {
+		return container.VolumeInfo{}, err
+	}
+
+	runtime := entry.GetRuntime()
+	if runtime.GetRuntimeType() != container.RuntimeDocker {
+		return container.VolumeInfo{}, fmt.Errorf("environment is not Docker runtime")
+	}
+
+	return runtime.GetVolumeManager().Create(biz.ctx, name, driver, labels, options)
+}
+
+// GetDockerVolume inspects Docker volume by name
+func (biz *ResourceBiz) GetDockerVolume(environmentID uint, name string) (container.VolumeInfo, error) {
+	entry, err := GContainerBiz.GetRuntimeEntry(biz.ctx, environmentID)
+	if err != nil {
+		return container.VolumeInfo{}, err
+	}
+
+	runtime := entry.GetRuntime()
+	if runtime.GetRuntimeType() != container.RuntimeDocker {
+		return container.VolumeInfo{}, fmt.Errorf("environment is not Docker runtime")
+	}
+
+	return runtime.GetVolumeManager().Inspect(biz.ctx, name)
+}
+
+// RemoveDockerVolume removes Docker volume
+func (biz *ResourceBiz) RemoveDockerVolume(environmentID uint, name string) error {
+	entry, err := GContainerBiz.GetRuntimeEntry(biz.ctx, environmentID)
+	if err != nil {
+		return err
+	}
+
+	runtime := entry.GetRuntime()
+	if runtime.GetRuntimeType() != container.RuntimeDocker {
+		return fmt.Errorf("environment is not Docker runtime")
+	}
+
+	return runtime.GetVolumeManager().Remove(biz.ctx, name)
+}
+
+// PruneDockerVolumes removes unused Docker volumes
+func (biz *ResourceBiz) PruneDockerVolumes(environmentID uint) (int, error) {
+	entry, err := GContainerBiz.GetRuntimeEntry(biz.ctx, environmentID)
+	if err != nil {
+		return 0, err
+	}
+
+	runtime := entry.GetRuntime()
+	if runtime.GetRuntimeType() != container.RuntimeDocker {
+		return 0, fmt.Errorf("environment is not Docker runtime")
+	}
+
+	return runtime.GetVolumeManager().Prune(biz.ctx)
+}

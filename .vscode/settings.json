@@ -19,7 +19,9 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "proto3.includePaths": [
     "${workspaceFolder}",
-    "${workspaceFolder}/backend/api"
+    "${workspaceFolder}/backend/third_party",
+    "${workspaceFolder}/backend/api",
+    "${workspaceFolder}/backend"
   ],
   "protoc.options": [
     "--proto_path=${workspaceFolder}/backend/third_party",

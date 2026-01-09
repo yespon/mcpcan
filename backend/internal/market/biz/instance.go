@@ -16,6 +16,9 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
+	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/client/transport"
+	"github.com/mark3labs/mcp-go/mcp"
 	"gorm.io/gorm"
 
 	instancepb "github.com/kymo-mcp/mcpcan/api/market/instance"
@@ -1147,6 +1150,7 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.InitScript = initScript
 	oriInstance.Command = command
 	oriInstance.ServicePath = req.ServicePath
+	oriInstance.PackageID = packageID
 	oriInstance.SourceConfig = json.RawMessage([]byte(mcpServers))
 	oriInstance.ImgAddr = imgAddress
 	oriInstance.EnvironmentVariables = toEnvs
@@ -1231,4 +1235,99 @@ func (biz *InstanceBiz) UpdateInstanceStatusToPending(ctx context.Context, insta
 		return fmt.Errorf("failed to update instance status: %v", err)
 	}
 	return nil
+}
+
+// ListTools list tools of instance
+func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain string) ([]mcp.Tool, error) {
+	// 获取 mcp 客户端
+	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
+	}
+
+	// 调用 mcp 服务的 list tools 接口
+	tools, err := mcpClient.ListTools(context.Background(), mcp.ListToolsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("list tools failed: %s", err.Error())
+	}
+	return tools.Tools, nil
+}
+
+func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolName string, arguments any, domain string) (interface{}, error) {
+	// 获取 mcp 客户端
+	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
+	}
+
+	// 调用 mcp 服务的 call tool 接口
+	resp, err := mcpClient.CallTool(context.Background(), mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name:      toolName,
+			Arguments: arguments,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("call tool failed: %s", err.Error())
+	}
+	return resp, nil
+}
+
+func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*client.Client, error) {
+	mcpInstance, err := biz.GetInstance(instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance: %s", err.Error())
+	}
+	if mcpInstance == nil {
+		return nil, fmt.Errorf("instance does not exist")
+	}
+
+	tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tokens: %s", err.Error())
+	}
+
+	var defaultTokens = getDefaultToken(tokens)
+	// 访问头
+	listToolsHeader := map[string]string{}
+	if defaultTokens != nil {
+		listToolsHeader["Authorization"] = defaultTokens.Token
+	}
+	// 外部访问地址
+	mcpServerUrl := fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
+
+	// 给该 mcp 实例创建对应的 http client
+	mcpClient, err := client.NewStreamableHttpClient(
+		mcpServerUrl,
+		transport.WithHTTPHeaders(listToolsHeader),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
+	}
+	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("init mcp failed: %s", err.Error())
+	}
+	return mcpClient, nil
+}
+
+func getDefaultToken(tokens []*model.McpToken) *model.McpToken {
+	var defaultTokens *model.McpToken
+	for _, token := range tokens {
+		if len(token.Usages) == 0 {
+			continue
+		}
+
+		var usages []string
+		if len(token.Usages) > 0 {
+			_ = json.Unmarshal(token.Usages, &usages)
+		}
+		for _, usage := range usages {
+			if usage == "default" {
+				defaultTokens = token
+				break
+			}
+		}
+	}
+	return defaultTokens
 }

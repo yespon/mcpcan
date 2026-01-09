@@ -1,9 +1,11 @@
+import { useStorage } from '@vueuse/core'
+
 export const useMarketListHooks = () => {
   const { t } = useI18n()
   const loading = ref(false)
   const searchInputRef = ref()
-  const keyword = ref('')
-  const categoryName = ref<string>('')
+  const keyword = useStorage('market-list-keyword', '')
+  const categoryName = useStorage('market-list-category', '')
   const typeMap = computed(() => [
     { label: t('market.type.test'), value: 'test', icon: 'MCP-ceshi' },
     {
@@ -45,7 +47,7 @@ export const useMarketListHooks = () => {
     },
     { label: t('market.type.other'), value: 'other', icon: 'MCP-qita' },
   ])
-  const pagerConfig = reactive({
+  const pagerConfig = useStorage('market-list-pager', {
     total: 0,
     page: 1,
     pageSize: 12,

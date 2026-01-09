@@ -103,6 +103,7 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 			Description: template.Notes,
 			CreatedAt:   template.CreatedAt.Unix(),
 			IconPath:    template.IconPath,
+			SourceType:  common.ConvertSourceType(template.SourceType),
 		}
 		cases = append(cases, caseInfo)
 	}
@@ -111,6 +112,7 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 		Cases: cases,
 	}, nil
 }
+
 
 func (s *DashboardService) StatisticalHandler(c *gin.Context) {
 	req := &pb.StatisticalRequest{}

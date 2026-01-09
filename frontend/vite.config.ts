@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import path from 'node:path'
-import { defineConfig } from 'vite'
+// import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
@@ -18,17 +19,17 @@ export default defineConfig({
     //   key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
     // },
     // 可选配置
-    // port: 443, // HTTPS 默认端口
+    port: 3000, // HTTPS 默认端口
     proxy: {
-      '/api/authz': {
-        target: 'https://mcp-dev.itqm.com',
+      // '/api/authz': {
+      //   target: 'https://mcp-dev.itqm.com',
+      //   changeOrigin: true,
+      //   // rewrite: (path: string) => path.replace(/^\/api/, ''),
+      // },
+      '/api': {
+        target: 'http://localhost:80',
         changeOrigin: true,
         // rewrite: (path: string) => path.replace(/^\/api/, ''),
-      },
-      '/api': {
-        target: 'http://172.16.40.5:8081',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
     },
   },
@@ -62,6 +63,14 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '~/': `${path.resolve(__dirname, 'src')}/`,
+    },
+  },
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
     },
   },
 })
