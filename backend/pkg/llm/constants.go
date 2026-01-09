@@ -6,6 +6,27 @@ var DeepSeekModels = []string{
 	"deepseek-coder",
 }
 
+// Supported OpenAI Models
+var OpenAIModels = []string{
+	"gpt-4o",
+	"gpt-4-turbo",
+	"gpt-4",
+	"gpt-3.5-turbo",
+}
+
+// Supported Anthropic Models
+var AnthropicModels = []string{
+	"claude-3-5-sonnet-20240620",
+	"claude-3-opus-20240229",
+	"claude-3-haiku-20240307",
+}
+
+// Supported Google Models
+var GoogleModels = []string{
+	"gemini-1.5-pro",
+	"gemini-1.5-flash",
+}
+
 // Supported Aliyun Qwen Models
 var QwenModels = []string{
 	"qwen-plus",
