@@ -11,6 +11,7 @@ const (
 	ProviderOpenAI    ProviderType = "openai"
 	ProviderDeepSeek  ProviderType = "deepseek"
 	ProviderMoonshot  ProviderType = "moonshot"
+	ProviderDoubao    ProviderType = "doubao"    // Doubao (Volcengine)
 	ProviderAnthropic ProviderType = "anthropic" // Future support
 	ProviderGemini    ProviderType = "gemini"    // Future support
 )

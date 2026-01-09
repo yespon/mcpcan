@@ -40,10 +40,12 @@ cmd/**/data/
 cmd/**/init-data/
 cmd/**/logs/
 
+# test
+.env
+
 .idea
 .DS_Store
 .vscode
 __debug_bin*
-
 
 

@@ -16,6 +16,7 @@ func init() {
 	llm.RegisterProvider(llm.ProviderOpenAI, factory)
 	llm.RegisterProvider(llm.ProviderDeepSeek, factory)
 	llm.RegisterProvider(llm.ProviderMoonshot, factory)
+	llm.RegisterProvider(llm.ProviderDoubao, factory)
 }
 
 type Provider struct {

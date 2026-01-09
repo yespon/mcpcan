@@ -27,6 +27,16 @@ var GoogleModels = []string{
 	"gemini-1.5-flash",
 }
 
+// Supported Doubao Models
+var DoubaoModels = []string{
+	"doubao-pro-4k",
+	"doubao-pro-32k",
+	"doubao-pro-128k",
+	"doubao-lite-4k",
+	"doubao-lite-32k",
+	"doubao-1-5-pro-32k-250115",
+}
+
 // Supported Aliyun Qwen Models
 var QwenModels = []string{
 	"qwen-plus",
@@ -35,8 +45,4 @@ var QwenModels = []string{
 	"qwen-long",
 }
 
-// Supported Volcengine Doubao Models
-var DoubaoModels = []string{
-	"Doubao-pro-32k",
-	"Doubao-lite-32k",
-}
+
