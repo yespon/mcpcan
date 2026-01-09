@@ -12,7 +12,6 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-	"github.com/kymo-mcp/mcpcan/pkg/llm"
 )
 
 // AiSessionService struct for ai session service
@@ -217,19 +216,11 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
 	// Call Biz
-	stream, err := biz.GAiSessionBiz.Chat(c.Request.Context(), req.SessionID, req.Content)
+	stream, err := biz.GAiSessionBiz.Chat(c.Request.Context(), req.SessionID, req.Content, req.Tools)
 	if err != nil {
 		s.sendSSE(c, "error", fmt.Sprintf("failed to start chat: %v", err))
 		return
 	}
-
-	var fullContent string
-	var usage *llm.Usage
-
-	// Map to aggregate tool calls: Index -> ToolCall
-	toolCallsMap := make(map[int]*llm.ToolCall)
-	// Order tracking
-	toolCallIndices := []int{}
 
 	// Stream Loop
 	for resp := range stream {
@@ -238,78 +229,17 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 			break
 		}
 
-		if resp.Usage != nil {
-			usage = resp.Usage
-		}
-
 		if resp.Content != "" {
-			fullContent += resp.Content
 			s.sendSSE(c, "text", resp.Content)
 		}
 
-		if len(resp.ToolCalls) > 0 {
-			for _, tc := range resp.ToolCalls {
-				if _, exists := toolCallsMap[tc.Index]; !exists {
-					toolCallsMap[tc.Index] = &llm.ToolCall{
-						Index: tc.Index,
-						ID:    tc.ID,
-						Type:  tc.Type,
-						Function: llm.ToolCallFunction{
-							Name:      "",
-							Arguments: "",
-						},
-					}
-					toolCallIndices = append(toolCallIndices, tc.Index)
-				}
-
-				existing := toolCallsMap[tc.Index]
-				if tc.ID != "" {
-					existing.ID = tc.ID
-				}
-				if tc.Type != "" {
-					existing.Type = tc.Type
-				}
-				if tc.Function.Name != "" {
-					existing.Function.Name += tc.Function.Name
-				}
-				if tc.Function.Arguments != "" {
-					existing.Function.Arguments += tc.Function.Arguments
-				}
+		if len(resp.ToolOutputs) > 0 {
+			if b, err := json.Marshal(resp.ToolOutputs); err == nil {
+				s.sendSSE(c, "tool_result", string(b))
 			}
 		}
 	}
 	s.sendSSE(c, "done", "")
-
-	// Construct final message
-	assistantMsg := &model.AiMessage{
-		SessionID: req.SessionID,
-		Role:      "assistant",
-		Content:   fullContent,
-	}
-
-	// Handle Tool Calls Saving
-	if len(toolCallIndices) > 0 {
-		var finalToolCalls []llm.ToolCall
-		for _, idx := range toolCallIndices {
-			finalToolCalls = append(finalToolCalls, *toolCallsMap[idx])
-		}
-		
-		toolCallsJSON, err := json.Marshal(finalToolCalls)
-		if err == nil {
-			assistantMsg.ToolCalls = string(toolCallsJSON)
-		} else {
-			fmt.Printf("failed to marshal tool calls: %v\n", err)
-		}
-	}
-
-	if usage != nil {
-		assistantMsg.PromptTokens = usage.PromptTokens
-		assistantMsg.CompletionTokens = usage.CompletionTokens
-		assistantMsg.TotalTokens = usage.TotalTokens
-	}
-	if err := biz.GAiSessionBiz.SaveMessage(c.Request.Context(), assistantMsg); err != nil {
-		fmt.Printf("failed to save assistant message: %v\n", err)
-	}
 }
 
 func (s *AiSessionService) sendSSE(c *gin.Context, msgType, content string) {

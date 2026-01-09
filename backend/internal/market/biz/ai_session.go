@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
@@ -119,7 +120,7 @@ func (b *AiSessionBiz) GetMessages(ctx context.Context, sessionID int64, limit i
 }
 
 // Chat prepares the chat stream and saves the user message
-func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string) (<-chan llm.StreamResponse, error) {
+func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string, toolsConfig string) (<-chan llm.StreamResponse, error) {
 	// 1. Load Session
 	session, err := mysql.AiSessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
@@ -193,15 +194,195 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 		return nil, fmt.Errorf("failed to save user message: %s", err.Error())
 	}
 
-	// 7. Create Stream
-	req := llm.ChatRequest{
-		Model:    modelAccess.ModelName,
-		Messages: messages,
-		Stream:   true,
-		// Tools: ... (Phase 4)
+	// 7. Init MCP Tools
+	var tools []llm.Tool
+	mcpManager := NewMcpManager()
+
+	// Use provided toolsConfig if available, otherwise use session's
+	configToUse := string(session.ToolsConfig)
+	if toolsConfig != "" {
+		configToUse = toolsConfig
 	}
 
-	return provider.StreamChat(ctx, req)
+	if len(configToUse) > 0 && configToUse != "{}" && configToUse != "null" {
+		if err := mcpManager.Initialize(ctx, configToUse); err != nil {
+			mcpManager.Close()
+			return nil, fmt.Errorf("failed to init mcp tools: %v", err)
+		}
+		var err error
+		tools, err = mcpManager.GetTools(ctx)
+		if err != nil {
+			mcpManager.Close()
+			return nil, fmt.Errorf("failed to get tools: %v", err)
+		}
+	}
+
+	// 8. Create Stream Loop
+	outCh := make(chan llm.StreamResponse)
+
+	go func() {
+		defer close(outCh)
+		defer mcpManager.Close()
+
+		currentMessages := messages
+		maxTurns := 10 // Safety limit for tool loops
+
+		for turn := 0; turn < maxTurns; turn++ {
+			req := llm.ChatRequest{
+				Model:    modelAccess.ModelName,
+				Messages: currentMessages,
+				Stream:   true,
+				Tools:    tools,
+			}
+
+			stream, err := provider.StreamChat(ctx, req)
+			if err != nil {
+				outCh <- llm.StreamResponse{Error: err}
+				return
+			}
+
+			var accumulatedContent string
+			accumulatedToolCalls := make(map[int]*llm.ToolCall)
+
+			for resp := range stream {
+				if resp.Error != nil {
+					outCh <- resp
+					return
+				}
+
+				if resp.Usage != nil {
+					outCh <- llm.StreamResponse{Usage: resp.Usage}
+				}
+
+				if resp.Content != "" {
+					accumulatedContent += resp.Content
+					outCh <- llm.StreamResponse{Content: resp.Content}
+				}
+
+				if len(resp.ToolCalls) > 0 {
+					for _, tc := range resp.ToolCalls {
+						if _, exists := accumulatedToolCalls[tc.Index]; !exists {
+							accumulatedToolCalls[tc.Index] = &llm.ToolCall{
+								Index: tc.Index,
+								ID:    tc.ID,
+								Type:  tc.Type,
+								Function: llm.ToolCallFunction{
+									Name: tc.Function.Name,
+								},
+							}
+						}
+						accumulatedToolCalls[tc.Index].Function.Arguments += tc.Function.Arguments
+						if tc.ID != "" {
+							accumulatedToolCalls[tc.Index].ID = tc.ID
+						}
+						if tc.Function.Name != "" {
+							accumulatedToolCalls[tc.Index].Function.Name = tc.Function.Name
+						}
+						if tc.Type != "" {
+							accumulatedToolCalls[tc.Index].Type = tc.Type
+						}
+					}
+				}
+			}
+
+			// Turn finished. Check for tool calls.
+			if len(accumulatedToolCalls) == 0 {
+				// No tools called, save assistant message and exit
+				asstMsg := &model.AiMessage{
+					SessionID:  sessionID,
+					Role:       "assistant",
+					Content:    accumulatedContent,
+					CreateTime: time.Now(),
+				}
+				mysql.AiMessageRepo.Create(ctx, asstMsg)
+				return
+			}
+
+			// Prepare Tool Calls
+			var toolCalls []llm.ToolCall
+			maxIndex := -1
+			for idx := range accumulatedToolCalls {
+				if idx > maxIndex {
+					maxIndex = idx
+				}
+			}
+			for i := 0; i <= maxIndex; i++ {
+				if tc, ok := accumulatedToolCalls[i]; ok {
+					toolCalls = append(toolCalls, *tc)
+				}
+			}
+
+			// Append Assistant Message
+			currentMessages = append(currentMessages, llm.Message{
+				Role:      "assistant",
+				Content:   accumulatedContent,
+				ToolCalls: toolCalls,
+			})
+
+			toolCallsJSON, _ := json.Marshal(toolCalls)
+			dbAsstMsg := &model.AiMessage{
+				SessionID:  sessionID,
+				Role:       "assistant",
+				Content:    accumulatedContent,
+				ToolCalls:  string(toolCallsJSON),
+				CreateTime: time.Now(),
+			}
+			mysql.AiMessageRepo.Create(ctx, dbAsstMsg)
+
+			// Execute Tools
+			for _, tc := range toolCalls {
+				resultStr := ""
+				mcpResult, err := mcpManager.CallTool(ctx, tc.Function.Name, tc.Function.Arguments)
+				if err != nil {
+					resultStr = fmt.Sprintf("Error: %v", err)
+				} else {
+					var texts []string
+					for _, c := range mcpResult.Content {
+						// Marshal content to JSON string to avoid field access issues
+						if b, err := json.Marshal(c); err == nil {
+							texts = append(texts, string(b))
+						} else {
+							texts = append(texts, fmt.Sprintf("%v", c))
+						}
+					}
+					resultStr = strings.Join(texts, "\n")
+					if mcpResult.IsError {
+						resultStr = "Tool Error: " + resultStr
+					}
+				}
+
+				// Append Tool Message
+				currentMessages = append(currentMessages, llm.Message{
+					Role:       "tool",
+					Content:    resultStr,
+					ToolCallID: tc.ID,
+				})
+
+				dbToolMsg := &model.AiMessage{
+					SessionID:  sessionID,
+					Role:       "tool",
+					Content:    resultStr,
+					ToolCallID: tc.ID,
+					CreateTime: time.Now(),
+				}
+				mysql.AiMessageRepo.Create(ctx, dbToolMsg)
+
+				// Notify Client
+				outCh <- llm.StreamResponse{
+					ToolOutputs: []llm.ToolOutput{
+						{
+							ID:     tc.ID,
+							Name:   tc.Function.Name,
+							Result: resultStr,
+						},
+					},
+				}
+			}
+			// Continue loop for next turn
+		}
+	}()
+
+	return outCh, nil
 }
 
 func (b *AiSessionBiz) SaveMessage(ctx context.Context, msg *model.AiMessage) error {

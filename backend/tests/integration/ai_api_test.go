@@ -108,9 +108,9 @@ func getEnv(key, fallback string) string {
 
 // Common API Response Wrapper
 type APIResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data"`
 }
 
 // Note: Other structs are now imported from "github.com/kymo-mcp/mcpcan/api/market/ai_agent" (as pb)
@@ -154,19 +154,25 @@ func makeRequest(t *testing.T, method, path string, body interface{}, response i
 	if response != nil {
 		// Check if it's wrapped in standard API response (code/message/data)
 		// We try to unmarshal into APIResponse first if the target isn't explicitly handling it
-		var apiResp APIResponse
-		// We create a temporary map to check structure
 		var tempMap map[string]interface{}
 		json.Unmarshal(respBody, &tempMap)
 
 		if _, ok := tempMap["code"]; ok {
 			// It is a wrapped response
-			apiResp.Data = response // Pointer to the target struct
+			var apiResp APIResponse
 			if err := json.Unmarshal(respBody, &apiResp); err != nil {
 				t.Fatalf("Failed to unmarshal API response wrapper: %v, body: %s", err, string(respBody))
 			}
 			if apiResp.Code > 0 {
 				t.Fatalf("API Error Code %d: %s", apiResp.Code, apiResp.Message)
+			}
+			
+			t.Logf("Raw Data: %s", string(apiResp.Data))
+			
+			if len(apiResp.Data) > 0 {
+				if err := json.Unmarshal(apiResp.Data, response); err != nil {
+					t.Fatalf("Failed to unmarshal data into target struct: %v", err)
+				}
 			}
 		} else {
 			// Direct response
@@ -564,7 +570,8 @@ func TestChatSSEInitiation(t *testing.T) {
 		buf := make([]byte, 1024)
 		n, _ := resp.Body.Read(buf)
 		if n > 0 {
-			t.Logf("Received initial stream data: %s", string(buf[:n]))
+			message := strings.TrimSpace(string(buf[:n]))
+			t.Logf("Received initial stream data: %s", message)
 		}
 	}
 }
@@ -583,4 +590,76 @@ func TestGetSessionMessages(t *testing.T) {
 	makeRequest(t, "GET", path, nil, &resp)
 
 	t.Logf("Retrieved %d messages", len(resp.List))
+}
+
+// 17. Test Chat with MCP Tools (Phase 4)
+func TestChatWithMcpTools(t *testing.T) {
+	modelID := createTestModelAccess(t)
+	defer deleteTestModelAccess(t, modelID)
+
+	// MCP Config from user
+	mcpConfig := `{
+		"mcpServers": {
+			"mcp-148670bf": {
+				"url": "https://demo.mcpcan.com/mcp-gateway/148670bf-89f0-4bc9-84d9-98b72dbc8de7/mcp",
+				"headers": {
+					"Authorization": "Bearer MGFkZDBlZGQtZWE3Zi00YzdlLTlkN2EtNGI1Njg2Y2YwM2E3eyJleHBpcmVBdCI6MTc2NjY1NzU0NjE1OSwidXNlcklkIjoxLCJ1c2VybmFtZSI6ImFkbWluIn0="
+				}
+			}
+		}
+	}`
+
+	// Create Session with MCP Config
+	sessionReq := &pb.CreateSessionRequest{
+		Name:          "Integration Test Session MCP",
+		ModelAccessID: modelID,
+		MaxContext:    10,
+		ToolsConfig:   mcpConfig,
+	}
+
+	path := "/ai/sessions"
+	var sessionResp pb.CreateSessionResponse
+	makeRequest(t, "POST", path, sessionReq, &sessionResp)
+	sessionID := sessionResp.Session.Id
+	defer deleteTestSession(t, sessionID)
+
+	t.Logf("Created session %d with MCP config", sessionID)
+
+	// Chat
+	chatPath := fmt.Sprintf("/ai/sessions/%d/chat", sessionID)
+	chatUrl := baseURL + chatPath
+
+	// Try to trigger a tool or just chat
+	reqBody, _ := json.Marshal(pb.ChatRequest{
+		SessionID: sessionID,
+		Content:   "List the tools you have access to and explain what they do.",
+	})
+
+	req, _ := http.NewRequest("POST", chatUrl, bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "text/event-stream")
+
+	client := &http.Client{Timeout: 60 * time.Second} // Longer timeout for tools
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Chat request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Fatalf("Chat request failed with status: %d", resp.StatusCode)
+	}
+
+	// Read stream
+	buf := make([]byte, 4096)
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			chunk := string(buf[:n])
+			t.Logf("Stream chunk: %s", chunk)
+		}
+		if err != nil {
+			break
+		}
+	}
 }

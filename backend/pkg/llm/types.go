@@ -67,12 +67,20 @@ type ChatRequest struct {
 	Stream      bool
 }
 
+// ToolOutput represents the result of a tool execution
+type ToolOutput struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Result string `json:"result"`
+}
+
 // StreamResponse represents a chunk of response from streaming API
 type StreamResponse struct {
-	Content   string
-	ToolCalls []ToolCall
-	Usage     *Usage
-	Error     error
+	Content     string
+	ToolCalls   []ToolCall
+	ToolOutputs []ToolOutput // Added for notifying execution results
+	Usage       *Usage
+	Error       error
 }
 
 // Usage represents token usage statistics

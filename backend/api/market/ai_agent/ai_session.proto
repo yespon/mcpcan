@@ -131,6 +131,7 @@ message ChatRequest {
     int64 sessionID = 1;
     // @inject_tag: json:"content" form:"content" desc:"Content"
     string content = 2;
+    string tools = 3; // JSON string for ad-hoc tools
 }
 
 message ChatResponse {
