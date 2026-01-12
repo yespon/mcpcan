@@ -32,8 +32,11 @@
           <div class="text-gray-500 u-line-1">Base URL: {{ configUrl }}</div>
         </div>
         <div>
-          <el-button type="primary" link @click="refreshInstance">
-            <el-icon class="mr-1"><Refresh /></el-icon> Refresh
+          <el-button v-if="layout" @click="handleBack" class="link-hover">
+            <el-icon class="mr-2">
+              <i class="icon iconfont MCP-fanhui"></i>
+            </el-icon>
+            {{ t('common.back') }}
           </el-button>
         </div>
       </div>
@@ -45,7 +48,7 @@
         <!-- Panel 1: Tool List -->
         <el-splitter-panel size="350px" class="flex flex-col" :resizable="false">
           <div class="p-3 border-b bg-header font-medium flex justify-between">
-            <span>Tools</span>
+            <span>{{ t('mcp.debugTool.list') }}</span>
             <el-tag size="small" type="info">{{ toolList.length }}</el-tag>
           </div>
           <div class="p-2 border-b">
@@ -67,14 +70,14 @@
               <div class="font-bold">{{ tool.name }}</div>
               <div class="text-xs mt-1 line-clamp-2">{{ tool.description }}</div>
             </div>
-            <el-empty v-if="filteredTools.length === 0" description="No tools found" />
+            <el-empty v-if="filteredTools.length === 0" />
           </el-scrollbar>
         </el-splitter-panel>
 
         <!-- Panel 2: Input Parameters -->
         <el-splitter-panel class="flex flex-col relative">
           <div class="p-3 border-b bg-header font-medium flex justify-between items-center">
-            <span>Input Parameters</span>
+            <span>{{ t('mcp.debugTool.input') }}</span>
             <el-switch
               v-if="currentTool"
               v-model="jsonMode"
@@ -176,7 +179,7 @@
                 </div>
               </div>
             </template>
-            <el-empty v-else description="Select a tool to configure inputs" />
+            <el-empty v-else />
           </el-scrollbar>
         </el-splitter-panel>
 
@@ -186,7 +189,9 @@
           class="flex flex-col bg-block border-l border-r"
           :resizable="false"
         >
-          <div class="p-3 border-b bg-header font-medium text-center">Action</div>
+          <div class="p-3 border-b bg-header font-medium text-center">
+            {{ t('mcp.debugTool.action') }}
+          </div>
           <div class="flex-1 flex flex-col items-center p-4 gap-4">
             <el-button
               type="primary"
@@ -197,7 +202,7 @@
               :disabled="!currentTool || !!jsonError"
               @click="handleRunTool"
             >
-              Run
+              {{ t('mcp.debugTool.run') }}
             </el-button>
             <el-button
               type="primary"
@@ -207,7 +212,7 @@
               :disabled="!inputJson"
               @click="handleCopyInput"
             >
-              Copy Input
+              {{ t('mcp.debugTool.copyInput') }}
             </el-button>
             <el-button
               type="primary"
@@ -217,7 +222,7 @@
               :disabled="!outputResult"
               @click="handleCopyOutput"
             >
-              Copy Output
+              {{ t('mcp.debugTool.copyOutput') }}
             </el-button>
 
             <!-- <el-divider content-position="center" class="!my-2">History</el-divider>
@@ -244,7 +249,7 @@
         <!-- Panel 4: Output Parameters -->
         <el-splitter-panel class="flex flex-col">
           <div class="p-3 border-b bg-header font-medium flex justify-between items-center">
-            <span>Entry Output</span>
+            <span>{{ t('mcp.debugTool.output') }}</span>
             <el-button v-if="outputResult" size="small" link @click="clearOutput">Clear</el-button>
           </div>
           <el-scrollbar class="flex-1 p-0">
@@ -317,7 +322,7 @@
                 </div>
               </div>
             </div>
-            <el-empty v-else description="No output generated" />
+            <el-empty v-else />
           </el-scrollbar>
         </el-splitter-panel>
       </el-splitter>
@@ -346,6 +351,7 @@ import {
 import { deBugAPI } from '@/api/mcp/instance.ts'
 import { AccessType } from '@/types'
 import { setClipboardData } from '@/utils/system'
+import { useRouterHooks } from '@/utils/url'
 
 const {
   activeOptions,
@@ -362,7 +368,8 @@ const {
   instanceId,
   t,
 } = useDebugToolsHooks()
-
+const layout = useLayout()
+const { jumpBack } = useRouterHooks()
 const configUrl = computed(() => {
   if (instanceInfo.value.accessType === AccessType.DIRECT) {
     const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
@@ -510,6 +517,11 @@ const handleCopyInput = () => {
 const handleCopyOutput = () => {
   setClipboardData(outputResult.value)
   ElMessage.success(t('action.copy'))
+}
+
+// back last class page
+const handleBack = () => {
+  jumpBack()
 }
 
 onMounted(() => {

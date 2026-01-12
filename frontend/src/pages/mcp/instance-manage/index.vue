@@ -220,7 +220,7 @@
                     {{ t('mcp.instance.action.accessLogs') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleDebugTools">
-                    {{ '工具调试' }}
+                    {{ t('mcp.instance.action.debugTool') }}
                   </el-dropdown-item>
                   <el-dropdown-item command="handleEditInstance">
                     {{ t('env.run.action.edit') }}

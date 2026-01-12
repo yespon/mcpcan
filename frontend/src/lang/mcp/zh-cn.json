@@ -275,6 +275,16 @@
       "passthrough": "透传",
       "account": "账号",
       "isEnable": "是否启用"
+    },
+    "debugTool": {
+      "list": "工具列表",
+      "input": "入参",
+      "action": "操作",
+      "output": "出参",
+      "run": "运行",
+      "copyInput": "复制入参",
+      "copyOutput": "复制出参",
+      "noData": "暂无数据"
     }
   }
 }
