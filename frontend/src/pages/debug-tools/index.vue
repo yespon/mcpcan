@@ -368,7 +368,7 @@ const configUrl = computed(() => {
     const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].url
   }
-  return `${'https://mcp-dev.itqm.com' || window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
 })
 // Computed
 const filteredTools = computed(() => {
