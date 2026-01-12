@@ -346,6 +346,7 @@ const {
   timer,
   selection,
   agentSyncDialog,
+  currentInstance,
   meta,
 } = useInstanceTableHooks()
 
@@ -551,6 +552,7 @@ const handleViewStatus = async (instanceInfo: InstanceResult) => {
  * @param row - item of instance data
  */
 const handleDebugTools = (instanceInfo: InstanceResult) => {
+  currentInstance.value = instanceInfo
   jumpToPage({
     url: '/debug-tools',
     data: {

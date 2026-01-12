@@ -4,8 +4,16 @@
     <el-card class="mb-4 text-sm" shadow="hover">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
+          <mcp-image
+            :src="instanceInfo.iconPath"
+            width="32"
+            height="32"
+            :key="instanceInfo.instanceId"
+          ></mcp-image>
           <div class="flex items-center gap-2">
-            <span class="font-bold text-lg">{{ instanceInfo.name || 'Unknown Instance' }}</span>
+            <span class="font-bold text-lg">{{
+              instanceInfo.instanceName || 'Unknown Instance'
+            }}</span>
             <el-tag
               :type="activeOptions[instanceInfo.status as keyof typeof activeOptions]?.type"
               effect="dark"
@@ -19,9 +27,9 @@
             </el-tag>
           </div>
           <el-divider direction="vertical" />
-          <div class="text-gray-500">ID: {{ instanceInfo.instanceId }}</div>
+          <div class="text-gray-500 u-line-1">ID: {{ instanceInfo.instanceId }}</div>
           <el-divider direction="vertical" />
-          <div class="text-gray-500">Base URL: {{ '----' }}</div>
+          <div class="text-gray-500 u-line-1">Base URL: {{ configUrl }}</div>
         </div>
         <div>
           <el-button type="primary" link @click="refreshInstance">
@@ -33,7 +41,7 @@
 
     <!-- Main Splitter Area -->
     <div class="flex-1 overflow-hidden">
-      <el-splitter class="h-full border rounded-lg bg-page">
+      <el-splitter class="h-full border rounded-lg bg-page overflow-hidden">
         <!-- Panel 1: Tool List -->
         <el-splitter-panel size="350px" class="flex flex-col" :resizable="false">
           <div class="p-3 border-b bg-header font-medium flex justify-between">
@@ -59,11 +67,7 @@
               <div class="font-bold">{{ tool.name }}</div>
               <div class="text-xs mt-1 line-clamp-2">{{ tool.description }}</div>
             </div>
-            <el-empty
-              v-if="filteredTools.length === 0"
-              description="No tools found"
-              image-size="60"
-            />
+            <el-empty v-if="filteredTools.length === 0" description="No tools found" />
           </el-scrollbar>
         </el-splitter-panel>
 
@@ -133,7 +137,7 @@
                   <template v-else-if="schema.type === 'number' || schema.type === 'integer'">
                     <el-input-number
                       v-model="paramsForm[key]"
-                      class="w-full"
+                      class="!w-full"
                       @change="handleFormChange"
                       :controls-position="'right'"
                     />
@@ -143,8 +147,7 @@
                   <template v-else>
                     <el-input
                       type="textarea"
-                      :model-value="JSON.stringify(paramsForm[key])"
-                      disabled
+                      v-model="paramsForm[key]"
                       placeholder="Complex type, please use JSON mode"
                     />
                   </template>
@@ -196,8 +199,28 @@
             >
               Run
             </el-button>
+            <el-button
+              type="primary"
+              size="large"
+              class="w-full base-btn !m-l-0"
+              :icon="DocumentCopy"
+              :disabled="!inputJson"
+              @click="handleCopyInput"
+            >
+              Copy Input
+            </el-button>
+            <el-button
+              type="primary"
+              size="large"
+              class="w-full base-btn !m-l-0"
+              :icon="DocumentCopy"
+              :disabled="!outputResult"
+              @click="handleCopyOutput"
+            >
+              Copy Output
+            </el-button>
 
-            <el-divider content-position="center" class="!my-2">History</el-divider>
+            <!-- <el-divider content-position="center" class="!my-2">History</el-divider>
 
             <el-scrollbar class="w-full flex-1">
               <div
@@ -214,7 +237,7 @@
                   }}</el-tag>
                 </div>
               </div>
-            </el-scrollbar>
+            </el-scrollbar> -->
           </div>
         </el-splitter-panel>
 
@@ -225,12 +248,76 @@
             <el-button v-if="outputResult" size="small" link @click="clearOutput">Clear</el-button>
           </div>
           <el-scrollbar class="flex-1 p-0">
-            <div v-if="outputResult" class="h-full relative">
-              <pre class="m-0 p-4 text-sm font-mono whitespace-pre-wrap break-all text-regular">{{
-                outputResult
-              }}</pre>
+            <div v-if="parsedOutput" class="p-4">
+              <!-- Result Status -->
+              <el-alert
+                v-if="parsedOutput.result?.isError"
+                title="Tool execution error"
+                type="error"
+                show-icon
+                :closable="false"
+                class="mb-4"
+              />
+              <el-alert
+                v-else
+                title="Tool execution successful"
+                type="success"
+                show-icon
+                :closable="false"
+                class="mb-4"
+              />
+
+              <!-- Content List -->
+              <div
+                v-if="parsedOutput.result?.content && parsedOutput.result.content.length"
+                class="flex flex-col gap-4"
+              >
+                <div
+                  v-for="(item, idx) in parsedOutput.result.content"
+                  :key="idx"
+                  class="rounded border bg-block overflow-hidden"
+                >
+                  <!-- Text Content -->
+                  <div
+                    v-if="item.type === 'text'"
+                    class="p-3 text-sm font-mono whitespace-pre-wrap break-words text-regular"
+                  >
+                    {{ item.text }}
+                  </div>
+
+                  <!-- Image Content -->
+                  <div v-else-if="item.type === 'image'" class="p-3 flex justify-center bg-card">
+                    <img
+                      :src="`data:${item.mimeType};base64,${item.data}`"
+                      class="max-w-full max-h-[400px] object-contain border rounded"
+                    />
+                  </div>
+
+                  <!-- Fallback -->
+                  <div v-else class="p-3 text-sm text-secondary italic">
+                    Unknown content type: {{ item.type }}
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center text-secondary py-8">No content returned</div>
+
+              <!-- Raw Details Toggle -->
+              <div class="mt-6 border-t pt-4">
+                <div
+                  class="flex items-center gap-1 text-xs text-secondary cursor-pointer select-none font-bold"
+                  @click="showRawOutput = !showRawOutput"
+                >
+                  <el-icon><ArrowRight v-if="!showRawOutput" /><ArrowDown v-else /></el-icon>
+                  <span>Raw JSON Output</span>
+                </div>
+                <div v-if="showRawOutput" class="mt-2 text-xs">
+                  <div class="bg-block p-2 rounded border font-mono whitespace-pre-wrap break-all">
+                    {{ outputResult }}
+                  </div>
+                </div>
+              </div>
             </div>
-            <el-empty v-else description="No output generated" image-size="60" />
+            <el-empty v-else description="No output generated" />
           </el-scrollbar>
         </el-splitter-panel>
       </el-splitter>
@@ -239,14 +326,26 @@
 </template>
 
 <script setup lang="ts">
-import { Search, Refresh, VideoPlay } from '@element-plus/icons-vue'
+import {
+  Search,
+  Refresh,
+  VideoPlay,
+  ArrowRight,
+  ArrowDown,
+  DocumentCopy,
+} from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { useDebugToolsHooks } from './hooks/index.ts'
+import McpImage from '@/components/mcp-image/index.vue'
 import {
   generateDefaultValue,
   isPropertyRequired,
   resolveRef,
   normalizeUnionType,
 } from '@/utils/schemaUtils'
+import { deBugAPI } from '@/api/mcp/instance.ts'
+import { AccessType } from '@/types'
+import { setClipboardData } from '@/utils/system'
 
 const {
   activeOptions,
@@ -258,12 +357,19 @@ const {
   outputResult,
   history,
   route,
+  loading,
+  running,
+  instanceId,
   t,
 } = useDebugToolsHooks()
 
-const loading = ref(false)
-const running = ref(false)
-const instanceId = computed(() => route.query.instanceId as string)
+const configUrl = computed(() => {
+  if (instanceInfo.value.accessType === AccessType.DIRECT) {
+    const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
+    return mcpServers[Object.keys(mcpServers)[0]].url
+  }
+  return `${'https://mcp-dev.itqm.com' || window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
+})
 // Computed
 const filteredTools = computed(() => {
   if (!keyword.value) return toolList.value
@@ -273,6 +379,16 @@ const filteredTools = computed(() => {
       t.name.toLowerCase().includes(lower) ||
       (t.description && t.description.toLowerCase().includes(lower)),
   )
+})
+
+const showRawOutput = ref(false)
+const parsedOutput = computed(() => {
+  if (!outputResult.value) return null
+  try {
+    return JSON.parse(outputResult.value)
+  } catch (e) {
+    return null
+  }
 })
 
 const jsonError = computed(() => {
@@ -289,86 +405,18 @@ const formatTime = (ts: number) => {
   return new Date(ts).toLocaleTimeString()
 }
 
-const getInstanceDetail = async () => {
-  if (!instanceId.value) return
+// handle get tool list
+const getTools = async () => {
   try {
     loading.value = true
-    // TODO: Replace with actual API call
-    // const res = await InstanceAPI.detail({ instanceId: instanceId.value })
-    // instanceInfo.value = res.data || {}
-
-    // Mock Data for UI dev
-    await new Promise((r) => setTimeout(r, 500))
-    instanceInfo.value = {
-      name: 'Example MCP Instance',
-      status: 'Running',
-      instanceId: instanceId.value,
-      baseUrl: 'http://localhost:3000',
-    }
-  } catch (err) {
-    console.error(err)
+    const list = await deBugAPI.toolList({
+      instanceId: instanceId.value || '',
+      domain: configUrl.value,
+    })
+    toolList.value = list || []
   } finally {
     loading.value = false
   }
-}
-
-const getTools = async () => {
-  // TODO: Call API to list tools for this instance
-  toolList.value = [
-    {
-      name: 'read_file',
-      description: 'Read a file from the filesystem',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'The absolute path to the file to read' },
-          encoding: { type: 'string', description: 'File encoding', default: 'utf-8' },
-        },
-        required: ['path'],
-      },
-    },
-    {
-      name: 'write_file',
-      description: 'Write content to a file',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'The absolute path to the file to write' },
-          content: { type: 'string', description: 'The content to write' },
-          create_dirs: {
-            type: 'boolean',
-            description: 'Create missing directories',
-            default: false,
-          },
-        },
-        required: ['path', 'content'],
-      },
-    },
-    {
-      name: 'list_directory',
-      description: 'List contents of a directory',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'The directory path' },
-        },
-        required: ['path'],
-      },
-    },
-    {
-      name: 'search_project',
-      description: 'Semantic search across project files',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Search query' },
-          max_results: { type: 'integer', description: 'Maximum results', default: 10 },
-          include_pattern: { type: 'string', description: 'Glob pattern to include' },
-        },
-        required: ['query'],
-      },
-    },
-  ]
 }
 
 const paramsForm = ref<Record<string, any>>({})
@@ -377,7 +425,6 @@ const jsonMode = ref(false)
 const handleSelectTool = (tool: any) => {
   currentTool.value = tool
   jsonMode.value = false
-
   // Generate default values from schema
   const defaults: Record<string, any> = {}
   if (tool.inputSchema?.properties) {
@@ -412,27 +459,25 @@ const handleRunTool = async () => {
   try {
     running.value = true
     const params = JSON.parse(inputJson.value)
+    const data = await deBugAPI.toolCall({
+      instanceId: instanceId.value || '',
+      toolName: currentTool.value.name,
+      domain: configUrl.value,
+      arguments: JSON.stringify(params),
+    })
 
-    // TODO: Call API executeTool(instanceId, tool.name, params)
-    await new Promise((r) => setTimeout(r, 1000)) // Mock delay
-
-    const mockOutput = {
+    const displayOutput = {
       tool: currentTool.value.name,
-      params,
-      result: {
-        success: true,
-        data: 'This is a mock response from the tool execution.\nFile content would appear here.',
-      },
+      arguments: params,
+      result: normalizeUnionType(data),
     }
-
-    outputResult.value = JSON.stringify(mockOutput, null, 2)
-
+    outputResult.value = JSON.stringify(displayOutput, null, 2)
     // Add to history
     history.value.unshift({
       tool: currentTool.value.name,
-      params: inputJson.value,
+      arguments: inputJson.value,
       timestamp: Date.now(),
-      status: 'success',
+      status: data.isError ? 'error' : 'success',
     })
   } catch (err) {
     outputResult.value = JSON.stringify({ error: 'Execution Failed', details: err }, null, 2)
@@ -450,7 +495,6 @@ const restoreHistory = (item: any) => {
 }
 
 const refreshInstance = () => {
-  getInstanceDetail()
   getTools()
 }
 
@@ -458,15 +502,18 @@ const clearOutput = () => {
   outputResult.value = ''
 }
 
+const handleCopyInput = () => {
+  setClipboardData(inputJson.value)
+  ElMessage.success(t('action.copy'))
+}
+
+const handleCopyOutput = () => {
+  setClipboardData(outputResult.value)
+  ElMessage.success(t('action.copy'))
+}
+
 onMounted(() => {
-  if (instanceId.value) {
-    getInstanceDetail()
-    getTools()
-  } else {
-    // Demo mode if no ID
-    getInstanceDetail()
-    getTools()
-  }
+  getTools()
 })
 </script>
 

@@ -1,8 +1,9 @@
 import { type InstanceResult, InstanceStatus, ContainerOptions } from '@/types/instance'
+import { useMcpStore } from '@/stores/modules/mcp-store'
 
 export const useDebugToolsHooks = () => {
   const { t } = useI18n()
-  const instanceInfo = ref<any>({})
+  // const instanceInfo = ref<any>({})
   const toolList = ref<any[]>([])
   const currentTool = ref<any>(null)
   const keyword = ref('')
@@ -10,6 +11,11 @@ export const useDebugToolsHooks = () => {
   const outputResult = ref<string>('')
   const history = ref<any[]>([])
   const route = useRoute()
+  const loading = ref(false)
+  const running = ref(false)
+  const instanceId = computed(() => route.query.instanceId as string)
+  const { currentInstance: instanceInfo } = toRefs(useMcpStore())
+
   // service status
   const activeOptions = {
     active: {
@@ -33,6 +39,9 @@ export const useDebugToolsHooks = () => {
     outputResult,
     history,
     route,
+    loading,
+    running,
+    instanceId,
     t,
   }
 }
