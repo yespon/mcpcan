@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -1244,6 +1245,7 @@ func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
+	defer mcpClient.Close()
 
 	// 调用 mcp 服务的 list tools 接口
 	tools, err := mcpClient.ListTools(context.Background(), mcp.ListToolsRequest{})
@@ -1259,6 +1261,7 @@ func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolNam
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
+	defer mcpClient.Close()
 
 	// 调用 mcp 服务的 call tool 接口
 	resp, err := mcpClient.CallTool(context.Background(), mcp.CallToolRequest{
@@ -1294,19 +1297,51 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 		listToolsHeader["Authorization"] = defaultTokens.Token
 	}
 	// 外部访问地址
-	mcpServerUrl := fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
+	var mcpServerUrl string
+	fmt.Fprintf(os.Stderr, "DEBUG: AccessType=%v, Config=%s\n", mcpInstance.AccessType, string(mcpInstance.SourceConfig))
+	if mcpInstance.AccessType == model.AccessTypeDirect {
+		validationResult, err := utils.ValidateMcpConfig(mcpInstance.SourceConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse source config: %s", err.Error())
+		}
+		if validationResult.Url == "" {
+			return nil, fmt.Errorf("direct access type requires url in source config")
+		}
+		mcpServerUrl = validationResult.Url
+		fmt.Fprintf(os.Stderr, "DEBUG: Validated URL=%s\n", mcpServerUrl)
+	} else {
+		mcpServerUrl = fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
+	}
 
 	// 给该 mcp 实例创建对应的 http client
-	mcpClient, err := client.NewStreamableHttpClient(
-		mcpServerUrl,
-		transport.WithHTTPHeaders(listToolsHeader),
-	)
+	var mcpClient *client.Client
+	if mcpInstance.McpProtocol == model.McpProtocolSSE {
+		mcpClient, err = client.NewSSEMCPClient(
+			mcpServerUrl,
+			client.WithHeaders(listToolsHeader),
+		)
+	} else {
+		mcpClient, err = client.NewStreamableHttpClient(
+			mcpServerUrl,
+			transport.WithHTTPHeaders(listToolsHeader),
+		)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
+
+	// Start the client
+	if err := mcpClient.Start(context.Background()); err != nil {
+		return nil, fmt.Errorf("start mcp client failed: %s", err.Error())
+	}
+
+	// Wait for SSE connection and endpoint event
+	time.Sleep(200 * time.Millisecond)
+
 	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
 	if err != nil {
-		return nil, fmt.Errorf("init mcp failed: %s", err.Error())
+		mcpClient.Close()
+		return nil, fmt.Errorf("init mcp failed (DEBUG_TAG): %s", err.Error())
 	}
 	return mcpClient, nil
 }

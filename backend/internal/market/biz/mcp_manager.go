@@ -13,12 +13,12 @@ import (
 )
 
 type McpManager struct {
-	clients map[string]client.MCPClient
+	clients map[string]*client.Client
 }
 
 func NewMcpManager() *McpManager {
 	return &McpManager{
-		clients: make(map[string]client.MCPClient),
+		clients: make(map[string]*client.Client),
 	}
 }
 
@@ -39,7 +39,7 @@ func (m *McpManager) Initialize(ctx context.Context, configJSON string) error {
 	}
 
 	for name, srv := range config.McpServers {
-		var mcpClient client.MCPClient
+		var mcpClient *client.Client
 		var err error
 
 		if srv.URL != "" {
@@ -65,6 +65,11 @@ func (m *McpManager) Initialize(ctx context.Context, configJSON string) error {
 
 		if err != nil {
 			return fmt.Errorf("failed to create client for %s: %v", name, err)
+		}
+
+		// Start client
+		if err := mcpClient.Start(ctx); err != nil {
+			return fmt.Errorf("failed to start client for %s: %v", name, err)
 		}
 
 		_, err = mcpClient.Initialize(ctx, mcp.InitializeRequest{
