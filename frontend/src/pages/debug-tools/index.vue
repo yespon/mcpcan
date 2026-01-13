@@ -257,7 +257,7 @@
               <!-- Result Status -->
               <el-alert
                 v-if="parsedOutput.result?.isError"
-                title="Tool execution error"
+                :title="t('mcp.debugTool.runFail')"
                 type="error"
                 show-icon
                 :closable="false"
@@ -265,7 +265,7 @@
               />
               <el-alert
                 v-else
-                title="Tool execution successful"
+                :title="t('mcp.debugTool.runSuccess')"
                 type="success"
                 show-icon
                 :closable="false"

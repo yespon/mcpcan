@@ -286,7 +286,9 @@
       "copyInput": "Copy Input",
       "copyOutput": "Copy Output",
       "noData": "No Data",
-      "keyPlaceholder": "Enter name to filter..."
+      "keyPlaceholder": "Enter name to filter...",
+      "runSuccess": "Tool execution successful",
+      "runFail": "Tool execution error"
     }
   }
 }

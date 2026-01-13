@@ -286,7 +286,9 @@
       "copyInput": "复制入参",
       "copyOutput": "复制出参",
       "noData": "暂无数据",
-      "keyPlaceholder": "输入名称进行筛选..."
+      "keyPlaceholder": "输入名称进行筛选...",
+      "runSuccess": "工具执行成功",
+      "runFail": "工具执行错误"
     }
   }
 }
