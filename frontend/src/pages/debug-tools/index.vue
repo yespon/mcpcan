@@ -54,7 +54,7 @@
           <div class="p-2 border-b">
             <el-input
               v-model="keyword"
-              placeholder="Search tools..."
+              :placeholder="t('mcp.debugTool.keyPlaceholder')"
               :prefix-icon="Search"
               clearable
             />

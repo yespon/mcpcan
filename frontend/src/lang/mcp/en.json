@@ -285,7 +285,8 @@
       "run": "Run",
       "copyInput": "Copy Input",
       "copyOutput": "Copy Output",
-      "noData": "No Data"
+      "noData": "No Data",
+      "keyPlaceholder": "Enter name to filter..."
     }
   }
 }
