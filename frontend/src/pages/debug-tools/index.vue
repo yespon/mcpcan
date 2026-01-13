@@ -97,64 +97,11 @@
 
               <!-- Form Mode -->
               <div v-if="!jsonMode && currentTool.inputSchema?.properties" class="mx-2">
-                <div
-                  v-for="(schema, key) in currentTool.inputSchema.properties"
-                  :key="key"
-                  class="mb-4"
-                >
-                  <div class="flex items-center justify-between mb-1">
-                    <span class="text-sm font-bold text-regular">
-                      {{ key }}
-                      <span
-                        v-if="isPropertyRequired(String(key), currentTool.inputSchema)"
-                        class="text-red"
-                        >*
-                      </span>
-                    </span>
-                    <span class="text-xs text-secondary">{{ schema.type }}</span>
-                  </div>
-                  <div class="text-xs text-placeholder mb-2" v-if="schema.description">
-                    {{ schema.description }}
-                  </div>
-
-                  <!-- String / Enum -->
-                  <template v-if="schema.type === 'string'">
-                    <el-select
-                      v-if="schema.enum"
-                      v-model="paramsForm[key]"
-                      class="w-full"
-                      @change="handleFormChange"
-                      clearable
-                    >
-                      <el-option v-for="opt in schema.enum" :key="opt" :label="opt" :value="opt" />
-                    </el-select>
-                    <el-input v-else v-model="paramsForm[key]" @input="handleFormChange" />
-                  </template>
-
-                  <!-- Boolean -->
-                  <template v-else-if="schema.type === 'boolean'">
-                    <el-switch v-model="paramsForm[key]" @change="handleFormChange" />
-                  </template>
-
-                  <!-- Number / Integer -->
-                  <template v-else-if="schema.type === 'number' || schema.type === 'integer'">
-                    <el-input-number
-                      v-model="paramsForm[key]"
-                      class="!w-full"
-                      @change="handleFormChange"
-                      :controls-position="'right'"
-                    />
-                  </template>
-
-                  <!-- Object / Array (Fallback to JSON input for field) -->
-                  <template v-else>
-                    <el-input
-                      type="textarea"
-                      v-model="paramsForm[key]"
-                      placeholder="Complex type, please use JSON mode"
-                    />
-                  </template>
-                </div>
+                <SchemaForm
+                  v-model="paramsForm"
+                  :schema="currentTool.inputSchema"
+                  @update:modelValue="handleFormChange"
+                />
               </div>
 
               <!-- JSON Mode or No Schema -->
@@ -342,6 +289,7 @@ import {
 import { ElMessage } from 'element-plus'
 import { useDebugToolsHooks } from './hooks/index.ts'
 import McpImage from '@/components/mcp-image/index.vue'
+import SchemaForm from './components/SchemaForm.vue'
 import {
   generateDefaultValue,
   isPropertyRequired,
@@ -375,7 +323,7 @@ const configUrl = computed(() => {
     const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].url
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
+  return `${'https://mcp-dev.itqm.com/' || window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
 })
 // Computed
 const filteredTools = computed(() => {
