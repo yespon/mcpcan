@@ -1,0 +1,139 @@
+{
+  "configurations": [
+    {
+      "name": "Python 3.12 - venv/pip",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "pip"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
+        "start": "/app/codepkg/mcp-sys-monitor/venv/bin/python /app/codepkg/mcp-sys-monitor/server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.12 标准环境 (venv): 适用于大多数标准 Python 项目。使用内置 venv 创建虚拟环境，pip 安装依赖。",
+      "description_en": "Python 3.12 Standard (venv): Best for standard projects. Uses built-in venv and pip."
+    },
+    {
+      "name": "Python 3.12 - Poetry",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "poetry"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && poetry env use python3.12 && poetry config virtualenvs.in-project true && poetry install",
+        "start": "cd /app/codepkg/mcp-sys-monitor/ && poetry run python server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.12 工程化环境 (Poetry): 适用于需要严格依赖锁定的生产级项目。自动管理虚拟环境和依赖图。",
+      "description_en": "Python 3.12 Engineering (Poetry): For production projects requiring strict dependency locking."
+    },
+    {
+      "name": "Python 3.11 - uv/pip",
+      "meta": {
+        "language": "python",
+        "version": "3.11",
+        "virtual_env": "uv",
+        "dependency_tool": "pip"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && uv venv --python 3.11 && uv pip install -r requirements.txt",
+        "start": "/app/codepkg/mcp-sys-monitor/.venv/bin/python /app/codepkg/mcp-sys-monitor/server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.11 极速环境 (uv): 适用于追求极致安装速度的项目。使用 Rust 编写的 uv 工具替代 pip/venv。",
+      "description_en": "Python 3.11 High Performance (uv): For fastest setup. Uses Rust-based uv tool."
+    },
+    {
+      "name": "Python 3.10 - Global/pip",
+      "meta": {
+        "language": "python",
+        "version": "3.10",
+        "virtual_env": "none",
+        "dependency_tool": "pip"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && python3.10 -m pip install -r requirements.txt",
+        "start": "python3.10 /app/codepkg/mcp-sys-monitor/server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.10 全局环境: 适用于 Docker 容器或一次性 CI 环境。直接安装到系统路径，无虚拟环境隔离。",
+      "description_en": "Python 3.10 Global: For Docker/CI. Installs directly to system path."
+    },
+    {
+      "name": "Node.js 20 - npm",
+      "meta": {
+        "language": "nodejs",
+        "version": "20",
+        "virtual_env": "none",
+        "dependency_tool": "npm"
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 20 && nvm use 20 && cd /app/codepkg/mcp-sys-monitor/ && npm install",
+        "start": "source $HOME/.nvm/nvm.sh && nvm use 20 && cd /app/codepkg/mcp-sys-monitor/ && npm start -- --transport=sse --port=8080"
+      },
+      "description": "Node.js 20 LTS (npm): 推荐用于生产环境。使用 NVM 切换版本，npm 管理依赖。Node 20 是当前的长期支持版本。",
+      "description_en": "Node.js 20 LTS (npm): Recommended for production. Uses NVM and npm."
+    },
+    {
+      "name": "Node.js 18 - Yarn",
+      "meta": {
+        "language": "nodejs",
+        "version": "18",
+        "virtual_env": "none",
+        "dependency_tool": "yarn"
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 18 && nvm use 18 && cd /app/codepkg/mcp-sys-monitor/ && yarn install",
+        "start": "source $HOME/.nvm/nvm.sh && nvm use 18 && cd /app/codepkg/mcp-sys-monitor/ && yarn start -- --transport=sse --port=8080"
+      },
+      "description": "Node.js 18 Legacy (yarn): 适用于旧项目维护。使用 Yarn Classic (v1) 作为包管理器。",
+      "description_en": "Node.js 18 Legacy (yarn): For legacy projects using Yarn v1."
+    },
+    {
+      "name": "Node.js 22 - pnpm",
+      "meta": {
+        "language": "nodejs",
+        "version": "22",
+        "virtual_env": "none",
+        "dependency_tool": "pnpm"
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 22 && nvm use 22 && cd /app/codepkg/mcp-sys-monitor/ && pnpm install",
+        "start": "source $HOME/.nvm/nvm.sh && nvm use 22 && cd /app/codepkg/mcp-sys-monitor/ && pnpm start -- --transport=sse --port=8080"
+      },
+      "description": "Node.js 22 Latest (pnpm): 适用于尝鲜和高性能构建。pnpm 节省磁盘空间并加快安装速度。",
+      "description_en": "Node.js 22 Latest (pnpm): For high performance using pnpm."
+    },
+    {
+      "name": "Binary - Linux",
+      "meta": {
+        "language": "binary",
+        "version": "latest",
+        "virtual_env": "none",
+        "dependency_tool": "none"
+      },
+      "commands": {
+        "install": "chmod +x /app/codepkg/mcp-sys-monitor/mcp-sys-monitor-linux",
+        "start": "/app/codepkg/mcp-sys-monitor/mcp-sys-monitor-linux --transport=sse --port=8080"
+      },
+      "description": "Linux 二进制直连: 无需任何依赖，直接运行编译好的二进制文件。适用于极简部署。",
+      "description_en": "Linux Binary: Standalone executable. No dependencies required."
+    },
+    {
+      "name": "Shell - Custom Script",
+      "meta": {
+        "language": "custom",
+        "version": "any",
+        "virtual_env": "custom",
+        "dependency_tool": "custom"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x ./install.sh && ./install.sh",
+        "start": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x ./start.sh && ./start.sh"
+      },
+      "description": "自定义 Shell 脚本: 通过 install.sh 和 start.sh 封装复杂的启动逻辑。已优化路径解析，支持任意目录执行。",
+      "description_en": "Custom Shell Script: Encapsulates logic via install.sh/start.sh. Path-aware."
+    }
+  ]
+}
