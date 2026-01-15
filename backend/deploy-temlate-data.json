@@ -1,0 +1,400 @@
+{
+  "configurations": [
+    {
+      "name": "Python 3.12 - venv/pip - SSE",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "pip",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.12 && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
+        "start": "python server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.12 标准环境 (venv) - SSE 模式: 适用于 Web 服务部署。使用内置 venv 创建虚拟环境，pip 安装依赖，通过 HTTP SSE 暴露服务。",
+      "description_en": "Python 3.12 Standard (venv) - SSE: Best for web deployment. Uses built-in venv and pip with HTTP SSE transport."
+    },
+    {
+      "name": "Python 3.12 - venv/pip - Stdio",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "pip",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "sh",
+              "args": [
+                "-c",
+                "cd /app/codepkg/mcp-sys-monitor/ && source venv/bin/activate && exec python server/main.py --transport=stdio"
+              ]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.12 && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && echo '{\"mcpServers\":{\"default\":{\"command\":\"bash\",\"args\":[\"-c\",\"source venv/bin/activate && exec python server/main.py --transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Python 3.12 标准环境 (venv) - Stdio 模式: 适用于 MCP 客户端集成 (如 Claude Desktop)。通过标准输入输出通信。",
+      "description_en": "Python 3.12 Standard (venv) - Stdio: Best for MCP client integration. Uses stdio transport."
+    },
+    {
+      "name": "Python 3.12 - Poetry - SSE",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "poetry",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.12 && poetry env use python && poetry config virtualenvs.in-project true && poetry install",
+        "start": "poetry run python server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.12 工程化环境 (Poetry) - SSE 模式: 适用于需要严格依赖锁定的生产级 Web 项目。自动管理虚拟环境和依赖图。",
+      "description_en": "Python 3.12 Engineering (Poetry) - SSE: For production web projects requiring strict dependency locking."
+    },
+    {
+      "name": "Python 3.12 - Poetry - Stdio",
+      "meta": {
+        "language": "python",
+        "version": "3.12",
+        "virtual_env": "venv",
+        "dependency_tool": "poetry",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "poetry",
+              "args": ["run", "python", "server/main.py", "--transport=stdio"],
+              "cwd": "/app/codepkg/mcp-sys-monitor"
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.12 && poetry env use python && poetry config virtualenvs.in-project true && poetry install && echo '{\"mcpServers\":{\"default\":{\"command\":\"poetry\",\"args\":[\"run\",\"python\",\"server/main.py\",\"--transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Python 3.12 工程化环境 (Poetry) - Stdio 模式: 适用于需要严格依赖锁定的 MCP 客户端集成。",
+      "description_en": "Python 3.12 Engineering (Poetry) - Stdio: For MCP client integration with strict dependency locking."
+    },
+    {
+      "name": "Python 3.11 - uv/pip - Streamable-HTTP",
+      "meta": {
+        "language": "python",
+        "version": "3.11",
+        "virtual_env": "uv",
+        "dependency_tool": "pip",
+        "protocol": "streamable-http"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.11 && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt",
+        "start": "python server/main.py --transport=streamable-http --port=8080"
+      },
+      "description": "Python 3.11 极速环境 (uv) - Streamable-HTTP 模式: 适用于追求极致性能的 Web 服务。使用 Rust 编写的 uv 工具和高效的 HTTP 流式传输。",
+      "description_en": "Python 3.11 High Performance (uv) - Streamable-HTTP: For fastest setup and efficient HTTP streaming."
+    },
+    {
+      "name": "Python 3.11 - uv/pip - SSE",
+      "meta": {
+        "language": "python",
+        "version": "3.11",
+        "virtual_env": "uv",
+        "dependency_tool": "pip",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.11 && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt",
+        "start": "python server/main.py --transport=sse --port=8080"
+      },
+      "description": "Python 3.11 极速环境 (uv) - SSE 模式: 适用于追求极致性能的 Web 服务。使用 Rust 编写的 uv 工具。",
+      "description_en": "Python 3.11 High Performance (uv) - SSE: For fastest setup and web serving."
+    },
+    {
+      "name": "Python 3.11 - uv/pip - Stdio",
+      "meta": {
+        "language": "python",
+        "version": "3.11",
+        "virtual_env": "uv",
+        "dependency_tool": "pip",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "sh",
+              "args": [
+                "-c",
+                "cd /app/codepkg/mcp-sys-monitor/ && source .venv/bin/activate && exec python server/main.py --transport=stdio"
+              ]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.11 && uv venv && source .venv/bin/activate && uv pip install -r requirements.txt && echo '{\"mcpServers\":{\"default\":{\"command\":\"bash\",\"args\":[\"-c\",\"source .venv/bin/activate && exec python server/main.py --transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Python 3.11 极速环境 (uv) - Stdio 模式: 适用于追求极致性能的 MCP 客户端集成。",
+      "description_en": "Python 3.11 High Performance (uv) - Stdio: For fastest setup and MCP client integration."
+    },
+    {
+      "name": "Python 3.10 - Global/pip - Stdio",
+      "meta": {
+        "language": "python",
+        "version": "3.10",
+        "virtual_env": "none",
+        "dependency_tool": "pip",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "bash",
+              "args": [
+                "-c",
+                "pyenv local 3.10 && exec python server/main.py --transport=stdio"
+              ],
+              "cwd": "/app/codepkg/mcp-sys-monitor"
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && pyenv local 3.10 && pip install -r requirements.txt && echo '{\"mcpServers\":{\"default\":{\"command\":\"bash\",\"args\":[\"-c\",\"pyenv local 3.10 && exec python server/main.py --transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Python 3.10 全局环境 - Stdio 模式: 适用于 Docker 容器或一次性 CI 环境。直接安装到系统路径，无虚拟环境隔离。",
+      "description_en": "Python 3.10 Global - Stdio: For Docker/CI. Installs directly to system path."
+    },
+    {
+      "name": "Node.js 20 - npm - SSE",
+      "meta": {
+        "language": "nodejs",
+        "version": "20",
+        "virtual_env": "none",
+        "dependency_tool": "npm",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 20 && nvm use 20 && cd /app/codepkg/mcp-sys-monitor/ && npm install",
+        "start": "npm start -- --transport=sse --port=8080"
+      },
+      "description": "Node.js 20 LTS (npm) - SSE 模式: 推荐用于生产环境 Web 服务。使用 NVM 切换版本，npm 管理依赖。",
+      "description_en": "Node.js 20 LTS (npm) - SSE: Recommended for production web services. Uses NVM and npm."
+    },
+    {
+      "name": "Node.js 20 - npm - Stdio",
+      "meta": {
+        "language": "nodejs",
+        "version": "20",
+        "virtual_env": "none",
+        "dependency_tool": "npm",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "sh",
+              "args": [
+                "-c",
+                "cd /app/codepkg/mcp-sys-monitor/ && source $HOME/.nvm/nvm.sh && nvm use 20 && exec node index.js --transport=stdio"
+              ]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 20 && nvm use 20 && cd /app/codepkg/mcp-sys-monitor/ && npm install && echo '{\"mcpServers\":{\"default\":{\"command\":\"bash\",\"args\":[\"-c\",\"source $HOME/.nvm/nvm.sh && nvm use 20 && exec node index.js --transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Node.js 20 LTS (npm) - Stdio 模式: 适用于 MCP 客户端集成。直接使用 node 运行以避免 npm 输出干扰标准流。",
+      "description_en": "Node.js 20 LTS (npm) - Stdio: For MCP client integration. Runs directly with node to avoid npm noise."
+    },
+    {
+      "name": "Node.js 22 - pnpm - SSE",
+      "meta": {
+        "language": "nodejs",
+        "version": "22",
+        "virtual_env": "none",
+        "dependency_tool": "pnpm",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 22 && nvm use 22 && cd /app/codepkg/mcp-sys-monitor/ && pnpm install",
+        "start": "pnpm start -- --transport=sse --port=8080"
+      },
+      "description": "Node.js 22 Latest (pnpm) - SSE 模式: 适用于尝鲜和高性能 Web 构建。pnpm 节省磁盘空间并加快安装速度。",
+      "description_en": "Node.js 22 Latest (pnpm) - SSE: For high performance web builds using pnpm."
+    },
+    {
+      "name": "Node.js 22 - pnpm - Stdio",
+      "meta": {
+        "language": "nodejs",
+        "version": "22",
+        "virtual_env": "none",
+        "dependency_tool": "pnpm",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "sh",
+              "args": [
+                "-c",
+                "cd /app/codepkg/mcp-sys-monitor/ && source $HOME/.nvm/nvm.sh && nvm use 22 && exec node index.js --transport=stdio"
+              ]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "source $HOME/.nvm/nvm.sh && nvm install 22 && nvm use 22 && cd /app/codepkg/mcp-sys-monitor/ && pnpm install && echo '{\"mcpServers\":{\"default\":{\"command\":\"bash\",\"args\":[\"-c\",\"source $HOME/.nvm/nvm.sh && nvm use 22 && exec node index.js --transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Node.js 22 Latest (pnpm) - Stdio 模式: 适用于尝鲜和高性能 MCP 客户端集成。",
+      "description_en": "Node.js 22 Latest (pnpm) - Stdio: For high performance MCP client integration."
+    },
+    {
+      "name": "Node.js - Direct - SSE",
+      "meta": {
+        "language": "nodejs",
+        "version": "system",
+        "virtual_env": "none",
+        "dependency_tool": "npm",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && npm install",
+        "start": "node index.js --transport=sse --port=8080"
+      },
+      "description": "Node.js 直接启动 - SSE 模式: 使用系统 Node.js 环境，不依赖 nvm。适用于已预装 Node.js 的容器或环境。",
+      "description_en": "Node.js Direct - SSE: Uses system Node.js without nvm. For pre-configured environments."
+    },
+    {
+      "name": "Node.js - Direct - Stdio",
+      "meta": {
+        "language": "nodejs",
+        "version": "system",
+        "virtual_env": "none",
+        "dependency_tool": "npm",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "sh",
+              "args": [
+                "-c",
+                "cd /app/codepkg/mcp-sys-monitor/ && exec node index.js --transport=stdio"
+              ]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && npm install && echo '{\"mcpServers\":{\"default\":{\"command\":\"node\",\"args\":[\"index.js\",\"--transport=stdio\"],\"cwd\":\"/app/codepkg/mcp-sys-monitor\"}}}' > /app/mcp-servers.json",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Node.js 直接启动 - Stdio 模式: 使用系统 Node.js 环境。直接调用 node 运行，无额外封装。",
+      "description_en": "Node.js Direct - Stdio: Uses system Node.js. Direct execution."
+    },
+    {
+      "name": "Binary - Linux - SSE",
+      "meta": {
+        "language": "binary",
+        "version": "latest",
+        "virtual_env": "none",
+        "dependency_tool": "none",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x mcp-sys-monitor-linux",
+        "start": "./mcp-sys-monitor-linux --transport=sse --port=8080"
+      },
+      "description": "Linux AMD64 二进制直连 - SSE 模式: 无需任何依赖，直接运行编译好的二进制文件提供 Web 服务。",
+      "description_en": "Linux AMD64 Binary - SSE: Standalone executable web server. No dependencies required."
+    },
+    {
+      "name": "Binary - Linux - Stdio",
+      "meta": {
+        "language": "binary",
+        "version": "latest",
+        "virtual_env": "none",
+        "dependency_tool": "none",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "/app/codepkg/mcp-sys-monitor/mcp-sys-monitor-linux",
+              "args": ["--transport=stdio"]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x mcp-sys-monitor-linux",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Linux AMD64 二进制直连 - Stdio 模式: 适用于极简的 MCP 客户端集成。零依赖。",
+      "description_en": "Linux AMD64 Binary - Stdio: Minimalist standalone executable for MCP clients."
+    },
+    {
+      "name": "Binary - Linux - SSE",
+      "meta": {
+        "language": "binary",
+        "version": "latest",
+        "virtual_env": "none",
+        "dependency_tool": "none",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x mcp-sys-monitor-linux",
+        "start": "./mcp-sys-monitor-linux --transport=sse --port=8080"
+      },
+      "description": "Linux AMD64 二进制直连 - SSE 模式: 无需任何依赖，直接运行编译好的二进制文件提供 Web 服务。",
+      "description_en": "Linux AMD64 Binary - SSE: Standalone executable web server. No dependencies required."
+    },
+    {
+      "name": "Binary - Linux - Stdio",
+      "meta": {
+        "language": "binary",
+        "version": "latest",
+        "virtual_env": "none",
+        "dependency_tool": "none",
+        "protocol": "stdio",
+        "mcp-servers-config": {
+          "mcpServers": {
+            "default": {
+              "command": "/app/codepkg/mcp-sys-monitor/mcp-sys-monitor-linux",
+              "args": ["--transport=stdio"]
+            }
+          }
+        }
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x mcp-sys-monitor-linux",
+        "start": "mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+      },
+      "description": "Linux AMD64 二进制直连 - Stdio 模式: 适用于极简的 MCP 客户端集成。零依赖。",
+      "description_en": "Linux AMD64 Binary - Stdio: Minimalist standalone executable for MCP clients."
+    },
+    {
+      "name": "Shell - Custom Script - SSE",
+      "meta": {
+        "language": "custom",
+        "version": "any",
+        "virtual_env": "custom",
+        "dependency_tool": "custom",
+        "protocol": "sse"
+      },
+      "commands": {
+        "install": "cd /app/codepkg/mcp-sys-monitor/ && chmod +x *.sh && ./install.sh",
+        "start": "./start.sh"
+      },
+      "description": "自定义 Shell 脚本 - SSE 模式: 通过 install.sh 和 start.sh 封装复杂的启动逻辑。已优化路径解析。",
+      "description_en": "Custom Shell Script - SSE: Encapsulates logic via install.sh/start.sh. Path-aware."
+    }
+  ]
+}
