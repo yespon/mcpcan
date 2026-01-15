@@ -261,6 +261,7 @@
 
     <!-- view detail model -->
     <InstanceDetail ref="instanceDetail"></InstanceDetail>
+    <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
     <!-- view config model -->
     <ViewConfig ref="viewConfig" @on-refresh="init"></ViewConfig>
     <!-- probe instance dialog model -->
@@ -311,6 +312,7 @@ import McpButton from '@/components/mcp-button/index.vue'
 import ViewConfig from './modules/view-config.vue'
 import ProbeStatus from './modules/probe-dialog.vue'
 import Select from '@/components/mcp-select/index.vue'
+import AccessTypeDialog from './modules/access-type.vue'
 import { TemplateAPI } from '@/api/mcp/template'
 import McpImage from '@/components/mcp-image/index.vue'
 import { AccessType, InstanceStatus, SourceType } from '@/types/instance'
@@ -328,7 +330,7 @@ const {
   tablePlus,
   requestConfig,
   pageConfig,
-  handleAddInstance,
+
   activeOptions,
   containerOptions,
   InstanceAPI,
@@ -346,7 +348,10 @@ const {
   meta,
 } = useInstanceTableHooks()
 
-const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
+const accessTypeDialog = ref()
+const handleAddInstance = () => {
+  accessTypeDialog.value.init()
+}
 
 /**
  * Handle create a instance by template list

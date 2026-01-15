@@ -228,16 +228,6 @@ export const useInstanceTableHooks = () => {
       model: {},
     },
   })
-  /**
-   *
-   * @param form - instance form data
-   */
-  const handleAddInstance = () => {
-    jumpToPage({
-      url: '/new-instance',
-      data: {},
-    })
-  }
 
   return {
     load,
@@ -248,7 +238,6 @@ export const useInstanceTableHooks = () => {
     tablePlus,
     requestConfig,
     pageConfig,
-    handleAddInstance,
     activeOptions,
     containerOptions,
     InstanceAPI,
