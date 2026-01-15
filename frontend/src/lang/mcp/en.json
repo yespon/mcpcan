@@ -26,7 +26,7 @@
       "formData": {
         "title": "Add a new Template",
         "name": "Name",
-        "notes": "Desc",
+        "notes": "Description",
         "isBind": "Bound",
         "size": "Size",
         "path": "Path",
@@ -103,7 +103,7 @@
         "stopInstance": "Instance stopped",
         "copy": "Copy Config",
         "selectTempalte": "Select a Tempalte",
-        "customize": "Customize",
+        "customize": "Quick Start",
         "byTemplate": "By Template",
         "byDocs": "By OpenAPI",
         "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
