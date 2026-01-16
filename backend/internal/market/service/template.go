@@ -66,6 +66,7 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 		Notes:          req.Notes,
 		IconPath:       req.IconPath,
 		OpenapiBaseUrl: req.OpenapiBaseUrl,
+		ServicePath:    req.ServicePath,
 	}
 
 	// Handle access type
@@ -261,6 +262,7 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	template.Notes = req.Notes
 	template.IconPath = req.IconPath
 	template.OpenapiBaseUrl = req.OpenapiBaseUrl
+	template.ServicePath = req.ServicePath
 
 	// Handle access type
 	switch req.AccessType {
@@ -272,6 +274,13 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 		template.AccessType = model.AccessTypeHosting
 	default:
 		template.AccessType = model.AccessTypeProxy // Default proxy mode
+	}
+
+	switch req.SourceType {
+	case instance.SourceType_OPENAPI:
+		template.SourceType = model.SourceTypeOpenapi
+	default:
+		template.SourceType = model.SourceTypeCustom
 	}
 
 	// Handle MCP protocol
@@ -519,6 +528,7 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 			IconPath:       template.IconPath,
 			McpServers:     string(template.McpServers),
 			OpenapiBaseUrl: template.OpenapiBaseUrl,
+			ServicePath:    template.ServicePath,
 		}
 
 		// Handle access type

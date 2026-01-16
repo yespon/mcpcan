@@ -539,6 +539,8 @@ message TemplateCreateRequest {
   string openapiBaseUrl = 20;
   // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type"
   SourceType sourceType = 21;
+  // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
+  string servicePath = 22;
 }
 
 // TemplateCreateResp template create response
@@ -645,6 +647,10 @@ message TemplateEditRequest {
   string iconPath = 20;
   // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"
   string openapiBaseUrl = 25;
+  // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type (custom/openapi)"
+  SourceType sourceType = 26;
+  // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
+  string servicePath = 27;
 }
 
 // TemplateEditResp template edit response
