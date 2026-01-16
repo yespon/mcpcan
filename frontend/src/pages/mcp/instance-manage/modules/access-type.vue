@@ -22,14 +22,15 @@
             :colors="['#ffaa40', '#9c40ff', '#ffaa40']"
             :animation-speed="10"
             :show-border="false"
-            class-name="w-full h-full flex flex-col items-center justify-center"
           >
-            <el-icon :size="48" class="mb-4" :color="item.color">
-              <component :is="item.icon" />
-            </el-icon>
-            <div class="text-lg font-bold mb-2">{{ item.label }}</div>
-            <div class="text-sm text-left">
-              {{ item.description }}
+            <div class="w-full h-full flex flex-col items-center justify-center">
+              <el-icon :size="48" class="mb-4" :color="item.color">
+                <component :is="item.icon" />
+              </el-icon>
+              <div class="text-lg font-bold mb-2">{{ item.label }}</div>
+              <div class="text-sm text-left">
+                {{ item.description }}
+              </div>
             </div>
           </GradientText>
           <div v-else class="w-full h-full flex flex-col items-center justify-center">
