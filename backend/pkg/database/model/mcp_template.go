@@ -20,7 +20,6 @@ type McpTemplate struct {
 	AccessType           AccessType      `gorm:"size:20;not null;comment:访问类型 (直连-direct/代理-proxy/托管-hosting)" json:"accessType"`
 	McpProtocol          McpProtocol     `gorm:"size:20;not null;comment:MCP协议 (SSE-1/StreamableHttp-2/Stdio-3)" json:"mcpProtocol"`
 	McpServers           json.RawMessage `gorm:"type:json;comment:MCP服务器配置 (JSON格式)" json:"mcpServers"`
-	ImgAddress           string          `gorm:"size:100;not null;comment:镜像地址" json:"imgAddress"`
 	McpServerID          string          `gorm:"size:100;comment:MCP 服务器ID" json:"mcpServerID"`
 	Notes                string          `gorm:"type:text;comment:备注" json:"notes"`
 	ServicePath          string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`

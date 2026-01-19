@@ -108,7 +108,6 @@ func (a *App) initMcpTemplateData(ctx context.Context) error {
 			PackageID:      packageID,
 			AccessType:     convertAccessType(it.AccessType),
 			McpProtocol:    convertMcpProtocol(it.McpProtocol),
-			ImgAddress:     it.ImgAddress,
 			Notes:          it.Notes,
 			ServicePath:    it.ServicePath,
 			IconPath:       it.IconPath,

@@ -61,7 +61,6 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 		RunningTimeout: req.RunningTimeout,
 		EnvironmentID:  req.EnvironmentId,
 		PackageID:      req.PackageId,
-		ImgAddress:     req.ImgAddress,
 		McpServerID:    req.McpServerId,
 		Notes:          req.Notes,
 		IconPath:       req.IconPath,
@@ -167,7 +166,6 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 		RunningTimeout: template.RunningTimeout,
 		EnvironmentId:  int32(template.EnvironmentID),
 		PackageId:      template.PackageID,
-		ImgAddress:     template.ImgAddress,
 		McpServerId:    template.McpServerID,
 		Notes:          template.Notes,
 		IconPath:       template.IconPath,
@@ -257,7 +255,6 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	template.RunningTimeout = req.RunningTimeout
 	template.EnvironmentID = req.EnvironmentId
 	template.PackageID = req.PackageId
-	template.ImgAddress = req.ImgAddress
 	template.McpServerID = req.McpServerId
 	template.Notes = req.Notes
 	template.IconPath = req.IconPath
@@ -429,7 +426,6 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 			RunningTimeout:  template.RunningTimeout,
 			EnvironmentId:   int32(template.EnvironmentID),
 			PackageId:       template.PackageID,
-			ImgAddress:      template.ImgAddress,
 			McpServerId:     template.McpServerID,
 			Notes:           template.Notes,
 			IconPath:        template.IconPath,
@@ -522,7 +518,6 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 			RunningTimeout: template.RunningTimeout,
 			EnvironmentId:  int32(template.EnvironmentID),
 			PackageId:      template.PackageID,
-			ImgAddress:     template.ImgAddress,
 			McpServerId:    template.McpServerID,
 			Notes:          template.Notes,
 			IconPath:       template.IconPath,
