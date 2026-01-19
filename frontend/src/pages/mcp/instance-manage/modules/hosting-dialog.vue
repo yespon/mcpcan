@@ -70,26 +70,46 @@
                 </div>
               </el-col>
             </el-row>
-
             <el-form-item prop="packageId">
               <template #label>
                 <span class="mr-2">{{ t('mcp.instance.formData.packageId') }}</span>
               </template>
               <div class="flex items-center">
-                <span v-if="pageInfo.formData.packageId" class="mr-2 max-w-25 u-line-1">
-                  <el-image :src="zipLogo" style="width: 16px; height: 16px"></el-image>
-                  {{ currentPackage.name }}
-                </span>
-                <el-button size="small" class="base-btn" @click="selectVisible = true">
+                <el-tooltip
+                  :disabled="!isPackageNameOverflow"
+                  :content="currentPackage.name"
+                  placement="top"
+                >
+                  <div
+                    v-if="pageInfo.formData.packageId"
+                    class="mr-2 max-w-60 flex items-center"
+                    ref="packageNameRef"
+                  >
+                    <el-image
+                      :src="zipLogo"
+                      style="width: 16px; height: 16px"
+                      class="mr-1 shrink-0"
+                    ></el-image>
+                    <span class="u-line-1" @mouseenter="checkPackageNameOverflow">
+                      {{ currentPackage.name }}
+                    </span>
+                  </div>
+                </el-tooltip>
+                <mcp-button size="small" class="base-btn" @click="selectVisible = true">
                   选择
-                </el-button>
-                <el-tooltip class="box-item" effect="dark" placement="top-start">
-                  <el-button class="base-btn-link" link>下载示例代码包</el-button>
+                </mcp-button>
+                <el-tooltip class="box-item" effect="light" placement="top-start">
+                  <el-button class="base-btn-link" link @click="downloadDialogVisible = true">
+                    下载示例代码包
+                  </el-button>
                   <template #content>
                     <div class="w-40">
-                      示例 MCP
-                      服务代码包，下载代码文件可用于了解不同编程语言在此平台的启动方式。也可以查看
-                      模板列表 提供了多个代码包启动示例。
+                      示例
+                      MCP服务代码包，下载代码文件可用于了解不同编程语言在此平台的启动方式。也可以查看<a
+                        href="#/template-manage"
+                        >模板列表</a
+                      >
+                      提供了多个代码包启动示例。
                     </div>
                   </template>
                 </el-tooltip>
@@ -159,12 +179,7 @@
             <el-form-item label="访问地址" class="mt-6">
               <el-radio-group>
                 <el-radio-button value="ip">
-                  <el-popover
-                    title="容器监听地址"
-                    width="260"
-                    trigger="click"
-                    placement="bottom-start"
-                  >
+                  <el-popover title="容器监听地址" width="260" placement="bottom-start">
                     <template #reference>
                       <div class="w-24">0.0.0.0</div>
                     </template>
@@ -173,37 +188,65 @@
                     </div>
                   </el-popover>
                 </el-radio-button>
-                <el-radio-button value="port">
-                  <el-popover
-                    title="容器监听端口"
-                    width="260"
-                    trigger="click"
-                    placement="bottom-start"
-                  >
+                <el-radio-button
+                  value="port"
+                  :class="pageInfo.formData.mcpProtocol !== 3 ? 'deep-form' : ''"
+                >
+                  <el-popover title="容器监听端口" width="260" placement="bottom-start">
                     <template #reference>
-                      <div class="w-24">8080</div>
+                      <div
+                        v-if="pageInfo.formData.mcpProtocol === 3"
+                        class="w-24 flex items-center"
+                      >
+                        <div class="w-24">8080</div>
+                      </div>
+                      <div v-else class="w-30 flex items-center">
+                        <el-input
+                          v-model.number="pageInfo.formData.port"
+                          type="number"
+                          :placeholder="t('mcp.instance.formData.port')"
+                          class="no-border-input w-24"
+                        />
+                      </div>
                     </template>
                     <div>
-                      默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改 此参数。
+                      {{
+                        pageInfo.formData.mcpProtocol === 3
+                          ? '默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改 此参数。'
+                          : '请输入 MCP服务真实监听端口号'
+                      }}
                     </div>
                   </el-popover>
                 </el-radio-button>
-                <el-radio-button value="path">
-                  <el-popover
-                    title="容器监听地址"
-                    width="260"
-                    trigger="click"
-                    placement="bottom-start"
-                  >
+                <el-radio-button
+                  value="path"
+                  :class="pageInfo.formData.mcpProtocol !== 3 ? 'deep-form' : ''"
+                >
+                  <el-popover title="容器监听路径" width="260" placement="bottom-start">
                     <template #reference>
-                      <div class="w-24">{{ '/see' || '/mcp' }}</div>
+                      <!-- STDIO 协议 -->
+                      <div
+                        v-if="pageInfo.formData.mcpProtocol === 3"
+                        class="w-24 flex items-center"
+                        @click="handleChangePath"
+                      >
+                        <div class="flex-1">{{ pageInfo.formData.servicePath }}</div>
+                        <el-icon class="ml-2 base-btn-link" size="12"><Refresh /></el-icon>
+                      </div>
+                      <div v-else class="w-30 flex items-center">
+                        <el-input
+                          v-model="pageInfo.formData.servicePath"
+                          :placeholder="t('mcp.template.formData.servicePath')"
+                          class="no-border-input w-24"
+                        />
+                      </div>
                     </template>
                     <div>
-                      启动命令会将 STDIO 协议转为 SSE和 STEAMABLEHTTP协议，此路径 /sse
-                      对应SSE协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。
-
-                      <!-- 启动命令会将 STIDO 协议转为 SSE和 STEAMABLEHTTP协议。此路径 /mcp 对应STEAMABLE
-                      HTTP协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修 改此参数。 -->
+                      {{
+                        pageInfo.formData.mcpProtocol === 3
+                          ? '启动命令会将 STDIO 协议转为 SSE和 STEAMABLEHTTP协议，此路径 /sse对应SSE协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。'
+                          : `请输入 MCP 服务挂载的访问 路径，留空则无前缀访问路 径。可参考 模板列表 中模版示例并启动后对照代码和容器日志。`
+                      }}
                     </div>
                   </el-popover>
                 </el-radio-button>
@@ -569,14 +612,53 @@
         </div>
       </template>
     </Select>
+
+    <!-- 下载示例代码包弹窗 -->
+    <el-dialog
+      v-model="downloadDialogVisible"
+      title="下载示例代码包"
+      width="520px"
+      append-to-body
+      :close-on-click-modal="false"
+    >
+      <div class="flex flex-col gap-4">
+        <div
+          v-for="(item, index) in exampleList"
+          :key="index"
+          class="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow"
+        >
+          <div class="flex items-center gap-3">
+            <el-image :src="zipLogo" style="width: 32px; height: 32px" />
+            <div class="flex flex-col">
+              <span class="font-bold text-base">{{ item.name }}</span>
+              <span class="text-xs text-gray-500">{{ item.description }}</span>
+            </div>
+          </div>
+          <el-button type="primary" link @click="handleDownloadExample(item)">
+            <el-icon class="mr-1"><Download /></el-icon>
+            下载
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plus, Remove, CircleClose, RefreshRight, UploadFilled } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Remove,
+  CircleClose,
+  RefreshRight,
+  Refresh,
+  UploadFilled,
+  Download,
+} from '@element-plus/icons-vue'
 import { useInstanceFormHooks } from '../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
+import McpButton from '@/components/mcp-button/index.vue'
 import { JsonFormatter } from '@/utils/json'
+import { ElMessage } from 'element-plus'
 import TokenForm from './components/token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
@@ -663,7 +745,9 @@ const handleDeleteEnvVariable = (index: number | string) => {
 /**
  * Handle McpProtocol Changed
  */
-const handleMcpProtocolChange = () => {}
+const handleMcpProtocolChange = (servicePath: number) => {
+  pageInfo.value.formData.servicePath = ['', '/sse', '/mcp', '/sse'][servicePath]
+}
 
 /**
  * Handle delete Volume mounting
@@ -719,6 +803,15 @@ const handleChangeEnvironmentId = async (e: number | undefined) => {
     handleGetPvcList(pageInfo.value.formData.environmentId)
   }
 }
+
+/**
+ * Handle change path
+ */
+const handleChangePath = () => {
+  pageInfo.value.formData.servicePath =
+    pageInfo.value.formData.servicePath === '/sse' ? '/mcp' : '/sse'
+}
+
 // Handle confirm save
 const handleConfirm = () => {}
 /**
@@ -730,6 +823,45 @@ const handleClose = () => {
   dialogInfo.value.visible = false
 }
 
+const downloadDialogVisible = ref(false)
+const exampleList = [
+  {
+    name: 'mcp-server-python',
+    language: 'Python',
+    description: 'Python 版本的 MCP Server 示例代码',
+    url: '/static/code-package/mcp-example.zip',
+  },
+  {
+    name: 'mcp-server-go',
+    language: 'Go',
+    description: 'Go 版本的 MCP Server 示例代码',
+    url: '/static/code-package/mcp-example.zip',
+  },
+  {
+    name: 'mcp-server-node',
+    language: 'Node.js',
+    description: 'Node.js 版本的 MCP Server 示例代码',
+    url: '/static/code-package/mcp-example.zip',
+  },
+]
+
+const handleDownloadExample = (item: any) => {
+  // const link = document.createElement('a')
+  // link.href = item.url
+  // link.download = item.name + '.zip'
+  // link.click()
+  ElMessage.info('下载功能开发中')
+}
+
+const packageNameRef = ref()
+const isPackageNameOverflow = ref(false)
+const checkPackageNameOverflow = () => {
+  if (packageNameRef.value) {
+    const el = packageNameRef.value
+    isPackageNameOverflow.value = el.scrollWidth > el.clientWidth
+  }
+}
+
 const init = async () => {
   dialogInfo.value.visible = true
   await handleGetEnvList() // 获取环境变量列表
@@ -738,6 +870,7 @@ const init = async () => {
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.HOSTING
     pageInfo.value.formData.mcpProtocol = 3
+    pageInfo.value.formData.servicePath = '/sse'
     // 默认选中第一个环境变量;所以上诉均没有return
     handleChangeEnvironmentId(envList.value[0]?.id)
   })
@@ -765,5 +898,25 @@ defineExpose({
     background-color: #409eff1a;
     border-left: 5px solid var(--el-color-primary);
   }
+}
+:deep(.el-input__wrapper) {
+  background: var(--ep-bg-form);
+}
+:deep(.el-select__wrapper) {
+  background: var(--ep-bg-form);
+}
+:deep(.el-textarea__inner) {
+  background: var(--ep-bg-form);
+}
+:deep(.el-button) {
+  background-color: transparent;
+}
+:deep(.deep-form .el-radio-button__inner) {
+  padding: 0;
+}
+:deep(.no-border-input .el-input__wrapper) {
+  box-shadow: none !important;
+  // background: transparent !important;
+  padding: 0 11px !important;
 }
 </style>
