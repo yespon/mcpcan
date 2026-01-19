@@ -362,7 +362,7 @@
                       </el-select>
                     </div>
                     <template v-if="currentEnvironment.environment === 'kubernetes'">
-                      <template v-if="volume.type === 'HostPath'">
+                      <template v-if="volume.type === 'hostPath'">
                         <div class="flex align-end">
                           <div>
                             <div>

@@ -6,7 +6,7 @@
       :show-close="false"
       :close-on-click-modal="false"
       class="access-type-dialog"
-      width="610px"
+      width="620px"
       top="10vh"
     >
       <el-scrollbar height="70vh">
