@@ -21,6 +21,7 @@ type McpTemplate struct {
 	McpProtocol          McpProtocol     `gorm:"size:20;not null;comment:MCP协议 (SSE-1/StreamableHttp-2/Stdio-3)" json:"mcpProtocol"`
 	McpServers           json.RawMessage `gorm:"type:json;comment:MCP服务器配置 (JSON格式)" json:"mcpServers"`
 	McpServerID          string          `gorm:"size:100;comment:MCP 服务器ID" json:"mcpServerID"`
+ 	ImgAddress           string          `gorm:"size:100;not null;default:'';comment:镜像地址" json:"imgAddress"`
 	Notes                string          `gorm:"type:text;comment:备注" json:"notes"`
 	ServicePath          string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`
 	IconPath             string          `gorm:"size:100;not null;default:'';comment:MCP 图标路径" json:"iconPath"`

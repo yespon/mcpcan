@@ -111,6 +111,7 @@ func (a *App) initMcpTemplateData(ctx context.Context) error {
 			Notes:          it.Notes,
 			ServicePath:    it.ServicePath,
 			IconPath:       it.IconPath,
+			ImgAddress:     it.ImgAddress,
 		}
 		if len(it.McpServers) > 0 {
 			// Parse JSON string and validate format
