@@ -41,6 +41,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		SourceType:                 protoSourceType,
 		Notes:                      instance.Notes,
 		OpenapiBaseUrl:             instance.OpenapiBaseUrl,
+		ImageAddress:               instance.ImgAddr,
 	}
 }
 
