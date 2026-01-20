@@ -235,7 +235,20 @@ func (r *McpInstanceRepository) FindWithPagination(ctx context.Context, page, pa
 
 	// 应用分页
 	offset := (page - 1) * pageSize
-	if err := query.Offset(int(offset)).Limit(int(pageSize)).Find(&instances).Error; err != nil {
+	// Optimize query by selecting only necessary columns
+	// Exclude large fields like init_script, command, environment_variables, volume_mounts, tokens, target_config
+	selectFields := []string{
+		"id", "instance_id", "instance_name", "notes", "access_type",
+		"mcp_protocol", "status", "package_id", "environment_id",
+		"source_type", "mcp_server_id", "template_id", "enabled_token",
+		"img_addr", "startup_timeout", "running_timeout",
+		"container_status", "container_name", "container_service_name",
+		"container_is_ready", "container_last_message",
+		"public_proxy_path", "proxy_protocol", "icon_path",
+		"openapi_base_url", "created_at", "updated_at",
+		"source_config", "container_create_options", "service_path",
+	}
+	if err := query.Select(selectFields).Offset(int(offset)).Limit(int(pageSize)).Find(&instances).Error; err != nil {
 		return nil, 0, err
 	}
 
