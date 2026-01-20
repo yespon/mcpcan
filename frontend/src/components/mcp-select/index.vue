@@ -10,7 +10,7 @@
       <div class="center">{{ props.title }}</div>
     </template>
     <el-scrollbar ref="scrollbarRef" max-height="75vh" class="pr-2">
-      <div class="mb-4 mt-1 flex align-center w-full">
+      <div class="mb-4 mt-1 flex align-center w-full pl-2">
         <el-input
           v-model="searchKeyword"
           :suffix-icon="Search"

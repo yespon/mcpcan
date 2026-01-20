@@ -48,7 +48,7 @@
                 @change="handleMcpProtocolChange"
               />
             </el-form-item>
-            <el-row v-show="pageInfo.formData.mcpProtocol === 3">
+            <el-row v-if="pageInfo.formData.mcpProtocol === 3">
               <el-col :span="18">
                 <el-form-item prop="mcpServers">
                   <el-input
@@ -95,7 +95,7 @@
                     </span>
                   </div>
                 </el-tooltip>
-                <mcp-button size="small" class="base-btn" @click="selectVisible = true">
+                <mcp-button size="small" class="base-btn" @click="handleSelectPackage">
                   选择
                 </mcp-button>
                 <el-tooltip class="box-item" effect="light" placement="top-start">
@@ -551,7 +551,7 @@
                   </el-button>
                 </el-form-item>
               </el-collapse-item>
-              <el-collapse-item name="3">
+              <el-collapse-item v-if="!pageInfo.formData.instanceId" name="3">
                 <template #title>
                   <div>
                     <span class="mr-1 font-bold">Header 透传配置</span>
@@ -574,10 +574,23 @@
         </div>
       </el-scrollbar>
       <template #footer>
-        <div class="text-center">
-          <el-button @click="handleConfirm">保存并运行</el-button>
-          <el-button @click="handleSaveAsTemplate">另存为模板</el-button>
-          <el-button @click="handleClose">退出</el-button>
+        <div
+          :class="
+            pageInfo.formData.instanceId ? 'flex justify-between items-center' : 'text-center'
+          "
+        >
+          <div v-if="pageInfo.formData.instanceId" class="flex">
+            <el-button link type="primary" @click="handleConfig"> 访问配置 </el-button>
+            <el-divider direction="vertical" class="!h-4 !my-auto" />
+            <el-button link type="warning" @click="handleViewStatus"> 状态探测 </el-button>
+            <el-divider direction="vertical" class="!h-4 !my-auto" />
+            <el-button link type="success" @click="handleViewLog"> 查看日志 </el-button>
+          </div>
+          <div class="flex justify-center">
+            <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
+            <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
+            <el-button @click="handleClose">退出</el-button>
+          </div>
         </div>
       </template>
     </el-dialog>
@@ -598,7 +611,7 @@
           </div>
           <div class="flex align-center">
             {{ t('mcp.template.formData.size') }}：{{ formatFileSize(option.size) }}
-            <span>{{ timestampToDate(option.createdAt) }}</span>
+            <span class="ml-2">{{ timestampToDate(option.createdAt) }}</span>
             <el-button
               type="primary"
               size="small"
@@ -610,6 +623,23 @@
             </el-button>
           </div>
         </div>
+      </template>
+      <template #action>
+        <el-upload
+          class="mr-8"
+          drag
+          :action="action"
+          :on-success="handleSuccess"
+          :headers="headers"
+          accept=".zip, .tar, .tar.gz, application/zip, application/x-tar, application/gzip"
+          :auto-upload="true"
+          :show-file-list="false"
+        >
+          <el-icon><UploadFilled /></el-icon>
+          <div class="ml-2">
+            {{ t('mcp.instance.openApi.localFile') }}
+          </div>
+        </el-upload>
       </template>
     </Select>
 
@@ -641,6 +671,10 @@
         </div>
       </div>
     </el-dialog>
+    <!-- probe instance dialog model -->
+    <ProbeStatus ref="probe"></ProbeStatus>
+    <ConfigDialog ref="config"></ConfigDialog>
+    <LogDialog ref="log"></LogDialog>
   </div>
 </template>
 
@@ -651,14 +685,14 @@ import {
   CircleClose,
   RefreshRight,
   Refresh,
-  UploadFilled,
   Download,
+  UploadFilled,
 } from '@element-plus/icons-vue'
 import { useInstanceFormHooks } from '../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { JsonFormatter } from '@/utils/json'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import TokenForm from './components/token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
@@ -666,11 +700,21 @@ import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts
 import { useMcpStoreHook } from '@/stores'
 import Select from '@/components/mcp-select/index.vue'
 import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
+import { InstanceAPI } from '@/api/mcp/instance'
+import { TemplateAPI } from '@/api/mcp/template'
+import { cloneDeep } from 'lodash-es'
+import baseConfig from '@/config/base_config.ts'
+import { Storage } from '@/utils/storage'
+import ProbeStatus from './probe-dialog.vue'
+import ConfigDialog from './config-dialog.vue'
+import LogDialog from './log-dialog.vue'
+import { type InstanceResult } from '@/types/instance.ts'
 
 const { t } = useI18n()
 const {
   pageInfo,
   jumpToPage,
+  originForm,
   placeholderServer,
   showCommand,
   disabledPvcNode,
@@ -696,6 +740,19 @@ const protocolOptions = [
   { label: 'SSE', value: 1 },
   { label: 'STEAMABLE_HTTP', value: 2 },
 ]
+const action = ref(
+  baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/code/upload',
+)
+const headers = ref({
+  Authorization: `Bearer ${Storage.get('token')}`,
+})
+const handleSuccess = (response: { code: number; data: { path: string } }) => {
+  if (response.code !== 0) {
+    return
+  }
+  handleGetPackageList()
+  ElMessage.success(t('action.upload'))
+}
 
 /**
  * Current environment
@@ -715,6 +772,10 @@ const currentPackage = computed(() => {
 })
 const handleFormat = () => {
   pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers)
+}
+const handleSelectPackage = () => {
+  handleGetPackageList()
+  selectVisible.value = true
 }
 /**
  * Handle view code package
@@ -812,13 +873,120 @@ const handleChangePath = () => {
     pageInfo.value.formData.servicePath === '/sse' ? '/mcp' : '/sse'
 }
 
+const config = ref()
+const handleConfig = () => {
+  config.value.init(Object.assign(originForm.value, pageInfo.value.formData))
+}
+const probe = ref()
+const handleViewStatus = () => {
+  probe.value.init(pageInfo.value.formData)
+}
+const log = ref()
+const handleViewLog = () => {
+  log.value.init(pageInfo.value.formData)
+}
 // Handle confirm save
-const handleConfirm = () => {}
+const handleConfirm = async () => {
+  if (pageInfo.value.formData.instanceId) {
+    const result = await ElMessageBox.confirm(
+      t('mcp.instance.pageDesc.confirmEdit'),
+      t('common.warn'),
+      {
+        confirmButtonText: t('common.ok'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+        customClass: 'tips-box',
+        center: true,
+        showClose: false,
+        confirmButtonClass: 'is-plain el-button--danger danger-btn',
+        customStyle: {
+          width: '517px',
+          height: '247px',
+        },
+      },
+    )
+    if (result !== 'confirm') return
+  }
+  baseInfo.value.validate(async (valid: boolean, fields: any) => {
+    if (valid) {
+      try {
+        pageInfo.value.loading = true
+        if (!pageInfo.value.formData.instanceId) {
+          if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
+            pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
+              pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
+                header.key,
+                header.value,
+              ]),
+            )
+          }
+        }
+        const { instanceId } = await (
+          pageInfo.value.formData.instanceId ? InstanceAPI.edit : InstanceAPI.create
+        )({
+          ...pageInfo.value.formData,
+          environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
+            (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
+            {},
+          ),
+        })
+        pageInfo.value.formData.instanceId = instanceId
+        ElMessage.success(
+          pageInfo.value.formData.instanceId ? t('action.edit') : t('action.create'),
+        )
+      } finally {
+        pageInfo.value.loading = false
+      }
+    } else {
+      ElMessage.warning(t('mcp.template.rules.validForm'))
+    }
+  })
+}
 /**
  * save as a template
  */
-const handleSaveAsTemplate = () => {}
+const handleSaveAsTemplate = () => {
+  try {
+    pageInfo.value.loading = true
+    baseInfo.value.validate(async (valid: boolean) => {
+      if (valid) {
+        try {
+          pageInfo.value.loading = true
+          await TemplateAPI.create({
+            ...pageInfo.value.formData,
+            environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
+              (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
+              {},
+            ),
+          })
+          ElMessage.success(t('action.create'))
+        } finally {
+          pageInfo.value.loading = false
+        }
+      }
+    })
+  } finally {
+    pageInfo.value.loading = false
+  }
+}
 
+/**
+ * Handle get instance detail info
+ */
+const handleGetDetail = async (instance: InstanceResult) => {
+  console.log(1111, instance)
+
+  const data = await InstanceAPI.detail({
+    instanceId: instance.instanceId,
+  })
+  pageInfo.value.formData = data
+  pageInfo.value.accessType = data.accessType
+  pageInfo.value.mcpServers = JsonFormatter.format(data.mcpServers)
+  pageInfo.value.formData.environmentVariables = Object.keys(data.environmentVariables)?.map(
+    (key) => ({ key, value: data.environmentVariables[key] }),
+  )
+  pageInfo.value.formData.volumeMounts = data.volumeMounts || []
+}
 const handleClose = () => {
   dialogInfo.value.visible = false
 }
@@ -862,11 +1030,15 @@ const checkPackageNameOverflow = () => {
   }
 }
 
-const init = async () => {
+const init = async (instance: InstanceResult | null) => {
   dialogInfo.value.visible = true
   await handleGetEnvList() // 获取环境变量列表
   await handleGetPackageList() // 获取包列表
-
+  if (instance) {
+    originForm.value = cloneDeep(instance)
+    handleGetDetail(instance)
+    return
+  }
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.HOSTING
     pageInfo.value.formData.mcpProtocol = 3
@@ -897,6 +1069,19 @@ defineExpose({
   &.tip-primary {
     background-color: #409eff1a;
     border-left: 5px solid var(--el-color-primary);
+  }
+}
+.upload-demo {
+  width: 100%;
+  color: var(--el-color-primary);
+  :deep(.el-upload.is-drag) {
+    height: 100%;
+  }
+  .el-icon--upload {
+    color: var(--el-color-primary);
+  }
+  .el-upload__text {
+    color: var(--el-color-primary);
   }
 }
 :deep(.el-input__wrapper) {

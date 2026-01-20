@@ -192,9 +192,9 @@
               size="small"
               link
               class="base-btn-link"
-              @click="handleViewDetail(row)"
+              @click="handleEditInstance(row)"
             >
-              {{ t('mcp.instance.action.view') }}
+              {{ t('env.run.action.edit') }}
             </el-button>
 
             <el-dropdown
@@ -221,9 +221,6 @@
                   </el-dropdown-item>
                   <el-dropdown-item command="handleDebugTools">
                     {{ t('mcp.instance.action.debugTool') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="handleEditInstance">
-                    {{ t('env.run.action.edit') }}
                   </el-dropdown-item>
                   <el-dropdown-item
                     v-if="row.accessType !== AccessType.DIRECT"
@@ -493,12 +490,13 @@ const handleEditInstance = (row: InstanceResult) => {
     openAPIDialog.value.init(row.instanceId)
     return
   }
-  jumpToPage({
-    url: '/new-instance',
-    data: {
-      instanceId: row.instanceId,
-    },
-  })
+  accessTypeDialog.value.init(row)
+  // jumpToPage({
+  //   url: '/new-instance',
+  //   data: {
+  //     instanceId: row.instanceId,
+  //   },
+  // })
 }
 /**
  * handle stop instance server

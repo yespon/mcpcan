@@ -57,10 +57,11 @@ import { AccessType } from '@/types/instance.ts'
 import HostingDialog from './hosting-dialog.vue'
 import ProxyDialog from './proxy-dialog.vue'
 import DirectDialog from './direct-dialog.vue'
+import { type InstanceResult } from '@/types/instance.ts'
 
 const emit = defineEmits(['select'])
 const { t } = useI18n()
-const { pageInfo } = useInstanceFormHooks()
+const { pageInfo, originForm } = useInstanceFormHooks()
 const dialogInfo = ref({
   visible: false,
 })
@@ -108,7 +109,16 @@ const handleSelect = (item: any) => {
   })
 }
 
-const init = () => {
+const init = (instance: InstanceResult | null) => {
+  if (instance) {
+    pageInfo.value.accessType = instance.accessType
+    if (instance.instanceId) {
+      nextTick(() => {
+        formComponent.value?.init(instance)
+      })
+      return
+    }
+  }
   dialogInfo.value.visible = true
 }
 defineExpose({
