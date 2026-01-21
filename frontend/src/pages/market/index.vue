@@ -14,7 +14,12 @@
         <el-card>
           <div class="flex justify-between items-center">
             <span class="my-1">{{ t('market.search') }}</span>
-            <el-button v-if="categoryName" type="primary" size="small" @click="clearType">
+            <el-button
+              v-if="categoryName || keyword"
+              type="primary"
+              size="small"
+              @click="clearType"
+            >
               {{ t('market.clear') }}
             </el-button>
           </div>
@@ -144,6 +149,7 @@ onMounted(() => {
   border: 1px solid transparent;
   &.active-type {
     background-color: var(--ep-bg-purple-color-deep);
+    border-color: var(--ep-btn-color-top);
   }
   &:hover {
     scale: 1.02;
