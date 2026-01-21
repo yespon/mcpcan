@@ -1177,6 +1177,7 @@ defineExpose({
   padding: 0 11px !important;
 }
 .type-item {
+  font-size: 14px;
   transition: all 0.3s ease;
   overflow: hidden;
   background-color: var(--ep-bg-purple-color);

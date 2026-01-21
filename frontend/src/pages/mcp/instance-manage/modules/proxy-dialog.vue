@@ -9,11 +9,13 @@
       width="620px"
       top="10vh"
     >
-      <el-scrollbar height="70vh"> </el-scrollbar>
+      <el-scrollbar height="70vh">
+        <ProxyForm ref="proxyFormRef" />
+      </el-scrollbar>
       <template #footer>
-        <div class="text-center">
-          <el-button @click="handleConfirm">保存并运行</el-button>
-          <el-button @click="handleSaveAsTemplate">另存为模板</el-button>
+        <div class="flex justify-center">
+          <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
+          <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
           <el-button @click="handleClose">退出</el-button>
         </div>
       </template>
@@ -22,9 +24,20 @@
 </template>
 
 <script setup lang="ts">
+import ProxyForm from './components/proxy-form.vue'
+import McpButton from '@/components/mcp-button/index.vue'
+
+const proxyFormRef = ref()
 const dialogInfo = ref({
   visible: false,
 })
+
+const handleConfirm = () => {
+  proxyFormRef.value.handleConfirm()
+}
+const handleSaveAsTemplate = () => {
+  proxyFormRef.value.handleSaveAsTemplate()
+}
 
 /**
  * Handle Close Dialog
@@ -32,20 +45,13 @@ const dialogInfo = ref({
 const handleClose = () => {
   dialogInfo.value.visible = false
 }
-</script>
-
-<style lang="scss" scoped>
-.tip {
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  &.tip-warning {
-    background-color: #fff1f0;
-    border-left: 5px solid var(--el-color-danger);
-  }
-  &.tip-primary {
-    background-color: #409eff1a;
-    border-left: 5px solid var(--el-color-primary);
-  }
+const init = () => {
+  dialogInfo.value.visible = true
+  nextTick(() => {
+    proxyFormRef.value?.init()
+  })
 }
-</style>
+defineExpose({
+  init,
+})
+</script>

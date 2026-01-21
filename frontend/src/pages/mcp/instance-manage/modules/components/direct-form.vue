@@ -37,61 +37,32 @@
           @change="handleMcpProtocolChange"
         />
       </el-form-item>
-      <el-row>
-        <el-col :span="18">
-          <el-form-item prop="mcpServers">
-            <el-input
-              v-model="pageInfo.formData.mcpServers"
-              :rows="14"
-              type="textarea"
-              :placeholder="placeholderServer"
-              @blur="handleFormat"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <div
-            class="pl-3 rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
-          >
-            MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
-            MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
-            <a href="#/template-manage">模板列表</a> 提供了多个启动示例。
-          </div>
-        </el-col>
-      </el-row>
-      <el-collapse :expand-icon-position="'left'">
-        <el-collapse-item v-if="!pageInfo.formData.instanceId" name="1">
-          <template #title>
-            <div>
-              <span class="mr-1 font-bold">Header 透传配置</span>
-              <span
-                class="rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
-              >
-                配置中存在 header 时，网关转发来自于客户端传输的 header时默认覆盖
-              </span>
-            </div>
-          </template>
-          <div>
-            <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
-          </div>
-          <div class="tip tip-primary">
-            注意:自定义header无需客户端提交，网关转发流量时自动携带到MCP服务请求中。当客户端请求，MCP配置，header透传自定义三者都存在header则优先级为header>MCP配置>客户端。也就是三者中存在相同header，以自定义配置为准，其次是MCP配置，再其次客户端请求haeder。
-          </div>
-        </el-collapse-item>
-      </el-collapse>
+      <el-form-item prop="mcpServers">
+        <el-input
+          v-model="pageInfo.formData.mcpServers"
+          :rows="14"
+          type="textarea"
+          :placeholder="placeholderServer"
+          @blur="handleFormat"
+        />
+      </el-form-item>
+      <div
+        class="mt-2 p-3 rounded border border-[var(--ep-border-color-lighter)] bg-[var(--ep-fill-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
+      >
+        MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP
+        访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。
+      </div>
     </el-form>
   </div>
 </template>
-
 <script setup lang="ts">
 import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
-import { AccessType } from '@/types/instance.ts'
 import { JsonFormatter } from '@/utils/json'
-import TokenForm from './token-form.vue'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
-import { TemplateAPI } from '@/api/mcp/template'
 import { InstanceAPI } from '@/api/mcp/instance'
+import { AccessType } from '@/types/instance.ts'
+import { TemplateAPI } from '@/api/mcp/template'
 
 const { t } = useI18n()
 const { pageInfo, placeholderServer } = useInstanceFormHooks()
@@ -140,6 +111,7 @@ const handleConfirm = async () => {
     }
   })
 }
+
 /**
  * save as a template
  */
@@ -148,19 +120,17 @@ const handleSaveAsTemplate = async () => {
     pageInfo.value.loading = true
     baseInfo.value.validate(async (valid: boolean) => {
       if (valid) {
-        try {
-          pageInfo.value.loading = true
-          await TemplateAPI.create({
-            ...pageInfo.value.formData,
-            environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
-              (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
-              {},
-            ),
-          })
-          ElMessage.success(t('action.create'))
-        } finally {
-          pageInfo.value.loading = false
-        }
+        pageInfo.value.loading = true
+        await TemplateAPI.create({
+          ...pageInfo.value.formData,
+          environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
+            (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
+            {},
+          ),
+        })
+        ElMessage.success(t('action.create'))
+        pageInfo.value.loading = false
+        dialogInfo.value.visible = false
       }
     })
   } finally {
@@ -169,7 +139,7 @@ const handleSaveAsTemplate = async () => {
 }
 const init = () => {
   nextTick(() => {
-    pageInfo.value.formData.accessType = AccessType.PROXY
+    pageInfo.value.formData.accessType = AccessType.DIRECT
     pageInfo.value.formData.mcpProtocol = 1
   })
 }
@@ -179,18 +149,3 @@ defineExpose({
   handleSaveAsTemplate,
 })
 </script>
-<style lang="scss" scoped>
-.tip {
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  &.tip-warning {
-    background-color: #fff1f0;
-    border-left: 5px solid var(--el-color-danger);
-  }
-  &.tip-primary {
-    background-color: #409eff1a;
-    border-left: 5px solid var(--el-color-primary);
-  }
-}
-</style>
