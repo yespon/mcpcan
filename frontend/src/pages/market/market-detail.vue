@@ -95,7 +95,7 @@
       </div>
 
       <!-- Right Column -->
-      <div class="lg:col-span-1 flex flex-col gap-6 config-sticky">
+      <div class="lg:col-span-1 flex flex-col gap-6 config-sticky" v-if="currentMCP.status === 1">
         <!-- Config Card -->
         <el-card>
           <h2 class="text-lg font-bold mb-4">{{ t('market.config') }}</h2>
@@ -143,7 +143,7 @@ const translationTag = (code: string) => {
 const iconUrl = computed(() => {
   return (card: any) => {
     if (card.iconUrl) {
-      return baseConfig.MAIN_SITE_URL + card.iconUrl
+      return card.iconUrl
     } else if (card.githubOwnerAvatarUrl) {
       return card.githubOwnerAvatarUrl
     } else {
