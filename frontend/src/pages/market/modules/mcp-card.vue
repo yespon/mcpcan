@@ -60,7 +60,7 @@ const props = defineProps({
 const iconUrl = computed(() => {
   return (card: any) => {
     if (card.iconUrl) {
-      return baseConfig.MAIN_SITE_URL + card.iconUrl
+      return card.iconUrl
     } else if (card.githubOwnerAvatarUrl) {
       return card.githubOwnerAvatarUrl
     } else {
