@@ -6,7 +6,7 @@
     label-position="top"
     class="mx-2"
   >
-    <el-form-item prop="tokenType">
+    <el-form-item prop="tokenType" v-if="false">
       <!-- :label="t('mcp.token.authentication')" -->
       <div class="w-full u-line-1" style="white-space: nowrap">
         Authorization：{{ localFormData.token }}

@@ -71,7 +71,7 @@
               </el-col>
             </el-row>
             <el-collapse :expand-icon-position="'left'">
-              <el-collapse-item name="1">
+              <el-collapse-item v-if="!pageInfo.formData.instanceId" name="1">
                 <template #title>
                   <div>
                     <span class="mr-1 font-bold">Header 透传配置</span>

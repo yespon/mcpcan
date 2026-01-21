@@ -152,7 +152,7 @@
         "readOnly": "只读",
         "pvcName": "PVC",
         "addVolume": "添加卷挂载",
-        "initScript": "初始化脚本",
+        "initScript": "依赖命令",
         "command": "启动命令",
         "addToken": " 添加令牌",
         "batchChangeHeader": "批量修改",

@@ -6,8 +6,9 @@
       :show-close="false"
       :close-on-click-modal="false"
       class="access-type-dialog"
-      width="620px"
+      width="850px"
       top="10vh"
+      destroy-on-close
     >
       <el-scrollbar height="70vh">
         <div class="px-5 py-2" v-loading="pageInfo.loading">
@@ -117,35 +118,21 @@
             </el-form-item>
 
             <!-- 命令 -->
-            <el-row>
-              <el-col :span="18">
+            <el-row :gutter="24">
+              <el-col :span="16">
                 <el-form-item :label="t('mcp.instance.formData.initScript')" prop="initScript">
-                  <!-- <template #label>
-                    <span class="mr-2">{{ t('mcp.instance.formData.initScript') }}</span>
-                    <el-tooltip effect="light" placement="top" class="ml-6" :raw-content="true">
-                      <el-icon><i class="icon iconfont MCP-tishi1"></i></el-icon>
-                      <template #content>
-                        <div class="w-36" v-html="t('mcp.instance.formData.initScriptTips')"></div>
-                      </template>
-                    </el-tooltip>
-                  </template> -->
                   <el-input
                     v-model="pageInfo.formData.initScript"
+                    :rows="6"
+                    type="textarea"
                     :placeholder="t('mcp.instance.formData.initScript')"
                   />
                 </el-form-item>
                 <el-form-item :label="t('mcp.instance.formData.command')" prop="command">
-                  <!-- <template #label>
-                    <span class="mr-2">{{ t('mcp.instance.formData.command') }}</span>
-                    <el-tooltip effect="light" placement="top" class="ml-6" :raw-content="true">
-                      <el-icon><i class="icon iconfont MCP-tishi1"></i></el-icon>
-                      <template #content>
-                        <div v-html="pageInfo.tooltip.imgAddress"></div>
-                      </template>
-                    </el-tooltip>
-                  </template> -->
                   <el-input
                     v-model="pageInfo.formData.command"
+                    :rows="6"
+                    type="textarea"
                     :placeholder="
                       showCommand ? InstanceData.COMMAND_TIP : t('mcp.instance.formData.command')
                     "
@@ -153,7 +140,91 @@
                   />
                 </el-form-item>
               </el-col>
-              <el-col :span="6"></el-col>
+              <el-col :span="8">
+                <div class="template-list-container">
+                  <div class="text-sm font-bold mb-2">运行环境命令实例</div>
+                  <el-popover
+                    :visible="!!selectedCommand.commands"
+                    placement="right"
+                    :title="selectedCommand?.name"
+                    :show-arrow="false"
+                    popper-style="width: 340px; padding: 0"
+                  >
+                    <template #reference>
+                      <div>
+                        <el-scrollbar height="175px">
+                          <div class="flex flex-col gap-2 pr-2 position-relative">
+                            <div
+                              v-for="(item, index) in deployTemplateData.configurations"
+                              :key="index"
+                              class="flex items-center gap-3 rounded-md mx-1 p-1 text-left type-item"
+                              :class="{ 'active-type': selectedCommand?.name === item.name }"
+                              @click="handleSelectCommand(item)"
+                            >
+                              <div class="font-bold truncate" :title="item.name">
+                                {{ item.name }}
+                                <!-- <el-tooltip
+                                  effect="dark"
+                                  :content="item.name"
+                                  placement="top-start"
+                                >
+                                  {{ item.name }}
+                                </el-tooltip> -->
+                              </div>
+                            </div>
+                          </div>
+                        </el-scrollbar>
+                        <div class="tip tip-primary mt-2">
+                          说明：平台针对
+                          MCP服务启动提供了默认容器，选择以上运行环境示例可以查看启动示例命令。也可以到<a
+                            href="#/template-manage"
+                            >模板列表</a
+                          >
+                          中查看启动示例。
+                        </div>
+                      </div>
+                    </template>
+                    <div v-if="selectedCommand" class="p-4 w-[300px]">
+                      <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                          <span class="font-bold text-sm">依赖命令示例</span>
+                          <el-button
+                            link
+                            type="primary"
+                            @click="
+                              handleUseCommand(selectedCommand?.commands?.install, 'initScript')
+                            "
+                            >使用</el-button
+                          >
+                        </div>
+                        <div class="p-2 rounded text-xs text-gray-500 break-all">
+                          {{ selectedCommand?.commands?.install }}
+                        </div>
+                      </div>
+                      <div v-if="!showCommand" class="mb-2">
+                        <div class="flex justify-between items-center mb-1">
+                          <span class="font-bold text-sm">启动命令示例</span>
+                          <el-button
+                            link
+                            type="primary"
+                            @click="handleUseCommand(selectedCommand.commands.start, 'command')"
+                            >使用</el-button
+                          >
+                        </div>
+                        <div class="p-2 rounded text-xs text-gray-500 break-all">
+                          {{ selectedCommand?.commands?.start }}
+                        </div>
+                      </div>
+                      <div class="tip tip-primary mb-2">
+                        {{ selectedCommand?.description || selectedCommand?.description_en }}
+                      </div>
+                      <div class="text-xs text-orange-500">
+                        注意：点击使用后会覆盖命令，无法恢复
+                      </div>
+                    </div>
+                  </el-popover>
+                </div>
+              </el-col>
             </el-row>
             <div class="font-size-3">
               <span class="font-bold">命令启动顺序：</span>
@@ -696,7 +767,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import TokenForm from './components/token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
-import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts'
+import {
+  type VolumeMountsItme,
+  type PvcForm,
+  type Code,
+  type InstanceResult,
+} from '@/types/index.ts'
 import { useMcpStoreHook } from '@/stores'
 import Select from '@/components/mcp-select/index.vue'
 import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
@@ -708,7 +784,7 @@ import { Storage } from '@/utils/storage'
 import ProbeStatus from './probe-dialog.vue'
 import ConfigDialog from './config-dialog.vue'
 import LogDialog from './log-dialog.vue'
-import { type InstanceResult } from '@/types/instance.ts'
+import deployTemplateData from '@/config/deploy-temlate-data.json'
 
 const { t } = useI18n()
 const {
@@ -988,6 +1064,7 @@ const handleGetDetail = async (instance: InstanceResult) => {
   pageInfo.value.formData.volumeMounts = data.volumeMounts || []
 }
 const handleClose = () => {
+  selectedCommand.value = {}
   dialogInfo.value.visible = false
 }
 
@@ -1019,6 +1096,24 @@ const handleDownloadExample = (item: any) => {
   // link.download = item.name + '.zip'
   // link.click()
   ElMessage.info('下载功能开发中')
+}
+
+const selectedCommand = ref({}) as any
+
+const handleSelectCommand = (item: any) => {
+  if (selectedCommand.value.name === item.name) {
+    selectedCommand.value = {}
+  } else {
+    selectedCommand.value = item
+  }
+}
+
+const handleUseCommand = (command: string, type: string) => {
+  if (type === 'initScript') {
+    pageInfo.value.formData.initScript = command
+  } else if (type === 'command') {
+    pageInfo.value.formData.command = command
+  }
 }
 
 const packageNameRef = ref()
@@ -1103,5 +1198,20 @@ defineExpose({
   box-shadow: none !important;
   // background: transparent !important;
   padding: 0 11px !important;
+}
+.type-item {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  background-color: var(--ep-bg-purple-color);
+  border: 1px solid transparent;
+  &.active-type {
+    background-color: var(--ep-bg-purple-color-deep);
+  }
+  &:hover {
+    scale: 1.02;
+    cursor: pointer;
+    background-color: var(--ep-bg-purple-color-deep);
+    border-color: var(--ep-btn-color-top);
+  }
 }
 </style>
