@@ -28,7 +28,7 @@ const layout = useLayout()
 const formComponent = ref()
 const { query, pageInfo, jumpBack } = useInstanceFormHooks()
 const currentComponent = computed(() => {
-  switch (3) {
+  switch (Number(query.type)) {
     case AccessType.HOSTING:
       return HostForm
     case AccessType.PROXY:

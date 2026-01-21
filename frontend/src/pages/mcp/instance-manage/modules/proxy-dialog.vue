@@ -8,6 +8,7 @@
       class="access-type-dialog"
       width="620px"
       top="10vh"
+      append-to-body
     >
       <el-scrollbar height="70vh">
         <ProxyForm ref="proxyFormRef" />

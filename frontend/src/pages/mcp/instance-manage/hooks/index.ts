@@ -20,6 +20,7 @@ export const useInstanceTableHooks = () => {
     text: '',
   })
   const selectVisible = ref(false)
+  const templateLoading = ref(false)
   const templateList = ref<any>([])
   const viewConfig = ref()
   const { jumpToPage } = useRouterHooks()
@@ -252,6 +253,7 @@ export const useInstanceTableHooks = () => {
     probe,
     openAPIDialog,
     selectVisible,
+    templateLoading,
     templateList,
     timer,
     selection,

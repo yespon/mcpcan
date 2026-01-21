@@ -9,6 +9,7 @@
       width="850px"
       top="10vh"
       destroy-on-close
+      append-to-body
     >
       <el-scrollbar height="70vh">
         <HostForm ref="hostForm"></HostForm>

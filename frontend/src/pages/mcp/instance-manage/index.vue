@@ -24,10 +24,10 @@
               <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
               {{ t('mcp.instance.action.byTemplate') }}
             </el-dropdown-item>
-            <el-dropdown-item command="handleAddByDocs">
+            <!-- <el-dropdown-item command="handleAddByDocs">
               <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
               {{ t('mcp.instance.action.byDocs') }}
-            </el-dropdown-item>
+            </el-dropdown-item> -->
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -75,6 +75,8 @@
         :showOperation="true"
         :requestConfig="requestConfig"
         :columns="columns"
+        show-view-mode
+        default-view-mode="card"
         :multiple="selection.showSelect"
         :rowKey="selection.rowKey"
         :row-class-name="tableRowClassName"
@@ -256,6 +258,11 @@
             </el-dropdown>
           </div>
         </template>
+        <template #slotCard="{ row }: { row: any }">
+          <el-card>
+            {{ row.instanceName }}
+          </el-card>
+        </template>
       </TablePlus>
     </div>
 
@@ -269,6 +276,7 @@
     <!-- select template -->
     <Select
       v-model="selectVisible"
+      :loading="templateLoading"
       ref="packageSelect"
       :title="t('mcp.instance.action.selectTempalte')"
       :options="templateList"
@@ -330,7 +338,6 @@ const {
   tablePlus,
   requestConfig,
   pageConfig,
-
   activeOptions,
   containerOptions,
   InstanceAPI,
@@ -341,6 +348,7 @@ const {
   probe,
   openAPIDialog,
   selectVisible,
+  templateLoading,
   templateList,
   timer,
   selection,
@@ -357,14 +365,20 @@ const handleAddInstance = () => {
 /**
  * Handle create a instance by template list
  */
+
 const handleAddByTemplate = async () => {
-  selectVisible.value = true
-  const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
-  templateList.value = data.list.map((template: any) => ({
-    id: template.templateId,
-    name: template.name,
-    ...template,
-  }))
+  try {
+    selectVisible.value = true
+    templateLoading.value = true
+    const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
+    templateList.value = data.list.map((template: any) => ({
+      id: template.templateId,
+      name: template.name,
+      ...template,
+    }))
+  } finally {
+    templateLoading.value = false
+  }
 }
 
 /**

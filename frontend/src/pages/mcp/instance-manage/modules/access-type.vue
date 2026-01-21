@@ -4,6 +4,7 @@
       v-model="dialogInfo.visible"
       :title="'快速开始'"
       :show-close="false"
+      append-to-body
       width="1200px"
       class="access-type-dialog"
     >
@@ -24,8 +25,8 @@
             :show-border="false"
           >
             <div class="w-full h-full flex flex-col items-center">
-              <el-icon :size="48" class="mb-4" :color="item.color">
-                <component :is="item.icon" />
+              <el-icon :size="48" class="mb-4 !text-[48px]" :color="item.color">
+                <i class="icon iconfont !text-[48px]" :class="item.icon"></i>
               </el-icon>
               <div class="text-lg font-bold mb-2">{{ item.label }}</div>
               <div class="text-left tip tip-primary">
@@ -49,8 +50,8 @@
             </div>
           </GradientText>
           <div v-else class="w-full h-full flex flex-col items-center">
-            <el-icon :size="48" class="mb-4" :color="item.color">
-              <component :is="item.icon" />
+            <el-icon :size="48" class="mb-4 !text-[48px]" :color="item.color">
+              <i class="icon iconfont !text-[48px]" :class="item.icon"></i>
             </el-icon>
             <div class="text-lg font-bold mb-2">{{ item.label }}</div>
             <div class="text-left tip tip-primary">
@@ -102,9 +103,9 @@ const accessOptions = [
   {
     label: '托管 (Hosting)',
     value: AccessType.HOSTING,
-    icon: Coin,
+    icon: 'MCP-anquan',
     formComponent: HostingDialog,
-    color: '#409EFF',
+    color: '#67C23A',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP, McpProtocol.STDIO],
     description:
       '托管模式是指平台利用自身容器管理能力运行 MCP 服务，并通过系统内置网关和适配器解决流量代理监控和协议不兼容问题',
@@ -112,9 +113,9 @@ const accessOptions = [
   {
     label: '代理 (Proxy)',
     value: AccessType.PROXY,
-    icon: Connection,
+    icon: 'MCP-daili',
     formComponent: ProxyDialog,
-    color: '#67C23A',
+    color: '#E6A23C',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
     description:
       '代理模式将平台转化为 MCP 服务的统一访问网关。而是通过平台提供的代理地址进行交互;平台在转发请求的过程中附加安全防护与审计能力，实现屏蔽后端、统一入口的目标。',
@@ -122,9 +123,9 @@ const accessOptions = [
   {
     label: '直连 (Direct)',
     value: AccessType.DIRECT,
-    icon: Link,
+    icon: 'MCP-zhilian',
     formComponent: DirectDialog,
-    color: '#E6A23C',
+    color: '#409EFF',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
     description:
       '直连模式是平台最轻量级的接入方式，平台仅承担配置注册中心角色，不代理任何业务流量，不参与健康探测与运行监控。客户端按照平台存储的配置，直接与外部 MCP 服务通信。',
@@ -132,7 +133,7 @@ const accessOptions = [
   {
     label: 'OpenAPI',
     value: 4,
-    icon: DocumentAdd,
+    icon: 'MCP-wenjian1',
     formComponent: OpenApiDialog,
     color: '#ff8eb9',
     supportTypes: [McpProtocol.STEAMABLE_HTTP],

@@ -57,15 +57,17 @@
           <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
           {{ t('env.run.formData.title') }}
         </el-dropdown-item> -->
-        <el-dropdown-item command="/update-code-package">
+        <!-- <el-dropdown-item command="/update-code-package">
           <el-icon><i class="icon iconfont MCP-shangchuan"></i></el-icon>
           {{ t('code.action.upload') }}
-        </el-dropdown-item>
+        </el-dropdown-item> -->
       </el-dropdown-menu>
     </template>
   </el-dropdown>
   <!-- 创建环境 -->
   <NewEnvDialog ref="newEnvDialog"></NewEnvDialog>
+  <!-- 快速开始 -->
+  <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
   <!-- 选择模板 -->
   <Select
     v-model="template.visible"
@@ -73,6 +75,7 @@
     ref="packageSelect"
     :title="t('mcp.instance.action.selectTempalte')"
     :options="template.templateList"
+    :loading="template.loading"
     @confirm="handleConfirmTemplate"
   >
     <template #options="{ option }">
@@ -96,14 +99,17 @@
 <script lang="ts" setup>
 import { useRouterHooks } from '@/utils/url'
 import NewEnvDialog from '@/pages/environment/working-environment/modules/new-env-dialog.vue'
+import AccessTypeDialog from '@/pages/mcp/instance-manage/modules/access-type.vue'
 import { TemplateAPI } from '@/api/mcp/template'
 import Select from '@/components/mcp-select/index.vue'
 
 const newEnvDialog = ref()
+const accessTypeDialog = ref()
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
 const template = ref<any>({
   visible: false,
+  loading: false,
   templateId: '',
   templateList: [],
 })
@@ -145,10 +151,11 @@ const handleJumpToPage = (url: string) => {
 
 const handleCommand = (cmd: string) => {
   if (cmd === '/new-instance') {
-    jumpToPage({
-      url: cmd,
-      data: {},
-    })
+    accessTypeDialog.value.init()
+    // jumpToPage({
+    //   url: cmd,
+    //   data: {},
+    // })
     return
   }
   handleAddByTemplate()
@@ -158,13 +165,18 @@ const handleCommand = (cmd: string) => {
  * Handle select a template by list
  */
 const handleAddByTemplate = async () => {
-  template.value.visible = true
-  const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
-  template.value.templateList = data.list.map((template: any) => ({
-    id: template.templateId,
-    name: template.name,
-    ...template,
-  }))
+  try {
+    template.value.visible = true
+    template.value.loading = true
+    const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
+    template.value.templateList = data.list.map((template: any) => ({
+      id: template.templateId,
+      name: template.name,
+      ...template,
+    }))
+  } finally {
+    template.value.loading = false
+  }
 }
 
 /**

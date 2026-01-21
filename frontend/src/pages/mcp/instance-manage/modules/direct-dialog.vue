@@ -8,6 +8,7 @@
       class="access-type-dialog"
       width="600px"
       top="10vh"
+      append-to-body
     >
       <el-scrollbar height="70vh">
         <DirectForm ref="directForm"></DirectForm>
