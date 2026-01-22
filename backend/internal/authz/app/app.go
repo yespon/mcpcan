@@ -135,17 +135,8 @@ func (a *App) setupMiddleware() {
 	a.ginEngine.Use(gin.Recovery())
 	a.ginEngine.Use(middleware.RequestResponseLoggingMiddleware())
 
-	// Add CORS handling
-	a.ginEngine.Use(middleware.CORSMiddleware([]string{"*"}))
-
-	// Add internationalization middleware
-	a.ginEngine.Use(middleware.I18nMiddleware())
-
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(config.GlobalConfig.Secret))
-
-	// Add authentication middleware
-	// a.ginEngine.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
 }
 
 // setupRoutes sets up routes
