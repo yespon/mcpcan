@@ -13,7 +13,8 @@
         />
         <el-card>
           <div class="flex justify-between items-center">
-            <span class="my-1">{{ t('market.search') }}</span>
+            <!-- {{ t('market.search') }} -->
+            <span class="my-1">MCP： {{ totalMcp }} </span>
             <el-button
               v-if="categoryName || keyword"
               type="primary"
@@ -31,10 +32,15 @@
               :class="{ 'active-type': categoryName === type.value }"
               @click="selectType(type.value)"
             >
-              <el-icon>
-                <i class="icon iconfont" :class="type.icon"></i>
-              </el-icon>
-              <span class="text-sm">{{ type.label }}</span>
+              <div class="flex items-center gap-3 w-full justify-between">
+                <span class="text-sm">
+                  <el-icon>
+                    <i class="icon iconfont" :class="type.icon"></i>
+                  </el-icon>
+                  {{ type.label }}
+                </span>
+                <span>{{ type.count }}</span>
+              </div>
             </div>
           </div>
         </el-card>
@@ -77,8 +83,17 @@ import { useMarketListHooks } from './hooks/index.ts'
 import McpCard from './modules/mcp-card.vue'
 import { MarketAPI } from '@/api/market/index.ts'
 
-const { t, loading, typeMap, categoryName, keyword, searchInputRef, pagerConfig } =
-  useMarketListHooks()
+const {
+  t,
+  loading,
+  typeMap,
+  typeCount,
+  totalMcp,
+  categoryName,
+  keyword,
+  searchInputRef,
+  pagerConfig,
+} = useMarketListHooks()
 
 const marketList = ref([])
 
@@ -125,8 +140,23 @@ const handleGetMarketList = async () => {
   }
 }
 
+const handleGetCountType = async () => {
+  try {
+    const { categories, total } = await MarketAPI.countType()
+    typeCount.value = categories || {}
+    totalMcp.value = total || 0
+    typeMap.value = typeMap.value.map((type) => ({
+      ...type,
+      count: typeCount.value.find((item: any) => item.code === type.value)?.total || 0,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch type counts:', error)
+  }
+}
+
 onMounted(() => {
   handleGetMarketList()
+  handleGetCountType()
   // searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
 })
 </script>
