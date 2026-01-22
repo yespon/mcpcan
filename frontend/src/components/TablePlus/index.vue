@@ -142,18 +142,9 @@
       <el-empty :image-size="200" :description="t('status.noData')" />
     </template>
   </el-table>
-  <div v-else-if="props.showViewMode && viewMode === 'card'">
+  <div v-else-if="props.showViewMode && viewMode === 'card'" v-loading="loading">
     <el-row :gutter="20">
-      <el-col
-        v-for="(row, index) in list"
-        :key="index"
-        :xs="24"
-        :sm="12"
-        :md="8"
-        :lg="6"
-        :xl="6"
-        class="mb-4"
-      >
+      <el-col v-for="(row, index) in list" :key="index" v-bind="props.gridConfig" class="mb-4">
         <slot name="slotCard" :row="row" :index="index">
           <el-card shadow="hover">
             <div class="text-center">{{ '数据为空' }}</div>
@@ -183,6 +174,10 @@ import FormPlus from '../FormPlus/index.vue'
 import { Search, Refresh, List, Grid } from '@element-plus/icons-vue'
 import GlareHover from '../Animation/GlareHover.vue'
 
+defineOptions({
+  inheritAttrs: false,
+})
+
 const { t } = useI18n()
 const searchInputRef = ref()
 const viewMode = ref<'table' | 'card'>('table')
@@ -210,6 +205,13 @@ interface HandlerColumnConfig {
   width: string | null
   fixed: string | null
 }
+interface GridConfig {
+  xs?: number
+  sm?: number
+  md?: number
+  lg?: number
+  xl?: number
+}
 
 const props = withDefaults(
   defineProps<{
@@ -226,12 +228,14 @@ const props = withDefaults(
     defaultViewMode?: 'card' | 'table'
     multiple?: boolean
     rowKey?: string
+    gridConfig?: GridConfig
   }>(),
   {
     showPage: () => true,
     showViewMode: () => false,
     multiple: () => false,
     rowKey: () => 'id',
+    gridConfig: () => ({ xs: 24, sm: 12, md: 8, lg: 6, xl: 6 }),
   },
 )
 
@@ -317,6 +321,7 @@ const resetFields = () => {
 const changeViewMode = () => {
   viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
   emit('update:viewMode', viewMode.value)
+  initData()
 }
 
 const handleSelectionChange = (selection: any[]) => {

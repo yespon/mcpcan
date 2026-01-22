@@ -82,9 +82,10 @@
         :row-class-name="tableRowClassName"
         :cell-class-name="tableRowClassName"
         v-model:pageConfig="pageConfig"
+        :gridConfig="{ xs: 24, sm: 12, md: 12, lg: 8, xl: 6 }"
         :handlerColumnConfig="{
           fixed: 'right',
-          width: '120px',
+          width: '380px',
         }"
         @on-selection-change="handleTableSelect"
       >
@@ -150,8 +151,8 @@
           <span v-else class="color-gray">{{ t('mcp.instance.pageDesc.noToken') }}</span>
         </template>
         <template #status="{ row }">
-          <el-text :type="activeOptions[row.status as keyof typeof activeOptions].type" link>
-            {{ activeOptions[row.status as keyof typeof activeOptions].label }}
+          <el-text :type="activeOptions[row.status as keyof typeof activeOptions]?.type" link>
+            {{ activeOptions[row.status as keyof typeof activeOptions]?.label }}
           </el-text>
         </template>
         <template #containerStatus="{ row }">
@@ -198,8 +199,67 @@
             >
               {{ t('env.run.action.edit') }}
             </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleViewAllLog(row)"
+            >
+              {{ '日志' }}
+            </el-button>
 
-            <el-dropdown
+            <el-button
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleDebugTools(row)"
+            >
+              {{ t('mcp.instance.action.debugTool') }}
+            </el-button>
+            <el-button
+              v-if="row.accessType !== AccessType.DIRECT"
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="
+                row.status === InstanceStatus.INACTIVE
+                  ? handleRestartInstance(row)
+                  : handleStopInstance(row)
+              "
+            >
+              {{
+                row.status === InstanceStatus.INACTIVE
+                  ? t('mcp.instance.action.start')
+                  : t('mcp.instance.action.stop')
+              }}
+            </el-button>
+            <el-button
+              v-if="row.status === InstanceStatus.ACTIVE"
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleRestartInstance(row)"
+            >
+              {{ t('mcp.instance.action.reStart') }}
+            </el-button>
+            <el-button
+              v-if="row.status === InstanceStatus.ACTIVE"
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleViewStatus(row)"
+            >
+              {{ t('mcp.instance.action.probe') }}
+            </el-button>
+            <el-button size="small" type="danger" link @click="handleDeleteInstance(row)">
+              {{ t('mcp.instance.action.delete') }}
+            </el-button>
+            <!-- <el-dropdown
               trigger="click"
               class="ml-4"
               @click.stop
@@ -239,7 +299,7 @@
                     }}
                   </el-dropdown-item>
                   <el-dropdown-item
-                    v-if="row.status === AccessType.HOSTING"
+                    v-if="row.status === InstanceStatus.ACTIVE"
                     command="handleRestartInstance"
                   >
                     {{ t('mcp.instance.action.reStart') }}
@@ -255,13 +315,173 @@
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
-            </el-dropdown>
+            </el-dropdown> -->
           </div>
         </template>
         <template #slotCard="{ row }: { row: any }">
-          <el-card>
-            {{ row.instanceName }}
-          </el-card>
+          <SpotlightCard class-name="hover-scale-card" spotlight-color="var(--ep-bg-purple-color)">
+            <div class="h-[130px] flex flex-col">
+              <div class="flex-grow-1 flex h-0">
+                <div>
+                  <mcp-image
+                    :src="row.iconPath"
+                    width="32"
+                    height="32"
+                    :key="row.instanceId"
+                  ></mcp-image>
+                </div>
+                <div class="flex-grow-1 flex flex-col">
+                  <div class="flex justify-between">
+                    <div class="flex">
+                      <div class="max-w-[120px] u-line-1 font-bold text-[16px] cursor-pointer">
+                        <el-tooltip :content="row.instanceName" placement="top" trigger="click">
+                          {{ row.instanceName }}
+                        </el-tooltip>
+                      </div>
+                      <div class="ml-2">
+                        <div
+                          class="flex color-[#67C23A]"
+                          v-if="row.accessType === AccessType.HOSTING"
+                        >
+                          <el-icon :size="16" class="mr-2" color="#67C23A">
+                            <i class="icon iconfont MCP-anquan"></i>
+                          </el-icon>
+                          托管
+                        </div>
+                        <div
+                          class="flex color-[#E6A23C]"
+                          v-if="row.accessType === AccessType.PROXY"
+                        >
+                          <el-icon :size="16" class="mr-2" color="#E6A23C">
+                            <i class="icon iconfont MCP-daili"></i>
+                          </el-icon>
+                          代理
+                        </div>
+                        <div
+                          class="flex color-[#409EFF]"
+                          v-if="row.accessType === AccessType.DIRECT"
+                        >
+                          <el-icon :size="16" class="mr-2" color="#409EFF">
+                            <i class="icon iconfont MCP-zhilian"></i>
+                          </el-icon>
+                          直连
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center">
+                      <el-dropdown
+                        trigger="click"
+                        class="ml-4"
+                        @click.stop
+                        :show-arrow="false"
+                        @command="(cmd: string) => handleCommand(cmd, row)"
+                      >
+                        <el-icon class="link-hover cursor-pointer mx-1"><Operation /></el-icon>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item command="handleEditInstance">
+                              <el-button type="primary" size="small" link class="base-btn-link">
+                                {{ t('env.run.action.edit') }}
+                              </el-button>
+                            </el-dropdown-item>
+                            <el-dropdown-item command="handleDeleteInstance">
+                              <el-button type="danger" link>
+                                {{ t('mcp.instance.action.delete') }}
+                              </el-button>
+                            </el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
+                      <el-tooltip v-if="row.accessType === AccessType.HOSTING" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2"
+                          :color="row.containerStatus === 'running' ? '#67C23A' : '#F56C6C'"
+                        >
+                          <i class="icon iconfont MCP-MCPshili"></i>
+                        </el-icon>
+                        <template #content>
+                          <span>
+                            {{
+                              '容器' +
+                              containerOptions[row.containerStatus as keyof typeof containerOptions]
+                                ?.label
+                            }}
+                          </span>
+                        </template>
+                      </el-tooltip>
+                      <el-tooltip content="容器启停" placement="top" trigger="click">
+                        <el-switch
+                          v-if="row.accessType !== AccessType.DIRECT"
+                          v-model="row.status"
+                          style="--el-switch-on-color: #13ce66"
+                          inline-prompt
+                          :active-text="'启用'"
+                          :inactive-text="'停用'"
+                          :active-value="InstanceStatus.ACTIVE"
+                          :inactive-value="InstanceStatus.INACTIVE"
+                          :loading="row.loading"
+                          @click="handleSwitchInstance(row)"
+                        ></el-switch>
+                      </el-tooltip>
+                    </div>
+                  </div>
+                  <div
+                    class="mt-1 flex-grow-1 h-0 text-justify break-all pr-1 text-sm text-gray-500 leading-normal ellipsis-three"
+                  >
+                    <el-tooltip placement="top" trigger="click">
+                      {{ row.notes }}
+                      <template #content>
+                        <div style="width: 300px">{{ row.notes }}</div>
+                      </template>
+                    </el-tooltip>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between mt-2">
+                <div class="flex items-center">
+                  <el-tag>{{
+                    mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
+                  }}</el-tag>
+                  <div class="ml-2">
+                    <el-tooltip content="日志" placement="top">
+                      <el-icon
+                        :size="16"
+                        class="mx-2 cursor-pointer link-hover"
+                        @click="handleViewAllLog(row)"
+                      >
+                        <Document />
+                      </el-icon>
+                    </el-tooltip>
+                    <el-tooltip content="状态探测" placement="top">
+                      <el-icon
+                        :size="16"
+                        class="mx-2 cursor-pointer link-hover"
+                        @click="handleViewStatus(row)"
+                      >
+                        <i class="icon iconfont MCP-tancerenwu"></i>
+                      </el-icon>
+                    </el-tooltip>
+                    <el-tooltip content="工具调试" placement="top">
+                      <el-icon
+                        :size="16"
+                        class="mx-2 cursor-pointer link-hover"
+                        @click="handleDebugTools(row)"
+                      >
+                        <i class="icon iconfont MCP-tool"></i>
+                      </el-icon>
+                    </el-tooltip>
+                  </div>
+                </div>
+                <mcp-button size="small" @click="handleViewConfig(row)">链接配置</mcp-button>
+              </div>
+            </div>
+            <el-checkbox
+              v-model="row.checked"
+              class="check-box"
+              :disabled="row.accessType === AccessType.DIRECT"
+            ></el-checkbox>
+          </SpotlightCard>
         </template>
       </TablePlus>
     </div>
@@ -303,11 +523,12 @@
     <!-- select agent with nameSpace  -->
     <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
     <TaskList ref="taskList"></TaskList>
+    <LogDialog ref="logDialog"></LogDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plus, More, Warning, Share } from '@element-plus/icons-vue'
+import { Plus, More, Warning, Share, Document, Operation } from '@element-plus/icons-vue'
 import { timestampToDate } from '@/utils/system'
 import TablePlus from '@/components/TablePlus/index.vue'
 import { useInstanceTableHooks } from './hooks/index.ts'
@@ -327,6 +548,8 @@ import { AccessType, InstanceStatus, SourceType } from '@/types/instance'
 import { type InstanceResult } from '@/types/instance.ts'
 import AgentSyncDialog from './modules/agent-sync-dialog.vue'
 import TaskList from './modules/task-list.vue'
+import SpotlightCard from '@/components/Animation/SpotlightCard.vue'
+import LogDialog from './modules/log-dialog.vue'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -355,6 +578,7 @@ const {
   agentSyncDialog,
   currentInstance,
   meta,
+  mcpProtocolOptions,
 } = useInstanceTableHooks()
 
 const accessTypeDialog = ref()
@@ -490,6 +714,10 @@ const handleViewAccessLog = (row: InstanceResult) => {
     },
   })
 }
+const logDialog = ref()
+const handleViewAllLog = (row: InstanceResult) => {
+  logDialog.value.init(row)
+}
 
 /**
  * Handle eidt the instance form
@@ -512,6 +740,31 @@ const handleEditInstance = (row: InstanceResult) => {
   //   },
   // })
 }
+
+const handleSwitchInstance = async (row: InstanceResult) => {
+  console.log(11111, row.status)
+
+  try {
+    row.loading = true
+    if (row.status === InstanceStatus.ACTIVE) {
+      await InstanceAPI.restart({
+        instanceId: row.instanceId,
+      })
+      ElMessage.success(t('mcp.instance.action.restart'))
+    } else {
+      await InstanceAPI.stop({
+        instanceId: row.instanceId,
+      })
+      ElMessage.success(t('mcp.instance.action.stopInstance'))
+    }
+  } catch {
+    row.status =
+      row.status === InstanceStatus.ACTIVE ? InstanceStatus.INACTIVE : InstanceStatus.ACTIVE
+  } finally {
+    row.loading = false
+  }
+}
+
 /**
  * handle stop instance server
  * @param instanceId - 实例ID
@@ -774,5 +1027,21 @@ onMounted(() => {
 }
 :deep(.el-table) .selected-row {
   --el-table-tr-bg-color: var(--ep-bg-purple-color-deep);
+}
+.hover-scale-card {
+  transition: transform 0.3s;
+  border: 1px solid var(--el-color-primary);
+  border-radius: 8px;
+  position: relative;
+  padding: 16px;
+  &:hover {
+    transform: scale(1.02);
+  }
+  .check-box {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+  }
 }
 </style>
