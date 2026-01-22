@@ -76,7 +76,7 @@
         :requestConfig="requestConfig"
         :columns="columns"
         show-view-mode
-        default-view-mode="card"
+        v-model:view-mode="viewMode"
         :multiple="selection.showSelect"
         :rowKey="selection.rowKey"
         :row-class-name="tableRowClassName"
@@ -479,6 +479,7 @@
             <el-checkbox
               v-model="row.checked"
               class="check-box"
+              @change="handleSelectedWithCard(row)"
               :disabled="row.accessType === AccessType.DIRECT"
             ></el-checkbox>
           </SpotlightCard>
@@ -580,12 +581,18 @@ const {
   meta,
   mcpProtocolOptions,
 } = useInstanceTableHooks()
-
+const viewMode = ref('card')
 const accessTypeDialog = ref()
 const handleAddInstance = () => {
   accessTypeDialog.value.init()
 }
-
+watch(
+  () => viewMode.value,
+  () => {
+    selection.value.selectList = []
+  },
+  { deep: true },
+)
 /**
  * Handle create a instance by template list
  */
@@ -938,6 +945,29 @@ const tableRowClassName = ({ row }: { row: any }) => {
   }
   return ''
 }
+
+// 卡片UI选择事件
+const handleSelectedWithCard = (row: InstanceResult) => {
+  const index = selection.value.selectList.findIndex((item) => item.instanceId === row.instanceId)
+  if (index === -1) {
+    selection.value.selectList.push(row)
+  } else {
+    selection.value.selectList.splice(index, 1)
+  }
+  // 有选择项暂停定时任务；否则启动定时任务
+  if (!selection.value.selectList.length) {
+    init()
+    if (timer.value) {
+      return
+    } else {
+      timer.value = setInterval(init, 30000)
+    }
+  } else {
+    clearInterval(timer.value)
+    timer.value = 0
+  }
+}
+
 /**
  * Handle get count data
  */

@@ -91,6 +91,7 @@
       type="selection"
       width="55"
       v-if="props.multiple"
+      :selectable="isRowSelectable"
       reserve-selection
     ></el-table-column>
     <el-table-column
@@ -173,6 +174,7 @@ import { cloneDeep } from 'lodash-es'
 import FormPlus from '../FormPlus/index.vue'
 import { Search, Refresh, List, Grid } from '@element-plus/icons-vue'
 import GlareHover from '../Animation/GlareHover.vue'
+import { AccessType } from '@/types/instance'
 
 defineOptions({
   inheritAttrs: false,
@@ -225,7 +227,7 @@ const props = withDefaults(
     queryFormatter?: Function
     showPage?: boolean
     showViewMode?: boolean
-    defaultViewMode?: 'card' | 'table'
+    viewMode?: 'card' | 'table' | string
     multiple?: boolean
     rowKey?: string
     gridConfig?: GridConfig
@@ -329,6 +331,11 @@ const handleSelectionChange = (selection: any[]) => {
   emit('on-selection-change', selectedRows.value)
 }
 
+// Element Plus selection guard: return false to make the row's checkbox disabled
+const isRowSelectable = (row: any) => {
+  return row?.accessType !== AccessType.DIRECT
+}
+
 //Init search data
 const initSearchQuery = () => {
   if (props.queryFormatter) {
@@ -368,7 +375,7 @@ onMounted(() => {
   initFormData()
   // 搜索图标按钮注册搜索事件
   searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
-  viewMode.value = props.defaultViewMode || 'table'
+  viewMode.value = (props.viewMode as 'table' | 'card') || 'table'
 })
 
 // 提供方法：获取/设置已选项
