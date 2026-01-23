@@ -41,13 +41,7 @@
         <el-col :span="18">
           <el-form-item prop="mcpServers">
             <template #label></template>
-            <el-input
-              v-model="pageInfo.formData.mcpServers"
-              :rows="14"
-              type="textarea"
-              :placeholder="placeholderServer"
-              @blur="handleFormat"
-            />
+            <MonacoEditor v-model="pageInfo.formData.mcpServers" height="200px" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -764,6 +758,7 @@ import ProbeStatus from '../probe-dialog.vue'
 import ConfigDialog from '../config-dialog.vue'
 import LogDialog from '../log-dialog.vue'
 import deployTemplateData from '@/config/deploy-temlate-data.json'
+import MonacoEditor from '@/components/MonacoEditor/index.vue'
 
 const { t } = useI18n()
 const {
