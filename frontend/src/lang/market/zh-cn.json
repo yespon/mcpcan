@@ -4,6 +4,7 @@
     "search": "筛选",
     "clear": "清除",
     "type": {
+      "all": "全部",
       "test": "测试",
       "browser-automation": "浏览器自动化",
       "search": "搜索工具",

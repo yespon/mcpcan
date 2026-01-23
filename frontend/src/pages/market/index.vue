@@ -38,7 +38,7 @@
                   </el-icon>
                   {{ type.label }}
                 </span>
-                <span>{{ type.count }}</span>
+                <span>{{ type.count > 0 ? type.count : '' }}</span>
               </div>
             </div>
           </div>
@@ -65,6 +65,7 @@
             <el-pagination
               background
               :total="pagerConfig.total"
+              layout="prev, pager, next, jumper"
               :current-page="pagerConfig.page"
               :page-size="pagerConfig.pageSize"
               @current-change="handlePageChange"
@@ -128,7 +129,13 @@ const handleGetMarketList = async () => {
     typeCount.value = categories || []
     typeMap.value = typeMap.value.map((type) => ({
       ...type,
-      count: categories.find((item: any) => item.code === type.value)?.total || 0,
+      count:
+        categories.find((item: any) => item.code === type.value)?.total ||
+        (type.value
+          ? 0
+          : categories
+              .map((item: any) => Number(item.total))
+              .reduce((sum: number, item: number) => sum + item, 0)),
     }))
   } finally {
     loading.value = false
