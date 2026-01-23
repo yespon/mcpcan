@@ -739,13 +739,14 @@ const handleEditInstance = (row: InstanceResult) => {
     openAPIDialog.value.init(row.instanceId)
     return
   }
-  accessTypeDialog.value.init(row)
-  // jumpToPage({
-  //   url: '/new-instance',
-  //   data: {
-  //     instanceId: row.instanceId,
-  //   },
-  // })
+  // accessTypeDialog.value.init(row)
+  jumpToPage({
+    url: '/new-instance',
+    data: {
+      instanceId: row.instanceId,
+      type: row.accessType,
+    },
+  })
 }
 
 const handleSwitchInstance = async (row: InstanceResult) => {

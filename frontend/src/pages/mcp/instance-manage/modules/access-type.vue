@@ -90,10 +90,11 @@ import ProxyDialog from './proxy-dialog.vue'
 import DirectDialog from './direct-dialog.vue'
 import OpenApiDialog from './open-api-dialog.vue'
 import { type InstanceResult } from '@/types/instance.ts'
+import { create } from 'lodash-es'
 
 const emit = defineEmits(['select'])
 const { t } = useI18n()
-const { pageInfo, originForm } = useInstanceFormHooks()
+const { pageInfo, jumpToPage, originForm } = useInstanceFormHooks()
 const dialogInfo = ref({
   visible: false,
 })
@@ -146,11 +147,21 @@ const currentModal = computed(() => {
 })
 
 const handleSelect = (item: any) => {
-  // emit('select', item.value)
   pageInfo.value.accessType = item.value
   dialogInfo.value.visible = false
-  nextTick(() => {
-    formComponent.value?.init()
+  // dialog view
+  if (item.value === 4) {
+    nextTick(() => {
+      formComponent.value?.init()
+    })
+    return
+  }
+  // page view with create
+  jumpToPage({
+    url: '/new-instance',
+    data: {
+      type: item.value,
+    },
   })
 }
 

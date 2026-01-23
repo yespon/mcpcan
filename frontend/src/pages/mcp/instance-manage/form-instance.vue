@@ -8,9 +8,25 @@
         {{ t('common.back') }}
       </el-button>
     </div>
-    <div class="flex justify-start">
-      <div class="form-body">
+    <div class="flex justify-center">
+      <div class="form-body position-relative">
         <component ref="formComponent" :is="currentComponent"></component>
+        <div class="footer-action">
+          <div :class="query.instanceId ? 'flex justify-between items-center' : 'text-center'">
+            <div v-if="query.instanceId" class="flex">
+              <el-button link type="primary" @click="handleConfig"> 访问配置 </el-button>
+              <el-divider direction="vertical" class="!h-4 !my-auto" />
+              <el-button link type="warning" @click="handleViewStatus"> 状态探测 </el-button>
+              <el-divider direction="vertical" class="!h-4 !my-auto" />
+              <el-button link type="success" @click="handleViewLog"> 查看日志 </el-button>
+            </div>
+            <div class="flex justify-center">
+              <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
+              <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
+              <el-button @click="handleClose">退出</el-button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -22,6 +38,7 @@ import HostForm from './modules/components/host-form.vue'
 import ProxyForm from './modules/components/proxy-form.vue'
 import DirectForm from './modules/components/direct-form.vue'
 import { AccessType } from '@/types/instance.ts'
+import McpButton from '@/components/mcp-button/index.vue'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -43,11 +60,28 @@ const currentComponent = computed(() => {
 const handleBack = () => {
   jumpBack()
 }
-
+const handleConfig = () => {
+  formComponent.value.handleConfig()
+}
+const handleClose = () => {
+  formComponent.value.visible = false
+}
+const handleViewStatus = () => {
+  formComponent.value.handleViewStatus()
+}
+const handleViewLog = () => {
+  formComponent.value.handleViewLog()
+}
+const handleConfirm = () => {
+  formComponent.value.handleConfirm()
+}
+const handleSaveAsTemplate = () => {
+  formComponent.value.handleSaveAsTemplate()
+}
 // 初始化当前表单
 const init = () => {
   nextTick(() => {
-    formComponent.value.init()
+    formComponent.value.init(query)
   })
 }
 onMounted(() => {
@@ -70,5 +104,13 @@ onMounted(() => {
 }
 .form-body {
   width: 850px;
+}
+.footer-action {
+  position: sticky;
+  bottom: -24px;
+  background: var(--ep-bg-color-deep);
+  padding: 16px;
+  margin-top: 24px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

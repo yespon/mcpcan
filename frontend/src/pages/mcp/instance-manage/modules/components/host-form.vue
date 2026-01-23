@@ -40,6 +40,7 @@
       <el-row v-if="pageInfo.formData.mcpProtocol === 3">
         <el-col :span="18">
           <el-form-item prop="mcpServers">
+            <template #label></template>
             <el-input
               v-model="pageInfo.formData.mcpServers"
               :rows="14"
@@ -134,7 +135,7 @@
               placement="right"
               :title="selectedCommand?.name"
               :show-arrow="false"
-              popper-style="width: 340px; padding: 0"
+              popper-style="width: 340px;"
             >
               <template #reference>
                 <div>
@@ -275,12 +276,8 @@
             <el-popover title="容器监听路径" width="260" placement="bottom-start">
               <template #reference>
                 <!-- STDIO 协议 -->
-                <div
-                  v-if="pageInfo.formData.mcpProtocol === 3"
-                  class="w-24 flex items-center"
-                  @click="handleChangePath"
-                >
-                  <div class="flex-1">{{ pageInfo.formData.servicePath }}</div>
+                <div v-if="pageInfo.formData.mcpProtocol === 3" class="w-24 flex items-center">
+                  <div class="flex-1">/sse</div>
                 </div>
                 <div v-else class="w-30 flex items-center">
                   <el-input
@@ -300,7 +297,7 @@
             </el-popover>
           </el-radio-button>
         </el-radio-group>
-        <el-radio-group class="mt-4">
+        <el-radio-group v-if="pageInfo.formData.mcpProtocol === 3" class="mt-4">
           <el-radio-button value="ip">
             <el-popover title="容器监听地址" width="260" placement="bottom-start">
               <template #reference>
@@ -331,8 +328,8 @@
                 </div>
               </template>
               <div>
-                启动命令会将 STDIO 协议转为 SSE和 STEAMABLEHTTP协议，此路径
-                /sse对应SSE协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。
+                启动命令会将 STDIO 协议转为 SSE和 STREAMABLEHTTP协议，此路径
+                /mcp对应STREAMABLE_HTTP协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。
               </div>
             </el-popover>
           </el-radio-button>
@@ -1029,8 +1026,6 @@ const handleSaveAsTemplate = () => {
  * Handle get instance detail info
  */
 const handleGetDetail = async (instance: InstanceResult) => {
-  console.log(1111, instance)
-
   const data = await InstanceAPI.detail({
     instanceId: instance.instanceId,
   })
@@ -1102,7 +1097,7 @@ const checkPackageNameOverflow = () => {
 const init = async (instance: InstanceResult | null) => {
   await handleGetEnvList() // 获取环境变量列表
   await handleGetPackageList() // 获取包列表
-  if (instance) {
+  if (instance?.instanceId) {
     originForm.value = cloneDeep(instance)
     handleGetDetail(instance)
     return
