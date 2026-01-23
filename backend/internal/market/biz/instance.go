@@ -235,7 +235,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		Name:        req.Name,
 		Status:      string(model.InstanceStatusActive),
 		AccessType:  instancepb.AccessType_HOSTING,
-		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+		McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
 	}, nil
 }
 
@@ -1056,7 +1056,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		InstanceId:  oriInstance.InstanceID,
 		Name:        oriInstance.InstanceName,
 		AccessType:  instancepb.AccessType_HOSTING,
-		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+		McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
 		Status:      string(model.InstanceStatusActive),
 	}
 	return resp, nil

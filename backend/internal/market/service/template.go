@@ -91,7 +91,7 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -200,7 +200,7 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 	case model.McpProtocolSSE:
 		resp.McpProtocol = instance.McpProtocol_SSE
 	case model.McpProtocolStreamableHttp:
-		resp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+		resp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 	case model.McpProtocolStdio:
 		resp.McpProtocol = instance.McpProtocol_STDIO
 	default:
@@ -284,7 +284,7 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -377,7 +377,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		switch req.McpProtocol {
 		case instance.McpProtocol_SSE:
 			filters["mcp_protocol"] = model.McpProtocolSSE
-		case instance.McpProtocol_STEAMABLE_HTTP:
+		case instance.McpProtocol_STREAMABLE_HTTP:
 			filters["mcp_protocol"] = model.McpProtocolStreamableHttp
 		case instance.McpProtocol_STDIO:
 			filters["mcp_protocol"] = model.McpProtocolStdio
@@ -461,7 +461,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:
@@ -550,7 +550,7 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:

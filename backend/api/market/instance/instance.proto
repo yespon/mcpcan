@@ -16,7 +16,7 @@ enum AccessType {
 enum McpProtocol {
   McpProtocolUnknown = 0;
   SSE                = 1;
-  STEAMABLE_HTTP     = 2;
+  STREAMABLE_HTTP     = 2;
   STDIO              = 3;
 }
 
