@@ -215,11 +215,10 @@
         <span class="font-bold">代码包解压</span>
         :会自动下载代码文件到/app/codepkg/目录中并解压，注意在后续依赖命令和启动命令中先试用cd/app/codepkg后再执行。
         <br />
-        <span>
-          <span class="text-orange-400">特别注意:</span>
+        <div class="text-orange-400 my-1">
+          <span>特别注意:</span>
           假设压缩包code.zip中包含顶层文件夹code，解压后路径为/app/codepkg/code.
-        </span>
-        <br />
+        </div>
         <span class="font-bold">依赖命令</span>:当存在阻塞命名后会导致后续动作无法执行
         <br />
         <span class="font-bold">启动命令</span>: 默认在系统/根路径，如果上一步依赖命令中已经cd
@@ -778,8 +777,16 @@ const {
   selectedPvc,
   selectVisible,
 } = useInstanceFormHooks()
-const { packageList, envList, nodeList, pvcList, volumeList, sourceOptions, accessTypeOptions } =
-  toRefs(useMcpStoreHook())
+const {
+  packageList,
+  envList,
+  nodeList,
+  pvcList,
+  volumeList,
+  currentInstance,
+  sourceOptions,
+  accessTypeOptions,
+} = toRefs(useMcpStoreHook())
 const {
   handleGetPackageList,
   handleGetEnvList,
@@ -927,7 +934,7 @@ const handleChangePath = () => {
 
 const config = ref()
 const handleConfig = () => {
-  config.value.init(Object.assign(originForm.value, pageInfo.value.formData))
+  config.value.init(Object.assign(currentInstance.value, pageInfo.value.formData))
 }
 const probe = ref()
 const handleViewStatus = () => {

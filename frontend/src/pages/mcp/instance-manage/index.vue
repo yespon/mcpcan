@@ -735,6 +735,7 @@ const handleEditInstance = (row: InstanceResult) => {
     ElMessage.error('未知类型，无法编辑')
     return
   }
+  currentInstance.value = row
   if (row.sourceType === SourceType.OPENAPI) {
     openAPIDialog.value.init(row.instanceId)
     return

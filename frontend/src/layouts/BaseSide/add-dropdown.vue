@@ -68,6 +68,8 @@
   <NewEnvDialog ref="newEnvDialog"></NewEnvDialog>
   <!-- 快速开始 -->
   <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
+  <OpenAPIDialog ref="openAPIDialog"></OpenAPIDialog>
+
   <!-- 选择模板 -->
   <Select
     v-model="template.visible"
@@ -100,13 +102,16 @@
 import { useRouterHooks } from '@/utils/url'
 import NewEnvDialog from '@/pages/environment/working-environment/modules/new-env-dialog.vue'
 import AccessTypeDialog from '@/pages/mcp/instance-manage/modules/access-type.vue'
+import OpenAPIDialog from '@/pages/mcp/instance-manage/modules/open-api-dialog.vue'
 import { TemplateAPI } from '@/api/mcp/template'
 import Select from '@/components/mcp-select/index.vue'
+import { SourceType } from '@/types/instance'
 
 const newEnvDialog = ref()
 const accessTypeDialog = ref()
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
+const openAPIDialog = ref()
 const template = ref<any>({
   visible: false,
   loading: false,
@@ -183,6 +188,13 @@ const handleAddByTemplate = async () => {
  * handle confirm selected template
  */
 const handleConfirmTemplate = (templateId: string) => {
+  if (
+    template.value.templateList.find((item: any) => item.templateId === templateId).sourceType ===
+    SourceType.OPENAPI
+  ) {
+    openAPIDialog.value.init(templateId, 'create')
+    return
+  }
   jumpToPage({
     url: '/new-instance',
     data: { templateId },

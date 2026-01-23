@@ -23,7 +23,7 @@
             <div class="flex justify-center">
               <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
               <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
-              <el-button @click="handleClose">退出</el-button>
+              <el-button @click="handleClose">返回列表</el-button>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ const handleConfig = () => {
   formComponent.value.handleConfig()
 }
 const handleClose = () => {
-  formComponent.value.visible = false
+  jumpBack()
 }
 const handleViewStatus = () => {
   formComponent.value.handleViewStatus()
@@ -107,10 +107,11 @@ onMounted(() => {
 }
 .footer-action {
   position: sticky;
-  bottom: -24px;
-  background: var(--ep-bg-color-deep);
+  bottom: -20px;
+  z-index: 1000;
+  border-radius: 6px;
+  background: var(--ep-bg-color);
   padding: 16px;
-  margin-top: 24px;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>
