@@ -9,12 +9,6 @@ export const MarketAPI = {
       params,
     })
   },
-  countType() {
-    return request<any, any>({
-      url: `/market/platform/count-type`,
-      method: 'GET',
-    })
-  },
 }
 export interface TableData {
   page: number

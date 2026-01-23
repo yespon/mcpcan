@@ -7,7 +7,6 @@ export const useMarketListHooks = () => {
   const keyword = useStorage('market-list-keyword', '')
   const categoryName = useStorage('market-list-category', '')
   const typeCount = ref<any>([])
-  const totalMcp = ref(0)
   const typeMap = ref([
     { label: t('market.type.test'), value: 'test', icon: 'MCP-ceshi', count: 0 },
     {
@@ -91,7 +90,6 @@ export const useMarketListHooks = () => {
     loading,
     typeMap,
     typeCount,
-    totalMcp,
     categoryName,
     keyword,
     searchInputRef,
