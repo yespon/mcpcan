@@ -40,13 +40,8 @@
       <el-row>
         <el-col :span="18">
           <el-form-item prop="mcpServers">
-            <el-input
-              v-model="pageInfo.formData.mcpServers"
-              :rows="14"
-              type="textarea"
-              :placeholder="placeholderServer"
-              @blur="handleFormat"
-            />
+            <template #label></template>
+            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -92,6 +87,7 @@ import TokenForm from './token-form.vue'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import { TemplateAPI } from '@/api/mcp/template'
 import { InstanceAPI } from '@/api/mcp/instance'
+import MonacoEditor from '@/components/MonacoEditor/index.vue'
 
 const { t } = useI18n()
 const { pageInfo, placeholderServer } = useInstanceFormHooks()

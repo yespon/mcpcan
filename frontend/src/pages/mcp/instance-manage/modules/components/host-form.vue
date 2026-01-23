@@ -41,7 +41,7 @@
         <el-col :span="18">
           <el-form-item prop="mcpServers">
             <template #label></template>
-            <MonacoEditor v-model="pageInfo.formData.mcpServers" height="200px" />
+            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -763,6 +763,7 @@ import MonacoEditor from '@/components/MonacoEditor/index.vue'
 const { t } = useI18n()
 const {
   pageInfo,
+  query,
   jumpToPage,
   originForm,
   placeholderServer,
@@ -825,7 +826,7 @@ const currentPackage = computed(() => {
   )
 })
 const handleFormat = () => {
-  pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers)
+  pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers, 2)
 }
 const handleSelectPackage = () => {
   handleGetPackageList()
@@ -1033,7 +1034,7 @@ const handleGetDetail = async (instance: InstanceResult) => {
   })
   pageInfo.value.formData = data
   pageInfo.value.accessType = data.accessType
-  pageInfo.value.mcpServers = JsonFormatter.format(data.mcpServers)
+  pageInfo.value.mcpServers = JsonFormatter.format(data.mcpServers, 2)
   pageInfo.value.formData.environmentVariables = Object.keys(data.environmentVariables)?.map(
     (key) => ({ key, value: data.environmentVariables[key] }),
   )
@@ -1099,9 +1100,9 @@ const checkPackageNameOverflow = () => {
 const init = async (instance: InstanceResult | null) => {
   await handleGetEnvList() // 获取环境变量列表
   await handleGetPackageList() // 获取包列表
-  if (instance?.instanceId) {
+  if (query.instanceId) {
     originForm.value = cloneDeep(instance)
-    handleGetDetail(instance)
+    instance && handleGetDetail(instance)
     return
   }
   nextTick(() => {

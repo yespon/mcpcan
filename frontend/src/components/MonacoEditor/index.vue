@@ -8,7 +8,6 @@ import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
 import { useSystemStoreHook } from '@/stores/modules/system-store'
 
 const systemStore = useSystemStoreHook()
-const { themeType } = toRefs(systemStore)
 // 设置 Worker 环境
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -53,7 +52,7 @@ const initEditor = () => {
     fontSize: 14,
     fontFamily: "'Fira Code', 'Consolas', monospace",
     formatOnPaste: true,
-    tabSize: 4,
+    tabSize: 2,
     lineNumbers: 'on', // 行数显示
     lineNumbersMinChars: 3, // 缩短行号宽度
     folding: true, // 代码折叠

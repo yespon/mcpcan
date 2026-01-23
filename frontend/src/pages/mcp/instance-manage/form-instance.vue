@@ -13,7 +13,10 @@
         <component ref="formComponent" :is="currentComponent"></component>
         <div class="footer-action">
           <div :class="query.instanceId ? 'flex justify-between items-center' : 'text-center'">
-            <div v-if="query.instanceId" class="flex">
+            <div
+              v-if="query.instanceId && currentInstance.accessType !== AccessType.DIRECT"
+              class="flex"
+            >
               <el-button link type="primary" @click="handleConfig"> 访问配置 </el-button>
               <el-divider direction="vertical" class="!h-4 !my-auto" />
               <el-button link type="warning" @click="handleViewStatus"> 状态探测 </el-button>
@@ -39,6 +42,7 @@ import ProxyForm from './modules/components/proxy-form.vue'
 import DirectForm from './modules/components/direct-form.vue'
 import { AccessType } from '@/types/instance.ts'
 import McpButton from '@/components/mcp-button/index.vue'
+import { useMcpStoreHook } from '@/stores'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -56,6 +60,7 @@ const currentComponent = computed(() => {
       return null
   }
 })
+const { currentInstance } = toRefs(useMcpStoreHook())
 // back last class page
 const handleBack = () => {
   jumpBack()
@@ -81,7 +86,7 @@ const handleSaveAsTemplate = () => {
 // 初始化当前表单
 const init = () => {
   nextTick(() => {
-    formComponent.value.init(query)
+    formComponent.value.init(currentInstance.value)
   })
 }
 onMounted(() => {

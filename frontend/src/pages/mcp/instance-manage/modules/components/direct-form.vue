@@ -37,21 +37,22 @@
           @change="handleMcpProtocolChange"
         />
       </el-form-item>
-      <el-form-item prop="mcpServers">
-        <el-input
-          v-model="pageInfo.formData.mcpServers"
-          :rows="14"
-          type="textarea"
-          :placeholder="placeholderServer"
-          @blur="handleFormat"
-        />
-      </el-form-item>
-      <div
-        class="mt-2 p-3 rounded border border-[var(--ep-border-color-lighter)] bg-[var(--ep-fill-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
-      >
-        MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP
-        访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。
-      </div>
+      <el-row :gutter="24">
+        <el-col :span="18">
+          <el-form-item prop="mcpServers">
+            <template #label></template>
+            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="6">
+          <div
+            class="pl-3 rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
+          >
+            MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP
+            访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。
+          </div>
+        </el-col>
+      </el-row>
     </el-form>
   </div>
 </template>
@@ -63,6 +64,7 @@ import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { AccessType } from '@/types/instance.ts'
 import { TemplateAPI } from '@/api/mcp/template'
+import MonacoEditor from '@/components/MonacoEditor/index.vue'
 
 const { t } = useI18n()
 const { pageInfo, placeholderServer } = useInstanceFormHooks()
@@ -130,7 +132,6 @@ const handleSaveAsTemplate = async () => {
         })
         ElMessage.success(t('action.create'))
         pageInfo.value.loading = false
-        dialogInfo.value.visible = false
       }
     })
   } finally {
