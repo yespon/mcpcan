@@ -193,6 +193,10 @@ func (a *App) initDataScope(ctx context.Context) error {
 	if err := a.initCodePackage(ctx); err != nil {
 		return fmt.Errorf("failed to init code package data: %w", err)
 	}
+	// 初始化 OpenAPI 文档数据
+	if err := a.initOpenapi(ctx); err != nil {
+		return fmt.Errorf("failed to init openapi data: %w", err)
+	}
 	// 初始化 MCP 模板数据（使用嵌入式模板 JSON）
 	if err := a.initMcpTemplateData(ctx); err != nil {
 		return fmt.Errorf("failed to init mcp template data: %w", err)
