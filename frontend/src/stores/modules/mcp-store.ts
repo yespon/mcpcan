@@ -40,7 +40,10 @@ export const useMcpStore = defineStore('mcp', () => {
    * Handle get package list
    */
   const handleGetPackageList = async () => {
-    const { list } = await CodeAPI.list(null)
+    const { list } = await CodeAPI.list({
+      page: 1,
+      pageSize: 999,
+    })
     packageList.value = list || []
   }
 

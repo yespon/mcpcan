@@ -65,17 +65,16 @@ import { InstanceAPI } from '@/api/mcp/instance'
 import { AccessType } from '@/types/instance.ts'
 import { TemplateAPI } from '@/api/mcp/template'
 import MonacoEditor from '@/components/MonacoEditor/index.vue'
+import { type InstanceResult } from '@/types/index.ts'
+import { cloneDeep } from 'lodash-es'
 
 const { t } = useI18n()
-const { pageInfo, placeholderServer } = useInstanceFormHooks()
+const { query, pageInfo, placeholderServer, jumpToPage } = useInstanceFormHooks()
 const baseInfo = ref()
 const protocolOptions = [
   { label: 'SSE', value: 1 },
   { label: 'STEAMABLE_HTTP', value: 2 },
 ]
-const handleFormat = () => {
-  pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers)
-}
 /**
  * Handle McpProtocol Changed
  */
@@ -97,7 +96,9 @@ const handleConfirm = async () => {
             )
           }
         }
-        await (pageInfo.value.formData.instanceId ? InstanceAPI.edit : InstanceAPI.create)({
+        const { instanceId } = await (
+          pageInfo.value.formData.instanceId ? InstanceAPI.edit : InstanceAPI.create
+        )({
           ...pageInfo.value.formData,
           environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
             (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
@@ -107,6 +108,14 @@ const handleConfirm = async () => {
         ElMessage.success(
           pageInfo.value.formData.instanceId ? t('action.edit') : t('action.create'),
         )
+        pageInfo.value.formData.instanceId = instanceId
+        jumpToPage({
+          url: '/new-instance',
+          data: {
+            instanceId,
+            type: query.type,
+          },
+        })
       } finally {
         pageInfo.value.loading = false
       }
@@ -138,10 +147,13 @@ const handleSaveAsTemplate = async () => {
     pageInfo.value.loading = false
   }
 }
-const init = () => {
+const init = (instance: InstanceResult | null) => {
+  if (instance) {
+    pageInfo.value.formData = cloneDeep(instance)
+  }
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.DIRECT
-    pageInfo.value.formData.mcpProtocol = 1
+    // pageInfo.value.formData.mcpProtocol = 1
   })
 }
 defineExpose({

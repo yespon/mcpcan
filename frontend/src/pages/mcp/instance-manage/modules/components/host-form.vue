@@ -765,7 +765,6 @@ const {
   pageInfo,
   query,
   jumpToPage,
-  originForm,
   placeholderServer,
   showCommand,
   disabledPvcNode,
@@ -985,10 +984,18 @@ const handleConfirm = async () => {
             {},
           ),
         })
-        pageInfo.value.formData.instanceId = instanceId
         ElMessage.success(
           pageInfo.value.formData.instanceId ? t('action.edit') : t('action.create'),
         )
+        pageInfo.value.formData.instanceId = instanceId
+        // 访问路径上添加instanceId
+        jumpToPage({
+          url: '/new-instance',
+          data: {
+            instanceId,
+            type: query.type,
+          },
+        })
       } finally {
         pageInfo.value.loading = false
       }
@@ -1023,22 +1030,6 @@ const handleSaveAsTemplate = () => {
   } finally {
     pageInfo.value.loading = false
   }
-}
-
-/**
- * Handle get instance detail info
- */
-const handleGetDetail = async (instance: InstanceResult) => {
-  const data = await InstanceAPI.detail({
-    instanceId: instance.instanceId,
-  })
-  pageInfo.value.formData = data
-  pageInfo.value.accessType = data.accessType
-  pageInfo.value.mcpServers = JsonFormatter.format(data.mcpServers, 2)
-  pageInfo.value.formData.environmentVariables = Object.keys(data.environmentVariables)?.map(
-    (key) => ({ key, value: data.environmentVariables[key] }),
-  )
-  pageInfo.value.formData.volumeMounts = data.volumeMounts || []
 }
 
 const downloadDialogVisible = ref(false)
@@ -1100,15 +1091,13 @@ const checkPackageNameOverflow = () => {
 const init = async (instance: InstanceResult | null) => {
   await handleGetEnvList() // 获取环境变量列表
   await handleGetPackageList() // 获取包列表
-  if (query.instanceId) {
-    originForm.value = cloneDeep(instance)
-    instance && handleGetDetail(instance)
-    return
+  if (instance) {
+    pageInfo.value.formData = cloneDeep(instance)
   }
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.HOSTING
-    pageInfo.value.formData.mcpProtocol = 3
-    pageInfo.value.formData.servicePath = '/sse'
+    // pageInfo.value.formData.mcpProtocol = 3
+    // pageInfo.value.formData.servicePath = '/sse'
     // 默认选中第一个环境变量;所以上诉均没有return
     handleChangeEnvironmentId(envList.value[0]?.id)
   })
