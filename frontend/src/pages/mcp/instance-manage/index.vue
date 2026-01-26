@@ -322,7 +322,7 @@
           <SpotlightCard class-name="hover-scale-card" spotlight-color="var(--ep-bg-purple-color)">
             <div class="h-[130px] flex flex-col">
               <div class="flex-grow-1 flex h-0">
-                <div>
+                <div class="mr-2">
                   <mcp-image
                     :src="row.iconPath"
                     width="32"
@@ -601,7 +601,7 @@ const handleAddByTemplate = async () => {
   try {
     selectVisible.value = true
     templateLoading.value = true
-    const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
+    const data = await TemplateAPI.list({ page: 1, pageSize: 999 })
     templateList.value = data.list.map((template: any) => ({
       id: template.templateId,
       name: template.name,
@@ -639,6 +639,7 @@ const handleEabledToken = async (row: InstanceResult) => {
  * @param templateId - selected of templateId
  */
 const handleConfirmSelect = (templateId: string) => {
+  const template = templateList.value.find((item: any) => item.templateId === templateId)
   if (
     templateList.value.find((item: any) => item.templateId === templateId).sourceType ===
     SourceType.OPENAPI
@@ -648,7 +649,10 @@ const handleConfirmSelect = (templateId: string) => {
   }
   jumpToPage({
     url: '/new-instance',
-    data: { templateId },
+    data: {
+      templateId,
+      type: template.accessType,
+    },
   })
 }
 

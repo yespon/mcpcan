@@ -173,7 +173,7 @@ const handleAddByTemplate = async () => {
   try {
     template.value.visible = true
     template.value.loading = true
-    const data = await TemplateAPI.list({ page: '1', pageSize: '999' })
+    const data = await TemplateAPI.list({ page: 1, pageSize: 999 })
     template.value.templateList = data.list.map((template: any) => ({
       id: template.templateId,
       name: template.name,
@@ -188,16 +188,16 @@ const handleAddByTemplate = async () => {
  * handle confirm selected template
  */
 const handleConfirmTemplate = (templateId: string) => {
-  if (
-    template.value.templateList.find((item: any) => item.templateId === templateId).sourceType ===
-    SourceType.OPENAPI
-  ) {
+  const templateInfo = template.value.templateList.find(
+    (item: any) => item.templateId === templateId,
+  )
+  if (templateInfo.sourceType === SourceType.OPENAPI) {
     openAPIDialog.value.init(templateId, 'create')
     return
   }
   jumpToPage({
     url: '/new-instance',
-    data: { templateId },
+    data: { templateId, type: templateInfo.accessType },
   })
 }
 </script>
