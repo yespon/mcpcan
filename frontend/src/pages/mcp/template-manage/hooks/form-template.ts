@@ -76,12 +76,12 @@ export const useTemplateFormHooks = () => {
               if (!parsed.mcpServers[serverName].url)
                 return callback(new Error(t('mcp.template.rules.mcpServers.url')))
               if (parsed.mcpServers[serverName].type) {
-                if (!['sse', 'steamable-http'].includes(parsed.mcpServers[serverName].type)) {
+                if (!['sse', 'streamable-http'].includes(parsed.mcpServers[serverName].type)) {
                   return callback(new Error(t('mcp.template.rules.mcpServers.type')))
                 }
               }
               if (parsed.mcpServers[serverName].transport) {
-                if (!['sse', 'steamable-http'].includes(parsed.mcpServers[serverName].transport)) {
+                if (!['sse', 'streamable-http'].includes(parsed.mcpServers[serverName].transport)) {
                   return callback(new Error(t('mcp.template.rules.mcpServers.transport')))
                 }
               }

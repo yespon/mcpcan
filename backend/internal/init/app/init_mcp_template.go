@@ -108,10 +108,10 @@ func (a *App) initMcpTemplateData(ctx context.Context) error {
 			PackageID:      packageID,
 			AccessType:     convertAccessType(it.AccessType),
 			McpProtocol:    convertMcpProtocol(it.McpProtocol),
-			ImgAddress:     it.ImgAddress,
 			Notes:          it.Notes,
 			ServicePath:    it.ServicePath,
 			IconPath:       it.IconPath,
+			ImgAddress:     it.ImgAddress,
 		}
 		if len(it.McpServers) > 0 {
 			// Parse JSON string and validate format
@@ -202,10 +202,10 @@ func determineProtocolType(config struct {
 
 	// 2. Check URL field
 	if config.URL != "" {
-		if strings.Contains(strings.ToLower(config.URL), "sse") {
-			return "sse"
+		if strings.Contains(strings.ToLower(config.URL), string(model.McpProtocolStreamableHttp)) {
+			return string(model.McpProtocolStreamableHttp)
 		}
-		return "steamableHttp"
+		return string(model.McpProtocolSSE)
 	}
 
 	// 3. Check command field
@@ -226,11 +226,15 @@ func validateProtocolFields(protocolType string, config struct {
 	URL       string   `json:"url,omitempty"`
 }) error {
 	switch protocolType {
-	case "sse", "steamableHttp":
+	case string(model.McpProtocolStreamableHttp):
 		if config.URL == "" {
 			return fmt.Errorf("%s protocol requires a valid url field", protocolType)
 		}
-	case "stdio":
+	case string(model.McpProtocolSSE):
+		if config.URL == "" {
+			return fmt.Errorf("%s protocol requires a valid url field", protocolType)
+		}
+	case string(model.McpProtocolStdio):
 		if config.Command == "" {
 			return fmt.Errorf("%s protocol requires a valid command field", protocolType)
 		}

@@ -41,6 +41,7 @@ func ConvertToInstanceInfo(instance *model.McpInstance) *instancepb.ListResp_Ins
 		SourceType:                 protoSourceType,
 		Notes:                      instance.Notes,
 		OpenapiBaseUrl:             instance.OpenapiBaseUrl,
+		ImageAddress:               instance.ImgAddr,
 	}
 }
 
@@ -49,7 +50,7 @@ func ConvertToModelMcpProtocol(mcpProtocol instancepb.McpProtocol) (model.McpPro
 	switch mcpProtocol {
 	case instancepb.McpProtocol_STDIO:
 		return model.McpProtocolStdio, nil
-	case instancepb.McpProtocol_STEAMABLE_HTTP:
+	case instancepb.McpProtocol_STREAMABLE_HTTP:
 		return model.McpProtocolStreamableHttp, nil
 	case instancepb.McpProtocol_SSE:
 		return model.McpProtocolSSE, nil
@@ -64,7 +65,7 @@ func ConvertToProtoMcpProtocol(mcpProtocol model.McpProtocol) (instancepb.McpPro
 	case model.McpProtocolStdio:
 		return instancepb.McpProtocol_STDIO, nil
 	case model.McpProtocolStreamableHttp:
-		return instancepb.McpProtocol_STEAMABLE_HTTP, nil
+		return instancepb.McpProtocol_STREAMABLE_HTTP, nil
 	case model.McpProtocolSSE:
 		return instancepb.McpProtocol_SSE, nil
 	default:

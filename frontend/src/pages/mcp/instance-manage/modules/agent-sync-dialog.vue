@@ -326,6 +326,7 @@ const accessTypeMap: Record<string, string> = {
   COZE: 'COZE ' + t('agent.action.enterprise'),
   DifyEnterprise: 'Dify ' + t('agent.action.enterprise'),
   Dify: 'Dify ' + t('agent.action.community'),
+  N8N: 'N8N',
 }
 const logoIcon = ref<any>({
   Dify: kymo,

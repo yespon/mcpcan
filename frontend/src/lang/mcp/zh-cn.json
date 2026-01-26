@@ -48,8 +48,8 @@
           "serverName": "必须存在一个mcp服务",
           "regexServerName": "mcp服务名称只能由大小写字母、数字、横线、下划线组成,且不能以数字开头",
           "url": "mcp服务名称url不能为空",
-          "type": "协议类型需要为sse或steamable-http",
-          "transport": "transport字段需要为sse或steamable-http",
+          "type": "协议类型需要为sse或streamable-http",
+          "transport": "transport字段需要为sse或streamable-http",
           "command": "command字段需要必填"
         }
       }

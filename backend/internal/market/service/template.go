@@ -61,11 +61,11 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 		RunningTimeout: req.RunningTimeout,
 		EnvironmentID:  req.EnvironmentId,
 		PackageID:      req.PackageId,
-		ImgAddress:     req.ImgAddress,
 		McpServerID:    req.McpServerId,
 		Notes:          req.Notes,
 		IconPath:       req.IconPath,
 		OpenapiBaseUrl: req.OpenapiBaseUrl,
+		ServicePath:    req.ServicePath,
 	}
 
 	// Handle access type
@@ -91,7 +91,7 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -166,7 +166,6 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 		RunningTimeout: template.RunningTimeout,
 		EnvironmentId:  int32(template.EnvironmentID),
 		PackageId:      template.PackageID,
-		ImgAddress:     template.ImgAddress,
 		McpServerId:    template.McpServerID,
 		Notes:          template.Notes,
 		IconPath:       template.IconPath,
@@ -201,7 +200,7 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 	case model.McpProtocolSSE:
 		resp.McpProtocol = instance.McpProtocol_SSE
 	case model.McpProtocolStreamableHttp:
-		resp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+		resp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 	case model.McpProtocolStdio:
 		resp.McpProtocol = instance.McpProtocol_STDIO
 	default:
@@ -256,11 +255,11 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	template.RunningTimeout = req.RunningTimeout
 	template.EnvironmentID = req.EnvironmentId
 	template.PackageID = req.PackageId
-	template.ImgAddress = req.ImgAddress
 	template.McpServerID = req.McpServerId
 	template.Notes = req.Notes
 	template.IconPath = req.IconPath
 	template.OpenapiBaseUrl = req.OpenapiBaseUrl
+	template.ServicePath = req.ServicePath
 
 	// Handle access type
 	switch req.AccessType {
@@ -274,11 +273,18 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 		template.AccessType = model.AccessTypeProxy // Default proxy mode
 	}
 
+	switch req.SourceType {
+	case instance.SourceType_OPENAPI:
+		template.SourceType = model.SourceTypeOpenapi
+	default:
+		template.SourceType = model.SourceTypeCustom
+	}
+
 	// Handle MCP protocol
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -371,7 +377,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		switch req.McpProtocol {
 		case instance.McpProtocol_SSE:
 			filters["mcp_protocol"] = model.McpProtocolSSE
-		case instance.McpProtocol_STEAMABLE_HTTP:
+		case instance.McpProtocol_STREAMABLE_HTTP:
 			filters["mcp_protocol"] = model.McpProtocolStreamableHttp
 		case instance.McpProtocol_STDIO:
 			filters["mcp_protocol"] = model.McpProtocolStdio
@@ -420,7 +426,6 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 			RunningTimeout:  template.RunningTimeout,
 			EnvironmentId:   int32(template.EnvironmentID),
 			PackageId:       template.PackageID,
-			ImgAddress:      template.ImgAddress,
 			McpServerId:     template.McpServerID,
 			Notes:           template.Notes,
 			IconPath:        template.IconPath,
@@ -456,7 +461,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:
@@ -513,12 +518,12 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 			RunningTimeout: template.RunningTimeout,
 			EnvironmentId:  int32(template.EnvironmentID),
 			PackageId:      template.PackageID,
-			ImgAddress:     template.ImgAddress,
 			McpServerId:    template.McpServerID,
 			Notes:          template.Notes,
 			IconPath:       template.IconPath,
 			McpServers:     string(template.McpServers),
 			OpenapiBaseUrl: template.OpenapiBaseUrl,
+			ServicePath:    template.ServicePath,
 		}
 
 		// Handle access type
@@ -545,7 +550,7 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:

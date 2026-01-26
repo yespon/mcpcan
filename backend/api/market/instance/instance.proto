@@ -16,7 +16,7 @@ enum AccessType {
 enum McpProtocol {
   McpProtocolUnknown = 0;
   SSE                = 1;
-  STEAMABLE_HTTP     = 2;
+  STREAMABLE_HTTP     = 2;
   STDIO              = 3;
 }
 
@@ -96,26 +96,24 @@ message CreateRequest {
   AccessType accessType = 11;
   // @inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"
   string mcpServers = 12;
-  // @inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"
-  string imgAddress = 13;
   // @inject_tag: json:"sourceType" form:"sourceType" desc:"Instance source"
-  SourceType sourceType = 14;
+  SourceType sourceType = 13;
   // @inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP server ID"
-  string mcpServerId = 15;
+  string mcpServerId = 14;
   // @inject_tag: json:"templateId" form:"templateId" desc:"Template ID"
-  int32 templateId = 16;
+  int32 templateId = 15;
   // @inject_tag: json:"tokens" form:"tokens" desc:"Token list"
-  repeated McpToken tokens = 17;
+  repeated McpToken tokens = 16;
   // @inject_tag: json:"notes" form:"notes" desc:"Notes"
-  string notes = 18;
+  string notes = 17;
   // @inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"
-  McpProtocol mcpProtocol = 19;
+  McpProtocol mcpProtocol = 18;
   // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
-  string servicePath = 20;
+  string servicePath = 19;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"
-  string iconPath = 21;
+  string iconPath = 20;
   // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"Enable tokens"
-  bool enabledToken = 22;
+  bool enabledToken = 21;
 }
 
 // McpToken MCP token
@@ -242,14 +240,12 @@ message EditRequest {
   int32 runningTimeout = 10;
   // @inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"
   string packageId = 11;
-  // @inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"
-  string imgAddress = 12;
   // @inject_tag: json:"notes" form:"notes" desc:"Notes"
-  string notes = 13;
+  string notes = 12;
   // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
-  string servicePath = 14;
+  string servicePath = 13;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"
-  string iconPath = 15;
+  string iconPath = 14;
 }
 
 // EditResp edit instance response
@@ -358,6 +354,8 @@ message ListResp {
     string notes = 27;
     // @inject_tag: json:"openapiBaseUrl" desc:"Base access path"
     string openapiBaseUrl = 28;
+    // @inject_tag: json:"imageAddress" desc:"Image address"
+    string imageAddress = 29;
   }
 }
 
@@ -539,6 +537,8 @@ message TemplateCreateRequest {
   string openapiBaseUrl = 20;
   // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type"
   SourceType sourceType = 21;
+  // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
+  string servicePath = 22;
 }
 
 // TemplateCreateResp template create response
@@ -645,6 +645,10 @@ message TemplateEditRequest {
   string iconPath = 20;
   // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"
   string openapiBaseUrl = 25;
+  // @inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type (custom/openapi)"
+  SourceType sourceType = 26;
+  // @inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"
+  string servicePath = 27;
 }
 
 // TemplateEditResp template edit response
