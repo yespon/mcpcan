@@ -709,7 +709,7 @@
             <span class="text-xs text-gray-500">{{ item.description }}</span>
           </div>
         </div>
-        <el-button type="primary" link @click="handleDownloadExample(item)">
+        <el-button class="base-btn-link" link @click="handleDownloadExample(item)">
           <el-icon class="mr-1"><Download /></el-icon>
           下载
         </el-button>
@@ -759,6 +759,7 @@ import ConfigDialog from '../url-config-dialog.vue'
 import LogDialog from '../log-dialog.vue'
 import deployTemplateData from '@/config/deploy-temlate-data.json'
 import MonacoEditor from '@/components/MonacoEditor/index.vue'
+import { CodeAPI } from '@/api/code/index'
 
 const { t } = useI18n()
 const {
@@ -771,6 +772,7 @@ const {
   disabledReadOnly,
   selectedPvc,
   selectVisible,
+  exampleList,
 } = useInstanceFormHooks()
 const {
   packageList,
@@ -1033,35 +1035,37 @@ const handleSaveAsTemplate = () => {
 }
 
 const downloadDialogVisible = ref(false)
-const exampleList = [
-  {
-    name: 'mcp-server-python',
-    language: 'Python',
-    description: 'Python 版本的 MCP Server 示例代码',
-    url: '/static/code-package/mcp-example.zip',
-  },
-  {
-    name: 'mcp-server-go',
-    language: 'Go',
-    description: 'Go 版本的 MCP Server 示例代码',
-    url: '/static/code-package/mcp-example.zip',
-  },
-  {
-    name: 'mcp-server-node',
-    language: 'Node.js',
-    description: 'Node.js 版本的 MCP Server 示例代码',
-    url: '/static/code-package/mcp-example.zip',
-  },
-]
 
-const handleDownloadExample = (item: any) => {
-  // const link = document.createElement('a')
-  // link.href = item.url
-  // link.download = item.name + '.zip'
-  // link.click()
-  ElMessage.info('下载功能开发中')
+const handleDownloadExample = async (item: any) => {
+  const { list } = await CodeAPI.list({
+    page: 1,
+    pageSize: 10,
+    name: item.name,
+  })
+  list[0] && handleDownload(list[0])
 }
-
+/**
+ * Handle download code package
+ */
+const handleDownload = async (code: any) => {
+  try {
+    pageInfo.value.loading = true
+    const response = await CodeAPI.download(code)
+    const blobUrl = URL.createObjectURL(
+      new Blob([response.data], { type: response.headers['content-type'] }),
+    )
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download =
+      response.headers['content-disposition']
+        ?.split('filename=')[1]
+        ?.match(/filename=("?)(.*?)\1/) || code.name
+    document.body.appendChild(link)
+    link.click()
+  } finally {
+    pageInfo.value.loading = false
+  }
+}
 const selectedCommand = ref({}) as any
 
 const handleSelectCommand = (item: any) => {

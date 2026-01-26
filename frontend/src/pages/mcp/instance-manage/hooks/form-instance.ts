@@ -140,7 +140,23 @@ export const useInstanceFormHooks = () => {
     },
   })
   const { pvcList } = toRefs(useMcpStoreHook())
-
+  const exampleList = [
+    {
+      name: 'python-mcp-sys-monitor',
+      language: 'Python',
+      description: 'Python 版本的 MCP Server 示例代码',
+    },
+    {
+      name: 'nodejs-mcp-sys-monitor',
+      language: 'Node.js',
+      description: 'Node.js 版本的 MCP Server 示例代码',
+    },
+    {
+      name: 'binary-mcp-sys-monitor',
+      language: '二进制',
+      description: '二进制版本的 MCP Server 示例代码',
+    },
+  ]
   /**
    * mcpServers placeholder
    */
@@ -230,5 +246,6 @@ export const useInstanceFormHooks = () => {
     disabledReadOnly,
     selectVisible,
     currentMCP,
+    exampleList,
   }
 }
