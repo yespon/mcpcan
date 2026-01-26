@@ -205,6 +205,7 @@
               link
               class="base-btn-link"
               @click="handleViewAllLog(row)"
+              v-if="row.accessType !== AccessType.DIRECT"
             >
               {{ '日志' }}
             </el-button>
@@ -219,7 +220,7 @@
               {{ t('mcp.instance.action.debugTool') }}
             </el-button>
             <el-button
-              v-if="row.accessType !== AccessType.DIRECT"
+              v-if="row.accessType === AccessType.HOSTING"
               type="primary"
               size="small"
               link
@@ -237,7 +238,7 @@
               }}
             </el-button>
             <el-button
-              v-if="row.status === InstanceStatus.ACTIVE"
+              v-if="row.accessType !== AccessType.DIRECT && row.status === InstanceStatus.ACTIVE"
               type="primary"
               size="small"
               link
@@ -412,7 +413,7 @@
                       </el-tooltip>
                       <el-tooltip content="容器启停" placement="top" trigger="click">
                         <el-switch
-                          v-if="row.accessType !== AccessType.DIRECT"
+                          v-if="row.accessType === AccessType.HOSTING"
                           v-model="row.status"
                           style="--el-switch-on-color: #13ce66"
                           inline-prompt

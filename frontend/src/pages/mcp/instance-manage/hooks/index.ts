@@ -170,12 +170,12 @@ export const useInstanceTableHooks = () => {
         return mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
       },
     },
-    {
-      dataIndex: 'enabledToken',
-      label: t('mcp.instance.enabledToken'),
-      props: { width: '160px' },
-      headSlot: 'enabledTokenHeader',
-    },
+    // {
+    //   dataIndex: 'enabledToken',
+    //   label: t('mcp.instance.enabledToken'),
+    //   props: { width: '160px' },
+    //   headSlot: 'enabledTokenHeader',
+    // },
     {
       dataIndex: 'publicProxyConfig',
       props: { width: '160px' },
