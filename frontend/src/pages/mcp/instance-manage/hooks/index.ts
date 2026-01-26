@@ -20,6 +20,7 @@ export const useInstanceTableHooks = () => {
     text: '',
   })
   const selectVisible = ref(false)
+  const templateLoading = ref(false)
   const templateList = ref<any>([])
   const viewConfig = ref()
   const { jumpToPage } = useRouterHooks()
@@ -230,16 +231,6 @@ export const useInstanceTableHooks = () => {
       model: {},
     },
   })
-  /**
-   *
-   * @param form - instance form data
-   */
-  const handleAddInstance = () => {
-    jumpToPage({
-      url: '/new-instance',
-      data: {},
-    })
-  }
 
   return {
     load,
@@ -250,7 +241,6 @@ export const useInstanceTableHooks = () => {
     tablePlus,
     requestConfig,
     pageConfig,
-    handleAddInstance,
     activeOptions,
     containerOptions,
     InstanceAPI,
@@ -263,6 +253,7 @@ export const useInstanceTableHooks = () => {
     probe,
     openAPIDialog,
     selectVisible,
+    templateLoading,
     templateList,
     timer,
     selection,

@@ -91,6 +91,7 @@
       type="selection"
       width="55"
       v-if="props.multiple"
+      :selectable="isRowSelectable"
       reserve-selection
     ></el-table-column>
     <el-table-column
@@ -142,18 +143,9 @@
       <el-empty :image-size="200" :description="t('status.noData')" />
     </template>
   </el-table>
-  <div v-else-if="props.showViewMode && viewMode === 'card'">
+  <div v-else-if="props.showViewMode && viewMode === 'card'" v-loading="loading">
     <el-row :gutter="20">
-      <el-col
-        v-for="(row, index) in list"
-        :key="index"
-        :xs="24"
-        :sm="12"
-        :md="8"
-        :lg="6"
-        :xl="6"
-        class="mb-4"
-      >
+      <el-col v-for="(row, index) in list" :key="index" v-bind="props.gridConfig" class="mb-4">
         <slot name="slotCard" :row="row" :index="index">
           <el-card shadow="hover">
             <div class="text-center">{{ '数据为空' }}</div>
@@ -182,6 +174,11 @@ import { cloneDeep } from 'lodash-es'
 import FormPlus from '../FormPlus/index.vue'
 import { Search, Refresh, List, Grid } from '@element-plus/icons-vue'
 import GlareHover from '../Animation/GlareHover.vue'
+import { AccessType } from '@/types/instance'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 const { t } = useI18n()
 const searchInputRef = ref()
@@ -210,6 +207,13 @@ interface HandlerColumnConfig {
   width: string | null
   fixed: string | null
 }
+interface GridConfig {
+  xs?: number
+  sm?: number
+  md?: number
+  lg?: number
+  xl?: number
+}
 
 const props = withDefaults(
   defineProps<{
@@ -223,15 +227,17 @@ const props = withDefaults(
     queryFormatter?: Function
     showPage?: boolean
     showViewMode?: boolean
-    defaultViewMode?: 'card' | 'table'
+    viewMode?: 'card' | 'table' | string
     multiple?: boolean
     rowKey?: string
+    gridConfig?: GridConfig
   }>(),
   {
     showPage: () => true,
     showViewMode: () => false,
     multiple: () => false,
     rowKey: () => 'id',
+    gridConfig: () => ({ xs: 24, sm: 12, md: 8, lg: 6, xl: 6 }),
   },
 )
 
@@ -317,11 +323,17 @@ const resetFields = () => {
 const changeViewMode = () => {
   viewMode.value = viewMode.value === 'table' ? 'card' : 'table'
   emit('update:viewMode', viewMode.value)
+  initData()
 }
 
 const handleSelectionChange = (selection: any[]) => {
   selectedRows.value = selection
   emit('on-selection-change', selectedRows.value)
+}
+
+// Element Plus selection guard: return false to make the row's checkbox disabled
+const isRowSelectable = (row: any) => {
+  return row?.accessType !== AccessType.DIRECT
 }
 
 //Init search data
@@ -363,7 +375,7 @@ onMounted(() => {
   initFormData()
   // 搜索图标按钮注册搜索事件
   searchInputRef.value.$el.getElementsByClassName('el-input__suffix')[0].onclick = handleQuery
-  viewMode.value = props.defaultViewMode || 'table'
+  viewMode.value = (props.viewMode as 'table' | 'card') || 'table'
 })
 
 // 提供方法：获取/设置已选项

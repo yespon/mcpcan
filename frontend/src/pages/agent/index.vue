@@ -47,6 +47,7 @@
         show-view-mode
         default-view-mode="card"
         v-model:pageConfig="pageConfig"
+        :gridConfig="{ xs: 24, sm: 12, md: 8, lg: 6, xl: 4 }"
         :handlerColumnConfig="{
           width: '120px',
           fixed: 'right',

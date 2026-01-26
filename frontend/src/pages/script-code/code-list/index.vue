@@ -1,13 +1,51 @@
 <template>
   <div v-loading="pageInfo.loading" :element-loading-text="pageInfo.loadingText">
     <!-- 头部区域 -->
-    <div class="flex justify-between page-header">
+    <!-- <div class="flex justify-between page-header">
       <div class="header-container">
         {{ t('code.pageDesc.list') }} <span class="desc">{{ t('code.pageDesc.desc') }}</span>
       </div>
       <mcp-button :icon="UploadFilled" @click="handleUpdatePackage">{{
         t('code.action.upload')
       }}</mcp-button>
+    </div> -->
+    <div class="flex-sub center link-hover mb-2">
+      <el-upload
+        class="upload-demo"
+        drag
+        :action="action"
+        multiple
+        :on-success="handleSuccess"
+        :headers="headers"
+        accept=".zip, .tar, .tar.gz, application/zip, application/x-tar, application/gzip"
+      >
+        <div class="flex justify-between align-center upload-dragger-content">
+          <div class="title">
+            <div class="mb-2">{{ t('code.action.upload') }}</div>
+            <div class="desc">
+              <div class="my-1">ZIP {{ t('code.desc.compressed') }} (.zip)</div>
+              <div>TAR {{ t('code.desc.compressed') }} (.tar, .tar.gz)</div>
+            </div>
+          </div>
+          <div>
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              {{ t('code.desc.suport') }}
+            </div>
+          </div>
+
+          <div class="footer">
+            {{ t('code.desc.describe') }}
+            <div class="desc">
+              <div class="ml-8 mt-2">{{ t('code.desc.text1') }}</div>
+              <div class="ml-8 mt-2">{{ t('code.desc.text2') }}</div>
+              <div class="ml-8 mt-2">{{ t('code.desc.text3') }}</div>
+              <div class="ml-8 mt-2">{{ t('code.desc.text4') }}</div>
+              <div class="ml-8 mt-2">{{ t('code.desc.text5') }}</div>
+            </div>
+          </div>
+        </div>
+      </el-upload>
     </div>
 
     <TablePlus
@@ -94,9 +132,17 @@ import codeLogo from '@/assets/logo/code.png'
 import zipLogo from '@/assets/logo/zip.png'
 import McpButton from '@/components/mcp-button/index.vue'
 
-const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo } = useCodeTableHooks()
+const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo, action, headers } =
+  useCodeTableHooks()
 const { jumpToPage } = useRouterHooks()
 
+const handleSuccess = (response: { code: number; data: { path: string } }) => {
+  if (response.code !== 0) {
+    return
+  }
+  init()
+  ElMessage.success(t('action.upload'))
+}
 /**
  * Handle jump to the page of update code package
  */
@@ -207,5 +253,64 @@ onMounted(init)
   font-size: 16px;
   color: #999999;
   margin-left: 16px;
+}
+.upload-demo {
+  width: 100%;
+  color: var(--el-color-primary);
+  .title {
+    font-size: 20px;
+    font-weight: 600;
+    text-align: left;
+    .desc {
+      font-size: 14px;
+      color: #999999;
+      font-weight: 400;
+      margin-left: 0;
+    }
+  }
+  .footer {
+    font-family:
+      PingFangSC,
+      PingFang SC;
+    font-weight: 600;
+    font-size: 20px;
+    // color: #cccccc;
+    line-height: 28px;
+    .desc {
+      font-family:
+        PingFangSC,
+        PingFang SC;
+      font-weight: 400;
+      font-size: 14px;
+      color: #999999;
+      line-height: 20px;
+      text-align: left;
+      font-style: normal;
+    }
+  }
+  :deep(.el-upload-dragger) {
+    border: 1px dashed var(--el-color-primary);
+    &:hover {
+      border-color: var(--el-color-primary-hover);
+      .el-icon--upload {
+        color: var(--el-color-primary-hover);
+      }
+      .el-upload__text {
+        color: var(--el-color-primary-hover);
+      }
+      .title {
+        color: var(--el-color-primary-hover);
+      }
+      .footer {
+        color: var(--el-color-primary-hover);
+      }
+    }
+  }
+  .el-icon--upload {
+    color: var(--el-color-primary);
+  }
+  .el-upload__text {
+    color: var(--el-color-primary);
+  }
 }
 </style>
