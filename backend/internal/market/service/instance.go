@@ -175,6 +175,13 @@ func (s *InstanceService) ListHandler(c *gin.Context) {
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
+	// Set default pagination values if not provided or invalid
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 10
+	}
 
 	// Use InstanceService to handle request
 	result, err := s.list(&req)
@@ -215,7 +222,7 @@ func (s *InstanceService) RestartHandler(c *gin.Context) {
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
-	// Validate required fields
+	// Vali\date required fields
 	if req.InstanceId == "" {
 		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
 		return
@@ -937,7 +944,7 @@ func (s *InstanceService) ListToolsHandler(c *gin.Context) {
 		return
 	}
 
-	tools, err := biz.GInstanceBiz.ListTools(c.Request.Context(), req.InstanceID, req.Domain)
+	tools, err := biz.GInstanceBiz.ListTools(c.Request.Context(), req.InstanceId, req.Domain)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list tools: %s", err.Error()))
 		return
@@ -959,7 +966,7 @@ func (s *InstanceService) CallToolHandler(c *gin.Context) {
 		}
 	}
 
-	resp, err := biz.GInstanceBiz.CallTool(c.Request.Context(), req.InstanceID, req.ToolName, args, req.Domain)
+	resp, err := biz.GInstanceBiz.CallTool(c.Request.Context(), req.InstanceId, req.ToolName, args, req.Domain)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to call tool: %s", err.Error()))
 		return

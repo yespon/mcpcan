@@ -15,13 +15,12 @@ type McpTemplate struct {
 	VolumeMounts         json.RawMessage `gorm:"type:json;comment:卷挂载配置列表 (JSON格式)" json:"VolumeMounts"`
 	StartupTimeout       int32           `gorm:"default:0;comment:启动超时时间（秒）" json:"StartupTimeout"`
 	RunningTimeout       int32           `gorm:"default:0;comment:运行超时时间（秒）" json:"RunningTimeout"`
-	EnvironmentID        int32           `gorm:"default:0;comment:环境ID" json:"environmentID"`
 	PackageID            string          `gorm:"size:100;comment:包ID" json:"packageID"`
 	AccessType           AccessType      `gorm:"size:20;not null;comment:访问类型 (直连-direct/代理-proxy/托管-hosting)" json:"accessType"`
 	McpProtocol          McpProtocol     `gorm:"size:20;not null;comment:MCP协议 (SSE-1/StreamableHttp-2/Stdio-3)" json:"mcpProtocol"`
 	McpServers           json.RawMessage `gorm:"type:json;comment:MCP服务器配置 (JSON格式)" json:"mcpServers"`
-	ImgAddress           string          `gorm:"size:100;not null;comment:镜像地址" json:"imgAddress"`
 	McpServerID          string          `gorm:"size:100;comment:MCP 服务器ID" json:"mcpServerID"`
+ 	ImgAddress           string          `gorm:"size:100;not null;default:'';comment:镜像地址" json:"imgAddress"`
 	Notes                string          `gorm:"type:text;comment:备注" json:"notes"`
 	ServicePath          string          `gorm:"size:100;not null;default:'';comment:MCP 服务路径" json:"servicePath"`
 	IconPath             string          `gorm:"size:100;not null;default:'';comment:MCP 图标路径" json:"iconPath"`

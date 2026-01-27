@@ -109,12 +109,12 @@ export const useInstanceFormHooks = () => {
               if (!parsed.mcpServers[serverName].url)
                 return callback(new Error(t('mcp.template.rules.mcpServers.url')))
               if (parsed.mcpServers[serverName].type) {
-                if (!['sse', 'steamable-http'].includes(parsed.mcpServers[serverName].type)) {
+                if (!['sse', 'streamable-http'].includes(parsed.mcpServers[serverName].type)) {
                   return callback(new Error(t('mcp.template.rules.mcpServers.type')))
                 }
               }
               if (parsed.mcpServers[serverName].transport) {
-                if (!['sse', 'steamable-http'].includes(parsed.mcpServers[serverName].transport)) {
+                if (!['sse', 'streamable-http'].includes(parsed.mcpServers[serverName].transport)) {
                   return callback(new Error(t('mcp.template.rules.mcpServers.transport')))
                 }
               }
@@ -140,7 +140,23 @@ export const useInstanceFormHooks = () => {
     },
   })
   const { pvcList } = toRefs(useMcpStoreHook())
-
+  const exampleList = [
+    {
+      name: 'python-mcp-sys-monitor',
+      language: 'Python',
+      description: 'Python 版本的 MCP Server 示例代码',
+    },
+    {
+      name: 'nodejs-mcp-sys-monitor',
+      language: 'Node.js',
+      description: 'Node.js 版本的 MCP Server 示例代码',
+    },
+    {
+      name: 'binary-mcp-sys-monitor',
+      language: '二进制',
+      description: '二进制版本的 MCP Server 示例代码',
+    },
+  ]
   /**
    * mcpServers placeholder
    */
@@ -230,5 +246,6 @@ export const useInstanceFormHooks = () => {
     disabledReadOnly,
     selectVisible,
     currentMCP,
+    exampleList,
   }
 }

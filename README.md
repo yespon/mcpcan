@@ -18,7 +18,7 @@ MCPCAN uses containers for flexible deployment of MCP services, resolving potent
 </div>
 <p align="center">
    <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
-   <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a><br>
+   <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com（login: admin/admin123）</a> | <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a><br>
    <a href="https://www.mcpcan.com/docs/en/guide/welcome
    "><u>Document</a></u>
 </p>
@@ -54,7 +54,7 @@ MCPCan supports multi-protocol compatibility and conversion, enabling seamless i
 
 ## ✨ Demo and Official Website
 
-For the best demo experience, try directly <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com</a>.<br>
+For the best demo experience, try directly <a href="https://demo.mcpcan.com">DemoSite : demo.mcpcan.com（login: admin/admin123）</a>.<br>
 </video>
 Watch our demo video on Bilibili: <a href="https://www.bilibili.com/video/BV1htBXBbECr?t=3.2">BV1htBXBbECr</a><br>
 To view our official website address, simply click <a href="https://www.mcpcan.com">MainSite : www.mcpcan.com</a>.
@@ -92,6 +92,9 @@ chmod +x replace.sh
 
 # 3. Start services
 docker compose up -d
+
+# 4. Access Web UI
+Login: admin/admin123
 ```
 
 After successful installation, access `http://localhost` (or `http://<Your Public IP>`) to start using.

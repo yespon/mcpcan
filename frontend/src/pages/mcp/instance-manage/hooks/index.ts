@@ -4,6 +4,7 @@ import { useMcpStoreHook } from '@/stores'
 import { useRouterHooks } from '@/utils/url'
 import { instanceTotal, instanceStart, instanceStop, instanceConnect } from '@/utils/logo'
 import { AccessType } from '@/types/instance'
+import { useMcpStore } from '@/stores/modules/mcp-store'
 
 export const useInstanceTableHooks = () => {
   const { t } = useI18n()
@@ -19,11 +20,13 @@ export const useInstanceTableHooks = () => {
     text: '',
   })
   const selectVisible = ref(false)
+  const templateLoading = ref(false)
   const templateList = ref<any>([])
   const viewConfig = ref()
   const { jumpToPage } = useRouterHooks()
   // const mcpHook = useMcpStoreHook()
   const { accessTypeOptions, mcpProtocolOptions } = useMcpStoreHook()
+  const { currentInstance } = toRefs(useMcpStore())
   const instanceCount = ref<any>({})
   const selection = ref({
     showSelect: true,
@@ -167,12 +170,12 @@ export const useInstanceTableHooks = () => {
         return mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
       },
     },
-    {
-      dataIndex: 'enabledToken',
-      label: t('mcp.instance.enabledToken'),
-      props: { width: '160px' },
-      headSlot: 'enabledTokenHeader',
-    },
+    // {
+    //   dataIndex: 'enabledToken',
+    //   label: t('mcp.instance.enabledToken'),
+    //   props: { width: '160px' },
+    //   headSlot: 'enabledTokenHeader',
+    // },
     {
       dataIndex: 'publicProxyConfig',
       props: { width: '160px' },
@@ -228,16 +231,6 @@ export const useInstanceTableHooks = () => {
       model: {},
     },
   })
-  /**
-   *
-   * @param form - instance form data
-   */
-  const handleAddInstance = () => {
-    jumpToPage({
-      url: '/new-instance',
-      data: {},
-    })
-  }
 
   return {
     load,
@@ -248,7 +241,6 @@ export const useInstanceTableHooks = () => {
     tablePlus,
     requestConfig,
     pageConfig,
-    handleAddInstance,
     activeOptions,
     containerOptions,
     InstanceAPI,
@@ -261,9 +253,11 @@ export const useInstanceTableHooks = () => {
     probe,
     openAPIDialog,
     selectVisible,
+    templateLoading,
     templateList,
     timer,
     selection,
+    currentInstance,
     agentSyncDialog,
   }
 }

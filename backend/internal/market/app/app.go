@@ -450,18 +450,12 @@ func (a *App) setupMiddleware() {
 	// Add request response logging middleware
 	a.ginEngine.Use(middleware.RequestResponseLoggingMiddleware())
 
-	// Add cross domain handling
-	domains := []string{"*"}
-	a.ginEngine.Use(middleware.CORSMiddleware(domains))
-
 	// Add internationalization middleware
 	a.ginEngine.Use(middleware.I18nMiddleware())
 
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
-	// // Add authentication middleware
-	// a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

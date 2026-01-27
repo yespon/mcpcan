@@ -23,7 +23,7 @@
     "action": {
       "create": "Create Agent",
       "community": "Community",
-      "enterprise": "Enterprise",
+      "enterprise": "Coze-Sass",
       "n8n": "N8N",
       "successConnection": "Connection Test Successful",
       "failConnectionTips": "Platform connection failed; do you still want to save?",

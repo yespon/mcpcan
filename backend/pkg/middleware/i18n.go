@@ -9,26 +9,26 @@ import (
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
-// I18nMiddleware 国际化中间件
+// I18nMiddleware Internationalization middleware
 func I18nMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 从请求中获取语言代码
+		// Get language code from request
 		lang := GetLanguageFromRequest(c)
 
-		// 解析为支持的语言类型
+		// Parse supported language
 		supportedLang := parseSupportedLanguage(lang)
 
-		// 将语言代码存储到上下文中
+		// Store language code in context
 		i18nresp.SetLanguageToGin(c, supportedLang)
 
-		// 设置响应头，告知客户端当前使用的语言
+		// Set response header to inform client of current language
 		c.Header("Accept-Language", string(supportedLang))
 
 		c.Next()
 	}
 }
 
-// parseSupportedLanguage 解析支持的语言
+// parseSupportedLanguage Parse supported language
 func parseSupportedLanguage(lang string) i18nresp.SupportedLanguage {
 	lang = strings.ToLower(strings.TrimSpace(lang))
 
@@ -42,27 +42,27 @@ func parseSupportedLanguage(lang string) i18nresp.SupportedLanguage {
 	}
 }
 
-// GetLocalizer 从上下文中获取本地化器（保持向后兼容）
+// GetLocalizer Get localizer from context (keep backward compatibility)
 func GetLocalizer(c *gin.Context) interface{} {
-	// 这个函数保持向后兼容，但实际上不再使用 go-i18n 的 Localizer
+	// This function keeps backward compatibility, but actually no longer uses go-i18n Localizer
 	return nil
 }
 
-// GetMessage 从上下文中获取本地化消息
+// GetMessage Get localized message from context
 func GetMessage(c *gin.Context, messageID string, templateData map[string]interface{}) string {
-	// 这个函数主要用于向后兼容，实际使用 pkg/i18n 的消息系统
+	// This function is mainly for backward compatibility, actually uses pkg/i18n message system
 	return messageID
 }
 
-// GetLanguage 从上下文中获取当前语言
+// GetLanguage Get current language from context
 func GetLanguage(c *gin.Context) string {
 	lang := i18nresp.GetLanguageFromGin(c)
 	return string(lang)
 }
 
-// LocalizedError 返回本地化的错误响应
+// LocalizedError Return localized error response
 func LocalizedError(c *gin.Context, statusCode int, messageID string, templateData map[string]interface{}) {
-	// 根据状态码映射到错误码
+	// Map status code to error code
 	var errorCode int
 	switch statusCode {
 	case http.StatusBadRequest:
@@ -94,20 +94,20 @@ func LocalizedError(c *gin.Context, statusCode int, messageID string, templateDa
 	i18nresp.ErrorResponse(c, errorCode, "")
 }
 
-// LocalizedSuccess 返回本地化的成功响应
+// LocalizedSuccess Return localized success response
 func LocalizedSuccess(c *gin.Context, data interface{}) {
 	i18nresp.SuccessResponse(c, data)
 }
 
-// SetLanguageCookie 设置语言Cookie
+// SetLanguageCookie Set language cookie
 func SetLanguageCookie(c *gin.Context, lang string) {
-	// 设置Cookie，有效期为30天
+	// Set Cookie, valid for 30 days
 	c.SetCookie("lang", lang, 60*60*24*30, "/", "", false, true)
 }
 
-// GetLanguageFromRequest 从请求中获取语言代码
+// GetLanguageFromRequest Get language code from request
 func GetLanguageFromRequest(c *gin.Context) string {
-	// 使用 pkg/i18n 包的语言检测逻辑
+	// Use pkg/i18n language detection logic
 	lang := i18nresp.GetLanguageFromGin(c)
 	return string(lang)
 }

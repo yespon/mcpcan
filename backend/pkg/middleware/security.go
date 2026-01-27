@@ -18,15 +18,15 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 )
 
-// SecurityConfig 安全配置
+// SecurityConfig Security configuration
 type SecurityConfig struct {
-	SecretKey    string        // 签名密钥
-	ReplayWindow time.Duration // 重放攻击时间窗口
-	EnableReplay bool          // 是否启用防重放
-	EnableSign   bool          // 是否启用防篡改
+	SecretKey    string        // Signature secret key
+	ReplayWindow time.Duration // Replay attack time window
+	EnableReplay bool          // Whether to enable anti-replay
+	EnableSign   bool          // Whether to enable anti-tamper
 }
 
-// SecurityMiddleware 安全中间件，实现防篡改和防重放攻击
+// SecurityMiddleware Security middleware, implementing anti-tamper and anti-replay attack
 func SecurityMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		config := &SecurityConfig{
@@ -36,21 +36,21 @@ func SecurityMiddleware(secret string) gin.HandlerFunc {
 			EnableSign:   common.EnableSign,
 		}
 
-		// 防重放攻击检查
+		// Anti-replay attack check
 		if config.EnableReplay {
 			if err := checkReplayAttack(c, config.ReplayWindow); err != nil {
-				logger.Warn("防重放检查失败", zap.Error(err), zap.String("path", c.Request.URL.Path))
-				i18n.HandleSignatureError(c, "请求已过期或重复")
+				logger.Warn("Replay check failed", zap.Error(err), zap.String("path", c.Request.URL.Path))
+				i18n.HandleSignatureError(c, "Request expired or repeated")
 				c.Abort()
 				return
 			}
 		}
 
-		// 防篡改检查
+		// Anti-tamper check
 		if config.EnableSign {
 			if err := checkSignature(c, config.SecretKey); err != nil {
-				logger.Warn("签名验证失败", zap.Error(err), zap.String("path", c.Request.URL.Path))
-				i18n.HandleSignatureError(c, "签名验证失败")
+				logger.Warn("Signature verification failed", zap.Error(err), zap.String("path", c.Request.URL.Path))
+				i18n.HandleSignatureError(c, "Signature verification failed")
 				c.Abort()
 				return
 			}
@@ -60,89 +60,89 @@ func SecurityMiddleware(secret string) gin.HandlerFunc {
 	}
 }
 
-// checkReplayAttack 检查重放攻击
+// checkReplayAttack Check replay attack
 func checkReplayAttack(c *gin.Context, window time.Duration) error {
 	timestampStr := c.GetHeader("X-Timestamp")
 	if timestampStr == "" {
-		return fmt.Errorf("缺少时间戳")
+		return fmt.Errorf("missing timestamp")
 	}
 
 	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
 	if err != nil {
-		return fmt.Errorf("时间戳格式错误")
+		return fmt.Errorf("invalid timestamp format")
 	}
 
 	requestTime := time.Unix(timestamp, 0)
 	now := time.Now()
 
-	// 检查时间窗口
+	// Check time window
 	if now.Sub(requestTime) > window {
-		return fmt.Errorf("请求已过期")
+		return fmt.Errorf("request expired")
 	}
 
-	// 检查时间是否过于超前
+	// Check if time is too far ahead
 	if requestTime.Sub(now) > time.Minute {
-		return fmt.Errorf("请求时间过于超前")
+		return fmt.Errorf("request time too far ahead")
 	}
 
-	// TODO: 这里可以添加nonce检查，防止相同时间戳的重复请求
-	// 可以使用Redis或内存缓存存储已使用的nonce
+	// TODO: Add nonce check here to prevent duplicate requests with same timestamp
+	// Can use Redis or memory cache to store used nonce
 	// redisClient := redis.GetClient()
 	// nonceKey := fmt.Sprintf("nonce:%d:%s", timestamp, c.Request.URL.Path)
 
-	// // 检查nonce是否已存在
+	// // Check if nonce already exists
 	// if _, err := redisClient.Get(nonceKey); err == nil {
-	// 	return fmt.Errorf("重复请求")
+	// 	return fmt.Errorf("duplicate request")
 	// }
 
-	// // 缓存nonce，过期时间为窗口长度
+	// // Cache nonce, expiration time is window length
 	// if err := redisClient.Set(nonceKey, "used", window); err != nil {
-	// 	return fmt.Errorf("缓存nonce失败: %v", err)
+	// 	return fmt.Errorf("failed to cache nonce: %v", err)
 	// }
 	return nil
 }
 
-// checkSignature 检查签名
+// checkSignature Check signature
 func checkSignature(c *gin.Context, secretKey string) error {
 	signature := c.GetHeader("X-Signature")
 	if signature == "" {
-		return fmt.Errorf("缺少签名")
+		return fmt.Errorf("missing signature")
 	}
 
-	// 构建签名字符串
+	// Build sign string
 	signString, err := buildSignString(c)
 	if err != nil {
-		return fmt.Errorf("构建签名字符串失败: %v", err)
+		return fmt.Errorf("failed to build sign string: %v", err)
 	}
 
-	// 计算期望的签名
+	// Calculate expected signature
 	expectedSignature := calculateSignature(signString, secretKey)
 
-	// 验证签名
+	// Verify signature
 	if !hmac.Equal([]byte(signature), []byte(expectedSignature)) {
-		return fmt.Errorf("签名不匹配")
+		return fmt.Errorf("signature mismatch")
 	}
 
 	return nil
 }
 
-// buildSignString 构建签名字符串
+// buildSignString Build sign string
 func buildSignString(c *gin.Context) (string, error) {
 	var parts []string
 
-	// 添加HTTP方法
+	// Add HTTP method
 	parts = append(parts, c.Request.Method)
 
-	// 添加路径
+	// Add path
 	parts = append(parts, c.Request.URL.Path)
 
-	// 添加时间戳
+	// Add timestamp
 	timestamp := c.GetHeader("X-Timestamp")
 	if timestamp != "" {
 		parts = append(parts, timestamp)
 	}
 
-	// 添加查询参数（按字母顺序排序）
+	// Add query parameters (sorted alphabetically)
 	if len(c.Request.URL.RawQuery) > 0 {
 		queryParams := make([]string, 0)
 		for key, values := range c.Request.URL.Query() {
@@ -154,7 +154,7 @@ func buildSignString(c *gin.Context) (string, error) {
 		parts = append(parts, strings.Join(queryParams, "&"))
 	}
 
-	// 添加请求体（如果是POST/PUT等方法）
+	// Add request body (if POST/PUT methods)
 	if c.Request.Method == "POST" || c.Request.Method == "PUT" || c.Request.Method == "PATCH" {
 		body := c.GetHeader("X-Body-Hash")
 		if body != "" {
@@ -165,7 +165,7 @@ func buildSignString(c *gin.Context) (string, error) {
 	return strings.Join(parts, "|"), nil
 }
 
-// calculateSignature 计算签名
+// calculateSignature Calculate signature
 func calculateSignature(data, secretKey string) string {
 	h := hmac.New(sha256.New, []byte(secretKey))
 	h.Write([]byte(data))

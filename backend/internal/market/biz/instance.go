@@ -236,7 +236,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		Name:        req.Name,
 		Status:      string(model.InstanceStatusActive),
 		AccessType:  instancepb.AccessType_HOSTING,
-		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+		McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
 	}, nil
 }
 
@@ -408,7 +408,7 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 		McpServerID:            req.McpServerId,
 		TemplateID:             uint(req.TemplateId),
 		EnabledToken:           req.EnabledToken,
-		ImgAddr:                req.ImgAddress,
+		ImgAddr:                imageAddress,
 		Port:                   req.Port,
 		InitScript:             req.InitScript,
 		Command:                req.Command,
@@ -1057,7 +1057,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		InstanceId:  oriInstance.InstanceID,
 		Name:        oriInstance.InstanceName,
 		AccessType:  instancepb.AccessType_HOSTING,
-		McpProtocol: instancepb.McpProtocol_STEAMABLE_HTTP,
+		McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
 		Status:      string(model.InstanceStatusActive),
 	}
 	return resp, nil
@@ -1071,12 +1071,12 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	packageID := req.PackageId
 	initScript := req.InitScript
 	command := req.Command
-	imgAddress := req.ImgAddress
 	envs := req.EnvironmentVariables
 	vms := req.VolumeMounts
 	startupTimeout := req.StartupTimeout
 	runningTimeout := req.RunningTimeout
 	mcpServers := req.McpServers
+	imgAddress := common.GetMcpHostingImage()
 
 	if oriInstance.McpProtocol == model.McpProtocolStdio {
 		if len(mcpServers) == 0 {

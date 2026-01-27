@@ -4,11 +4,12 @@
     <div class="flex justify-between items-start">
       <div class="flex gap-6">
         <!-- Logo -->
-        <div
-          class="w-24 h-24 rounded-2xl border border-gray-200 flex items-center justify-center bg-white shadow-sm overflow-hidden p-2"
-        >
-          <img :src="iconUrl(currentMCP)" alt="Logo" class="w-full h-full object-contain" />
-        </div>
+        <!-- <div
+          class="w-24 h-24 rounded-2xl border border-gray-200 flex items-center justify-center bg-white shadow-sm overflow-hidden"
+        > -->
+        <mcp-image :src="iconUrl(currentMCP)" width="96" height="96"></mcp-image>
+        <!-- <img :src="iconUrl(currentMCP)" alt="Logo" class="w-full h-full object-contain" /> -->
+        <!-- </div> -->
 
         <!-- Content -->
         <div class="flex flex-col justify-between py-1">
@@ -89,13 +90,13 @@
 
         <!-- Readme Card -->
         <el-card>
-          <h2 class="text-3xl font-bold mb-8">MCP-Auth （readme.md）</h2>
+          <!-- <h2 class="text-3xl font-bold mb-8">MCP-Auth （readme.md）</h2> -->
           <div class="prose max-w-none dark:prose-invert" v-html="renderedReadme"></div>
         </el-card>
       </div>
 
       <!-- Right Column -->
-      <div class="lg:col-span-1 flex flex-col gap-6 config-sticky">
+      <div class="lg:col-span-1 flex flex-col gap-6 config-sticky" v-if="currentMCP.status === 1">
         <!-- Config Card -->
         <el-card>
           <h2 class="text-lg font-bold mb-4">{{ t('market.config') }}</h2>
@@ -125,6 +126,7 @@ import { JsonFormatter } from '@/utils/json'
 import MarkdownIt from 'markdown-it'
 import baseConfig from '@/config/base_config.ts'
 import McpButton from '@/components/mcp-button/index.vue'
+import McpImage from '@/components/mcp-image/index.vue'
 
 const layout = useLayout()
 const { t, locale, jumpBack, jumpToPage, currentMCP } = useMarketDetailHooks()
@@ -143,7 +145,7 @@ const translationTag = (code: string) => {
 const iconUrl = computed(() => {
   return (card: any) => {
     if (card.iconUrl) {
-      return baseConfig.MAIN_SITE_URL + card.iconUrl
+      return card.iconUrl
     } else if (card.githubOwnerAvatarUrl) {
       return card.githubOwnerAvatarUrl
     } else {

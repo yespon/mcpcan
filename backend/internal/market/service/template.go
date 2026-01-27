@@ -11,10 +11,8 @@ import (
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
-	"github.com/kymo-mcp/mcpcan/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -59,13 +57,12 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 		Command:        req.Command,
 		StartupTimeout: req.StartupTimeout,
 		RunningTimeout: req.RunningTimeout,
-		EnvironmentID:  req.EnvironmentId,
 		PackageID:      req.PackageId,
-		ImgAddress:     req.ImgAddress,
 		McpServerID:    req.McpServerId,
 		Notes:          req.Notes,
 		IconPath:       req.IconPath,
 		OpenapiBaseUrl: req.OpenapiBaseUrl,
+		ServicePath:    req.ServicePath,
 	}
 
 	// Handle access type
@@ -91,7 +88,7 @@ func (s *TemplateService) TemplateCreate(ctx context.Context, req *instance.Temp
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -164,9 +161,7 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 		Command:        template.Command,
 		StartupTimeout: template.StartupTimeout,
 		RunningTimeout: template.RunningTimeout,
-		EnvironmentId:  int32(template.EnvironmentID),
 		PackageId:      template.PackageID,
-		ImgAddress:     template.ImgAddress,
 		McpServerId:    template.McpServerID,
 		Notes:          template.Notes,
 		IconPath:       template.IconPath,
@@ -201,7 +196,7 @@ func (s *TemplateService) TemplateDetail(ctx context.Context, req *instance.Temp
 	case model.McpProtocolSSE:
 		resp.McpProtocol = instance.McpProtocol_SSE
 	case model.McpProtocolStreamableHttp:
-		resp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+		resp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 	case model.McpProtocolStdio:
 		resp.McpProtocol = instance.McpProtocol_STDIO
 	default:
@@ -254,13 +249,12 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 	template.Command = req.Command
 	template.StartupTimeout = req.StartupTimeout
 	template.RunningTimeout = req.RunningTimeout
-	template.EnvironmentID = req.EnvironmentId
 	template.PackageID = req.PackageId
-	template.ImgAddress = req.ImgAddress
 	template.McpServerID = req.McpServerId
 	template.Notes = req.Notes
 	template.IconPath = req.IconPath
 	template.OpenapiBaseUrl = req.OpenapiBaseUrl
+	template.ServicePath = req.ServicePath
 
 	// Handle access type
 	switch req.AccessType {
@@ -274,11 +268,18 @@ func (s *TemplateService) TemplateEdit(ctx context.Context, req *instance.Templa
 		template.AccessType = model.AccessTypeProxy // Default proxy mode
 	}
 
+	switch req.SourceType {
+	case instance.SourceType_OPENAPI:
+		template.SourceType = model.SourceTypeOpenapi
+	default:
+		template.SourceType = model.SourceTypeCustom
+	}
+
 	// Handle MCP protocol
 	switch req.McpProtocol {
 	case instance.McpProtocol_SSE:
 		template.McpProtocol = model.McpProtocolSSE
-	case instance.McpProtocol_STEAMABLE_HTTP:
+	case instance.McpProtocol_STREAMABLE_HTTP:
 		template.McpProtocol = model.McpProtocolStreamableHttp
 	case instance.McpProtocol_STDIO:
 		template.McpProtocol = model.McpProtocolStdio
@@ -371,7 +372,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		switch req.McpProtocol {
 		case instance.McpProtocol_SSE:
 			filters["mcp_protocol"] = model.McpProtocolSSE
-		case instance.McpProtocol_STEAMABLE_HTTP:
+		case instance.McpProtocol_STREAMABLE_HTTP:
 			filters["mcp_protocol"] = model.McpProtocolStreamableHttp
 		case instance.McpProtocol_STDIO:
 			filters["mcp_protocol"] = model.McpProtocolStdio
@@ -385,17 +386,6 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		return nil, fmt.Errorf("failed to get templates: %v", err)
 	}
 
-	// envIds
-	envIds := make([]string, 0, len(templates))
-	for _, instance := range templates {
-		envIds = append(envIds, fmt.Sprintf("%d", instance.EnvironmentID))
-	}
-	envIds = utils.RemoveDuplicates(envIds)
-	envNames, err := mysql.McpEnvironmentRepo.FindNamesByIDs(ctx, envIds)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query environment names: %v", err)
-	}
-
 	// Build response
 	resp := &instance.TemplateListResp{
 		List:     make([]*instance.TemplateDetailResp, 0, len(templates)),
@@ -406,30 +396,23 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 
 	// Process each template
 	for _, template := range templates {
-		envName, ok := envNames[fmt.Sprintf("%d", template.EnvironmentID)]
-		if !ok {
-			envName = ""
-		}
 		templateResp := &instance.TemplateDetailResp{
-			TemplateId:      int32(template.ID),
-			Name:            template.Name,
-			Port:            template.Port,
-			InitScript:      template.InitScript,
-			Command:         template.Command,
-			StartupTimeout:  template.StartupTimeout,
-			RunningTimeout:  template.RunningTimeout,
-			EnvironmentId:   int32(template.EnvironmentID),
-			PackageId:       template.PackageID,
-			ImgAddress:      template.ImgAddress,
-			McpServerId:     template.McpServerID,
-			Notes:           template.Notes,
-			IconPath:        template.IconPath,
-			McpServers:      string(template.McpServers),
-			CreatedAt:       template.CreatedAt.String(),
-			UpdatedAt:       template.UpdatedAt.String(),
-			EnvironmentName: envName,
-			ServicePath:     template.ServicePath,
-			OpenapiBaseUrl:  template.OpenapiBaseUrl,
+			TemplateId:     int32(template.ID),
+			Name:           template.Name,
+			Port:           template.Port,
+			InitScript:     template.InitScript,
+			Command:        template.Command,
+			StartupTimeout: template.StartupTimeout,
+			RunningTimeout: template.RunningTimeout,
+			PackageId:      template.PackageID,
+			McpServerId:    template.McpServerID,
+			Notes:          template.Notes,
+			IconPath:       template.IconPath,
+			McpServers:     string(template.McpServers),
+			CreatedAt:      template.CreatedAt.String(),
+			UpdatedAt:      template.UpdatedAt.String(),
+			ServicePath:    template.ServicePath,
+			OpenapiBaseUrl: template.OpenapiBaseUrl,
 		}
 
 		// Handle access type
@@ -456,7 +439,7 @@ func (s *TemplateService) TemplateList(ctx context.Context, req *instance.Templa
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:
@@ -511,14 +494,13 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 			Command:        template.Command,
 			StartupTimeout: template.StartupTimeout,
 			RunningTimeout: template.RunningTimeout,
-			EnvironmentId:  int32(template.EnvironmentID),
 			PackageId:      template.PackageID,
-			ImgAddress:     template.ImgAddress,
 			McpServerId:    template.McpServerID,
 			Notes:          template.Notes,
 			IconPath:       template.IconPath,
 			McpServers:     string(template.McpServers),
 			OpenapiBaseUrl: template.OpenapiBaseUrl,
+			ServicePath:    template.ServicePath,
 		}
 
 		// Handle access type
@@ -545,7 +527,7 @@ func (s *TemplateService) TemplateListWithPagination(ctx context.Context, page, 
 		case model.McpProtocolSSE:
 			templateResp.McpProtocol = instance.McpProtocol_SSE
 		case model.McpProtocolStreamableHttp:
-			templateResp.McpProtocol = instance.McpProtocol_STEAMABLE_HTTP
+			templateResp.McpProtocol = instance.McpProtocol_STREAMABLE_HTTP
 		case model.McpProtocolStdio:
 			templateResp.McpProtocol = instance.McpProtocol_STDIO
 		default:
@@ -653,13 +635,6 @@ func (s *TemplateService) TemplateListWithPaginationHandler(c *gin.Context) {
 
 	// Build filter conditions
 	filters := make(map[string]interface{})
-
-	// Handle environment ID filter
-	if envIdStr := c.Query("environmentId"); envIdStr != "" {
-		if envId, parseErr := strconv.ParseInt(envIdStr, 10, 32); parseErr == nil {
-			filters["environment_id"] = envId
-		}
-	}
 
 	// Handle access type filter
 	if accessType := c.Query("accessType"); accessType != "" {

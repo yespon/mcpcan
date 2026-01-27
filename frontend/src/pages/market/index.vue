@@ -2,7 +2,7 @@
   <div>
     <!-- <div><el-card></el-card></div> -->
     <div v-loading="loading" class="flex gap-4 mt-4">
-      <div class="w-75 type-sticky" v-if="false">
+      <div class="w-75 type-sticky">
         <el-input
           ref="searchInputRef"
           v-model="keyword"
@@ -13,23 +13,47 @@
         />
         <el-card>
           <div class="flex justify-between items-center">
-            <span class="my-1">{{ t('market.search') }}</span>
-            <el-button v-if="categoryName" type="primary" size="small" @click="clearType">
+            <span class="my-1">{{ t('market.search') }} </span>
+            <el-button
+              v-if="categoryName || keyword"
+              type="primary"
+              size="small"
+              @click="clearType"
+            >
               {{ t('market.clear') }}
             </el-button>
           </div>
           <div class="mt-3 flex flex-col gap-2">
             <div
-              v-for="type in typeMap"
+              class="w-full flex items-center gap-3 rounded-md px-3 py-2 text-left type-item"
+              :class="{ 'active-type': categoryName === '' }"
+              @click="selectType('')"
+            >
+              <div class="flex items-center gap-3 w-full justify-between">
+                <span class="text-sm">
+                  <el-icon>
+                    <i class="icon iconfont MCP-qita"></i>
+                  </el-icon>
+                  {{ t('market.type.all') }}
+                </span>
+              </div>
+            </div>
+            <div
+              v-for="type in typeMap.filter((item) => item.count > 0)"
               :key="type.value"
               class="w-full flex items-center gap-3 rounded-md px-3 py-2 text-left type-item"
               :class="{ 'active-type': categoryName === type.value }"
               @click="selectType(type.value)"
             >
-              <el-icon>
-                <i class="icon iconfont" :class="type.icon"></i>
-              </el-icon>
-              <span class="text-sm">{{ type.label }}</span>
+              <div class="flex items-center gap-3 w-full justify-between">
+                <span class="text-sm">
+                  <el-icon>
+                    <i class="icon iconfont" :class="type.icon"></i>
+                  </el-icon>
+                  {{ type.label }}
+                </span>
+                <span>{{ type.count > 0 ? type.count : '' }}</span>
+              </div>
             </div>
           </div>
         </el-card>
@@ -55,6 +79,7 @@
             <el-pagination
               background
               :total="pagerConfig.total"
+              layout="prev, pager, next, jumper"
               :current-page="pagerConfig.page"
               :page-size="pagerConfig.pageSize"
               @current-change="handlePageChange"
@@ -72,7 +97,7 @@ import { useMarketListHooks } from './hooks/index.ts'
 import McpCard from './modules/mcp-card.vue'
 import { MarketAPI } from '@/api/market/index.ts'
 
-const { t, loading, typeMap, categoryName, keyword, searchInputRef, pagerConfig } =
+const { t, loading, typeMap, typeCount, categoryName, keyword, searchInputRef, pagerConfig } =
   useMarketListHooks()
 
 const marketList = ref([])
@@ -103,11 +128,11 @@ const handlePageChange = (newPage: number) => {
   handleGetMarketList()
 }
 
-// handle get market list data
+// handle get market list data and type count
 const handleGetMarketList = async () => {
   try {
     loading.value = true
-    const { list, total } = await MarketAPI.list({
+    const { list, total, categories } = await MarketAPI.list({
       page: pagerConfig.value.page,
       pageSize: pagerConfig.value.pageSize,
       name: keyword.value,
@@ -115,6 +140,11 @@ const handleGetMarketList = async () => {
     })
     marketList.value = list || []
     pagerConfig.value.total = Number(total || 0)
+    typeCount.value = categories || []
+    typeMap.value = typeMap.value.map((type) => ({
+      ...type,
+      count: categories.find((item: any) => item.code === type.value)?.total || 0,
+    }))
   } finally {
     loading.value = false
   }
@@ -144,6 +174,7 @@ onMounted(() => {
   border: 1px solid transparent;
   &.active-type {
     background-color: var(--ep-bg-purple-color-deep);
+    border-color: var(--ep-btn-color-top);
   }
   &:hover {
     scale: 1.02;

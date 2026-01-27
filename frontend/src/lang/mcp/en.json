@@ -26,7 +26,7 @@
       "formData": {
         "title": "Add a new Template",
         "name": "Name",
-        "notes": "Desc",
+        "notes": "Description",
         "isBind": "Bound",
         "size": "Size",
         "path": "Path",
@@ -89,12 +89,14 @@
         "asTemplate": "As Template",
         "view": "View",
         "log": "Container Logs",
+        "logs": "Logs",
         "accessLogs": "Access Logs",
+        "debugTool": "Debug",
         "stop": "Stop",
         "start": "Start",
         "reStart": "Restart",
         "token": "Token",
-        "probe": "Probe Status",
+        "probe": "Probe",
         "delete": "Delete",
         "deleteBox": "Are you sure to delete this instance?",
         "detection": "Detection successful; Service is connected normally",
@@ -102,7 +104,7 @@
         "stopInstance": "Instance stopped",
         "copy": "Copy Config",
         "selectTempalte": "Select a Tempalte",
-        "customize": "Customize",
+        "customize": "Quick Start",
         "byTemplate": "By Template",
         "byDocs": "By OpenAPI",
         "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
@@ -117,7 +119,8 @@
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
         "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing.",
         "noToken": "Not certified",
-        "apiSelectTitle": "Select OpenAPI Document"
+        "apiSelectTitle": "Select OpenAPI Document",
+        "downloadCode": "Download Example Code Package"
       },
       "tableHeadDesc": {
         "token": "After enabling token authentication, token verification will be activated, and accessing MCP services requires carrying the token Token"
@@ -257,6 +260,34 @@
         "errorInfo": "Error Info",
         "warnInfo": "Warn Info",
         "unit": "Warns"
+      },
+      "card": {
+        "configUrl": "Config",
+        "containerControl": "Container Control",
+        "start": "Open",
+        "stop": "Close"
+      },
+      "hostingForm": {
+        "codeExample": "Example",
+        "commandExample": "Command Example",
+        "dependenceExample": "Dependence Example",
+        "startExample": "Start Command Example",
+        "commandTips": "Note: After clicking use, the command will be overwritten and cannot be restored",
+        "startTips": "Startup Command Description",
+        "accessUrl": "Access IP",
+        "listenUrl": "Container Listen URL",
+        "listenUrlTips1": "Default binding: 0.0.0.0 address, the gateway will automatically identify the container SVC address and route traffic into the container. No need to modify this parameter in the current running mode.",
+        "listenPort": "Container Listen Port",
+        "listenPortTips1": "Default 8080, the gateway will automatically identify the container and route traffic into the container. No need to modify this parameter in the current running mode.",
+        "listenPortTips2": "Please enter the real listening port number of the MCP service",
+        "listenPath": "Container Listen Path",
+        "listenPathTips1": "The startup command will convert the STDIO protocol to the SSE protocol, and the MCP service mount path is /sse. The gateway will automatically identify the path and route the traffic in. No need to modify this parameter in the current running mode.",
+        "listenPathTips2": "Please enter the access path mounted by the MCP service. Leave it blank for no prefix path. You can refer to the example data in the deployment template.",
+        "listenPathTips3": "The startup command will convert the STDIO protocol to the STREAMABLEHTTP protocol, and the MCP service mount path is /mcp. The gateway will automatically identify the path and route the traffic in. No need to modify this parameter in the current running mode.",
+        "envTips": "Container Environment Variable Configuration",
+        "envNotes": "Note: Environment variable configuration refers to the container's environment variable configuration, and will also be brought into the MCP service through the hosting command.",
+        "volume": "Volume Mount",
+        "volumeTips": "Container Volume Mount Configuration"
       }
     },
     "type": {
@@ -275,6 +306,19 @@
       "passthrough": "Passthrough",
       "account": "Account",
       "isEnable": "Enable"
+    },
+    "debugTool": {
+      "list": "Tools",
+      "input": "Input Parameters",
+      "action": "Action",
+      "output": "Entry Output",
+      "run": "Run",
+      "copyInput": "Copy Input",
+      "copyOutput": "Copy Output",
+      "noData": "No Data",
+      "keyPlaceholder": "Enter name to filter...",
+      "runSuccess": "Tool execution successful",
+      "runFail": "Tool execution error"
     }
   }
 }

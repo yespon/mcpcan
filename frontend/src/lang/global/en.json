@@ -86,7 +86,9 @@
     "back": "Back",
     "on": "ON",
     "off": "OFF",
-    "more": "More"
+    "more": "More",
+    "select": "Select",
+    "use": "Use"
   },
   "status": {
     "active": "Active",
@@ -120,7 +122,7 @@
     "initScript": "Init Script",
     "imgAddressTip1": "Built on Python: 3.12-alpine image, lightweight and compatible with mainstream container environments",
     "imgAddressTip2": "Pre installed components and versions are clearly locked：",
-    "imgAddressTip3": "Command: mcp hosting. After startup, convert MCP STDIO protocol to STEAMABLE-HTTP protocol to run.",
+    "imgAddressTip3": "Command: mcp hosting. After startup, convert MCP STDIO protocol to STREAMABLE-HTTP protocol to run.",
     "env": "Environment",
     "tools": "Support tools",
     "baseCommand": "Basic commands",

@@ -26,11 +26,24 @@ message ListMcpServerRequest {
   string category_name = 4;
 }
 
+message Category {
+  // @inject_tag: json:"id" desc:"ID"
+  string id = 1;
+  // @inject_tag: json:"name" desc:"Name"
+  string name = 2;
+  // @inject_tag: json:"code" desc:"Code"
+  string code = 3;
+  // @inject_tag: json:"total" desc:"Total count"
+  string total = 4;
+}
+
 message ListMcpServerReply {
   // @inject_tag: json:"total" desc:"Total count"
   string total = 1;
+  // @inject_tag: json:"categories" desc:"Categories"
+  repeated Category categories = 2;
   // @inject_tag: json:"list" desc:"List"
-  repeated McpServer list = 2;
+  repeated McpServer list = 3;
 }
 
 message McpServer {
@@ -88,13 +101,4 @@ message McpServer {
   string github_owner_avatar_url = 26;
   // @inject_tag: json:"githubRepoUrl" desc:"Github Repo URL"
   string github_repo_url = 27;
-
-  message Category {
-    // @inject_tag: json:"id" desc:"ID"
-    string id = 1;
-    // @inject_tag: json:"name" desc:"Name"
-    string name = 2;
-    // @inject_tag: json:"code" desc:"Code"
-    string code = 3;
-  }
 }

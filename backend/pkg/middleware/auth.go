@@ -25,10 +25,10 @@ var SkipPaths = []string{
 	"/market/openapi/download",
 }
 
-// AuthTokenMiddleware 用户token验证中间件
+// AuthTokenMiddleware User token validation middleware
 func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 跳过登录等不需要认证的接口
+		// Skip authentication for login and other public endpoints
 		if shouldSkipAuth(c.Request.URL.Path) {
 			c.Next()
 			return
@@ -36,22 +36,22 @@ func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 
 		tokenString := ExtractToken(c)
 		if tokenString == "" {
-			i18n.Unauthorized(c, "缺少认证令牌")
+			i18n.Unauthorized(c, "missing auth token")
 			c.Abort()
 			return
 		}
 
 		claims, err := jwt.ParseTokenWithClaims(tokenString, secret)
 		if err != nil {
-			logger.Error("JWT令牌验证失败", zap.Error(err))
-			i18n.Unauthorized(c, "无效的认证令牌")
+			logger.Error("JWT token validation failed", zap.Error(err))
+			i18n.Unauthorized(c, "invalid auth token")
 			c.Abort()
 			return
 		}
 
-		// 检查令牌是否过期
+		// Check if token is expired
 		if time.Now().Unix() > int64(claims.ExpiresAt.Unix()) {
-			i18n.Unauthorized(c, "认证令牌已过期")
+			i18n.Unauthorized(c, "auth token expired")
 			c.Abort()
 			return
 		}
@@ -64,8 +64,8 @@ func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 
 		userToken, err := redis.GetUserTokenByToken(tokenString)
 		if err != nil {
-			logger.Error("获取用户令牌失败", zap.Error(err))
-			i18n.Unauthorized(c, "无效的认证令牌")
+			logger.Error("failed to get user token", zap.Error(err))
+			i18n.Unauthorized(c, "invalid auth token")
 			c.Abort()
 			return
 		}
@@ -75,14 +75,14 @@ func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		// 检查令牌是否有效
+		// Check if token is valid
 		c.Set("userId", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Next()
 	}
 }
 
-// shouldSkipAuth 判断是否跳过认证
+// shouldSkipAuth Check if authentication should be skipped
 func shouldSkipAuth(path string) bool {
 	for _, skipPath := range SkipPaths {
 		if strings.HasPrefix(path, skipPath) {
@@ -92,15 +92,15 @@ func shouldSkipAuth(path string) bool {
 	return false
 }
 
-// ExtractToken 提取令牌
+// ExtractToken Extract token
 func ExtractToken(c *gin.Context) string {
-	// 从Authorization头提取
+	// Extract from Authorization header
 	auth := c.GetHeader("Authorization")
 	if auth != "" && strings.HasPrefix(auth, "Bearer ") {
 		return strings.TrimPrefix(auth, "Bearer ")
 	}
 
-	// 从查询参数提取
+	// Extract from query parameter
 	token := c.Query("token")
 	if token != "" {
 		return token

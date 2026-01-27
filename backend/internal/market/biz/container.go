@@ -340,6 +340,8 @@ func (cd *ContainerBiz) getMcpHostingImageCfg(imgAddress string, port int32, ini
 	}
 
 	// Build complete startup script
+	// Escape single quotes for shell echo command
+	mcpServerCfg = strings.ReplaceAll(mcpServerCfg, "'", "'\\''")
 	startupScript := fmt.Sprintf(`
 		# Create working directory
 		mkdir -p /app/init
@@ -348,16 +350,19 @@ func (cd *ContainerBiz) getMcpHostingImageCfg(imgAddress string, port int32, ini
 #!/bin/sh
 set -e
 
+# Write /app/mcp-servers.json
+echo '%s' > /app/mcp-servers.json
+
 # Download and extract code package
 %s
 
 echo "[$(date)] Starting initialization script execution..."
 %s
 echo "[$(date)] Initialization script execution completed"
-EOF
-		# Write /app/mcp-servers.json
-		cat > /app/mcp-servers.json << 'EOF'
-%s
+
+# Start main program
+echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
+mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
 EOF
 
 		# Set script execution permissions
@@ -365,14 +370,10 @@ EOF
 		
 		# Execute initialization script
 		/app/init/startup.sh
-		
-		# Start main program
-		echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
-		mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
 	`,
+		mcpServerCfg,
 		codepkgInstallScript,
 		initScript,
-		mcpServerCfg,
 		port,
 		port)
 
@@ -758,7 +759,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		}
 	} else {
 		// Generate image configuration
-		imgPms, err = cd.getMcpHostingImageCfg(imgAddress, port, command, codepkgInstallScript, mcpServices)
+		imgPms, err = cd.getMcpHostingImageCfg(imgAddress, port, initScript, codepkgInstallScript, mcpServices)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
 		}

@@ -13,6 +13,7 @@ export const useMcpStore = defineStore('mcp', () => {
   const pvcList = ref<any[]>([])
   const volumeList = ref<any[]>([])
   const currentMCP = useStorage('currentMCP', {} as any)
+  const currentInstance = useStorage('currentInstance', {} as any)
 
   // source of instance list
   const sourceOptions = computed(() => [
@@ -39,7 +40,10 @@ export const useMcpStore = defineStore('mcp', () => {
    * Handle get package list
    */
   const handleGetPackageList = async () => {
-    const { list } = await CodeAPI.list(null)
+    const { list } = await CodeAPI.list({
+      page: 1,
+      pageSize: 999,
+    })
     packageList.value = list || []
   }
 
@@ -84,6 +88,7 @@ export const useMcpStore = defineStore('mcp', () => {
     accessTypeOptions,
     mcpProtocolOptions,
     currentMCP,
+    currentInstance,
     handleGetPackageList,
     handleGetEnvList,
     handleGetNodeList,

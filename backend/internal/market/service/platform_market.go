@@ -77,12 +77,13 @@ func (s *PlatformMarketService) ListMcpServer(c *gin.Context) {
 	// Convert response
 	list := make([]*pm.McpServer, 0, len(resp.List))
 	for _, item := range resp.List {
-		categories := make([]*pm.McpServer_Category, 0, len(item.CategoryIds))
+		categories := make([]*pm.Category, 0, len(item.CategoryIds))
 		for _, cat := range item.CategoryIds {
-			categories = append(categories, &pm.McpServer_Category{
-				Id:   cat.Id,
-				Name: cat.Name,
-				Code: cat.Code,
+			categories = append(categories, &pm.Category{
+				Id:    cat.Id,
+				Name:  cat.Name,
+				Code:  cat.Code,
+				Total: cat.Total,
 			})
 		}
 
@@ -118,8 +119,9 @@ func (s *PlatformMarketService) ListMcpServer(c *gin.Context) {
 	}
 
 	reply := &pm.ListMcpServerReply{
-		Total: resp.Total,
-		List:  list,
+		Total:      resp.Total,
+		Categories: resp.Categories,
+		List:       list,
 	}
 
 	common.GinSuccess(c, reply)
