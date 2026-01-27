@@ -49,8 +49,9 @@
         v-model:pageConfig="pageConfig"
         :gridConfig="{ xs: 24, sm: 12, md: 12, lg: 8, xl: 6 }"
         :handlerColumnConfig="{
-          width: '160px',
+          width: '180px',
           fixed: 'right',
+          align: 'center',
         }"
       >
         <template #action>
@@ -75,7 +76,7 @@
           </div>
         </template>
         <template #operation="{ row }">
-          <div class="flex align-center">
+          <div class="flex align-center justify-center">
             <el-button type="text" size="small" link class="base-btn-link" @click="handleEdit(row)">
               {{ t('common.edit') }}
             </el-button>

@@ -3,7 +3,6 @@
     <el-dialog
       v-model="dialogInfo.visible"
       :title="'快速开始'"
-      :show-close="false"
       append-to-body
       width="1200px"
       class="access-type-dialog"

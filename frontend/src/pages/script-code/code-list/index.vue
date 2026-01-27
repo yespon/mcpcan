@@ -56,8 +56,9 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '140px',
+        width: '180px',
         fixed: 'right',
+        align: 'center',
       }"
     >
       <template #action>

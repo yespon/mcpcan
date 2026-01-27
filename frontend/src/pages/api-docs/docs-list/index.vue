@@ -55,8 +55,9 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '140px',
+        width: '180px',
         fixed: 'right',
+        align: 'center',
       }"
     >
       <template #action>
@@ -96,26 +97,6 @@
         <el-button type="danger" size="small" link @click="handleDelete(row)">{{
           t('common.delete')
         }}</el-button>
-
-        <!-- <el-dropdown
-          trigger="click"
-          class="ml-4"
-          @click.stop
-          :show-arrow="false"
-          @command="(cmd: string) => handleCommand(cmd, row)"
-        >
-          <el-icon class="link-hover cursor-pointer"><More /></el-icon>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="handleDownload">
-                {{ t('common.download') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="handleDelete">
-                <el-button type="danger" size="small" link>{{ t('common.delete') }}</el-button>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown> -->
       </template>
     </TablePlus>
   </div>

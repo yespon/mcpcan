@@ -266,7 +266,8 @@
         "containerControl": "容器启停",
         "start": "启用",
         "stop": "禁用"
-      }
+      },
+      "hostingForm": {}
     },
     "type": {
       "hosting": "托管",
