@@ -43,7 +43,7 @@
                   STEAMABLE_HTTP协议
                 </div>
                 <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
-                  标准输入输出STDIO协议（对外暴露SSE/STEAMABLE_HTTP）
+                  STDIO标准输入输出协议（转为 SSE/STEAMABLE_HTTP）
                 </div>
               </div>
             </div>
@@ -68,7 +68,7 @@
                 STEAMABLE_HTTP协议
               </div>
               <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
-                标准输入输出STDIO协议（对外暴露SSE/STEAMABLE_HTTP）
+                STDIO标准输入输出协议（转为 SSE/STEAMABLE_HTTP）
               </div>
             </div>
           </div>
@@ -108,7 +108,7 @@ const accessOptions = [
     color: '#67C23A',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP, McpProtocol.STDIO],
     description:
-      '托管模式是指平台利用自身容器管理能力运行 MCP 服务，并通过系统内置网关和适配器解决流量代理监控和协议不兼容问题',
+      '托管模式让平台利用自身容器能力运行MCP服务，通过内置网关和适配器解决流量代理、监控及协议兼容问题',
   },
   {
     label: '代理 (Proxy)',
@@ -118,7 +118,7 @@ const accessOptions = [
     color: '#E6A23C',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
     description:
-      '代理模式将平台转化为 MCP 服务的统一访问网关。而是通过平台提供的代理地址进行交互;平台在转发请求的过程中附加安全防护与审计能力，实现屏蔽后端、统一入口的目标。',
+      '代理模式将平台作为MCP服务的统一访问网关，通过平台代理地址交互。平台在转发请求时提供安全防护与审计，实现后端屏蔽、统一入口。',
   },
   {
     label: '直连 (Direct)',
@@ -128,7 +128,7 @@ const accessOptions = [
     color: '#409EFF',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
     description:
-      '直连模式是平台最轻量级的接入方式，平台仅承担配置注册中心角色，不代理任何业务流量，不参与健康探测与运行监控。客户端按照平台存储的配置，直接与外部 MCP 服务通信。',
+      '直连模式是最轻量级接入方式，平台仅作配置注册中心，不代理业务流量，不参与健康探测与监控。客户端直连外部MCP服务。',
   },
   {
     label: 'OpenAPI',
@@ -138,7 +138,7 @@ const accessOptions = [
     color: '#ff8eb9',
     supportTypes: [McpProtocol.STEAMABLE_HTTP],
     description:
-      '将标准的 OpenAPI 接口文档自动转化为 MCP 服务。平台解析接口文档并生成适配器，使得传统的 HTTP 接口能够通过 MCP 协议进行流式访问，从而快速实现现有业务接口到 MCP 生态的无缝集成。',
+      '将标准OpenAPI文档自动转为MCP服务。平台解析文档并生成适配器，使传统HTTP接口可通过MCP协议流式访问，快速实现业务接口到MCP生态的无缝集成。',
   },
 ]
 const currentModal = computed(() => {

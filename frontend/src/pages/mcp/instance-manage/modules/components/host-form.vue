@@ -86,7 +86,7 @@
                 示例
                 MCP服务代码包，下载代码文件可用于了解不同编程语言在此平台的启动方式。也可以查看<a
                   href="#/template-manage"
-                  >模板列表</a
+                  >部署模板</a
                 >
                 提供了多个代码包启动示例。
               </div>
@@ -149,7 +149,7 @@
                     说明：平台针对
                     MCP服务启动提供了默认容器，选择以上运行环境示例可以查看启动示例命令。也可以到<a
                       href="#/template-manage"
-                      >模板列表</a
+                      >部署模板</a
                     >
                     中查看启动示例。
                   </div>
@@ -193,24 +193,67 @@
           </div>
         </el-col>
       </el-row>
-      <div class="font-size-3">
-        <span class="font-bold">命令启动顺序：</span>
-        <br />
-        <span class="font-bold">代码包解压</span>
-        :会自动下载代码文件到/app/codepkg/目录中并解压，注意在后续依赖命令和启动命令中先试用cd/app/codepkg后再执行。
-        <br />
-        <div class="text-orange-400 my-1">
-          <span>特别注意:</span>
-          假设压缩包code.zip中包含顶层文件夹code，解压后路径为/app/codepkg/code.
+      <div class="tip tip-primary">
+        <div class="font-bold mb-2">MCP 容器内服务启动命令执行顺序</div>
+        <div class="space-y-2">
+          <div>
+            <span class="font-bold">代码包解压</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              系统会自动下载代码文件，并解压至 /app/codepkg/ 目录。
+            </div>
+            <div class="text-xs text-orange-500 mt-1">
+              特别注意：若压缩包为 code.zip 且内置顶层文件夹 code，解压后最终路径为
+              /app/codepkg/code。后续执行依赖命令与启动命令时，需先执行 cd /app/codepkg
+              进入对应目录。
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">依赖命令</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              执行依赖命令时，需避免出现阻塞型指令。一旦发生命令阻塞，将直接导致后续所有动作无法正常执行。
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">启动命令</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              启动命令默认在系统根路径下执行。若上一步依赖命令中已执行 cd
+              操作进入项目目录，且执行后未退出该目录，启动命令会直接沿用此路径，无需再次执行目录切换操作。
+            </div>
+          </div>
         </div>
-        <span class="font-bold">依赖命令</span>:当存在阻塞命名后会导致后续动作无法执行
-        <br />
-        <span class="font-bold">启动命令</span>: 默认在系统/根路径，如果上一步依赖命令中已经cd
-        到项目目录，并且执行后没有退出，启动命令会沿用依赖中路径位置，不需要再次进入项目目录。
       </div>
       <div class="font-size-3 mt-4">
-        <span class="font-bold light:text-black dark:text-white">启动容器说明</span>
-        <div v-html="pageInfo.tooltip.imgAddress"></div>
+        <div class="tip tip-primary mt-2">
+          <span class="font-bold light:text-black dark:text-white">MCP托管容器构建说明：</span>
+          <div class="mb-2">
+            基于 debian:bookworm-slim 镜像构建，兼顾镜像体积与兼容性（完整 glibc 支持），适配主流
+            Python/Node.js 原生扩展。
+          </div>
+          <div class="font-bold mb-1">预装组件及版本说明：</div>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>
+              系统基础命令：curl、git、wget、tar、zip、unzip 及基础编译依赖（build-essential）。
+            </li>
+            <li>
+              Python 环境：
+              <ul class="list-disc pl-5 mt-1 space-y-1">
+                <li>采用 pyenv 进行多版本管理，预装 Python 3.12.8（默认）、3.11.9、3.10.14。</li>
+                <li>集成现代包管理工具：poetry、uv（含 uvx），均已配置阿里云 PyPI 加速源。</li>
+              </ul>
+            </li>
+            <li>
+              Node.js 环境：
+              <ul class="list-disc pl-5 mt-1 space-y-1">
+                <li>采用 nvm 进行多版本管理，预装 Node.js v22（默认）、v20。</li>
+                <li>集成全套包管理工具：npm、yarn、pnpm，均已配置国内镜像源。</li>
+              </ul>
+            </li>
+            <li>
+              默认启动命令：mcp-hosting。启动后作为网关服务，将标准 MCP STDIO 协议转换为
+              HTTP（SSE）协议，提供远程调用能力。
+            </li>
+          </ul>
+        </div>
       </div>
 
       <el-form-item label="访问地址" class="mt-6">
@@ -221,7 +264,8 @@
                 <div class="w-24">0.0.0.0</div>
               </template>
               <div>
-                默认绑0.0.0.0地址，网关会自动识别容器并将流是导入容器中，当前运行模式无需修改此参数。
+                默认绑定：0.0.0.0地址，网关会自动识别容器SVC
+                地址，并将流是导入容器中。当前运行模式无需修改此参数。
               </div>
             </el-popover>
           </el-radio-button>
@@ -273,8 +317,8 @@
               <div>
                 {{
                   pageInfo.formData.mcpProtocol === 3
-                    ? '启动命令会将 STDIO 协议转为 SSE和 STEAMABLEHTTP协议，此路径 /sse对应SSE协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。'
-                    : `请输入 MCP 服务挂载的访问 路径，留空则无前缀访问路 径。可参考 模板列表 中模版示例并启动后对照代码和容器日志。`
+                    ? '启动命令会将 STDIO 协议转为 SSE协议，MCP服务挂载路径/sse，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。'
+                    : `请输入MCP服务挂载的访问路径，留空则无前缀路径。可参考"部署模板"中示例数据。`
                 }}
               </div>
             </el-popover>
@@ -287,7 +331,8 @@
                 <div class="w-24">0.0.0.0</div>
               </template>
               <div>
-                默认绑0.0.0.0地址，网关会自动识别容器并将流是导入容器中，当前运行模式无需修改此参数。
+                默认绑定绑定：0.0.0.0地址，网关会自动识别容器SVC
+                地址，并将流是导入容器中。当前运行模式无需修改此参数。
               </div>
             </el-popover>
           </el-radio-button>
@@ -299,7 +344,7 @@
                 </div>
               </template>
               <div>
-                默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改 此参数。
+                默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改此参数。
               </div>
             </el-popover>
           </el-radio-button>
@@ -311,8 +356,8 @@
                 </div>
               </template>
               <div>
-                启动命令会将 STDIO 协议转为 SSE和 STREAMABLEHTTP协议，此路径
-                /mcp对应STREAMABLE_HTTP协议，网关会自动识别路径并将流量导入容器中，当前运行模式无需修改此参数。
+                启动命令会将 STDIO 协议转为STREAMABLEHTTP协议，MCP 服务挂载路径
+                /mcp，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。
               </div>
             </el-popover>
           </el-radio-button>
@@ -718,18 +763,16 @@ import {
   Remove,
   CircleClose,
   RefreshRight,
-  Refresh,
   Download,
   UploadFilled,
 } from '@element-plus/icons-vue'
 import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
-import { JsonFormatter } from '@/utils/json'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import TokenForm from './token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
-import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
+import { AccessType, InstanceData, NodeVisible } from '@/types/instance'
 import {
   type VolumeMountsItme,
   type PvcForm,
@@ -738,7 +781,7 @@ import {
 } from '@/types/index.ts'
 import { useMcpStoreHook } from '@/stores'
 import Select from '@/components/mcp-select/index.vue'
-import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
+import { formatFileSize, timestampToDate } from '@/utils/system'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { TemplateAPI } from '@/api/mcp/template'
 import { cloneDeep } from 'lodash-es'
@@ -756,7 +799,6 @@ const {
   pageInfo,
   query,
   jumpToPage,
-  placeholderServer,
   showCommand,
   disabledPvcNode,
   disabledReadOnly,
@@ -764,16 +806,8 @@ const {
   selectVisible,
   exampleList,
 } = useInstanceFormHooks()
-const {
-  packageList,
-  envList,
-  nodeList,
-  pvcList,
-  volumeList,
-  currentInstance,
-  sourceOptions,
-  accessTypeOptions,
-} = toRefs(useMcpStoreHook())
+const { packageList, envList, nodeList, pvcList, volumeList, currentInstance } =
+  toRefs(useMcpStoreHook())
 const {
   handleGetPackageList,
   handleGetEnvList,
@@ -808,7 +842,7 @@ const mcpServersTips = computed(() => {
             <a href="#/template-manage">Template List</a> which provides multiple startup examples.`
     : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
             MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
-            <a href="#/template-manage">模板列表</a> 提供了多个启动示例。`
+            <a href="#/template-manage">部署模板</a> 提供了多个启动示例。`
 })
 
 /**
@@ -876,7 +910,7 @@ const handleDeleteVolume = (index: number | string) => {
  * @param key - $event
  * @param volume - item of pvc
  */
-const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
+const handlePvcChange = (_key: any, volume: VolumeMountsItme) => {
   const pvc = pvcList.value.find((pvc: PvcForm) => pvc.name === volume.pvcName)
   if (pvc) {
     const accessModes = pvc.accessModes || []
@@ -961,7 +995,7 @@ const handleConfirm = async () => {
     )
     if (result !== 'confirm') return
   }
-  baseInfo.value.validate(async (valid: boolean, fields: any) => {
+  baseInfo.value.validate(async (valid: boolean) => {
     if (valid) {
       try {
         pageInfo.value.loading = true
@@ -1040,7 +1074,9 @@ const handleDownloadExample = async (item: any) => {
     pageSize: 10,
     name: item.name,
   })
-  list[0] && handleDownload(list[0])
+  if (list[0]) {
+    await handleDownload(list[0])
+  }
 }
 /**
  * Handle download code package

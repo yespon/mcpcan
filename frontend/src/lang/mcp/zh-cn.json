@@ -18,8 +18,8 @@
       "pageDesc": {
         "createTitle": "创建 MCP Server 模板",
         "editTitle": "编辑 MCP Server 模板",
-        "list": "MCP模板列表",
-        "desc": "管理你的模板列表以及提供再可快速部署MCP服务实例",
+        "list": "MCP部署模板",
+        "desc": "管理你的部署模板以及提供再可快速部署MCP服务实例",
         "total": "模板总数",
         "compress": "代码包已默认加压到"
       },

@@ -50,7 +50,7 @@
           >
             MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
             MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
-            <a href="#/template-manage">模板列表</a> 提供了多个启动示例。
+            <a href="#/template-manage">部署模板</a> 提供了多个启动示例。
           </div>
         </el-col>
       </el-row>
