@@ -53,38 +53,15 @@
         </div>
       </template>
       <template #operation="{ row }">
-        <div class="flex align-center">
-          <el-button size="small" link @click="handleEditTemplate(row)" class="base-btn-link">
-            {{ t('env.run.action.edit') }}
-          </el-button>
-          <el-button size="small" link @click="handleCreatInstance(row)" class="base-btn-link">
-            {{ t('mcp.template.action.createInstance') }}
-          </el-button>
-          <el-button type="danger" link @click="handleDeleteTemplate(row)">
-            {{ t('mcp.instance.action.delete') }}
-          </el-button>
-          <!-- <el-dropdown
-            trigger="click"
-            class="ml-4"
-            @click.stop
-            :show-arrow="false"
-            @command="(cmd: string) => handleCommand(cmd, row)"
-          >
-            <el-icon class="link-hover cursor-pointer"><More /></el-icon>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="handleCreatInstance">
-                  {{ t('mcp.template.action.createInstance') }}
-                </el-dropdown-item>
-                <el-dropdown-item command="handleDeleteTemplate">
-                  <el-button type="danger" link>
-                    {{ t('mcp.instance.action.delete') }}
-                  </el-button>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown> -->
-        </div>
+        <el-button size="small" link @click="handleEditTemplate(row)" class="base-btn-link">
+          {{ t('env.run.action.edit') }}
+        </el-button>
+        <el-button size="small" link @click="handleCreatInstance(row)" class="base-btn-link">
+          {{ t('mcp.template.action.createInstance') }}
+        </el-button>
+        <el-button type="danger" link @click="handleDeleteTemplate(row)">
+          {{ t('mcp.instance.action.delete') }}
+        </el-button>
       </template>
     </TablePlus>
 

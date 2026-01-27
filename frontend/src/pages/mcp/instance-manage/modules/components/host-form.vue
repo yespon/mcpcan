@@ -691,7 +691,7 @@
   <!-- 下载示例代码包弹窗 -->
   <el-dialog
     v-model="downloadDialogVisible"
-    title="下载示例代码包"
+    :title="t('mcp.instance.pageDesc.downloadCode')"
     width="520px"
     append-to-body
     :close-on-click-modal="false"
@@ -711,7 +711,7 @@
         </div>
         <el-button class="base-btn-link" link @click="handleDownloadExample(item)">
           <el-icon class="mr-1"><Download /></el-icon>
-          下载
+          {{ t('common.download') }}
         </el-button>
       </div>
     </div>
