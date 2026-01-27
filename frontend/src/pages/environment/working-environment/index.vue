@@ -21,6 +21,7 @@
         :handlerColumnConfig="{
           fixed: 'right',
           width: '260px',
+          align: 'center',
         }"
         v-model:pageConfig="pageConfig"
       >

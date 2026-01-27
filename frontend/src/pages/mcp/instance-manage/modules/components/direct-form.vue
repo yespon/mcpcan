@@ -150,10 +150,11 @@ const handleSaveAsTemplate = async () => {
 const init = (instance: InstanceResult | null) => {
   if (instance) {
     pageInfo.value.formData = cloneDeep(instance)
+  } else {
+    pageInfo.value.formData.mcpProtocol = 1
   }
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.DIRECT
-    // pageInfo.value.formData.mcpProtocol = 1
   })
 }
 defineExpose({

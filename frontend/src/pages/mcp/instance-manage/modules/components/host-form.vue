@@ -47,11 +47,8 @@
         <el-col :span="6">
           <div
             class="pl-3 rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
-          >
-            MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
-            MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
-            <a href="#/template-manage">模板列表</a> 提供了多个启动示例。
-          </div>
+            v-html="mcpServersTips"
+          ></div>
         </el-col>
       </el-row>
       <el-form-item prop="packageId">
@@ -133,7 +130,7 @@
             >
               <template #reference>
                 <div>
-                  <el-scrollbar height="175px">
+                  <el-scrollbar height="175px" always>
                     <div class="flex flex-col gap-2 pr-2 position-relative">
                       <div
                         v-for="(item, index) in deployTemplateData.configurations"
@@ -144,13 +141,6 @@
                       >
                         <div class="font-bold truncate" :title="item.name">
                           {{ item.name }}
-                          <!-- <el-tooltip
-                                  effect="dark"
-                                  :content="item.name"
-                                  placement="top-start"
-                                >
-                                  {{ item.name }}
-                                </el-tooltip> -->
                         </div>
                       </div>
                     </div>
@@ -761,7 +751,7 @@ import deployTemplateData from '@/config/deploy-temlate-data.json'
 import MonacoEditor from '@/components/MonacoEditor/index.vue'
 import { CodeAPI } from '@/api/code/index'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const {
   pageInfo,
   query,
@@ -810,6 +800,17 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
   handleGetPackageList()
   ElMessage.success(t('action.upload'))
 }
+
+const mcpServersTips = computed(() => {
+  return locale.value === 'en'
+    ? `MCP service SSE/STEAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
+            After saving, the gateway access configuration will be displayed on the list page. You can also view
+            <a href="#/template-manage">Template List</a> which provides multiple startup examples.`
+    : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
+            MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
+            <a href="#/template-manage">模板列表</a> 提供了多个启动示例。`
+})
+
 /**
  * Current environment
  */
@@ -826,9 +827,6 @@ const currentPackage = computed(() => {
     ) || { name: '', size: '', createdAt: '' }
   )
 })
-const handleFormat = () => {
-  pageInfo.value.formData.mcpServers = JsonFormatter.format(pageInfo.value.formData.mcpServers, 2)
-}
 const handleSelectPackage = () => {
   handleGetPackageList()
   selectVisible.value = true
@@ -1097,11 +1095,12 @@ const init = async (instance: InstanceResult | null) => {
   await handleGetPackageList() // 获取包列表
   if (instance) {
     pageInfo.value.formData = cloneDeep(instance)
+  } else {
+    pageInfo.value.formData.mcpProtocol = 3
+    pageInfo.value.formData.servicePath = '/sse'
   }
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.HOSTING
-    // pageInfo.value.formData.mcpProtocol = 3
-    // pageInfo.value.formData.servicePath = '/sse'
     // 默认选中第一个环境变量;所以上诉均没有return
     handleChangeEnvironmentId(envList.value[0]?.id)
   })

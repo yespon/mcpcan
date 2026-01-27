@@ -60,7 +60,7 @@
             </el-form-item>
           </el-form>
           <TokenForm
-            v-if="!formData.instanceId"
+            v-if="dialogInfo.operation !== 'template' && !formData.instanceId"
             ref="tokenForm"
             :formData="formData.tokens[0]"
           ></TokenForm>

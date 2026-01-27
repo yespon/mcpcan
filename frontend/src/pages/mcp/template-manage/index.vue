@@ -21,8 +21,9 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '165px',
+        width: '220px',
         fixed: 'right',
+        align: 'center',
       }"
     >
       <template #action>
