@@ -62,7 +62,9 @@
               <span
                 class="rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
               >
-                配置中存在 header 时，网关转发来自于客户端传输的 header时默认覆盖
+                此项不配置时：默认透传来自客户端的Headers到MCP服务中。
+                如果MCPServers配置中存在Header参数，优先级为：MCPServers配置中Header >
+                客户端的Headers
               </span>
             </div>
           </template>
@@ -70,7 +72,11 @@
             <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
           </div>
           <div class="tip tip-primary">
-            注意:自定义header无需客户端提交，网关转发流量时自动携带到MCP服务请求中。当客户端请求，MCP配置，header透传自定义三者都存在header则优先级为header>MCP配置>客户端。也就是三者中存在相同header，以自定义配置为准，其次是MCP配置，再其次客户端请求haeder。
+            注意事项：1.自定义 Header 无需客户端主动提交，网关在转发流量时，会自动将其携带至 MCP
+            服务的请求中。 2.若客户端请求 Header、MCP 配置 Header、自定义透传 Header
+            三者存在同名项，优先级顺序为：自定义透传 Header > MCP 配置 Header > 客户端请求 Header。
+            即同名 Header 取值时，优先采用自定义透传配置，其次为 MCP
+            配置，最后为客户端请求传入的值。
           </div>
         </el-collapse-item>
       </el-collapse>
