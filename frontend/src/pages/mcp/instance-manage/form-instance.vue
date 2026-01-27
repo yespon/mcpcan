@@ -90,7 +90,7 @@ const handleConfirm = () => {
 const handleSaveAsTemplate = () => {
   formComponent.value.handleSaveAsTemplate()
 }
-// 实例详情
+// instance details
 const handleGetDetail = async () => {
   let formData: any = {}
   const data = await InstanceAPI.detail({
@@ -108,7 +108,7 @@ const handleGetDetail = async () => {
   formData.volumeMounts = data.volumeMounts || []
   return formData
 }
-// 模板详情
+// template details
 const handleGetTemplateDetail = async () => {
   let formData: any = {}
   const data = await TemplateAPI.detail({
@@ -147,7 +147,7 @@ const handleGetTemplateDetail = async () => {
   ]
   return formData
 }
-// 市场详情
+//instacen  market details
 const handleInitMarketInstance = async () => {
   let tokenValue =
     'Bearer ' +
@@ -188,31 +188,31 @@ const handleInitMarketInstance = async () => {
   }
   return formData
 }
-// 初始化当前表单组件数据
+// handle init components formdata
 const init = () => {
   if (query.instanceId) {
-    // 编辑
+    // edit instance
     handleGetDetail().then((formData) => {
       nextTick(() => {
         formComponent.value.init(formData)
       })
     })
   } else if (query.templateId) {
-    // 模板创建
+    // create instance by template
     handleGetTemplateDetail().then((formData) => {
       nextTick(() => {
         formComponent.value.init(formData)
       })
     })
   } else if (query.from === 'market') {
-    // 市场创建
+    // create instance by market
     handleInitMarketInstance().then((formData) => {
       nextTick(() => {
         formComponent.value.init(formData)
       })
     })
   } else {
-    // 自定义创建
+    // create instance by custom
     nextTick(() => {
       formComponent.value.init(null)
     })

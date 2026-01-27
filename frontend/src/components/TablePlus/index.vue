@@ -131,6 +131,7 @@
     </el-table-column>
     <el-table-column
       v-if="props.showOperation"
+      v-bind="props.handlerColumnConfig"
       :fixed="props.handlerColumnConfig?.fixed || 'right'"
       :width="props.handlerColumnConfig?.width || '240px'"
       :label="t('common.operation')"
@@ -206,6 +207,7 @@ interface PageConfig {
 interface HandlerColumnConfig {
   width: string | null
   fixed: string | null
+  align?: string | null
 }
 interface GridConfig {
   xs?: number

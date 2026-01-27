@@ -89,13 +89,14 @@
         "asTemplate": "As Template",
         "view": "View",
         "log": "Container Logs",
+        "logs": "Logs",
         "accessLogs": "Access Logs",
-        "debugTool": "Debug Tool",
+        "debugTool": "Debug",
         "stop": "Stop",
         "start": "Start",
         "reStart": "Restart",
         "token": "Token",
-        "probe": "Probe Status",
+        "probe": "Probe",
         "delete": "Delete",
         "deleteBox": "Are you sure to delete this instance?",
         "detection": "Detection successful; Service is connected normally",
@@ -118,7 +119,8 @@
         "confirmEdit": "After editing the instance, it will restart; Are you sure about editing?",
         "packStatusTips": "There is a delay in the status, and container operation can be checked through status detection or log viewing.",
         "noToken": "Not certified",
-        "apiSelectTitle": "Select OpenAPI Document"
+        "apiSelectTitle": "Select OpenAPI Document",
+        "downloadCode": "Download Example Code Package"
       },
       "tableHeadDesc": {
         "token": "After enabling token authentication, token verification will be activated, and accessing MCP services requires carrying the token Token"
@@ -258,6 +260,12 @@
         "errorInfo": "Error Info",
         "warnInfo": "Warn Info",
         "unit": "Warns"
+      },
+      "card": {
+        "configUrl": "Config",
+        "containerControl": "Container Control",
+        "start": "Open",
+        "stop": "Close"
       }
     },
     "type": {
