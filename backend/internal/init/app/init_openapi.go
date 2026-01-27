@@ -69,20 +69,41 @@ func (a *App) initOpenapi(ctx context.Context) error {
 		return fmt.Errorf("failed to query openapi packages: %w", err)
 	}
 
+	var existingBase *model.McpOpenapiPackage
 	for _, pkg := range existingPackages {
-		if pkg.OriginalName != fileName || pkg.BaseOpenapiFileID != "" {
-			continue
+		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
+			existingBase = pkg
+			break
 		}
-		if err := fileManager.DeleteOpenapiFile(pkg.OpenapiFilePath); err != nil {
-			logger.Warn("Failed to delete old openapi file",
-				zap.String("openapiFileId", pkg.OpenapiFileID),
-				zap.String("filePath", pkg.OpenapiFilePath),
-				zap.Error(err))
+	}
+
+	if existingBase != nil {
+		if _, err := os.Stat(existingBase.OpenapiFilePath); err == nil {
+			if err := fileManager.DeleteOpenapiFile(fileInfo.OpenapiFilePath); err != nil {
+				logger.Warn("Failed to delete duplicated openapi file",
+					zap.String("filePath", fileInfo.OpenapiFilePath),
+					zap.Error(err))
+			}
+			logger.Info("OpenAPI base package already exists, skipping initialization",
+				zap.String("openapiFileId", existingBase.OpenapiFileID),
+				zap.String("filePath", existingBase.OpenapiFilePath))
+			return nil
 		}
-		if err := mysql.McpOpenapiPackageRepo.DeleteByOpenapiFileID(ctx, pkg.OpenapiFileID); err != nil {
-			logger.Warn("Failed to delete old openapi record",
-				zap.String("openapiFileId", pkg.OpenapiFileID),
-				zap.Error(err))
+	}
+
+	for _, pkg := range existingPackages {
+		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
+			if err := fileManager.DeleteOpenapiFile(pkg.OpenapiFilePath); err != nil {
+				logger.Warn("Failed to delete old openapi file",
+					zap.String("openapiFileId", pkg.OpenapiFileID),
+					zap.String("filePath", pkg.OpenapiFilePath),
+					zap.Error(err))
+			}
+			if err := mysql.McpOpenapiPackageRepo.DeleteByOpenapiFileID(ctx, pkg.OpenapiFileID); err != nil {
+				logger.Warn("Failed to delete old openapi record",
+					zap.String("openapiFileId", pkg.OpenapiFileID),
+					zap.Error(err))
+			}
 		}
 	}
 
