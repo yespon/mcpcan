@@ -56,7 +56,7 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '120px',
+        width: '140px',
         fixed: 'right',
       }"
     >
@@ -88,16 +88,17 @@
         </div>
       </template>
       <template #operation="{ row }">
-        <el-button
-          type="text"
-          size="small"
-          link
-          @click="handleViewCode(row)"
-          class="base-btn-link"
-          >{{ t('common.view') }}</el-button
-        >
+        <el-button type="text" size="small" link @click="handleViewCode(row)" class="base-btn-link">
+          {{ t('common.view') }}
+        </el-button>
+        <el-button type="text" size="small" link @click="handleDownload(row)" class="base-btn-link">
+          {{ t('common.download') }}
+        </el-button>
+        <el-button type="danger" size="small" link @click="handleDelete(row)">{{
+          t('common.delete')
+        }}</el-button>
 
-        <el-dropdown
+        <!-- <el-dropdown
           trigger="click"
           class="ml-4"
           @click.stop
@@ -115,7 +116,7 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
-        </el-dropdown>
+        </el-dropdown> -->
       </template>
     </TablePlus>
   </div>

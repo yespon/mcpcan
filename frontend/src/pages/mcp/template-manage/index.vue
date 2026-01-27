@@ -21,7 +21,7 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '120px',
+        width: '165px',
         fixed: 'right',
       }"
     >
@@ -57,7 +57,13 @@
           <el-button size="small" link @click="handleEditTemplate(row)" class="base-btn-link">
             {{ t('env.run.action.edit') }}
           </el-button>
-          <el-dropdown
+          <el-button size="small" link @click="handleCreatInstance(row)" class="base-btn-link">
+            {{ t('mcp.template.action.createInstance') }}
+          </el-button>
+          <el-button type="danger" link @click="handleDeleteTemplate(row)">
+            {{ t('mcp.instance.action.delete') }}
+          </el-button>
+          <!-- <el-dropdown
             trigger="click"
             class="ml-4"
             @click.stop
@@ -77,7 +83,7 @@
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
-          </el-dropdown>
+          </el-dropdown> -->
         </div>
       </template>
     </TablePlus>

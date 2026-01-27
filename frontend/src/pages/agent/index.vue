@@ -45,11 +45,11 @@
         :requestConfig="requestConfig"
         :columns="columns"
         show-view-mode
-        default-view-mode="card"
+        view-mode="card"
         v-model:pageConfig="pageConfig"
         :gridConfig="{ xs: 24, sm: 12, md: 8, lg: 6, xl: 4 }"
         :handlerColumnConfig="{
-          width: '120px',
+          width: '160px',
           fixed: 'right',
         }"
       >
@@ -76,15 +76,24 @@
         </template>
         <template #operation="{ row }">
           <div class="flex align-center">
+            <el-button type="text" size="small" link class="base-btn-link" @click="handleEdit(row)">
+              {{ t('common.edit') }}
+            </el-button>
             <el-button
               type="text"
               size="small"
               link
               class="base-btn-link"
-              @click="handleEdit(row)"
-              >{{ t('common.edit') }}</el-button
+              v-if="row.accessType !== AgentType.COZE"
+              @click="handleConnection(row)"
             >
-            <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
+              {{ t('common.connection') }}
+            </el-button>
+            <el-button type="danger" size="small" link @click="handleDelete(row)">
+              {{ t('common.delete') }}
+            </el-button>
+
+            <!-- <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
               <el-icon class="link-hover cursor-pointer"><More /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -99,7 +108,7 @@
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
-            </el-dropdown>
+            </el-dropdown> -->
           </div>
         </template>
         <template #slotCard="{ row }: { row: any }">
