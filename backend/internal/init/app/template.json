@@ -244,9 +244,9 @@
     "openapi_file_name": "mcpcan-openapi.json",
     "name": "MCPCAN OpenAPI",
     "openapiBaseUrl": "https://CURRENT_DOMAIN/api/market",
-    "sourceType": 4,
-    "mcpProtocol": 2,
-    "accessType": 3,
-    "nodes": "MCPCAN OpenAPI Template: After replacing the current domain name, you can call it by filling in the server's Authorization Bearer token (example: Bearer xxxxxxx, the token can be obtained from the browser console of the current user in the MCPCAN system)"
+    "sourceType": "openapi",
+    "mcpProtocol": "streamable-http",
+    "accessType": "hosting",
+    "notes": "MCPCAN OpenAPI Template: After replacing the current domain name, you can call it by filling in the server's Authorization Bearer token (example: Bearer xxxxxxx, the token can be obtained from the browser console of the current user in the MCPCAN system)"
   }
 ]

@@ -32,25 +32,34 @@ type intelligentAccessSeed struct {
 
 const intelligentAccessSeedJSON = `[
   {
-    "access_name": "COZE_SAAS_TEAM_DEF(Complete the enterprise ID information)",
+    "access_name": "COZE_SAAS_TEAM(Complete the enterprise ID information)",
     "access_type": "COZE",
     "sub_type": "Team",
     "enterprise_id": "Please fill in your enterprise ID here"
   },
   {
-    "access_name": "COZE_SAAS_PERSON_DEF(Complete the Coze user ID information)",
+    "access_name": "COZE_SAAS_PERSON(Complete the Coze user ID information)",
     "access_type": "COZE",
     "sub_type": "Person",
     "coze_user_id": "Please fill in your Coze user ID here"
   },
   {
-    "access_name": "Dify_DB_INFO(Please fill in the database information)",
+    "access_name": "DifyEnterprise_DB_INFO(Please fill in the database information)",
     "access_type": "DifyEnterprise",
     "db_host": "postgres_db_host_address",
     "db_port": 5432,
     "db_user": "postgres_db_user",
     "db_password": "postgres_db_password",
-    "db_name": "Dify"
+    "db_name": "dify"
+  },
+  {
+    "access_name": "Dify_DB_INFO(Please fill in the database information)",
+    "access_type": "Dify",
+    "db_host": "postgres_db_host_address",
+    "db_port": 5432,
+    "db_user": "postgres_db_user",
+    "db_password": "postgres_db_password",
+    "db_name": "dify"
   },
   {
     "access_name": "N8N_Account(Please fill in the account information)",
