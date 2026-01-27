@@ -370,29 +370,6 @@
                       </div>
                     </div>
                     <div class="flex items-center">
-                      <el-dropdown
-                        trigger="click"
-                        class="ml-4"
-                        @click.stop
-                        :show-arrow="false"
-                        @command="(cmd: string) => handleCommand(cmd, row)"
-                      >
-                        <el-icon class="link-hover cursor-pointer mx-1"><Operation /></el-icon>
-                        <template #dropdown>
-                          <el-dropdown-menu>
-                            <el-dropdown-item command="handleEditInstance">
-                              <el-button type="primary" size="small" link class="base-btn-link">
-                                {{ t('env.run.action.edit') }}
-                              </el-button>
-                            </el-dropdown-item>
-                            <el-dropdown-item command="handleDeleteInstance">
-                              <el-button type="danger" link>
-                                {{ t('mcp.instance.action.delete') }}
-                              </el-button>
-                            </el-dropdown-item>
-                          </el-dropdown-menu>
-                        </template>
-                      </el-dropdown>
                       <el-tooltip v-if="row.accessType === AccessType.HOSTING" placement="top">
                         <el-icon
                           :size="16"
@@ -472,6 +449,25 @@
                         <i class="icon iconfont MCP-tool"></i>
                       </el-icon>
                     </el-tooltip>
+                    <el-tooltip :content="t('env.run.action.edit')" placement="top">
+                      <el-icon
+                        :size="16"
+                        class="mx-2 cursor-pointer link-hover"
+                        @click="handleEditInstance(row)"
+                      >
+                        <Edit />
+                      </el-icon>
+                    </el-tooltip>
+                    <el-tooltip :content="t('mcp.instance.action.delete')" placement="top">
+                      <el-icon
+                        :size="16"
+                        class="mx-2 cursor-pointer link-hover"
+                        @click="handleDeleteInstance(row)"
+                        color="#F56C6C"
+                      >
+                        <Delete />
+                      </el-icon>
+                    </el-tooltip>
                   </div>
                 </div>
                 <mcp-button size="small" @click="handleViewConfig(row)">链接配置</mcp-button>
@@ -530,7 +526,16 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, More, Warning, Share, Document, Operation } from '@element-plus/icons-vue'
+import {
+  Plus,
+  More,
+  Warning,
+  Share,
+  Document,
+  Operation,
+  Edit,
+  Delete,
+} from '@element-plus/icons-vue'
 import { timestampToDate } from '@/utils/system'
 import TablePlus from '@/components/TablePlus/index.vue'
 import { useInstanceTableHooks } from './hooks/index.ts'

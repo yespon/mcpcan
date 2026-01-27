@@ -24,7 +24,11 @@
                 :placeholder="t('mcp.instance.formData.instanceName')"
               />
             </el-form-item>
-            <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
+            <el-form-item
+              v-if="!formData.templateId"
+              :label="t('mcp.instance.formData.environmentId')"
+              prop="environmentId"
+            >
               <el-select
                 v-model="formData.environmentId"
                 :placeholder="t('mcp.instance.formData.environmentId')"
@@ -63,7 +67,14 @@
           <div class="mt-8 color-gray text-3 pb-4">{{ t('mcp.instance.openApi.tips') }}</div>
         </div>
       </el-splitter-panel>
-      <el-splitter-panel size="50%" :min="600" class="p-4">
+      <el-splitter-panel
+        size="50%"
+        :min="600"
+        class="p-4"
+        :class="{
+          'cursor-not-allowed': !!formData.templateId && dialogInfo.operation === 'template',
+        }"
+      >
         <div
           :class="{
             'disabled-click': !!formData.templateId && dialogInfo.operation === 'template',

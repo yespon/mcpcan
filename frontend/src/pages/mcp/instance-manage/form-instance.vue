@@ -90,7 +90,7 @@ const handleConfirm = () => {
 const handleSaveAsTemplate = () => {
   formComponent.value.handleSaveAsTemplate()
 }
-// 实例详情
+// instance details
 const handleGetDetail = async () => {
   let formData: any = {}
   const data = await InstanceAPI.detail({
@@ -108,7 +108,7 @@ const handleGetDetail = async () => {
   formData.volumeMounts = data.volumeMounts || []
   return formData
 }
-// 模板详情
+// template details
 const handleGetTemplateDetail = async () => {
   let formData: any = {}
   const data = await TemplateAPI.detail({
@@ -147,7 +147,7 @@ const handleGetTemplateDetail = async () => {
   ]
   return formData
 }
-// 市场详情
+//instacen  market details
 const handleInitMarketInstance = async () => {
   let tokenValue =
     'Bearer ' +
