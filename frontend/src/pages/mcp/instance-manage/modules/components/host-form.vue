@@ -76,20 +76,15 @@
               </span>
             </div>
           </el-tooltip>
-          <mcp-button size="small" class="base-btn" @click="handleSelectPackage"> 选择 </mcp-button>
+          <mcp-button size="small" class="base-btn" @click="handleSelectPackage">
+            {{ t('common.select') }}
+          </mcp-button>
           <el-tooltip class="box-item" effect="light" placement="top-start">
             <el-button class="base-btn-link" link @click="downloadDialogVisible = true">
-              下载示例代码包
+              {{ t('mcp.instance.hostingForm.codeExample') }}
             </el-button>
             <template #content>
-              <div class="w-40">
-                示例
-                MCP服务代码包，下载代码文件可用于了解不同编程语言在此平台的启动方式。也可以查看<a
-                  href="#/template-manage"
-                  >部署模板</a
-                >
-                提供了多个代码包启动示例。
-              </div>
+              <div class="w-40" v-html="codeTips"></div>
             </template>
           </el-tooltip>
         </div>
@@ -120,7 +115,9 @@
         </el-col>
         <el-col :span="8">
           <div class="template-list-container">
-            <div class="text-sm font-bold mb-2">运行环境命令实例</div>
+            <div class="text-sm font-bold mb-2">
+              {{ t('mcp.instance.hostingForm.commandExample') }}
+            </div>
             <el-popover
               :visible="!!selectedCommand.commands"
               placement="right"
@@ -146,12 +143,7 @@
                     </div>
                   </el-scrollbar>
                   <div class="tip tip-primary mt-2">
-                    说明：平台针对
-                    MCP服务启动提供了默认容器，选择以上运行环境示例可以查看启动示例命令。也可以到<a
-                      href="#/template-manage"
-                      >部署模板</a
-                    >
-                    中查看启动示例。
+                    {{ commandTips }}
                   </div>
                 </div>
               </template>
@@ -163,8 +155,9 @@
                       link
                       type="primary"
                       @click="handleUseCommand(selectedCommand?.commands?.install, 'initScript')"
-                      >使用</el-button
                     >
+                      {{ t('common.use') }}
+                    </el-button>
                   </div>
                   <div class="p-2 rounded text-xs text-gray-500 break-all">
                     {{ selectedCommand?.commands?.install }}
@@ -172,13 +165,16 @@
                 </div>
                 <div v-if="!showCommand" class="mb-2">
                   <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-sm">启动命令示例</span>
+                    <span class="font-bold text-sm">{{
+                      t('mcp.instance.hostingForm.startExample')
+                    }}</span>
                     <el-button
                       link
                       type="primary"
                       @click="handleUseCommand(selectedCommand.commands.start, 'command')"
-                      >使用</el-button
                     >
+                      {{ t('common.use') }}
+                    </el-button>
                   </div>
                   <div class="p-2 rounded text-xs text-gray-500 break-all">
                     {{ selectedCommand?.commands?.start }}
@@ -187,7 +183,9 @@
                 <div class="tip tip-primary mb-2">
                   {{ selectedCommand?.description || selectedCommand?.description_en }}
                 </div>
-                <div class="text-xs text-orange-500">注意：点击使用后会覆盖命令，无法恢复</div>
+                <div class="text-xs text-orange-500">
+                  {{ t('mcp.instance.hostingForm.commandTips') }}
+                </div>
               </div>
             </el-popover>
           </div>
@@ -256,16 +254,19 @@
         </div>
       </div>
 
-      <el-form-item label="访问地址" class="mt-6">
+      <el-form-item :label="t('mcp.instance.hostingForm.accessUrl')" class="mt-6">
         <el-radio-group>
           <el-radio-button value="ip">
-            <el-popover title="容器监听地址" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenUrl')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <div class="w-24">0.0.0.0</div>
               </template>
               <div>
-                默认绑定：0.0.0.0地址，网关会自动识别容器SVC
-                地址，并将流是导入容器中。当前运行模式无需修改此参数。
+                {{ t('mcp.instance.hostingForm.listenUrlTips1') }}
               </div>
             </el-popover>
           </el-radio-button>
@@ -273,7 +274,11 @@
             value="port"
             :class="pageInfo.formData.mcpProtocol !== 3 ? 'deep-form' : ''"
           >
-            <el-popover title="容器监听端口" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenPort')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <div v-if="pageInfo.formData.mcpProtocol === 3" class="w-24 flex items-center">
                   <div class="w-24">8080</div>
@@ -290,8 +295,8 @@
               <div>
                 {{
                   pageInfo.formData.mcpProtocol === 3
-                    ? '默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改 此参数。'
-                    : '请输入 MCP服务真实监听端口号'
+                    ? t('mcp.instance.hostingForm.listenPortTips1')
+                    : t('mcp.instance.hostingForm.listenPortTips2')
                 }}
               </div>
             </el-popover>
@@ -300,7 +305,11 @@
             value="path"
             :class="pageInfo.formData.mcpProtocol !== 3 ? 'deep-form' : ''"
           >
-            <el-popover title="容器监听路径" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenPath')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <!-- STDIO 协议 -->
                 <div v-if="pageInfo.formData.mcpProtocol === 3" class="w-24 flex items-center">
@@ -317,8 +326,8 @@
               <div>
                 {{
                   pageInfo.formData.mcpProtocol === 3
-                    ? '启动命令会将 STDIO 协议转为 SSE协议，MCP服务挂载路径/sse，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。'
-                    : `请输入MCP服务挂载的访问路径，留空则无前缀路径。可参考"部署模板"中示例数据。`
+                    ? t('mcp.instance.hostingForm.listenPathTips1')
+                    : t('mcp.instance.hostingForm.listenPathTips2')
                 }}
               </div>
             </el-popover>
@@ -326,38 +335,48 @@
         </el-radio-group>
         <el-radio-group v-if="pageInfo.formData.mcpProtocol === 3" class="mt-4">
           <el-radio-button value="ip">
-            <el-popover title="容器监听地址" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenUrl')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <div class="w-24">0.0.0.0</div>
               </template>
               <div>
-                默认绑定绑定：0.0.0.0地址，网关会自动识别容器SVC
-                地址，并将流是导入容器中。当前运行模式无需修改此参数。
+                {{ t('mcp.instance.hostingForm.listenUrlTips1') }}
               </div>
             </el-popover>
           </el-radio-button>
           <el-radio-button value="port">
-            <el-popover title="容器监听端口" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenPort')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <div class="w-24 flex items-center">
                   <div class="w-24">8080</div>
                 </div>
               </template>
               <div>
-                默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改此参数。
+                {{ t('mcp.instance.hostingForm.listenPortTips1') }}
               </div>
             </el-popover>
           </el-radio-button>
           <el-radio-button value="path">
-            <el-popover title="容器监听路径" width="260" placement="bottom-start">
+            <el-popover
+              :title="t('mcp.instance.hostingForm.listenPath')"
+              width="260"
+              placement="bottom-start"
+            >
               <template #reference>
                 <div class="w-24 flex items-center" @click="handleChangePath">
                   <div class="flex-1">/mcp</div>
                 </div>
               </template>
               <div>
-                启动命令会将 STDIO 协议转为STREAMABLEHTTP协议，MCP 服务挂载路径
-                /mcp，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。
+                {{ t('mcp.instance.hostingForm.listenPathTips3') }}
               </div>
             </el-popover>
           </el-radio-button>
@@ -387,11 +406,13 @@
         <el-collapse-item name="1">
           <template #title>
             <div>
-              <span class="mr-1 font-bold">环境变量</span>
+              <span class="mr-1 font-bold">{{
+                t('mcp.instance.formData.environmentVariables')
+              }}</span>
               <span
                 class="rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
               >
-                容器环境变量配置
+                {{ t('mcp.instance.hostingForm.envTips') }}
               </span>
             </div>
           </template>
@@ -427,17 +448,17 @@
             </el-button>
           </el-form-item>
           <div class="tip tip-primary">
-            注意:环境变量配置是指容器的环境变量配置，同时也会通过托管命令带入到MCP服务中
+            {{ t('mcp.instance.hostingForm.envNotes') }}
           </div>
         </el-collapse-item>
         <el-collapse-item v-if="pageInfo.formData.environmentId" name="2">
           <template #title>
             <div>
-              <span class="mr-1 font-bold">卷挂载</span>
+              <span class="mr-1 font-bold">{{ t('mcp.instance.hostingForm.volume') }}</span>
               <span
                 class="rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
               >
-                容器卷挂载配置
+                {{ t('mcp.instance.hostingForm.volumeTips') }}
               </span>
             </div>
           </template>
@@ -843,6 +864,51 @@ const mcpServersTips = computed(() => {
     : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
             MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
             <a href="#/template-manage">部署模板</a> 提供了多个启动示例。`
+})
+const codeTips = computed(() => {
+  return locale.value === 'en'
+    ? ` Example MCP service code package, download the code files to understand how to start on this platform in different programming languages. You can also check the
+            <a href="#/template-manage"> Template List</a> which provides multiple code package startup examples.`
+    : ` 示例MCP服务代码包，下载代码文件可用于了解不同编程语言在此平台的启动方式。也可以查看<a href="#/template-manage"> 部署模板</a>提供了多个代码包启动示例。`
+})
+const commandTips = computed(() => {
+  return locale.value === 'en'
+    ? `Note: The platform provides a default container for MCP service startup. You can view the startup example commands by selecting the above runtime environment examples. You can also check the
+            <a href="#/template-manage"> Template List</a> which provides multiple startup examples.`
+    : ` 说明：平台针对MCP服务启动提供了默认容器，选择以上运行环境示例可以查看启动示例命令。也可以到<a href="#/template-manage">部署模板</a>中查看启动示例。`
+})
+
+const commandDesc = computed(() => {
+  return locale.value === 'en'
+    ? `
+      <span class="font-bold">Command Startup Sequence：</span>
+      <br />
+      <span class="font-bold">Code Package Decompression</span>
+      : Automatically downloads the code files to the /app/codepkg/ directory and decompresses them. Note that in subsequent dependency commands and startup commands, you should first try using cd /app/codepkg before executing.
+      <br />
+      <div class="text-orange-400 my-1">
+        <span>Notes:</span>
+        Assuming that the compressed file code .zip contains the top-level folder code, the decompressed path is /app/codepkg/code.
+      </div>
+      <span class="font-bold">Dependency Command</span>: When there is a blocking command, it will cause subsequent actions to fail.
+      <br />
+      <span class="font-bold">Startup Command</span>: By default, it is in the system/root path. If the previous dependency command has already cd'd into the project directory and has not exited after execution, the startup command will use the path location from the dependency and does not need to re-enter the project directory.
+    `
+    : `
+      <span class="font-bold">命令启动顺序：</span>
+      <br />
+      <span class="font-bold">代码包解压</span>
+      :会自动下载代码文件到/app/codepkg/目录中并解压，注意在后续依赖命令和启动命令中先试用cd/app/codepkg后再执行。
+      <br />
+      <div class="text-orange-400 my-1">
+        <span>特别注意:</span>
+        假设压缩包code.zip中包含顶层文件夹code，解压后路径为/app/codepkg/code.
+      </div>
+      <span class="font-bold">依赖命令</span>:当存在阻塞命名后会导致后续动作无法执行
+      <br />
+      <span class="font-bold">启动命令</span>: 默认在系统/根路径，如果上一步依赖命令中已经cd
+      到项目目录，并且执行后没有退出，启动命令会沿用依赖中路径位置，不需要再次进入项目目录。
+    `
 })
 
 /**

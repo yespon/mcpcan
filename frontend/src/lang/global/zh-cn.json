@@ -86,7 +86,9 @@
     "back": "返回",
     "on": "开启",
     "off": "关闭",
-    "more": "更多"
+    "more": "更多",
+    "select": "选择",
+    "use": "使用"
   },
   "status": {
     "active": "启用",

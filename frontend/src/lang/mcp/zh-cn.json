@@ -267,7 +267,28 @@
         "start": "启用",
         "stop": "禁用"
       },
-      "hostingForm": {}
+      "hostingForm": {
+        "codeExample": "代码示例",
+        "commandExample": "运行环境命令示例",
+        "dependenceExample": "依赖命令示例",
+        "startExample": "启动命令示例",
+        "commandTips": "注意：点击使用后会覆盖命令，无法恢复",
+        "startTips": "启动容器说明",
+        "accessUrl": "访问地址",
+        "listenUrl": "容器监听地址",
+        "listenUrlTips1": "默认绑定：0.0.0.0地址，网关会自动识别容器SVC地址，并将流量导入容器中。当前运行模式无需修改此参数。",
+        "listenPort": "容器监听端口",
+        "listenPortTips1": "默认8080，网关会自动识别容器并将流量导入容器中，当前运行模式无需修改此参数。",
+        "listenPortTips2": "请输入 MCP服务真实监听端口号",
+        "listenPath": "容器监听路径",
+        "listenPathTips1": "启动命令会将 STDIO 协议转为 SSE协议，MCP服务挂载路径/sse，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。",
+        "listenPathTips2": "请输入MCP服务挂载的访问路径，留空则无前缀路径。可参考部署模板中示例数据。",
+        "listenPathTips3": " 启动命令会将 STDIO 协议转为STREAMABLEHTTP协议，MCP 服务挂载路径/mcp，网关会自动识别路径并将流量导入。当前运行模式无需修改此参数。",
+        "envTips": "容器环境变量配置",
+        "envNotes": "注意:环境变量配置是指容器的环境变量配置，同时也会通过托管命令带入到MCP服务中",
+        "volume": "卷挂载",
+        "volumeTips": "容器卷挂载配置"
+      }
     },
     "type": {
       "hosting": "托管",
