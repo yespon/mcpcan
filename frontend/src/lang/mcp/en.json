@@ -108,7 +108,11 @@
         "byTemplate": "By Template",
         "byDocs": "By OpenAPI",
         "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
-        "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification."
+        "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification.",
+        "accessConfig": "Configuration",
+        "viewLogs": "Logs",
+        "saveAndRun": "Save and Run",
+        "backList": "List"
       },
       "pageDesc": {
         "createTitle": "Create a instance",
@@ -134,7 +138,7 @@
         "instanceName": "InstanceName",
         "deployType": "DeployType",
         "imgAddress": "ImgAddress",
-        "mcpServers": "mcpServersConfig",
+        "mcpServers": "MCPServersConfig",
         "mcpServersPlaceholder": "Please enter the MCP server configuration in JSON format,Example:",
         "configInfo": "ConfigInfo",
         "packageId": "CodePackage",
@@ -287,7 +291,23 @@
         "envTips": "Container Environment Variable Configuration",
         "envNotes": "Note: Environment variable configuration refers to the container's environment variable configuration, and will also be brought into the MCP service through the hosting command.",
         "volume": "Volume Mount",
-        "volumeTips": "Container Volume Mount Configuration"
+        "volumeTips": "Container Volume Mount Configuration",
+        "headerTitle": "Header Passthrough Configuration",
+        "directTips": "The current configuration of MCP service SSE / STREAMABLE HTTP protocol is in direct connection mode, mainly filling in the external MCP access configuration. The platform only plays the role of 'configuration registration center'. If you need to proxy business traffic or participate in health checks and operation monitoring, please switch to proxy mode."
+      },
+      "accessType": {
+        "title": "Quick Start",
+        "hosting": "Hosting",
+        "direct": "Direct",
+        "proxy": "Proxy",
+        "hostingDesc": "Hosting mode allows the platform to utilize its container capabilities to run MCP services, solving traffic proxying, monitoring, and protocol compatibility issues through built-in gateways and adapters.",
+        "proxyDesc": "Proxy mode takes the platform as a unified access gateway for MCP services, interacting through the proxy address. The platform provides security protection and auditing when forwarding requests, achieving backend shielding and a unified entrance.",
+        "directDesc": "Direct mode is the lightest access method, with the platform only serving as a configuration registration center, not proxying business traffic or participating in health checks and monitoring. Clients connect directly to external MCP services.",
+        "openAPIDesc": "Automatically convert standard OpenAPI documents into MCP services. The platform parses the documents and generates adapters, allowing traditional HTTP interfaces to be accessed via the MCP protocol, quickly achieving seamless integration of business interfaces into the MCP ecosystem.",
+        "protocolType": "Supported Protocol Types",
+        "SSE": "SSE Protocol",
+        "STEAMABLE_HTTP": "Steamable HTTP Protocol",
+        "STDIO": "STDIO Standard Input/Output Protocol (converted to SSE/STEAMABLE_HTTP)"
       }
     },
     "type": {

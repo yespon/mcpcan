@@ -257,7 +257,12 @@
             >
               {{ t('mcp.instance.action.probe') }}
             </el-button>
-            <el-button size="small" type="danger" link @click="handleDeleteInstance(row)">
+            <el-button
+              size="small"
+              type="danger"
+              link
+              @click="handleDeleteInstance(row.instanceId)"
+            >
               {{ t('mcp.instance.action.delete') }}
             </el-button>
           </div>
@@ -315,7 +320,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center">
+                    <div class="flex items-center h-[32px]">
                       <el-tooltip v-if="row.accessType === AccessType.HOSTING" placement="top">
                         <el-icon
                           :size="16"
@@ -411,7 +416,7 @@
                       <el-icon
                         :size="16"
                         class="mx-2 cursor-pointer link-hover"
-                        @click="handleDeleteInstance(row)"
+                        @click="handleDeleteInstance(row.instanceId)"
                         color="#F56C6C"
                       >
                         <Delete />

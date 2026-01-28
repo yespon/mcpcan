@@ -158,7 +158,7 @@ const handleCreatInstance = (row: TemplateResult) => {
   }
   jumpToPage({
     url: '/new-instance',
-    data: { templateId: row.templateId },
+    data: { templateId: row.templateId, type: row.accessType },
   })
 }
 

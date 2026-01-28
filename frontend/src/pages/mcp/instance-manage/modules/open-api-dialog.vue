@@ -25,7 +25,7 @@
               />
             </el-form-item>
             <el-form-item
-              v-if="!formData.templateId"
+              v-if="false"
               :label="t('mcp.instance.formData.environmentId')"
               prop="environmentId"
             >
@@ -705,7 +705,7 @@ const handleTemplateDetail = async (id: string) => {
       {
         enabled: true,
         expireAt: '',
-        headers: [{ key: 'Authorization', value: tokenValue }],
+        headers: [{ key: 'Authorization', value: '' }],
         publishAt: new Date().getTime(),
         token: tokenValue,
         tokenType: TokenType.BEARER,
@@ -768,7 +768,7 @@ const init = async (id?: string, type?: string) => {
         {
           enabled: true,
           expireAt: '',
-          headers: [{ key: 'Authorization', value: tokenValue }],
+          headers: [{ key: 'Authorization', value: '' }],
           publishAt: new Date().getTime(),
           token: tokenValue,
           tokenType: TokenType.BEARER,
