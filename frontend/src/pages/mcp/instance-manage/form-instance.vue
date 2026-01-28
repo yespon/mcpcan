@@ -11,7 +11,13 @@
     <div class="flex justify-center">
       <div class="form-body position-relative">
         <div class="form-title flex items-center">
-          快速创建-{{ ['代理模式', '直连模式', '托管模式'][Number(query.type) - 1] }}
+          {{ t('mcp.instance.accessType.title') }}-{{
+            [
+              t('mcp.instance.accessType.direct'),
+              t('mcp.instance.accessType.proxy'),
+              t('mcp.instance.accessType.hosting'),
+            ][Number(query.type) - 1]
+          }}
         </div>
         <component ref="formComponent" :is="currentComponent"></component>
         <div class="footer-action">
@@ -56,7 +62,7 @@ import { useInstanceFormHooks } from './hooks/form-instance.ts'
 import HostForm from './modules/components/host-form.vue'
 import ProxyForm from './modules/components/proxy-form.vue'
 import DirectForm from './modules/components/direct-form.vue'
-import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
+import { AccessType, McpProtocol, SourceType, InstanceData } from '@/types/instance'
 import McpButton from '@/components/mcp-button/index.vue'
 import { useMcpStoreHook } from '@/stores'
 import { InstanceAPI } from '@/api/mcp/instance'
