@@ -40,7 +40,7 @@
       <el-row>
         <el-col :span="18">
           <el-form-item prop="mcpServers">
-            <template #label></template>
+            <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
             <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
         </el-col>
