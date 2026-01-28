@@ -43,6 +43,30 @@ var QwenModels = []string{
 	"qwen-max",
 	"qwen-turbo",
 	"qwen-long",
+	"qwen3-235b-a22b",
+	"qwen3-32b",
+	"qwen3-14b",
+	"qwen3-8b",
+	"qwen3-30b-a3b",
+	"qwen3-coder-480b-a35b",
+	"qwen3-coder-30b-a3b",
+	"qwen3-vl-8b",
+	"qwen2.5-7b-instruct",
 }
 
-
+// Supported Zhipu GLM Models
+var ZhipuModels = []string{
+	"glm-4.5",
+	"glm-4.5-air",
+	"glm-4.7-flash",
+	"glm-4-32b",
+	"glm-4",
+	"glm-4-plus",
+	"glm-4-long",
+	"glm-4-flash",
+	"glm-4-air",
+	"glm-4-airx",
+	"glm-4v",
+	"glm-4v-plus",
+	"codegeex-4",
+}

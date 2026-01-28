@@ -44,3 +44,9 @@ cmd/**/logs/
 
 .idea
 .DS_Store
+
+# .agent
+.agent/
+
+# .vscode
+.vscode/docs
