@@ -2,7 +2,7 @@
   <div>
     <el-dialog
       v-model="dialogInfo.visible"
-      :title="'快速开始'"
+      :title="t('mcp.instance.accessType.title')"
       append-to-body
       width="1200px"
       class="access-type-dialog"
@@ -32,18 +32,20 @@
                 {{ item.description }}
               </div>
               <div class="mt-4 text-size-sm w-full">
-                <div class="font-bold text-left">支持协议类型</div>
+                <div class="font-bold text-left">
+                  {{ t('mcp.instance.accessType.protocolType') }}
+                </div>
                 <div v-if="item.supportTypes.includes(McpProtocol.SSE)" class="item-control">
-                  SSE协议
+                  {{ t('mcp.instance.accessType.SSE') }}
                 </div>
                 <div
                   v-if="item.supportTypes.includes(McpProtocol.STEAMABLE_HTTP)"
                   class="item-control"
                 >
-                  STEAMABLE_HTTP协议
+                  {{ t('mcp.instance.accessType.STEAMABLE_HTTP') }}
                 </div>
                 <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
-                  STDIO标准输入输出协议（转为 SSE/STEAMABLE_HTTP）
+                  {{ t('mcp.instance.accessType.STDIO') }}
                 </div>
               </div>
             </div>
@@ -57,18 +59,18 @@
               {{ item.description }}
             </div>
             <div class="mt-4 text-size-sm w-full">
-              <div class="font-bold text-left">支持协议类型</div>
+              <div class="font-bold text-left">{{ t('mcp.instance.accessType.protocolType') }}</div>
               <div v-if="item.supportTypes.includes(McpProtocol.SSE)" class="item-control">
-                SSE协议
+                {{ t('mcp.instance.accessType.SSE') }}
               </div>
               <div
                 v-if="item.supportTypes.includes(McpProtocol.STEAMABLE_HTTP)"
                 class="item-control"
               >
-                STEAMABLE_HTTP协议
+                {{ t('mcp.instance.accessType.STEAMABLE_HTTP') }}
               </div>
               <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
-                STDIO标准输入输出协议（转为 SSE/STEAMABLE_HTTP）
+                {{ t('mcp.instance.accessType.STDIO') }}
               </div>
             </div>
           </div>
@@ -89,7 +91,6 @@ import ProxyDialog from './proxy-dialog.vue'
 import DirectDialog from './direct-dialog.vue'
 import OpenApiDialog from './open-api-dialog.vue'
 import { type InstanceResult } from '@/types/instance.ts'
-import { create } from 'lodash-es'
 
 const emit = defineEmits(['select'])
 const { t } = useI18n()
@@ -101,34 +102,31 @@ const currentHover = ref<AccessType | null>()
 const formComponent = ref()
 const accessOptions = [
   {
-    label: '托管 (Hosting)',
+    label: t('mcp.instance.accessType.hosting'),
     value: AccessType.HOSTING,
     icon: 'MCP-anquan',
     formComponent: HostingDialog,
     color: '#67C23A',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP, McpProtocol.STDIO],
-    description:
-      '托管模式让平台利用自身容器能力运行MCP服务，通过内置网关和适配器解决流量代理、监控及协议兼容问题',
+    description: t('mcp.instance.accessType.hostingDesc'),
   },
   {
-    label: '代理 (Proxy)',
+    label: t('mcp.instance.accessType.proxy'),
     value: AccessType.PROXY,
     icon: 'MCP-daili',
     formComponent: ProxyDialog,
     color: '#E6A23C',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
-    description:
-      '代理模式将平台作为MCP服务的统一访问网关，通过平台代理地址交互。平台在转发请求时提供安全防护与审计，实现后端屏蔽、统一入口。',
+    description: t('mcp.instance.accessType.proxyDesc'),
   },
   {
-    label: '直连 (Direct)',
+    label: t('mcp.instance.accessType.direct'),
     value: AccessType.DIRECT,
     icon: 'MCP-zhilian',
     formComponent: DirectDialog,
     color: '#409EFF',
     supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
-    description:
-      '直连模式是最轻量级接入方式，平台仅作配置注册中心，不代理业务流量，不参与健康探测与监控。客户端直连外部MCP服务。',
+    description: t('mcp.instance.accessType.directDesc'),
   },
   {
     label: 'OpenAPI',
@@ -137,8 +135,7 @@ const accessOptions = [
     formComponent: OpenApiDialog,
     color: '#ff8eb9',
     supportTypes: [McpProtocol.STEAMABLE_HTTP],
-    description:
-      '将标准OpenAPI文档自动转为MCP服务。平台解析文档并生成适配器，使传统HTTP接口可通过MCP协议流式访问，快速实现业务接口到MCP生态的无缝集成。',
+    description: t('mcp.instance.accessType.openAPIDesc'),
   },
 ]
 const currentModal = computed(() => {

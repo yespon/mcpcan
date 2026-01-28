@@ -294,6 +294,20 @@
         "volumeTips": "容器卷挂载配置",
         "headerTitle": "Header 透传配置",
         "directTips": "MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。"
+      },
+      "accessType": {
+        "title": "快速开始",
+        "hosting": "托管模式",
+        "direct": "直连模式",
+        "proxy": "代理模式",
+        "hostingDesc": "托管模式让平台利用自身容器能力运行MCP服务，通过内置网关和适配器解决流量代理、监控及协议兼容问题",
+        "proxyDesc": "代理模式将平台作为MCP服务的统一访问网关，通过平台代理地址交互。平台在转发请求时提供安全防护与审计，实现后端屏蔽、统一入口。",
+        "directDesc": "直连模式是最轻量级接入方式，平台仅作配置注册中心，不代理业务流量，不参与健康探测与监控。客户端直连外部MCP服务。",
+        "openAPIDesc": "将标准OpenAPI文档自动转为MCP服务。平台解析文档并生成适配器，使传统HTTP接口可通过MCP协议流式访问，快速实现业务接口到MCP生态的无缝集成。",
+        "protocolType": "支持协议类型",
+        "SSE": "SSE协议",
+        "STEAMABLE_HTTP": "Steamable HTTP协议",
+        "STDIO": "STDIO标准输入输出协议（转为SSE/STEAMABLE_HTTP）"
       }
     },
     "type": {

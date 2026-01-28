@@ -1259,14 +1259,14 @@ const checkPackageNameOverflow = () => {
 }
 
 const init = async (instance: InstanceResult | null) => {
-  handleGetEnvList() // 获取环境变量列表
-  handleGetPackageList() // 获取包列表
   if (instance) {
     pageInfo.value.formData = cloneDeep(instance)
   } else {
     pageInfo.value.formData.mcpProtocol = 3
     pageInfo.value.formData.servicePath = '/sse'
   }
+  await handleGetEnvList() // 获取环境变量列表
+  await handleGetPackageList() // 获取包列表
   nextTick(() => {
     pageInfo.value.formData.accessType = AccessType.HOSTING
     // 默认选中第一个环境变量;所以上诉均没有return
