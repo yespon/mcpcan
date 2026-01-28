@@ -34,8 +34,12 @@ func (s *AiSessionService) CreateHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get current user ID from context
-	userID := int64(1)
+	// 从认证上下文中获取当前用户 ID
+	userID, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
 
 	session, err := biz.GAiSessionBiz.Create(c.Request.Context(), &req, userID)
 	if err != nil {
@@ -118,8 +122,12 @@ func (s *AiSessionService) ListHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get UserID
-	userID := int64(1)
+	// 从认证上下文中获取当前用户 ID
+	userID, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
 
 	sessions, total, err := biz.GAiSessionBiz.List(c.Request.Context(), userID, int(req.Page), int(req.PageSize))
 	if err != nil {
@@ -262,4 +270,22 @@ func (s *AiSessionService) convertModelToProto(m *model.AiSession) *pb.AiSession
 		CreateTime:    m.CreateTime.Unix(),
 		UpdateTime:    m.UpdateTime.Unix(),
 	}
+}
+
+// GetSessionUsageHandler 获取会话的 Token 使用统计
+func (s *AiSessionService) GetSessionUsageHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	sessionID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, "invalid session id")
+		return
+	}
+
+	usage, err := biz.GAiSessionBiz.GetSessionUsage(c.Request.Context(), sessionID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get session usage: %s", err.Error()))
+		return
+	}
+
+	i18nresp.SuccessResponse(c, usage)
 }

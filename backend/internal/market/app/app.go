@@ -422,6 +422,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id", routerPrefix), aiSessionService.GetHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.ListHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/messages", routerPrefix), aiSessionService.GetSessionMessagesHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/usage", routerPrefix), aiSessionService.GetSessionUsageHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions/:id/chat", routerPrefix), aiSessionService.ChatHandler)
 
 	// Register AI model access management interface
@@ -456,6 +457,8 @@ func (a *App) setupMiddleware() {
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
+	// Add authentication middleware
+	a.ginEngine.Use(middleware.AuthTokenMiddleware(a.config.Secret))
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

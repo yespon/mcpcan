@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
@@ -13,16 +14,35 @@ import (
 )
 
 type McpManager struct {
-	clients map[string]*client.Client
+	clients      map[string]*client.Client
+	configs      map[string]utils.McpServerConfig // 存储配置用于重连
+	healthStatus map[string]bool                  // 存储健康状态
+	mu           sync.RWMutex                     // 并发安全锁
+	ctx          context.Context                  // 管理器生命周期上下文
+	cancelFunc   context.CancelFunc               // 取消函数
 }
 
 func NewMcpManager() *McpManager {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &McpManager{
-		clients: make(map[string]*client.Client),
+		clients:      make(map[string]*client.Client),
+		configs:      make(map[string]utils.McpServerConfig),
+		healthStatus: make(map[string]bool),
+		ctx:          ctx,
+		cancelFunc:   cancel,
 	}
 }
 
 func (m *McpManager) Close() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// 取消上下文
+	if m.cancelFunc != nil {
+		m.cancelFunc()
+	}
+
+	// 关闭所有客户端
 	for _, c := range m.clients {
 		c.Close()
 	}
@@ -38,56 +58,77 @@ func (m *McpManager) Initialize(ctx context.Context, configJSON string) error {
 		return fmt.Errorf("invalid mcp config: %v", err)
 	}
 
-	for name, srv := range config.McpServers {
-		var mcpClient *client.Client
-		var err error
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-		if srv.URL != "" {
-			// Using NewSSEMCPClient for remote connections
-			mcpClient, err = client.NewSSEMCPClient(
-				srv.URL,
-				client.WithHeaders(srv.Headers),
-			)
-		} else if srv.Command != "" {
-			// Using NewStdioMCPClient for local command execution
-			var env []string
-			for k, v := range srv.Env {
-				env = append(env, fmt.Sprintf("%s=%s", k, v))
-			}
-			mcpClient, err = client.NewStdioMCPClient(
-				srv.Command,
-				env,
-				srv.Args...,
-			)
-		} else {
+	for name, srv := range config.McpServers {
+		// 存储配置用于后续重连
+		m.configs[name] = srv
+
+		// 初始化客户端
+		if err := m.initializeClient(ctx, name, srv); err != nil {
+			// 初始化失败,标记为不健康,但不返回错误
+			m.healthStatus[name] = false
 			continue
 		}
 
-		if err != nil {
-			return fmt.Errorf("failed to create client for %s: %v", name, err)
-		}
-
-		// Start client
-		if err := mcpClient.Start(ctx); err != nil {
-			return fmt.Errorf("failed to start client for %s: %v", name, err)
-		}
-
-		_, err = mcpClient.Initialize(ctx, mcp.InitializeRequest{
-			Params: mcp.InitializeParams{
-				ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
-				ClientInfo: mcp.Implementation{
-					Name:    "mcpcan-backend",
-					Version: "1.0.0",
-				},
-				Capabilities: mcp.ClientCapabilities{},
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("failed to initialize client %s: %v", name, err)
-		}
-
-		m.clients[name] = mcpClient
+		// 标记为健康
+		m.healthStatus[name] = true
 	}
+	return nil
+}
+
+// initializeClient 初始化单个 MCP 客户端 (内部方法,调用者需持有锁)
+func (m *McpManager) initializeClient(ctx context.Context, name string, srv utils.McpServerConfig) error {
+	var mcpClient *client.Client
+	var err error
+
+	if srv.URL != "" {
+		// Using NewSSEMCPClient for remote connections
+		mcpClient, err = client.NewSSEMCPClient(
+			srv.URL,
+			client.WithHeaders(srv.Headers),
+		)
+	} else if srv.Command != "" {
+		// Using NewStdioMCPClient for local command execution
+		var env []string
+		for k, v := range srv.Env {
+			env = append(env, fmt.Sprintf("%s=%s", k, v))
+		}
+		mcpClient, err = client.NewStdioMCPClient(
+			srv.Command,
+			env,
+			srv.Args...,
+		)
+	} else {
+		return fmt.Errorf("neither URL nor Command specified")
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to create client: %v", err)
+	}
+
+	// Start client
+	if err := mcpClient.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start client: %v", err)
+	}
+
+	_, err = mcpClient.Initialize(ctx, mcp.InitializeRequest{
+		Params: mcp.InitializeParams{
+			ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
+			ClientInfo: mcp.Implementation{
+				Name:    "mcpcan-backend",
+				Version: "1.0.0",
+			},
+			Capabilities: mcp.ClientCapabilities{},
+		},
+	})
+	if err != nil {
+		mcpClient.Close()
+		return fmt.Errorf("failed to initialize client: %v", err)
+	}
+
+	m.clients[name] = mcpClient
 	return nil
 }
 

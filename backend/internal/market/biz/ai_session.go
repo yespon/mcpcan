@@ -189,7 +189,13 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 		Content:    content,
 		CreateTime: time.Now(),
 	}
-	// Estimate tokens? For now 0
+	// 简单估算 User Message 的 Token 数 (粗略估算: 1 token ≈ 4 字符)
+	estimatedTokens := len(content) / 4
+	if estimatedTokens < 1 {
+		estimatedTokens = 1
+	}
+	userMsg.PromptTokens = estimatedTokens
+	userMsg.TotalTokens = estimatedTokens
 	if err := mysql.AiMessageRepo.Create(ctx, userMsg); err != nil {
 		return nil, fmt.Errorf("failed to save user message: %s", err.Error())
 	}
@@ -243,6 +249,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 
 			var accumulatedContent string
 			accumulatedToolCalls := make(map[int]*llm.ToolCall)
+			var finalUsage *llm.Usage // 累积 Token 统计信息
 
 			for resp := range stream {
 				if resp.Error != nil {
@@ -251,6 +258,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 				}
 
 				if resp.Usage != nil {
+					finalUsage = resp.Usage // 记录最后的 Usage
 					outCh <- llm.StreamResponse{Usage: resp.Usage}
 				}
 
@@ -294,6 +302,12 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 					Content:    accumulatedContent,
 					CreateTime: time.Now(),
 				}
+				// 添加 Token 统计
+				if finalUsage != nil {
+					asstMsg.PromptTokens = finalUsage.PromptTokens
+					asstMsg.CompletionTokens = finalUsage.CompletionTokens
+					asstMsg.TotalTokens = finalUsage.TotalTokens
+				}
 				mysql.AiMessageRepo.Create(ctx, asstMsg)
 				return
 			}
@@ -326,6 +340,12 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 				Content:    accumulatedContent,
 				ToolCalls:  string(toolCallsJSON),
 				CreateTime: time.Now(),
+			}
+			// 添加 Token 统计
+			if finalUsage != nil {
+				dbAsstMsg.PromptTokens = finalUsage.PromptTokens
+				dbAsstMsg.CompletionTokens = finalUsage.CompletionTokens
+				dbAsstMsg.TotalTokens = finalUsage.TotalTokens
 			}
 			mysql.AiMessageRepo.Create(ctx, dbAsstMsg)
 
@@ -388,4 +408,36 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 func (b *AiSessionBiz) SaveMessage(ctx context.Context, msg *model.AiMessage) error {
 	msg.CreateTime = time.Now()
 	return mysql.AiMessageRepo.Create(ctx, msg)
+}
+
+// SessionUsage 会话的 Token 使用统计
+type SessionUsage struct {
+	SessionID        int64 `json:"sessionId"`
+	TotalMessages    int   `json:"totalMessages"`
+	PromptTokens     int   `json:"promptTokens"`
+	CompletionTokens int   `json:"completionTokens"`
+	TotalTokens      int   `json:"totalTokens"`
+}
+
+// GetSessionUsage 获取会话的 Token 使用统计
+func (b *AiSessionBiz) GetSessionUsage(ctx context.Context, sessionID int64) (*SessionUsage, error) {
+	// 获取会话的所有消息
+	messages, err := mysql.AiMessageRepo.FindBySessionID(ctx, sessionID, 10000) // 使用大数字获取所有消息
+	if err != nil {
+		return nil, fmt.Errorf("failed to get messages: %w", err)
+	}
+
+	usage := &SessionUsage{
+		SessionID: sessionID,
+	}
+
+	// 累计统计
+	for _, msg := range messages {
+		usage.TotalMessages++
+		usage.PromptTokens += msg.PromptTokens
+		usage.CompletionTokens += msg.CompletionTokens
+		usage.TotalTokens += msg.TotalTokens
+	}
+
+	return usage, nil
 }

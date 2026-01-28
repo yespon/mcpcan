@@ -97,13 +97,34 @@ message ListModelAccessResponse {
     int64 total = 2;
 }
 
-message ModelProvider {
-    // @inject_tag: json:"id" desc:"ID"
+message ModelInfo {
+    // @inject_tag: json:"id" desc:"Model ID"
     string id = 1;
-    // @inject_tag: json:"name" desc:"Name"
+    // @inject_tag: json:"name" desc:"Display Name"
     string name = 2;
-    // @inject_tag: json:"models" desc:"Models"
+    // @inject_tag: json:"description" desc:"Description"
+    string description = 3;
+    // @inject_tag: json:"contextLength" desc:"Context Length"
+    int32 contextLength = 4;
+    // @inject_tag: json:"modality" desc:"Modality"
+    string modality = 5;
+}
+
+message ModelProvider {
+    // @inject_tag: json:"id" desc:"Provider ID"
+    string id = 1;
+    // @inject_tag: json:"name" desc:"Provider Name"
+    string name = 2;
+    // @inject_tag: json:"models" desc:"Model ID List (deprecated)"
     repeated string models = 3;
+    // @inject_tag: json:"registerUrl" desc:"API Key Register URL"
+    string registerUrl = 4;
+    // @inject_tag: json:"docsUrl" desc:"Documentation URL"
+    string docsUrl = 5;
+    // @inject_tag: json:"baseUrl" desc:"API Base URL"
+    string baseUrl = 6;
+    // @inject_tag: json:"modelInfos" desc:"Model Details"
+    repeated ModelInfo modelInfos = 7;
 }
 
 message GetSupportedModelsRequest {}
@@ -112,6 +133,7 @@ message GetSupportedModelsResponse {
     // @inject_tag: json:"providers" desc:"Providers"
     repeated ModelProvider providers = 1;
 }
+
 
 message GetAvailableModelsRequest {}
 

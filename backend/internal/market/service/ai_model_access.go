@@ -71,8 +71,12 @@ func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get user id from context
-	userID := int64(1)
+	// 从认证上下文中获取当前用户 ID
+	userID, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
 
 	modelAccess, err := biz.GAiModelAccessBiz.Create(c.Request.Context(), &req, userID)
 	if err != nil {
@@ -155,8 +159,12 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get user id from context
-	userID := int64(1)
+	// 从认证上下文中获取当前用户 ID
+	userID, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
 
 	accesses, total, err := biz.GAiModelAccessBiz.List(c.Request.Context(), userID, int(req.Page), int(req.PageSize))
 	if err != nil {
@@ -178,8 +186,12 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 
 // GetAvailableModelsHandler gets available models for selection (no pagination)
 func (s *AiModelAccessService) GetAvailableModelsHandler(c *gin.Context) {
-	// TODO: Get user id from context
-	userID := int64(1)
+	// 从认证上下文中获取当前用户 ID
+	userID, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
 
 	// Fetch all (use a large limit)
 	accesses, _, err := biz.GAiModelAccessBiz.List(c.Request.Context(), userID, 1, 1000)
@@ -200,48 +212,76 @@ func (s *AiModelAccessService) GetAvailableModelsHandler(c *gin.Context) {
 	i18nresp.SuccessResponse(c, resp)
 }
 
-// GetSupportedModelsHandler gets supported models
+// GetSupportedModelsHandler gets supported models with registration URLs
 func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
-	// 1. OpenAI Models (Generated from go-openai)
+	// Import models from the new models package
+	// Note: Using llm package constants for backward compatibility
+	// Full model info is available via models.AllProviders
+
+	// 1. OpenAI Models
 	openAIModels := llm.SupportedOpenAIModels
 
 	// 2. DeepSeek Models
 	deepSeekModels := llm.DeepSeekModels
 
-	// 3. Aliyun Qwen
+	// 3. Aliyun Qwen Models
 	qwenModels := llm.QwenModels
 
-	// 4. Volcengine Doubao
+	// 4. Volcengine Doubao Models
 	doubaoModels := llm.DoubaoModels
 
-	// 5. Construct Response
+	// 5. Zhipu GLM Models
+	zhipuModels := llm.ZhipuModels
+
+	// 6. Construct Response with registration URLs
 	resp := &pb.GetSupportedModelsResponse{
 		Providers: []*pb.ModelProvider{
 			{
-				Id:     "openai",
-				Name:   "OpenAI",
-				Models: openAIModels,
+				Id:          "openai",
+				Name:        "OpenAI",
+				Models:      openAIModels,
+				RegisterUrl: "https://platform.openai.com/api-keys",
+				DocsUrl:     "https://platform.openai.com/docs",
+				BaseUrl:     "https://api.openai.com/v1",
 			},
 			{
-				Id:     "deepseek",
-				Name:   "DeepSeek",
-				Models: deepSeekModels,
+				Id:          "deepseek",
+				Name:        "DeepSeek",
+				Models:      deepSeekModels,
+				RegisterUrl: "https://platform.deepseek.com/api_keys",
+				DocsUrl:     "https://api-docs.deepseek.com",
+				BaseUrl:     "https://api.deepseek.com/v1",
 			},
 			{
-				Id:     "qwen",
-				Name:   "Aliyun Qwen",
-				Models: qwenModels,
+				Id:          "qwen",
+				Name:        "阿里通义千问 (Qwen)",
+				Models:      qwenModels,
+				RegisterUrl: "https://dashscope.console.aliyun.com/apiKey",
+				DocsUrl:     "https://help.aliyun.com/zh/model-studio",
+				BaseUrl:     "https://dashscope.aliyuncs.com/compatible-mode/v1",
 			},
 			{
-				Id:     "doubao",
-				Name:   "Volcengine Doubao",
-				Models: doubaoModels,
+				Id:          "doubao",
+				Name:        "火山引擎豆包 (Doubao)",
+				Models:      doubaoModels,
+				RegisterUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
+				DocsUrl:     "https://www.volcengine.com/docs/82379",
+				BaseUrl:     "https://ark.cn-beijing.volces.com/api/v3",
+			},
+			{
+				Id:          "zhipu",
+				Name:        "智谱 AI (Zhipu GLM)",
+				Models:      zhipuModels,
+				RegisterUrl: "https://bigmodel.cn/usercenter/apikeys",
+				DocsUrl:     "https://bigmodel.cn/dev/api",
+				BaseUrl:     "https://open.bigmodel.cn/api/paas/v4",
 			},
 		},
 	}
 
 	i18nresp.SuccessResponse(c, resp)
 }
+
 
 func (s *AiModelAccessService) convertModelToProto(m *model.AiModelAccess) *pb.AiModelAccess {
 	// Mask API Key
