@@ -65,7 +65,7 @@
         </el-button>
       </template>
     </TablePlus>
-
+    <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
     <!-- Create a intance by openAPI docs -->
     <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
   </div>
@@ -83,21 +83,24 @@ import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import { SourceType, type TemplateResult } from '@/types/index.ts'
 import OpenAPIDialog from '../instance-manage/modules/open-api-dialog.vue'
+import AccessTypeDialog from '../instance-manage/modules/access-type.vue'
 
 const { t } = useI18n()
 const { tablePlus, columns, requestConfig, pageConfig } = useTemplateTableHooks()
 const { jumpToPage } = useRouterHooks()
 const openAPIDialog = ref()
 const baseUrl = (window as any).__APP_CONFIG__?.PUBLIC_PATH || ''
+const accessTypeDialog = ref()
 
 /**
  * Handle create a tamplate
  */
 const handleAddTemplate = () => {
-  jumpToPage({
-    url: '/new-template',
-    data: {},
-  })
+  accessTypeDialog.value.init()
+  // jumpToPage({
+  //   url: '/new-template',
+  //   data: {},
+  // })
 }
 
 /**

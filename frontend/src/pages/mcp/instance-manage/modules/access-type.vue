@@ -82,7 +82,6 @@
 </template>
 
 <script setup lang="ts">
-import { Coin, Connection, Link, DocumentAdd } from '@element-plus/icons-vue'
 import GradientText from '@/components/Animation/GradientText.vue'
 import { useInstanceFormHooks } from '../hooks/form-instance.ts'
 import { AccessType, McpProtocol } from '@/types/instance.ts'
@@ -94,7 +93,7 @@ import { type InstanceResult } from '@/types/instance.ts'
 
 const emit = defineEmits(['select'])
 const { t } = useI18n()
-const { pageInfo, jumpToPage, originForm } = useInstanceFormHooks()
+const { pageInfo, jumpToPage, path } = useInstanceFormHooks()
 const dialogInfo = ref({
   visible: false,
 })
@@ -142,13 +141,22 @@ const currentModal = computed(() => {
   return accessOptions.find((option) => option.value === pageInfo.value.accessType)
 })
 
-const handleSelect = (item: any) => {
+const handleSelect = async (item: any) => {
   pageInfo.value.accessType = item.value
   dialogInfo.value.visible = false
   // dialog view
   if (item.value === 4) {
     nextTick(() => {
       formComponent.value?.init()
+    })
+    return
+  }
+  if (path === '/template-manage') {
+    jumpToPage({
+      url: '/new-template',
+      data: {
+        type: item.value,
+      },
     })
     return
   }

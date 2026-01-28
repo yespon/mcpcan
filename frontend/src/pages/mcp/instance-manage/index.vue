@@ -338,33 +338,20 @@
                           </span>
                         </template>
                       </el-tooltip>
-                      <el-tooltip
-                        :content="t('mcp.instance.card.containerControl')"
-                        placement="top"
-                        trigger="click"
-                      >
-                        <el-switch
-                          v-if="row.accessType === AccessType.HOSTING"
-                          v-model="row.status"
-                          style="--el-switch-on-color: #13ce66"
-                          inline-prompt
-                          :active-text="t('mcp.instance.card.start')"
-                          :inactive-text="t('mcp.instance.card.stop')"
-                          :active-value="InstanceStatus.ACTIVE"
-                          :inactive-value="InstanceStatus.INACTIVE"
-                          :loading="row.loading"
-                          @click="handleSwitchInstance(row)"
-                        ></el-switch>
-                      </el-tooltip>
+                      <el-tag>{{
+                        mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
+                      }}</el-tag>
                     </div>
                   </div>
                   <div
-                    class="mt-1 flex-grow-1 h-0 text-justify break-all pr-1 text-sm leading-normal ellipsis-three"
+                    class="mt-1 line-height-[20px] flex-grow-1 h-0 text-justify break-words pr-1 text-xs leading-normal ellipsis-three"
                   >
                     <el-tooltip placement="top" trigger="click">
                       {{ row.notes }}
                       <template #content>
-                        <div style="width: 300px">{{ row.notes }}</div>
+                        <div style="width: 300px; text-align: justify; word-break: break-word">
+                          {{ row.notes }}
+                        </div>
                       </template>
                     </el-tooltip>
                   </div>
@@ -372,9 +359,6 @@
               </div>
               <div class="flex justify-between mt-2">
                 <div class="flex items-center">
-                  <el-tag>{{
-                    mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
-                  }}</el-tag>
                   <div class="ml-2">
                     <el-tooltip :content="t('mcp.instance.action.logs')" placement="top">
                       <el-icon
@@ -424,9 +408,30 @@
                     </el-tooltip>
                   </div>
                 </div>
-                <mcp-button size="small" @click="handleViewConfig(row)">{{
-                  t('mcp.instance.card.configUrl')
-                }}</mcp-button>
+                <div class="flex">
+                  <el-tooltip
+                    :content="t('mcp.instance.card.containerControl')"
+                    placement="top"
+                    trigger="click"
+                  >
+                    <el-switch
+                      v-if="row.accessType !== AccessType.DIRECT"
+                      v-model="row.status"
+                      style="--el-switch-on-color: #13ce66"
+                      inline-prompt
+                      size="small"
+                      :active-text="t('mcp.instance.card.start')"
+                      :inactive-text="t('mcp.instance.card.stop')"
+                      :active-value="InstanceStatus.ACTIVE"
+                      :inactive-value="InstanceStatus.INACTIVE"
+                      :loading="row.loading"
+                      @click="handleSwitchInstance(row)"
+                    ></el-switch>
+                  </el-tooltip>
+                  <mcp-button size="small" class="ml-2" @click="handleViewConfig(row)">{{
+                    t('mcp.instance.card.configUrl')
+                  }}</mcp-button>
+                </div>
               </div>
             </div>
             <el-checkbox

@@ -23,12 +23,15 @@
         <div class="footer-action">
           <div
             :class="
-              query.instanceId && Number(query.type) !== AccessType.DIRECT
+              route.query.instanceId && Number(route.query.type) !== AccessType.DIRECT
                 ? 'flex justify-between items-center'
                 : 'text-center'
             "
           >
-            <div v-if="query.instanceId && Number(query.type) !== AccessType.DIRECT" class="flex">
+            <div
+              v-if="route.query.instanceId && Number(route.query.type) !== AccessType.DIRECT"
+              class="flex"
+            >
               <el-button link type="primary" @click="handleConfig">
                 {{ t('mcp.instance.action.accessConfig') }}
               </el-button>
@@ -74,6 +77,7 @@ const { t, locale } = useI18n()
 const layout = useLayout()
 const formComponent = ref()
 const { query, pageInfo, userInfo, jumpBack, currentMCP } = useInstanceFormHooks()
+const route = useRoute()
 const currentComponent = computed(() => {
   switch (Number(query.type)) {
     case AccessType.HOSTING:
