@@ -320,7 +320,7 @@
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center">
+                    <div class="flex items-center h-[32px]">
                       <el-tooltip v-if="row.accessType === AccessType.HOSTING" placement="top">
                         <el-icon
                           :size="16"

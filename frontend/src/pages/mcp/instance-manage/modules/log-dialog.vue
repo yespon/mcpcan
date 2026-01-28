@@ -12,7 +12,7 @@
       class="config-info"
       v-loading="dialogInfo.loading"
     >
-      <el-button-group class="action-group my-4 px-5">
+      <el-button-group class="action-group my-4 px-5" v-if="dialogInfo.logType === 'container'">
         <el-tooltip class="box-item" effect="dark" :content="t('common.download')" placement="top">
           <el-button :icon="Download" @click="handleDownload" />
         </el-tooltip>
@@ -26,7 +26,7 @@
       <div v-if="dialogInfo.logType === 'container'" class="px-5 py-2 log-info">
         {{ dialogInfo.logContent.logs || '暂无日志内容' }}
       </div>
-      <div v-else class="px-5 py-2 mt-8">
+      <div v-else class="px-5 py-2">
         <template v-if="dialogInfo.accessLogs.length">
           <div
             class="log-line"
