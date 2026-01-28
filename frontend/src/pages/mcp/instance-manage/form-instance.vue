@@ -102,60 +102,70 @@ const handleSaveAsTemplate = () => {
 }
 // instance details
 const handleGetDetail = async () => {
-  let formData: any = {}
-  const data = await InstanceAPI.detail({
-    instanceId: query.instanceId,
-  })
-  formData = data
-  formData.accessType = data.accessType
-  formData.mcpServers = JsonFormatter.format(data.mcpServers, 2)
-  formData.environmentVariables = data.environmentVariables
-    ? Object.keys(data.environmentVariables)?.map((key) => ({
-        key,
-        value: data.environmentVariables[key],
-      }))
-    : []
-  formData.volumeMounts = data.volumeMounts || []
-  return formData
+  try {
+    pageInfo.value.loading = true
+    let formData: any = {}
+    const data = await InstanceAPI.detail({
+      instanceId: query.instanceId,
+    })
+    formData = data
+    formData.accessType = data.accessType
+    formData.mcpServers = JsonFormatter.format(data.mcpServers, 2)
+    formData.environmentVariables = data.environmentVariables
+      ? Object.keys(data.environmentVariables)?.map((key) => ({
+          key,
+          value: data.environmentVariables[key],
+        }))
+      : []
+    formData.volumeMounts = data.volumeMounts || []
+    return formData
+  } finally {
+    pageInfo.value.loading = false
+  }
 }
 // template details
 const handleGetTemplateDetail = async () => {
-  let formData: any = {}
-  const data = await TemplateAPI.detail({
-    id: query.templateId,
-  })
-  formData = data
-  formData.mcpServers = JsonFormatter.format(data.mcpServers)
-  formData.environmentVariables = data.environmentVariables
-    ? Object.keys(data.environmentVariables)?.map((key) => ({
-        key,
-        value: data.environmentVariables[key],
-      }))
-    : []
-  formData.volumeMounts = data.volumeMounts || []
-  formData.sourceType = SourceType.TEMPLATE
-  // default open token
-  let tokenValue =
-    'Bearer ' +
-    getToken(
-      JSON.stringify({
-        expireAt: Date.now(),
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  formData.enabledToken = true
-  formData.tokens = [
-    {
-      expireAt: '',
-      enabled: true,
-      publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: '' }],
-      token: tokenValue,
-      usages: ['default'],
-    },
-  ]
-  return formData
+  try {
+    pageInfo.value.loading = true
+    let formData: any = {}
+    const data = await TemplateAPI.detail({
+      id: query.templateId,
+    })
+    formData = data
+    formData.mcpServers = JsonFormatter.format(data.mcpServers)
+    formData.environmentVariables = data.environmentVariables
+      ? Object.keys(data.environmentVariables)?.map((key) => ({
+          key,
+          value: data.environmentVariables[key],
+        }))
+      : []
+    formData.volumeMounts = data.volumeMounts || []
+    formData.sourceType = SourceType.TEMPLATE
+    // default open token
+    let tokenValue =
+      'Bearer ' +
+      getToken(
+        JSON.stringify({
+          expireAt: Date.now(),
+          userId: userInfo.userId,
+          username: userInfo.username,
+        }),
+      )
+    formData.enabledToken = true
+    formData.tokens = [
+      {
+        expireAt: '',
+        enabled: true,
+        publishAt: new Date().getTime(),
+        headers: [{ key: 'Authorization', value: '' }],
+        token: tokenValue,
+        usages: ['default'],
+      },
+    ]
+    return formData
+  } finally {
+    pageInfo.value.loading = false
+  }
 }
 //instacen  market details
 const handleInitMarketInstance = async () => {

@@ -25,7 +25,7 @@
               />
             </el-form-item>
             <el-form-item
-              v-if="!formData.templateId"
+              v-if="false"
               :label="t('mcp.instance.formData.environmentId')"
               prop="environmentId"
             >
