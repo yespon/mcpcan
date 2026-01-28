@@ -287,7 +287,9 @@
         "envTips": "Container Environment Variable Configuration",
         "envNotes": "Note: Environment variable configuration refers to the container's environment variable configuration, and will also be brought into the MCP service through the hosting command.",
         "volume": "Volume Mount",
-        "volumeTips": "Container Volume Mount Configuration"
+        "volumeTips": "Container Volume Mount Configuration",
+        "headerTitle": "Header Passthrough Configuration",
+        "directTips": "The current configuration of MCP service SSE / STREAMABLE HTTP protocol is in direct connection mode, mainly filling in the external MCP access configuration. The platform only plays the role of 'configuration registration center'. If you need to proxy business traffic or participate in health checks and operation monitoring, please switch to proxy mode."
       }
     },
     "type": {

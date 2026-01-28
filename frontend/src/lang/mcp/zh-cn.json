@@ -287,7 +287,9 @@
         "envTips": "容器环境变量配置",
         "envNotes": "注意:环境变量配置是指容器的环境变量配置，同时也会通过托管命令带入到MCP服务中",
         "volume": "卷挂载",
-        "volumeTips": "容器卷挂载配置"
+        "volumeTips": "容器卷挂载配置",
+        "headerTitle": "Header 透传配置",
+        "directTips": "MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。"
       }
     },
     "type": {

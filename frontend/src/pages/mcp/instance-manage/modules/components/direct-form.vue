@@ -48,8 +48,7 @@
           <div
             class="pl-3 rounded border border-[var(--ep-border-color-lighter)] text-[var(--ep-text-color-secondary)] text-xs leading-6 tracking-wide"
           >
-            MCP服务 SSE / STEAMABLE HTTP 协议配置当前为直连模式，主要是填写外部 MCP
-            访问配置，平台仅承担「配置注册中心」角色。如果需要代理业务流量或者参与健康探测与运行监控请切换为代理模式。
+            {{ t('mcp.instance.hostingForm.directTips') }}
           </div>
         </el-col>
       </el-row>
