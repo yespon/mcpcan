@@ -20,16 +20,26 @@
             "
           >
             <div v-if="query.instanceId && Number(query.type) !== AccessType.DIRECT" class="flex">
-              <el-button link type="primary" @click="handleConfig"> 访问配置 </el-button>
+              <el-button link type="primary" @click="handleConfig">
+                {{ t('mcp.instance.action.accessConfig') }}
+              </el-button>
               <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="warning" @click="handleViewStatus"> 状态探测 </el-button>
+              <el-button link type="warning" @click="handleViewStatus">
+                {{ t('mcp.instance.action.probe') }}
+              </el-button>
               <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="success" @click="handleViewLog"> 查看日志 </el-button>
+              <el-button link type="success" @click="handleViewLog">
+                {{ t('mcp.instance.action.viewLogs') }}
+              </el-button>
             </div>
             <div class="flex justify-center">
-              <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
-              <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
-              <el-button @click="handleClose">返回列表</el-button>
+              <mcp-button @click="handleConfirm" class="mr-4">
+                {{ t('mcp.instance.action.saveAndRun') }}
+              </mcp-button>
+              <mcp-button plain @click="handleSaveAsTemplate" class="mr-4">
+                {{ t('mcp.instance.action.asTemplate') }}
+              </mcp-button>
+              <el-button @click="handleClose"> {{ t('mcp.instance.action.backList') }} </el-button>
             </div>
           </div>
         </div>
@@ -140,7 +150,7 @@ const handleGetTemplateDetail = async () => {
       expireAt: '',
       enabled: true,
       publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: tokenValue }],
+      headers: [{ key: 'Authorization', value: '' }],
       token: tokenValue,
       usages: ['default'],
     },
@@ -180,7 +190,7 @@ const handleInitMarketInstance = async () => {
         enabled: true,
         expireAt: '',
         publishAt: new Date().getTime(),
-        headers: [{ key: 'Authorization', value: tokenValue }],
+        headers: [{ key: 'Authorization', value: '' }],
         token: tokenValue,
         usages: ['default'],
       },

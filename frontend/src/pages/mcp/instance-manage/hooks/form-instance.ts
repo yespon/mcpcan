@@ -55,7 +55,7 @@ export const useInstanceFormHooks = () => {
           enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
-          headers: [{ key: 'Authorization', value: tokenValue }],
+          headers: [{ key: 'Authorization', value: '' }],
           token: tokenValue,
           usages: ['default'],
         },

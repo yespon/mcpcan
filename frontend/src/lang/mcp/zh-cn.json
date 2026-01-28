@@ -108,7 +108,11 @@
         "byTemplate": "从模板创建",
         "byDocs": "导入OpenAPI",
         "deleteToken": "确定删除该令牌？删除有效令牌后，使用该令牌的请求将无法通过验证。",
-        "random": "确定重新生产令牌？重新生成令牌后，使用该令牌的请求将无法通过验证。"
+        "random": "确定重新生产令牌？重新生成令牌后，使用该令牌的请求将无法通过验证。",
+        "accessConfig": "访问配置",
+        "viewLogs": "查看日志",
+        "saveAndRun": "保存并运行",
+        "backList": "返回列表"
       },
       "pageDesc": {
         "createTitle": "创建实例",
@@ -134,7 +138,7 @@
         "instanceName": "实例名称",
         "deployType": "部署模式",
         "imgAddress": "镜像地址",
-        "mcpServers": "MCP服务器配置",
+        "mcpServers": "MCPServers配置",
         "mcpServersPlaceholder": "请输入JSON格式的MCP服务器配置，例如:",
         "configInfo": "配置信息",
         "packageId": "代码包选择",

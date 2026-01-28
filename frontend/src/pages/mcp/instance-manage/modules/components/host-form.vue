@@ -40,7 +40,7 @@
       <el-row v-if="pageInfo.formData.mcpProtocol === 3">
         <el-col :span="18">
           <el-form-item prop="mcpServers">
-            <template #label></template>
+            <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
             <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
         </el-col>
@@ -142,15 +142,15 @@
                       </div>
                     </div>
                   </el-scrollbar>
-                  <div class="tip tip-primary mt-2">
-                    {{ commandTips }}
-                  </div>
+                  <div class="tip tip-primary mt-2" v-html="commandTips"></div>
                 </div>
               </template>
               <div v-if="selectedCommand" class="p-4 w-[300px]">
                 <div class="mb-4">
                   <div class="flex justify-between items-center mb-1">
-                    <span class="font-bold text-sm">依赖命令示例</span>
+                    <span class="font-bold text-sm">{{
+                      t('mcp.instance.hostingForm.dependenceExample')
+                    }}</span>
                     <el-button
                       link
                       type="primary"
@@ -181,7 +181,9 @@
                   </div>
                 </div>
                 <div class="tip tip-primary mb-2">
-                  {{ selectedCommand?.description || selectedCommand?.description_en }}
+                  {{
+                    locale === 'en' ? selectedCommand?.description_en : selectedCommand?.description
+                  }}
                 </div>
                 <div class="text-xs text-orange-500">
                   {{ t('mcp.instance.hostingForm.commandTips') }}
@@ -191,67 +193,9 @@
           </div>
         </el-col>
       </el-row>
-      <div class="tip tip-primary">
-        <div class="font-bold mb-2">MCP 容器内服务启动命令执行顺序</div>
-        <div class="space-y-2">
-          <div>
-            <span class="font-bold">代码包解压</span>
-            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-              系统会自动下载代码文件，并解压至 /app/codepkg/ 目录。
-            </div>
-            <div class="text-xs text-orange-500 mt-1">
-              特别注意：若压缩包为 code.zip 且内置顶层文件夹 code，解压后最终路径为
-              /app/codepkg/code。后续执行依赖命令与启动命令时，需先执行 cd /app/codepkg
-              进入对应目录。
-            </div>
-          </div>
-          <div>
-            <span class="font-bold">依赖命令</span>
-            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-              执行依赖命令时，需避免出现阻塞型指令。一旦发生命令阻塞，将直接导致后续所有动作无法正常执行。
-            </div>
-          </div>
-          <div>
-            <span class="font-bold">启动命令</span>
-            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-              启动命令默认在系统根路径下执行。若上一步依赖命令中已执行 cd
-              操作进入项目目录，且执行后未退出该目录，启动命令会直接沿用此路径，无需再次执行目录切换操作。
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="tip tip-primary mt-2" v-html="commandDesc"></div>
       <div class="font-size-3 mt-4">
-        <div class="tip tip-primary mt-2">
-          <span class="font-bold light:text-black dark:text-white">MCP托管容器构建说明：</span>
-          <div class="mb-2">
-            基于 debian:bookworm-slim 镜像构建，兼顾镜像体积与兼容性（完整 glibc 支持），适配主流
-            Python/Node.js 原生扩展。
-          </div>
-          <div class="font-bold mb-1">预装组件及版本说明：</div>
-          <ul class="list-disc pl-5 space-y-1">
-            <li>
-              系统基础命令：curl、git、wget、tar、zip、unzip 及基础编译依赖（build-essential）。
-            </li>
-            <li>
-              Python 环境：
-              <ul class="list-disc pl-5 mt-1 space-y-1">
-                <li>采用 pyenv 进行多版本管理，预装 Python 3.12.8（默认）、3.11.9、3.10.14。</li>
-                <li>集成现代包管理工具：poetry、uv（含 uvx），均已配置阿里云 PyPI 加速源。</li>
-              </ul>
-            </li>
-            <li>
-              Node.js 环境：
-              <ul class="list-disc pl-5 mt-1 space-y-1">
-                <li>采用 nvm 进行多版本管理，预装 Node.js v22（默认）、v20。</li>
-                <li>集成全套包管理工具：npm、yarn、pnpm，均已配置国内镜像源。</li>
-              </ul>
-            </li>
-            <li>
-              默认启动命令：mcp-hosting。启动后作为网关服务，将标准 MCP STDIO 协议转换为
-              HTTP（SSE）协议，提供远程调用能力。
-            </li>
-          </ul>
-        </div>
+        <div class="tip tip-primary mt-2" v-html="buildNotes"></div>
       </div>
 
       <el-form-item :label="t('mcp.instance.hostingForm.accessUrl')" class="mt-6">
@@ -684,11 +628,8 @@
                   v-show="currentOpenCollapse !== '3'"
                   class="flex-1 tip tip-primary my-2 line-height-[18px]"
                   style="margin-left: -16px"
-                >
-                  此项不配置时：默认透传来自客户端的Headers到MCP服务中。
-                  如果MCPServers配置中存在Header参数，优先级为：MCPServers配置中Header >
-                  客户端的Headers
-                </div>
+                  v-html="headerTitleTips"
+                ></div>
               </Transition>
             </div>
           </template>
@@ -699,16 +640,8 @@
             <div
               v-show="currentOpenCollapse === '3'"
               class="flex-1 tip tip-primary my-2 line-height-[18px]"
-            >
-              注意事项：
-              <br />
-              1.自定义 Header 无需客户端主动提交，网关在转发流量时，会自动将其携带至 MCP
-              服务的请求中。
-              <br />2.若客户端请求 Header、MCP 配置 Header、自定义透传 Header
-              三者存在同名项，优先级顺序为：自定义透传 Header > MCP 配置 Header > 客户端请求
-              Header。 即同名 Header 取值时，优先采用自定义透传配置，其次为 MCP
-              配置，最后为客户端请求传入的值。
-            </div>
+              v-html="headerContentTips"
+            ></div>
           </Transition>
         </el-collapse-item>
       </el-collapse>
@@ -811,7 +744,7 @@ import McpButton from '@/components/mcp-button/index.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import TokenForm from './token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
-import { AccessType, InstanceData, NodeVisible } from '@/types/instance'
+import { AccessType, InstanceData, McpProtocol, NodeVisible } from '@/types/instance'
 import {
   type VolumeMountsItme,
   type PvcForm,
@@ -899,34 +832,149 @@ const commandTips = computed(() => {
 const commandDesc = computed(() => {
   return locale.value === 'en'
     ? `
-      <span class="font-bold">Command Startup Sequence：</span>
-      <br />
-      <span class="font-bold">Code Package Decompression</span>
-      : Automatically downloads the code files to the /app/codepkg/ directory and decompresses them. Note that in subsequent dependency commands and startup commands, you should first try using cd /app/codepkg before executing.
-      <br />
-      <div class="text-orange-400 my-1">
-        <span>Notes:</span>
-        Assuming that the compressed file code .zip contains the top-level folder code, the decompressed path is /app/codepkg/code.
-      </div>
-      <span class="font-bold">Dependency Command</span>: When there is a blocking command, it will cause subsequent actions to fail.
-      <br />
-      <span class="font-bold">Startup Command</span>: By default, it is in the system/root path. If the previous dependency command has already cd'd into the project directory and has not exited after execution, the startup command will use the path location from the dependency and does not need to re-enter the project directory.
-    `
+      <div class="font-bold mb-2">Execution order of service startup commands inside the MCP container</div>
+        <div class="space-y-2">
+          <div>
+            <span class="font-bold">Code package extraction</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              The system will automatically download the code package and extract it to the /app/codepkg/ directory.
+            </div>
+            <div class="text-xs text-orange-500 mt-1">
+              Important: If the archive is named code.zip and contains a top-level folder named code, the final path after extraction will be /app/codepkg/code. When running dependency or start commands afterwards, be sure to run <code>cd /app/codepkg</code> first to enter the correct directory.
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">Dependency commands</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              Avoid using blocking instructions when running dependency commands. If a command blocks, all subsequent actions will fail to execute.
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">Start commands</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              Start commands are executed from the system root path by default. If a previous dependency command changed directory into the project (using <code>cd</code>) and did not exit that directory, the start command will inherit that working directory and no additional directory change is required.
+            </div>
+          </div>
+    </div>
+  `
     : `
-      <span class="font-bold">命令启动顺序：</span>
-      <br />
-      <span class="font-bold">代码包解压</span>
-      :会自动下载代码文件到/app/codepkg/目录中并解压，注意在后续依赖命令和启动命令中先试用cd/app/codepkg后再执行。
-      <br />
-      <div class="text-orange-400 my-1">
-        <span>特别注意:</span>
-        假设压缩包code.zip中包含顶层文件夹code，解压后路径为/app/codepkg/code.
-      </div>
-      <span class="font-bold">依赖命令</span>:当存在阻塞命名后会导致后续动作无法执行
-      <br />
-      <span class="font-bold">启动命令</span>: 默认在系统/根路径，如果上一步依赖命令中已经cd
-      到项目目录，并且执行后没有退出，启动命令会沿用依赖中路径位置，不需要再次进入项目目录。
+      <div class="font-bold mb-2">MCP 容器内服务启动命令执行顺序</div>
+        <div class="space-y-2">
+          <div>
+            <span class="font-bold">代码包解压</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              系统会自动下载代码文件，并解压至 /app/codepkg/ 目录。
+            </div>
+            <div class="text-xs text-orange-500 mt-1">
+              特别注意：若压缩包为 code.zip 且内置顶层文件夹 code，解压后最终路径为
+              /app/codepkg/code。后续执行依赖命令与启动命令时，需先执行 cd /app/codepkg
+              进入对应目录。
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">依赖命令</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              执行依赖命令时，需避免出现阻塞型指令。一旦发生命令阻塞，将直接导致后续所有动作无法正常执行。
+            </div>
+          </div>
+          <div>
+            <span class="font-bold">启动命令</span>
+            <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+              启动命令默认在系统根路径下执行。若上一步依赖命令中已执行 cd
+              操作进入项目目录，且执行后未退出该目录，启动命令会直接沿用此路径，无需再次执行目录切换操作。
+            </div>
+          </div>
+        </div>
     `
+})
+
+const buildNotes = computed(() => {
+  return locale.value === 'en'
+    ? `
+      <span class="font-bold light:text-black dark:text-white">MCP hosting container build notes:</span>
+      <div class="mb-2">
+        Built from the debian:bookworm-slim image to balance image size and compatibility (full glibc support), and to support common native extensions for Python and Node.js.
+      </div>
+      <div class="font-bold mb-1">Preinstalled components and versions:</div>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>
+          System utilities: curl, git, wget, tar, zip, unzip and basic build tools (build-essential).
+        </li>
+        <li>
+          Python environment:
+          <ul class="list-disc pl-5 mt-1 space-y-1">
+            <li>Managed by pyenv with multiple versions preinstalled: Python 3.12.8 (default), 3.11.9, 3.10.14.</li>
+            <li>Includes modern package managers: poetry and uv (including uvx), configured with Alibaba Cloud PyPI mirrors.</li>
+          </ul>
+        </li>
+        <li>
+          Node.js environment:
+          <ul class="list-disc pl-5 mt-1 space-y-1">
+            <li>Managed by nvm with Node.js v22 (default) and v20 preinstalled.</li>
+            <li>Includes npm, yarn and pnpm, configured with domestic registry mirrors.</li>
+          </ul>
+        </li>
+        ${
+          pageInfo.value.formData.mcpProtocol === McpProtocol.STDIO
+            ? '<li v-if="pageInfo.formData.mcpProtocol === McpProtocol.STDIO">Default start command: <code>mcp-hosting</code>. After starting, it acts as a gateway service that converts the standard MCP STDIO protocol to HTTP (SSE), enabling remote invocation.</li>'
+            : ''
+        }
+
+      </ul>
+  `
+    : `
+      <span class="font-bold light:text-black dark:text-white">MCP托管容器构建说明：</span>
+      <div class="mb-2">
+        基于 debian:bookworm-slim 镜像构建，兼顾镜像体积与兼容性（完整 glibc 支持），适配主流
+        Python/Node.js 原生扩展。
+      </div>
+      <div class="font-bold mb-1">预装组件及版本说明：</div>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>
+          系统基础命令：curl、git、wget、tar、zip、unzip 及基础编译依赖（build-essential）。
+        </li>
+        <li>
+          Python 环境：
+          <ul class="list-disc pl-5 mt-1 space-y-1">
+            <li>采用 pyenv 进行多版本管理，预装 Python 3.12.8（默认）、3.11.9、3.10.14。</li>
+            <li>集成现代包管理工具：poetry、uv（含 uvx），均已配置阿里云 PyPI 加速源。</li>
+          </ul>
+        </li>
+        <li>
+          Node.js 环境：
+          <ul class="list-disc pl-5 mt-1 space-y-1">
+            <li>采用 nvm 进行多版本管理，预装 Node.js v22（默认）、v20。</li>
+            <li>集成全套包管理工具：npm、yarn、pnpm，均已配置国内镜像源。</li>
+          </ul>
+        </li>
+        ${
+          pageInfo.value.formData.mcpProtocol === McpProtocol.STDIO
+            ? '<li>默认启动命令：mcp-hosting。启动后作为网关服务，将标准 MCP STDIO 协议转换为HTTP（SSE）协议，提供远程调用能力。</li>'
+            : ''
+        }
+      </ul>
+  `
+})
+
+const headerTitleTips = computed(() => {
+  return locale.value === 'en'
+    ? `If this field is left empty, headers from the client will be passed through to the MCP service by default. If the MCPServers configuration defines header parameters, precedence is: MCPServers configuration headers > client request headers.`
+    : `此项不配置时：默认透传来自客户端的Headers到MCP服务中。如果MCPServers配置中存在Header参数，优先级为：MCPServers配置中Header > 客户端的Headers`
+})
+
+const headerContentTips = computed(() => {
+  return locale.value === 'en'
+    ? `
+      Notes:
+      <br/>
+      1. Custom headers do not need to be actively submitted by the client; the gateway will automatically include them in requests forwarded to the MCP service.
+      <br/>
+      2. If there are duplicate header names among client request headers, MCP configuration headers, and custom pass-through headers, the precedence order is: custom pass-through headers > MCP configuration headers > client request headers. That is, when retrieving values for duplicate header names, the custom pass-through configuration is used first, followed by the MCP configuration, and finally the value provided by the client request.`
+    : `注意事项：
+      <br/>
+      1.自定义 Header 无需客户端主动提交，网关在转发流量时，会自动将其携带至 MCP 服务的请求中。
+      <br/>
+      2.若客户端请求 Header、MCP 配置 Header、自定义透传 Header 三者存在同名项，优先级顺序为：自定义透传 Header > MCP 配置 Header > 客户端请求 Header。即同名 Header 取值时，优先采用自定义透传配置，其次为 MCP 配置，最后为客户端请求传入的值。`
 })
 
 /**
@@ -1211,8 +1259,8 @@ const checkPackageNameOverflow = () => {
 }
 
 const init = async (instance: InstanceResult | null) => {
-  await handleGetEnvList() // 获取环境变量列表
-  await handleGetPackageList() // 获取包列表
+  handleGetEnvList() // 获取环境变量列表
+  handleGetPackageList() // 获取包列表
   if (instance) {
     pageInfo.value.formData = cloneDeep(instance)
   } else {

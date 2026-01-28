@@ -108,7 +108,11 @@
         "byTemplate": "By Template",
         "byDocs": "By OpenAPI",
         "deleteToken": "Are you sure to delete this token? After deleting a valid token, requests using that token will not pass verification.",
-        "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification."
+        "random": "Are you sure to reproduce the token? After regenerating the token, requests using the token will not pass verification.",
+        "accessConfig": "Configuration",
+        "viewLogs": "Logs",
+        "saveAndRun": "Save and Run",
+        "backList": "List"
       },
       "pageDesc": {
         "createTitle": "Create a instance",
@@ -134,7 +138,7 @@
         "instanceName": "InstanceName",
         "deployType": "DeployType",
         "imgAddress": "ImgAddress",
-        "mcpServers": "mcpServersConfig",
+        "mcpServers": "MCPServersConfig",
         "mcpServersPlaceholder": "Please enter the MCP server configuration in JSON format,Example:",
         "configInfo": "ConfigInfo",
         "packageId": "CodePackage",
