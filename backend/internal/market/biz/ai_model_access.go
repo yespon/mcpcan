@@ -45,12 +45,11 @@ type TestConnectionResponse struct {
 
 func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
 	modelAccess := &model.AiModelAccess{
-		UserID:    userID,
-		Name:      req.Name,
-		Provider:  req.Provider,
-		ApiKey:    req.ApiKey,
-		BaseUrl:   req.BaseUrl,
-		ModelName: req.ModelName,
+		UserID:   userID,
+		Name:     req.Name,
+		Provider: req.Provider,
+		ApiKey:   req.ApiKey,
+		BaseUrl:  req.BaseUrl,
 	}
 
 	if err := mysql.AiModelAccessRepo.Create(ctx, modelAccess); err != nil {
@@ -76,9 +75,6 @@ func (b *AiModelAccessBiz) Update(ctx context.Context, req *pb.UpdateModelAccess
 	}
 	if req.BaseUrl != "" {
 		modelAccess.BaseUrl = req.BaseUrl
-	}
-	if req.ModelName != "" {
-		modelAccess.ModelName = req.ModelName
 	}
 
 	if err := mysql.AiModelAccessRepo.Update(ctx, modelAccess); err != nil {
@@ -139,7 +135,8 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 		providerStr = modelAccess.Provider
 		baseUrl = modelAccess.BaseUrl
 		apiKey = modelAccess.ApiKey
-		modelName = modelAccess.ModelName
+		// ModelName must be provided in request for testing
+		modelName = req.ModelName
 	} else {
 		// Use request params
 		providerStr = req.Provider

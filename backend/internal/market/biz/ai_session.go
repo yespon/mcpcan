@@ -40,6 +40,7 @@ func (b *AiSessionBiz) Create(ctx context.Context, req *pb.CreateSessionRequest,
 		UserID:        userID,
 		Name:          req.Name,
 		ModelAccessID: req.ModelAccessID,
+		ModelName:     req.ModelName, // 模型名称在会话中指定
 		MaxContext:    int(req.MaxContext),
 		ToolsConfig:   json.RawMessage(req.ToolsConfig),
 	}
@@ -70,6 +71,9 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 	}
 	if req.MaxContext != 0 {
 		session.MaxContext = int(req.MaxContext)
+	}
+	if req.ModelName != "" {
+		session.ModelName = req.ModelName
 	}
 
 	if err := mysql.AiSessionRepo.Update(ctx, session); err != nil {
@@ -235,7 +239,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, sessionID int64, content string
 
 		for turn := 0; turn < maxTurns; turn++ {
 			req := llm.ChatRequest{
-				Model:    modelAccess.ModelName,
+				Model:    session.ModelName, // 从 Session 读取模型名称
 				Messages: currentMessages,
 				Stream:   true,
 				Tools:    tools,

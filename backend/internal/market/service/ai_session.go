@@ -265,6 +265,7 @@ func (s *AiSessionService) convertModelToProto(m *model.AiSession) *pb.AiSession
 		Id:            m.ID,
 		Name:          m.Name,
 		ModelAccessID: m.ModelAccessID,
+		ModelName:     m.ModelName,
 		ToolsConfig:   string(m.ToolsConfig),
 		MaxContext:    int32(m.MaxContext),
 		CreateTime:    m.CreateTime.Unix(),

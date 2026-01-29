@@ -298,7 +298,6 @@ func (s *AiModelAccessService) convertModelToProto(m *model.AiModelAccess) *pb.A
 		Provider:   m.Provider,
 		ApiKey:     maskedKey,
 		BaseUrl:    m.BaseUrl,
-		ModelName:  m.ModelName,
 		CreateTime: m.CreateTime.Unix(),
 		UpdateTime: m.UpdateTime.Unix(),
 	}
