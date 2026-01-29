@@ -236,6 +236,10 @@ const rules: FormRules<typeof formModel.value> = {
   baseUrl: [{ required: true, message: t('agent.placeholder.baseUrl'), trigger: 'blur' }],
   username: [{ required: true, message: t('agent.placeholder.username'), trigger: 'blur' }],
   password: [{ required: true, message: t('agent.placeholder.password'), trigger: 'blur' }],
+  cozeUserID: [
+    { required: true, message: t('agent.placeholder.cozeUserID'), trigger: 'blur' },
+    { max: 32, message: t('agent.placeholder.accessNameLength'), trigger: 'blur' },
+  ],
 }
 
 // cancel dialog
