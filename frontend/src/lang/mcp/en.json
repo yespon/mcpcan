@@ -307,7 +307,7 @@
         "protocolType": "Supported Protocol Types",
         "SSE": "SSE Protocol",
         "STREAMABLE_HTTP": "Streamable HTTP Protocol",
-        "STDIO": "STDIO Standard Input/Output Protocol (converted to SSE/STREAMABLE_HTTP)"
+        "STDIO": "STDIO Standard Input/Output Protocol (automatically converted to SSE/Streamable HTTP protocol after creation)"
       }
     },
     "type": {

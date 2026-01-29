@@ -307,7 +307,7 @@
         "protocolType": "支持协议类型",
         "SSE": "SSE协议",
         "STREAMABLE_HTTP": "Streamable HTTP协议",
-        "STDIO": "STDIO标准输入输出协议（转为SSE/STREAMABLE_HTTP）"
+        "STDIO": "STDIO 标准输入输出协议（创建后由适配器自动转换为 SSE/Streamable HTTP 协议）"
       }
     },
     "type": {
