@@ -42,6 +42,7 @@ cmd/**/logs/
 
 # test
 .env
+test/go-test/config.json
 
 .idea
 .DS_Store
