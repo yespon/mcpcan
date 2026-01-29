@@ -44,6 +44,14 @@ type TestConnectionResponse struct {
 }
 
 func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
+	// Validate provider
+	if req.Provider == "" {
+		return nil, fmt.Errorf("provider is required")
+	}
+	if !llm.IsValidProvider(req.Provider) {
+		return nil, fmt.Errorf("unsupported provider: %s, supported providers: %v", req.Provider, llm.GetSupportedProviderList())
+	}
+
 	modelAccess := &model.AiModelAccess{
 		UserID:   userID,
 		Name:     req.Name,
@@ -68,6 +76,10 @@ func (b *AiModelAccessBiz) Update(ctx context.Context, req *pb.UpdateModelAccess
 		modelAccess.Name = req.Name
 	}
 	if req.Provider != "" {
+		// Validate provider before update
+		if !llm.IsValidProvider(req.Provider) {
+			return nil, fmt.Errorf("unsupported provider: %s, supported providers: %v", req.Provider, llm.GetSupportedProviderList())
+		}
 		modelAccess.Provider = req.Provider
 	}
 	if req.ApiKey != "" {

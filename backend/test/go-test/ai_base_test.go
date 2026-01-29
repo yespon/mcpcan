@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -72,12 +71,6 @@ func doRequest(t *testing.T, method, path string, body interface{}) (*http.Respo
 	
 	if config.Token != "" {
 		req.Header.Set("Authorization", config.Token) 
-		// Extra safety for Bearer prefix, though config usually has it
-		if !strings.HasPrefix(config.Token, "Bearer ") && !strings.HasPrefix(config.Token, "ey") {
-             // Basic basic check; standardizing on just passing what's in config is safer if user followed instructions
-             // But let's keep it simple: assume user might paste just the token
-             // Actually, let's just use what's in config to avoid double prefixing if they added it.
-		}
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -88,11 +81,22 @@ func doRequest(t *testing.T, method, path string, body interface{}) (*http.Respo
 	require.NoError(t, err)
 	resp.Body.Close()
 
-	t.Logf("[%s] %s -> Status: %d", method, url, resp.StatusCode)
-	// Uncomment for debugging full response
-	t.Logf("Response: %s", string(respBytes))
+	fmt.Printf("[%s] %s -> Status: %d\n", method, path, resp.StatusCode)
+	// Pretty print JSON response
+	printPrettyJSON(respBytes)
 
 	return resp, respBytes
+}
+
+// printPrettyJSON formats and prints JSON response body
+func printPrettyJSON(data []byte) {
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, data, "", "  "); err != nil {
+		// If not valid JSON, print as-is
+		fmt.Printf("[RESPONSE] %s\n", string(data))
+		return
+	}
+	fmt.Printf("[RESPONSE]\n%s\n", prettyJSON.String())
 }
 
 type CommonResponse struct {

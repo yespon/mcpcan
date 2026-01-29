@@ -8,13 +8,69 @@ import (
 type ProviderType string
 
 const (
-	ProviderOpenAI    ProviderType = "openai"
-	ProviderDeepSeek  ProviderType = "deepseek"
-	ProviderMoonshot  ProviderType = "moonshot"
-	ProviderDoubao    ProviderType = "doubao"    // Doubao (Volcengine)
-	ProviderAnthropic ProviderType = "anthropic" // Future support
-	ProviderGemini    ProviderType = "gemini"    // Future support
+	// Core Providers (OpenAI-compatible)
+	ProviderOpenAI      ProviderType = "openai"
+	ProviderAzureOpenAI ProviderType = "azure_openai"
+	ProviderDeepSeek    ProviderType = "deepseek"
+	ProviderAnthropic   ProviderType = "anthropic"
+	ProviderGoogle      ProviderType = "google"
+	ProviderMistral     ProviderType = "mistral"
+	ProviderXAI         ProviderType = "xai"
+
+	// Aggregator/Proxy Providers
+	ProviderOpenRouter ProviderType = "openrouter"
+	ProviderLiteLLM    ProviderType = "litellm"
+	ProviderOllama     ProviderType = "ollama"
+
+	// Chinese Providers
+	ProviderQwen    ProviderType = "qwen"    // Aliyun Tongyi Qwen
+	ProviderDoubao  ProviderType = "doubao"  // Volcengine Doubao
+	ProviderZhipu   ProviderType = "zhipu"   // Zhipu GLM
+	ProviderMoonshot ProviderType = "moonshot" // Moonshot Kimi
 )
+
+// SupportedProviders contains all valid provider types
+var SupportedProviders = map[ProviderType]bool{
+	ProviderOpenAI:      true,
+	ProviderAzureOpenAI: true,
+	ProviderDeepSeek:    true,
+	ProviderAnthropic:   true,
+	ProviderGoogle:      true,
+	ProviderMistral:     true,
+	ProviderXAI:         true,
+	ProviderOpenRouter:  true,
+	ProviderLiteLLM:     true,
+	ProviderOllama:      true,
+	ProviderQwen:        true,
+	ProviderDoubao:      true,
+	ProviderZhipu:       true,
+	ProviderMoonshot:    true,
+}
+
+// GetSupportedProviderList returns list of all supported provider IDs
+func GetSupportedProviderList() []string {
+	return []string{
+		string(ProviderOpenAI),
+		string(ProviderAzureOpenAI),
+		string(ProviderAnthropic),
+		string(ProviderDeepSeek),
+		string(ProviderGoogle),
+		string(ProviderMistral),
+		string(ProviderXAI),
+		string(ProviderOpenRouter),
+		string(ProviderLiteLLM),
+		string(ProviderOllama),
+		string(ProviderQwen),
+		string(ProviderDoubao),
+		string(ProviderZhipu),
+		string(ProviderMoonshot),
+	}
+}
+
+// IsValidProvider checks if the provider string is a valid provider type
+func IsValidProvider(provider string) bool {
+	return SupportedProviders[ProviderType(provider)]
+}
 
 // ProviderConfig holds configuration for LLM provider
 type ProviderConfig struct {
