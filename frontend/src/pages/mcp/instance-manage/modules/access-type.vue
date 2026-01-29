@@ -27,11 +27,14 @@
               <el-icon :size="48" class="mb-4 !text-[48px]" :color="item.color">
                 <i class="icon iconfont !text-[48px]" :class="item.icon"></i>
               </el-icon>
-              <div class="text-lg font-bold mb-2">{{ item.label }}</div>
-              <div class="text-left tip tip-primary">
+              <div class="text-lg font-bold" :class="item.subLabel ? '' : 'mb-2'">
+                {{ item.label }}
+              </div>
+              <div class="text-size-sm mb-1" v-if="item.subLabel">({{ item?.subLabel }})</div>
+              <div class="desc tip tip-primary">
                 {{ item.description }}
               </div>
-              <div class="mt-4 text-size-sm w-full">
+              <div class="mt-4 text-size-sm w-full" v-if="item.supportTypes">
                 <div class="font-bold text-left">
                   {{ t('mcp.instance.accessType.protocolType') }}
                 </div>
@@ -54,11 +57,14 @@
             <el-icon :size="48" class="mb-4 !text-[48px]" :color="item.color">
               <i class="icon iconfont !text-[48px]" :class="item.icon"></i>
             </el-icon>
-            <div class="text-lg font-bold mb-2">{{ item.label }}</div>
-            <div class="text-left tip tip-primary">
+            <div class="text-lg font-bold" :class="item.subLabel ? '' : 'mb-2'">
+              {{ item.label }}
+            </div>
+            <div class="text-size-sm mb-1" v-if="item.subLabel">({{ item?.subLabel }})</div>
+            <div class="desc tip tip-primary">
               {{ item.description }}
             </div>
-            <div class="mt-4 text-size-sm w-full">
+            <div class="mt-4 text-size-sm w-full" v-if="item.supportTypes">
               <div class="font-bold text-left">{{ t('mcp.instance.accessType.protocolType') }}</div>
               <div v-if="item.supportTypes.includes(McpProtocol.SSE)" class="item-control">
                 {{ t('mcp.instance.accessType.SSE') }}
@@ -132,12 +138,13 @@ const accessOptions = [
     description: t('mcp.instance.accessType.directDesc'),
   },
   {
-    label: 'OpenAPI',
+    label: t('mcp.instance.accessType.api'),
+    subLabel: '仅支持标准的OpenAPI文档',
     value: 4,
     icon: 'MCP-wenjian1',
     formComponent: OpenApiDialog,
     color: '#ff8eb9',
-    supportTypes: [McpProtocol.STREAMABLE_HTTP],
+    // supportTypes: [],
     description: t('mcp.instance.accessType.openAPIDesc'),
   },
 ]
@@ -221,6 +228,12 @@ defineExpose({
     background-color: #409eff1a;
     border-left: 5px solid var(--el-color-primary);
   }
+}
+.desc {
+  text-align: justify;
+  text-justify: inter-word;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 .item-control {
   font-size: 12px;
