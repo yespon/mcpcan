@@ -76,7 +76,7 @@ import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
 const { t, locale } = useI18n()
 const layout = useLayout()
 const formComponent = ref()
-const { query, pageInfo, userInfo, jumpBack, currentMCP } = useInstanceFormHooks()
+const { query, pageInfo, userInfo, jumpBack, jumpToPage, currentMCP } = useInstanceFormHooks()
 const route = useRoute()
 const currentComponent = computed(() => {
   switch (Number(query.type)) {
@@ -99,7 +99,10 @@ const handleConfig = () => {
   formComponent.value.handleConfig()
 }
 const handleClose = () => {
-  jumpBack()
+  // jumpBack()
+  jumpToPage({
+    url: '/instance-manage',
+  })
 }
 const handleViewStatus = () => {
   formComponent.value.handleViewStatus()

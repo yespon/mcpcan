@@ -57,7 +57,7 @@ import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
 const { t, locale } = useI18n()
 const layout = useLayout()
 const formComponent = ref()
-const { query, pageInfo, jumpBack } = useTemplateFormHooks()
+const { query, pageInfo, jumpBack, jumpToPage } = useTemplateFormHooks()
 const currentComponent = computed(() => {
   switch (Number(query.type)) {
     case AccessType.HOSTING:
@@ -79,7 +79,10 @@ const handleConfig = () => {
   formComponent.value.handleConfig()
 }
 const handleClose = () => {
-  jumpBack()
+  // jumpBack()
+  jumpToPage({
+    url: '/template-manage',
+  })
 }
 
 const handleConfirm = () => {

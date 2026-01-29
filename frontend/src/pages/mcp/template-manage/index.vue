@@ -116,6 +116,7 @@ const handleEditTemplate = (row: TemplateResult) => {
     url: '/new-template',
     data: {
       templateId: row.templateId,
+      type: row.accessType,
     },
   })
 }
