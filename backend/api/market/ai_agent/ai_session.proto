@@ -21,6 +21,8 @@ message AiSession {
     int64 createTime = 6;
     // @inject_tag: json:"updateTime" desc:"Update Time"
     int64 updateTime = 7;
+    // @inject_tag: json:"modelName" desc:"Model Name"
+    string modelName = 8;
 }
 
 message AiMessage {
@@ -55,6 +57,8 @@ message CreateSessionRequest {
     string toolsConfig = 3;
     // @inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"
     int32 maxContext = 4;
+    // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
+    string modelName = 5;
 }
 
 message CreateSessionResponse {
@@ -73,6 +77,8 @@ message UpdateSessionRequest {
     int32 maxContext = 4;
     // @inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"
     int64 modelAccessID = 5;
+    // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
+    string modelName = 6;
 }
 
 message UpdateSessionResponse {
