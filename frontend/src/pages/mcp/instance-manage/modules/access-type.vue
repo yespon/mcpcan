@@ -31,7 +31,7 @@
                 {{ item.label }}
               </div>
               <div class="text-size-sm mb-1" v-if="item.subLabel">({{ item?.subLabel }})</div>
-              <div class="desc tip tip-primary">
+              <div class="tip tip-primary desc">
                 {{ item.description }}
               </div>
               <div class="mt-4 text-size-sm w-full" v-if="item.supportTypes">
@@ -61,7 +61,7 @@
               {{ item.label }}
             </div>
             <div class="text-size-sm mb-1" v-if="item.subLabel">({{ item?.subLabel }})</div>
-            <div class="desc tip tip-primary">
+            <div class="tip tip-primary desc">
               {{ item.description }}
             </div>
             <div class="mt-4 text-size-sm w-full" v-if="item.supportTypes">
@@ -139,7 +139,7 @@ const accessOptions = [
   },
   {
     label: t('mcp.instance.accessType.api'),
-    subLabel: '仅支持标准的OpenAPI文档',
+    subLabel: t('mcp.instance.accessType.supportApi'),
     value: 4,
     icon: 'MCP-wenjian1',
     formComponent: OpenApiDialog,

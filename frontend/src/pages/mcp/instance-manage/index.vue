@@ -285,7 +285,7 @@
                 <div class="flex-grow-1 flex flex-col">
                   <div class="flex justify-between">
                     <div class="flex items-center flex-grow-1">
-                      <div class="max-w-[120px] u-line-1 font-bold text-[16px] cursor-pointer">
+                      <div class="max-w-[110px] u-line-1 font-bold text-[16px] cursor-pointer">
                         <el-tooltip :content="row.instanceName" placement="top" trigger="click">
                           {{ row.instanceName }}
                         </el-tooltip>
