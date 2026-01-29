@@ -306,8 +306,8 @@
         "openAPIDesc": "将标准OpenAPI文档自动转为MCP服务。平台解析文档并生成适配器，使传统HTTP接口可通过MCP协议流式访问，快速实现业务接口到MCP生态的无缝集成。",
         "protocolType": "支持协议类型",
         "SSE": "SSE协议",
-        "STEAMABLE_HTTP": "Steamable HTTP协议",
-        "STDIO": "STDIO标准输入输出协议（转为SSE/STEAMABLE_HTTP）"
+        "STREAMABLE_HTTP": "Streamable HTTP协议",
+        "STDIO": "STDIO标准输入输出协议（转为SSE/STREAMABLE_HTTP）"
       }
     },
     "type": {

@@ -509,7 +509,7 @@ const mcpProtocolOptions = computed(() => {
     return (
       pageInfo.value.formData.accessType === AccessType.HOSTING ||
       ([AccessType.DIRECT, AccessType.PROXY].includes(pageInfo.value.formData.accessType) &&
-        [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP].includes(option.value))
+        [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP].includes(option.value))
     )
   })
 })

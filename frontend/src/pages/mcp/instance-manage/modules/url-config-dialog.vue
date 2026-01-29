@@ -69,7 +69,7 @@ const dialogInfo = ref<any>({
 })
 const pathTypeOptions = [
   { label: 'SSE', value: 'sse' },
-  { label: 'STEAMABLE_HTTP', value: 'steamable_http' },
+  { label: 'STREAMABLE_HTTP', value: 'steamable_http' },
 ]
 // token list
 const tokenList = ref<Array<any>>([])

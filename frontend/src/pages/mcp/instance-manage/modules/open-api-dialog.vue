@@ -631,7 +631,7 @@ const handleSaveAsTemplate = async () => {
           ...formData.value,
           packageId: formData.value.openapiFileID,
           accessType: AccessType.HOSTING,
-          mcpProtocol: McpProtocol.STEAMABLE_HTTP,
+          mcpProtocol: McpProtocol.STREAMABLE_HTTP,
           sourceType: SourceType.OPENAPI,
         })
         ElMessage.success(formData.value.templateId ? t('action.edit') : t('action.create'))

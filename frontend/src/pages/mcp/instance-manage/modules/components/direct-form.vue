@@ -72,7 +72,7 @@ const { query, pageInfo, placeholderServer, jumpToPage } = useInstanceFormHooks(
 const baseInfo = ref()
 const protocolOptions = [
   { label: 'SSE', value: 1 },
-  { label: 'STEAMABLE_HTTP', value: 2 },
+  { label: 'STREAMABLE_HTTP', value: 2 },
 ]
 /**
  * Handle McpProtocol Changed

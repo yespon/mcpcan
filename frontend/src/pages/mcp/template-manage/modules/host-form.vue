@@ -759,7 +759,7 @@ const currentOpenCollapse = ref()
 const protocolOptions = [
   { label: 'STDIO', value: 3 },
   { label: 'SSE', value: 1 },
-  { label: 'STEAMABLE_HTTP', value: 2 },
+  { label: 'STREAMABLE_HTTP', value: 2 },
 ]
 const action = ref(
   baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/code/upload',
@@ -777,7 +777,7 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
 
 const mcpServersTips = computed(() => {
   return locale.value === 'en'
-    ? `MCP service SSE/STEAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
+    ? `MCP service SSE/STREAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
             After saving, the gateway access configuration will be displayed on the list page. You can also view <a href="#/template-manage">Template List</a> which provides multiple startup examples.`
     : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
             MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看

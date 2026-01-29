@@ -102,7 +102,7 @@ export const useInstanceFormHooks = () => {
             // 1.Verification when the current deployment mode is SSE or steamableHttp
             if (
               [AccessType.DIRECT, AccessType.PROXY].includes(pageInfo.value.formData.accessType) &&
-              [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP].includes(
+              [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP].includes(
                 pageInfo.value.formData.mcpProtocol,
               )
             ) {
@@ -178,7 +178,7 @@ export const useInstanceFormHooks = () => {
     return !(
       pageInfo.value.formData.accessType === AccessType.HOSTING &&
       (pageInfo.value.formData.mcpProtocol === McpProtocol.SSE ||
-        pageInfo.value.formData.mcpProtocol === McpProtocol.STEAMABLE_HTTP)
+        pageInfo.value.formData.mcpProtocol === McpProtocol.STREAMABLE_HTTP)
     )
   })
 
@@ -199,7 +199,7 @@ export const useInstanceFormHooks = () => {
     return (
       pageInfo.value.formData.accessType === AccessType.HOSTING &&
       (pageInfo.value.formData.mcpProtocol === McpProtocol.SSE ||
-        pageInfo.value.formData.mcpProtocol === McpProtocol.STEAMABLE_HTTP)
+        pageInfo.value.formData.mcpProtocol === McpProtocol.STREAMABLE_HTTP)
     )
   })
 

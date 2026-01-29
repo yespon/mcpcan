@@ -241,7 +241,7 @@
       "openApi": {
         "importTitle": "Import OpenAPI Document",
         "serviceUrl": "Service Url",
-        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STEAMABLE_HTTP protocol",
+        "tips": "Note: MCP services imported through the OpenAPI document will be accessed via the STREAMABLE_HTTP protocol",
         "support": "Supports importing JSON or YAML files in OpenAPI 3.0.0 or higher version data format.",
         "localFile": "Local Upload",
         "selectDocs": "Select from Document Library",
@@ -306,8 +306,8 @@
         "openAPIDesc": "Automatically convert standard OpenAPI documents into MCP services. The platform parses the documents and generates adapters, allowing traditional HTTP interfaces to be accessed via the MCP protocol, quickly achieving seamless integration of business interfaces into the MCP ecosystem.",
         "protocolType": "Supported Protocol Types",
         "SSE": "SSE Protocol",
-        "STEAMABLE_HTTP": "Steamable HTTP Protocol",
-        "STDIO": "STDIO Standard Input/Output Protocol (converted to SSE/STEAMABLE_HTTP)"
+        "STREAMABLE_HTTP": "Streamable HTTP Protocol",
+        "STDIO": "STDIO Standard Input/Output Protocol (converted to SSE/STREAMABLE_HTTP)"
       }
     },
     "type": {

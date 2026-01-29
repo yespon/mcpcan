@@ -39,10 +39,10 @@
                   {{ t('mcp.instance.accessType.SSE') }}
                 </div>
                 <div
-                  v-if="item.supportTypes.includes(McpProtocol.STEAMABLE_HTTP)"
+                  v-if="item.supportTypes.includes(McpProtocol.STREAMABLE_HTTP)"
                   class="item-control"
                 >
-                  {{ t('mcp.instance.accessType.STEAMABLE_HTTP') }}
+                  {{ t('mcp.instance.accessType.STREAMABLE_HTTP') }}
                 </div>
                 <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
                   {{ t('mcp.instance.accessType.STDIO') }}
@@ -64,10 +64,10 @@
                 {{ t('mcp.instance.accessType.SSE') }}
               </div>
               <div
-                v-if="item.supportTypes.includes(McpProtocol.STEAMABLE_HTTP)"
+                v-if="item.supportTypes.includes(McpProtocol.STREAMABLE_HTTP)"
                 class="item-control"
               >
-                {{ t('mcp.instance.accessType.STEAMABLE_HTTP') }}
+                {{ t('mcp.instance.accessType.STREAMABLE_HTTP') }}
               </div>
               <div v-if="item.supportTypes.includes(McpProtocol.STDIO)" class="item-control">
                 {{ t('mcp.instance.accessType.STDIO') }}
@@ -110,7 +110,7 @@ const accessOptions = [
     icon: 'MCP-anquan',
     formComponent: HostingDialog,
     color: '#67C23A',
-    supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP, McpProtocol.STDIO],
+    supportTypes: [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP, McpProtocol.STDIO],
     description: t('mcp.instance.accessType.hostingDesc'),
   },
   {
@@ -119,7 +119,7 @@ const accessOptions = [
     icon: 'MCP-daili',
     formComponent: ProxyDialog,
     color: '#E6A23C',
-    supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
+    supportTypes: [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP],
     description: t('mcp.instance.accessType.proxyDesc'),
   },
   {
@@ -128,7 +128,7 @@ const accessOptions = [
     icon: 'MCP-zhilian',
     formComponent: DirectDialog,
     color: '#409EFF',
-    supportTypes: [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP],
+    supportTypes: [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP],
     description: t('mcp.instance.accessType.directDesc'),
   },
   {
@@ -137,7 +137,7 @@ const accessOptions = [
     icon: 'MCP-wenjian1',
     formComponent: OpenApiDialog,
     color: '#ff8eb9',
-    supportTypes: [McpProtocol.STEAMABLE_HTTP],
+    supportTypes: [McpProtocol.STREAMABLE_HTTP],
     description: t('mcp.instance.accessType.openAPIDesc'),
   },
 ]

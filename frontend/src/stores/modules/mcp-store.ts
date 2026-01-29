@@ -33,7 +33,7 @@ export const useMcpStore = defineStore('mcp', () => {
   const mcpProtocolOptions = computed(() => [
     { label: 'STDIO', value: McpProtocol.STDIO },
     { label: 'SSE', value: McpProtocol.SSE },
-    { label: 'STEAMABLE_HTTP', value: McpProtocol.STEAMABLE_HTTP },
+    { label: 'STREAMABLE_HTTP', value: McpProtocol.STREAMABLE_HTTP },
   ])
 
   /**
