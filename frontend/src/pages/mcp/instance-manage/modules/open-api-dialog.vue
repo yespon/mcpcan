@@ -59,12 +59,15 @@
               <Upload v-model="formData.iconPath"></Upload>
             </el-form-item>
           </el-form>
+
           <TokenForm
-            v-if="dialogInfo.operation !== 'template' && !formData.instanceId"
+            v-if="dialogInfo.operation === 'instance'"
             ref="tokenForm"
             :formData="formData.tokens[0]"
           ></TokenForm>
-          <div class="mt-8 color-gray text-3 pb-4">{{ t('mcp.instance.openApi.tips') }}</div>
+          <div class="mt-8 color-gray text-3 pb-4">
+            {{ t('mcp.instance.openApi.tips') }}
+          </div>
         </div>
       </el-splitter-panel>
       <el-splitter-panel
@@ -128,9 +131,11 @@
         <el-button class="mr-4 w-25" @click="dialogInfo.visible = false">{{
           t('common.cancel')
         }}</el-button>
-        <mcp-button class="w-25 mr-4" @click="handleConfirm">{{ t('common.save') }}</mcp-button>
+        <mcp-button class="w-25 mr-4" @click="handleConfirm">
+          {{ t('common.save') }}
+        </mcp-button>
         <!-- v-if="!formData.instanceId && !formData.templateId" -->
-        <mcp-button @click="handleSaveAsTemplate"
+        <mcp-button v-if="dialogInfo.operation === 'instance'" @click="handleSaveAsTemplate"
           >{{ t('mcp.instance.action.asTemplate') }}
         </mcp-button>
       </div>
@@ -630,6 +635,8 @@ const handleSaveAsTemplate = async () => {
           sourceType: SourceType.OPENAPI,
         })
         ElMessage.success(formData.value.templateId ? t('action.edit') : t('action.create'))
+        emit('on-refresh')
+        dialogInfo.value.visible = false
       }
     })
   } finally {
@@ -696,7 +703,7 @@ const handleTemplateDetail = async (id: string) => {
     notes: data.notes,
     iconPath: data.iconPath,
     openapiBaseUrl: data.openapiBaseUrl,
-    environmentId: data.environmentId,
+    environmentId: envList.value[0]?.id || data.environmentId,
     enabledToken: true,
     openapiFileID: data.packageId,
     chooseOpenapiFileID: '',
@@ -730,13 +737,13 @@ const handleTemplateDetail = async (id: string) => {
  */
 const init = async (id?: string, type?: string) => {
   dialogInfo.value.visible = true
+  dialogInfo.value.operation = type
   baseInfo.value?.resetFields()
   handleGetAPIlist()
   await handleGetEnvList()
   if (id) {
     // 模板编辑
-    if (type === 'template' || type === 'create') {
-      dialogInfo.value.operation = type
+    if (type === 'template' || type === 'instance') {
       handleTemplateDetail(id)
     } else {
       // get detail

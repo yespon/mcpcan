@@ -284,36 +284,36 @@
                 </div>
                 <div class="flex-grow-1 flex flex-col">
                   <div class="flex justify-between">
-                    <div class="flex">
+                    <div class="flex items-center flex-grow-1">
                       <div class="max-w-[120px] u-line-1 font-bold text-[16px] cursor-pointer">
                         <el-tooltip :content="row.instanceName" placement="top" trigger="click">
                           {{ row.instanceName }}
                         </el-tooltip>
                       </div>
-                      <div class="ml-2">
+                      <div class="ml-1 text-sm">
                         <div
-                          class="flex color-[#67C23A]"
+                          class="flex color-[#67C23A] items-center"
                           v-if="row.accessType === AccessType.HOSTING"
                         >
-                          <el-icon :size="16" class="mr-2" color="#67C23A">
+                          <el-icon :size="16" class="mr-1" color="#67C23A">
                             <i class="icon iconfont MCP-anquan"></i>
                           </el-icon>
                           {{ t('mcp.type.hosting') }}
                         </div>
                         <div
-                          class="flex color-[#E6A23C]"
+                          class="flex color-[#E6A23C] items-center"
                           v-if="row.accessType === AccessType.PROXY"
                         >
-                          <el-icon :size="16" class="mr-2" color="#E6A23C">
+                          <el-icon :size="16" class="mr-1" color="#E6A23C">
                             <i class="icon iconfont MCP-daili"></i>
                           </el-icon>
                           {{ t('mcp.type.proxy') }}
                         </div>
                         <div
-                          class="flex color-[#409EFF]"
+                          class="flex color-[#409EFF] items-center"
                           v-if="row.accessType === AccessType.DIRECT"
                         >
-                          <el-icon :size="16" class="mr-2" color="#409EFF">
+                          <el-icon :size="16" class="mr-1" color="#409EFF">
                             <i class="icon iconfont MCP-zhilian"></i>
                           </el-icon>
                           {{ t('mcp.type.direct') }}
@@ -447,7 +447,7 @@
 
     <!-- view detail model -->
     <InstanceDetail ref="instanceDetail"></InstanceDetail>
-    <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
+    <AccessTypeDialog ref="accessTypeDialog" @on-refresh="init"></AccessTypeDialog>
     <!-- view config model -->
     <ViewConfig ref="viewConfig" @on-refresh="init"></ViewConfig>
     <!-- probe instance dialog model -->
@@ -708,7 +708,7 @@ const handleEditInstance = (row: InstanceResult) => {
   }
   currentInstance.value = row
   if (row.sourceType === SourceType.OPENAPI) {
-    openAPIDialog.value.init(row.instanceId)
+    openAPIDialog.value.init(row.instanceId, 'edit')
     return
   }
   // accessTypeDialog.value.init(row)

@@ -156,7 +156,7 @@ const handleDeleteTemplate = (row: TemplateResult) => {
  */
 const handleCreatInstance = (row: TemplateResult) => {
   if (row.sourceType === SourceType.OPENAPI) {
-    openAPIDialog.value.init(row.templateId, 'create')
+    openAPIDialog.value.init(row.templateId, 'instance')
     return
   }
   jumpToPage({

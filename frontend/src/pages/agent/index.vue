@@ -46,6 +46,7 @@
         :columns="columns"
         show-view-mode
         view-mode="card"
+        :showPage="false"
         v-model:pageConfig="pageConfig"
         :gridConfig="{ xs: 24, sm: 12, md: 12, lg: 8, xl: 6 }"
         :handlerColumnConfig="{

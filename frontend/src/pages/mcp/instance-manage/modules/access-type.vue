@@ -77,7 +77,11 @@
         </div>
       </div>
     </el-dialog>
-    <component ref="formComponent" :is="currentModal?.formComponent"></component>
+    <component
+      ref="formComponent"
+      :is="currentModal?.formComponent"
+      @on-refresh="emit('on-refresh')"
+    ></component>
   </div>
 </template>
 
@@ -91,7 +95,7 @@ import DirectDialog from './direct-dialog.vue'
 import OpenApiDialog from './open-api-dialog.vue'
 import { type InstanceResult } from '@/types/instance.ts'
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'on-refresh'])
 const { t } = useI18n()
 const { pageInfo, jumpToPage, path } = useInstanceFormHooks()
 const dialogInfo = ref({
@@ -147,7 +151,7 @@ const handleSelect = async (item: any) => {
   // dialog view
   if (item.value === 4) {
     nextTick(() => {
-      formComponent.value?.init()
+      formComponent.value?.init(null, path === '/template-manage' ? 'template' : 'instance')
     })
     return
   }

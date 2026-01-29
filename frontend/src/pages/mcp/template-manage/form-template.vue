@@ -28,25 +28,9 @@
                 : 'text-center'
             "
           >
-            <div v-if="query.instanceId && Number(query.type) !== AccessType.DIRECT" class="flex">
-              <el-button link type="primary" @click="handleConfig">
-                {{ t('mcp.instance.action.accessConfig') }}
-              </el-button>
-              <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="warning" @click="handleViewStatus">
-                {{ t('mcp.instance.action.probe') }}
-              </el-button>
-              <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="success" @click="handleViewLog">
-                {{ t('mcp.instance.action.viewLogs') }}
-              </el-button>
-            </div>
             <div class="flex justify-center">
-              <mcp-button @click="handleConfirm" class="mr-4">
-                {{ t('mcp.instance.action.saveAndRun') }}
-              </mcp-button>
               <mcp-button plain @click="handleSaveAsTemplate" class="mr-4">
-                {{ t('mcp.instance.action.asTemplate') }}
+                {{ t('mcp.template.action.save') }}
               </mcp-button>
               <el-button @click="handleClose"> {{ t('mcp.instance.action.backList') }} </el-button>
             </div>
@@ -97,12 +81,7 @@ const handleConfig = () => {
 const handleClose = () => {
   jumpBack()
 }
-const handleViewStatus = () => {
-  formComponent.value.handleViewStatus()
-}
-const handleViewLog = () => {
-  formComponent.value.handleViewLog()
-}
+
 const handleConfirm = () => {
   formComponent.value.handleConfirm()
 }

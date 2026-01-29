@@ -119,7 +119,7 @@ export const useInstanceTableHooks = () => {
   const pageConfig = ref({
     total: 0,
     page: 1,
-    pageSize: 10,
+    pageSize: 12,
   })
   const columns = ref<any>([
     {
