@@ -241,7 +241,7 @@
     "service_path": "/sse"
   },
   {
-    "openapi_file_name": "mcpcan-openapi.json",
+    "openapi_file_name": "mcpcan-openapi.yaml",
     "name": "MCPCAN OpenAPI",
     "openapi_base_url": "https://{{CURRENT_DOMAIN}}/api/market",
     "mcp_protocol": "streamable-http",
