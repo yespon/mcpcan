@@ -54,6 +54,8 @@ message CaseInfo {
   string iconPath = 5;
   // @inject_tag: json:"sourceType" desc:"案例来源类型"
   instance.SourceType sourceType = 6;
+  // @inject_tag: json:"accessType" desc:"案例访问类型"
+  instance.AccessType accessType = 7;
 }
 
 // DashboardService 仪表板服务
