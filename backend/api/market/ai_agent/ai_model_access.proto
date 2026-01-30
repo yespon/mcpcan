@@ -202,13 +202,15 @@ service AiModelAccessService {
             get: "/ai/models/available"
         };
     }
-    rpc TestConnection(TestConnectionRequest) returns (TestConnectionResponse) {
+    rpc TestConnectionById(TestConnectionRequest) returns (TestConnectionResponse) {
         option (google.api.http) = {
             post: "/ai/models/{id}/test"
-            additional_bindings {
+        };
+    }
+    rpc TestConnectionNew(TestConnectionRequest) returns (TestConnectionResponse) {
+        option (google.api.http) = {
                 post: "/ai/models/test"
                 body: "*"
-            }
         };
     }
 }
