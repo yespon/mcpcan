@@ -96,7 +96,7 @@ const accessTypeDialog = ref()
  * Handle create a tamplate
  */
 const handleAddTemplate = () => {
-  accessTypeDialog.value.init()
+  accessTypeDialog.value.init(null, 'template')
   // jumpToPage({
   //   url: '/new-template',
   //   data: {},

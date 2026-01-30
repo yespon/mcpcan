@@ -68,6 +68,7 @@
   <NewEnvDialog ref="newEnvDialog"></NewEnvDialog>
   <!-- 快速开始 -->
   <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
+
   <OpenAPIDialog ref="openAPIDialog"></OpenAPIDialog>
 
   <!-- 选择模板 -->
@@ -119,7 +120,6 @@ const template = ref<any>({
   templateList: [],
 })
 const addDropdown = ref()
-
 const props = defineProps({
   popperOptions: {
     type: Object,
@@ -148,10 +148,15 @@ const handleJumpToPage = (url: string) => {
     newEnvDialog.value.init({})
     return
   }
-  jumpToPage({
-    url: url,
-    data: {},
-  })
+  if (url === '/new-template') {
+    accessTypeDialog.value.init(null, 'template')
+    return
+  } else {
+    jumpToPage({
+      url: url,
+      data: {},
+    })
+  }
 }
 
 const handleCommand = (cmd: string) => {

@@ -91,12 +91,42 @@ const handleConfirm = () => {
 const handleSaveAsTemplate = () => {
   formComponent.value.handleSaveAsTemplate()
 }
-
+/**
+ * handle get template detail info
+ */
+const handleGetTemplateDetail = async () => {
+  try {
+    pageInfo.value.loading = true
+    let formData: any = {}
+    const data = await TemplateAPI.detail({
+      id: query.templateId,
+    })
+    formData = data
+    formData.mcpServers = JsonFormatter.format(data.mcpServers)
+    formData.environmentVariables = data.environmentVariables
+      ? Object.keys(data.environmentVariables)?.map((key) => ({
+          key,
+          value: data.environmentVariables[key],
+        }))
+      : []
+    formData.volumeMounts = data.volumeMounts || []
+    return formData
+  } finally {
+    pageInfo.value.loading = false
+  }
+}
 // handle init components formdata
 const init = () => {
-  nextTick(() => {
-    formComponent.value.init(null)
-  })
+  if (query.templateId) {
+    handleGetTemplateDetail().then((formData) => {
+      formComponent.value.init(formData)
+    })
+    return
+  } else {
+    nextTick(() => {
+      formComponent.value.init(null)
+    })
+  }
 }
 onMounted(() => {
   init()
