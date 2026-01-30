@@ -2,11 +2,21 @@ package models
 
 // AllProviders 所有支持的提供商列表
 var AllProviders = []ProviderInfo{
+	// Core Providers
 	OpenAIProvider,
+	AnthropicProvider,
+	DeepSeekProvider,
+	GoogleProvider,
+	MistralProvider,
+	XAIProvider,
+	// Chinese Providers
 	QwenProvider,
 	DoubaoProvider,
 	ZhipuProvider,
-	DeepSeekProvider,
+	MoonshotProvider,
+	// Aggregator/Proxy Providers
+	OpenRouterProvider,
+	OllamaProvider,
 }
 
 // GetProviderByID 根据 ID 获取提供商信息

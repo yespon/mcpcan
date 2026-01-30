@@ -129,15 +129,6 @@ var OpenAIProvider = ProviderInfo{
 			Modality:      "text+image->text",
 			Provider:      "openai",
 		},
-		// GPT-3.5
-		{
-			ID:            openai.GPT3Dot5Turbo,
-			Name:          "GPT-3.5 Turbo",
-			Description:   "GPT-3.5 Turbo,经典快速模型",
-			ContextLength: 16385,
-			Modality:      "text->text",
-			Provider:      "openai",
-		},
 	},
 }
 

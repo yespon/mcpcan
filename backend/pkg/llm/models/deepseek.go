@@ -8,19 +8,11 @@ var DeepSeekProvider = ProviderInfo{
 	RegisterURL: "https://platform.deepseek.com/api_keys",
 	DocsURL:     "https://api-docs.deepseek.com",
 	Models: []ModelInfo{
-		// DeepSeek 主力模型
+		// DeepSeek 主力模型 (支持 Function Calling)
 		{
 			ID:            "deepseek-chat",
 			Name:          "DeepSeek Chat",
-			Description:   "DeepSeek V3 对话模型,综合能力强",
-			ContextLength: 65536,
-			Modality:      "text->text",
-			Provider:      "deepseek",
-		},
-		{
-			ID:            "deepseek-coder",
-			Name:          "DeepSeek Coder",
-			Description:   "DeepSeek 代码专用模型",
+			Description:   "DeepSeek V3 对话模型,综合能力强,支持工具调用",
 			ContextLength: 65536,
 			Modality:      "text->text",
 			Provider:      "deepseek",
@@ -28,25 +20,8 @@ var DeepSeekProvider = ProviderInfo{
 		{
 			ID:            "deepseek-reasoner",
 			Name:          "DeepSeek Reasoner",
-			Description:   "DeepSeek R1 推理模型,深度思考能力",
+			Description:   "DeepSeek R1 推理模型,深度思考能力,支持工具调用",
 			ContextLength: 65536,
-			Modality:      "text->text",
-			Provider:      "deepseek",
-		},
-		// DeepSeek R1 Distill 系列
-		{
-			ID:            "deepseek-r1-distill-llama-70b",
-			Name:          "DeepSeek R1 Distill Llama 70B",
-			Description:   "基于 Llama 70B 的 R1 蒸馏模型",
-			ContextLength: 128000,
-			Modality:      "text->text",
-			Provider:      "deepseek",
-		},
-		{
-			ID:            "deepseek-r1-distill-qwen-32b",
-			Name:          "DeepSeek R1 Distill Qwen 32B",
-			Description:   "基于 Qwen 32B 的 R1 蒸馏模型",
-			ContextLength: 128000,
 			Modality:      "text->text",
 			Provider:      "deepseek",
 		},

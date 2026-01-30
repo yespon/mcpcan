@@ -11,7 +11,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
-	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	"github.com/kymo-mcp/mcpcan/pkg/llm/models"
 )
 
 type AiModelAccessService struct {
@@ -214,69 +214,21 @@ func (s *AiModelAccessService) GetAvailableModelsHandler(c *gin.Context) {
 
 // GetSupportedModelsHandler gets supported models with registration URLs
 func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
-	// Import models from the new models package
-	// Note: Using llm package constants for backward compatibility
-	// Full model info is available via models.AllProviders
+	// 使用 models.AllProviders 动态构建响应
+	var providers []*pb.ModelProvider
+	for _, p := range models.AllProviders {
+		providers = append(providers, &pb.ModelProvider{
+			Id:          p.ID,
+			Name:        p.Name,
+			Models:      p.GetModelIDs(),
+			RegisterUrl: p.RegisterURL,
+			DocsUrl:     p.DocsURL,
+			BaseUrl:     p.BaseURL,
+		})
+	}
 
-	// 1. OpenAI Models
-	openAIModels := llm.SupportedOpenAIModels
-
-	// 2. DeepSeek Models
-	deepSeekModels := llm.DeepSeekModels
-
-	// 3. Aliyun Qwen Models
-	qwenModels := llm.QwenModels
-
-	// 4. Volcengine Doubao Models
-	doubaoModels := llm.DoubaoModels
-
-	// 5. Zhipu GLM Models
-	zhipuModels := llm.ZhipuModels
-
-	// 6. Construct Response with registration URLs
 	resp := &pb.GetSupportedModelsResponse{
-		Providers: []*pb.ModelProvider{
-			{
-				Id:          "openai",
-				Name:        "OpenAI",
-				Models:      openAIModels,
-				RegisterUrl: "https://platform.openai.com/api-keys",
-				DocsUrl:     "https://platform.openai.com/docs",
-				BaseUrl:     "https://api.openai.com/v1",
-			},
-			{
-				Id:          "deepseek",
-				Name:        "DeepSeek",
-				Models:      deepSeekModels,
-				RegisterUrl: "https://platform.deepseek.com/api_keys",
-				DocsUrl:     "https://api-docs.deepseek.com",
-				BaseUrl:     "https://api.deepseek.com/v1",
-			},
-			{
-				Id:          "qwen",
-				Name:        "阿里通义千问 (Qwen)",
-				Models:      qwenModels,
-				RegisterUrl: "https://dashscope.console.aliyun.com/apiKey",
-				DocsUrl:     "https://help.aliyun.com/zh/model-studio",
-				BaseUrl:     "https://dashscope.aliyuncs.com/compatible-mode/v1",
-			},
-			{
-				Id:          "doubao",
-				Name:        "火山引擎豆包 (Doubao)",
-				Models:      doubaoModels,
-				RegisterUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
-				DocsUrl:     "https://www.volcengine.com/docs/82379",
-				BaseUrl:     "https://ark.cn-beijing.volces.com/api/v3",
-			},
-			{
-				Id:          "zhipu",
-				Name:        "智谱 AI (Zhipu GLM)",
-				Models:      zhipuModels,
-				RegisterUrl: "https://bigmodel.cn/usercenter/apikeys",
-				DocsUrl:     "https://bigmodel.cn/dev/api",
-				BaseUrl:     "https://open.bigmodel.cn/api/paas/v4",
-			},
-		},
+		Providers: providers,
 	}
 
 	i18nresp.SuccessResponse(c, resp)
