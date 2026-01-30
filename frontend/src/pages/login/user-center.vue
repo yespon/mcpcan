@@ -80,7 +80,7 @@ import baseConfig from '@/config/base_config.ts'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { Storage } from '@/utils/storage'
 import AuthAPI from '@/api/auth-api.ts'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import McpImage from '@/components/mcp-image/index.vue'
 
@@ -109,10 +109,11 @@ const { jumpBack } = useRouterHooks()
 
 // 上传成功
 const handleAvatarSuccess = (
-  response: { code: number },
+  response: { code: number; message: string },
   uploadFile: { raw: Blob | MediaSource },
 ) => {
   if (response.code !== 0) {
+    ElMessage.error(response.message)
     return
   }
   imageUrl.value = URL.createObjectURL(uploadFile.raw!)
