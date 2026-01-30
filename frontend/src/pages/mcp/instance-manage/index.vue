@@ -227,8 +227,8 @@
               class="base-btn-link"
               @click="
                 row.status === InstanceStatus.INACTIVE
-                  ? handleRestartInstance(row)
-                  : handleStopInstance(row)
+                  ? handleRestartInstance(row.instanceId)
+                  : handleStopInstance(row.instanceId)
               "
             >
               {{
@@ -243,7 +243,7 @@
               size="small"
               link
               class="base-btn-link"
-              @click="handleRestartInstance(row)"
+              @click="handleRestartInstance(row.instanceId)"
             >
               {{ t('mcp.instance.action.reStart') }}
             </el-button>
@@ -286,8 +286,17 @@
                   <div class="flex justify-between">
                     <div class="flex items-center flex-grow-1">
                       <div class="max-w-[110px] u-line-1 font-bold text-[16px] cursor-pointer">
-                        <el-tooltip :content="row.instanceName" placement="top" trigger="click">
+                        <el-tooltip placement="top">
                           {{ row.instanceName }}
+                          <template #content>
+                            <div class="title-instance">
+                              <div>{{ row.instanceName }}</div>
+                              <div class="text-primary text-bold">ID:{{ row.instanceId }}</div>
+                              <div class="text-success text-bold">
+                                {{ t('mcp.instance.containerName') }}：{{ row.containerName }}
+                              </div>
+                            </div>
+                          </template>
                         </el-tooltip>
                       </div>
                       <div class="ml-1 text-sm">
