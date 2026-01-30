@@ -158,11 +158,11 @@ const handleSelect = async (item: any) => {
   // dialog view
   if (item.value === 4) {
     nextTick(() => {
-      formComponent.value?.init(null, path === '/template-manage' ? 'template' : 'instance')
+      formComponent.value?.init(null, pageInfo.value.type === 'template' ? 'template' : 'instance')
     })
     return
   }
-  if (path === '/template-manage') {
+  if (pageInfo.value.type === 'template') {
     jumpToPage({
       url: '/new-template',
       data: {
@@ -171,6 +171,7 @@ const handleSelect = async (item: any) => {
     })
     return
   }
+
   // page view with create
   jumpToPage({
     url: '/new-instance',
@@ -180,7 +181,9 @@ const handleSelect = async (item: any) => {
   })
 }
 
-const init = (instance: InstanceResult | null) => {
+const init = (instance: InstanceResult | null, type: string) => {
+  pageInfo.value.type = type
+
   if (instance) {
     pageInfo.value.accessType = instance.accessType
     if (instance.instanceId) {

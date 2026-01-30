@@ -218,7 +218,7 @@ const handleToTemplateForm = (itemCase: any) => {
   } else {
     jumpToPage({
       url: '/new-instance',
-      data: { templateId: itemCase.templateId },
+      data: { templateId: itemCase.templateId, type: itemCase.accessType || 3 },
     })
   }
 }
