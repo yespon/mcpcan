@@ -167,7 +167,17 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 		return
 	}
 
-	messages, err := biz.GAiSessionBiz.GetMessages(c.Request.Context(), req.SessionID, int(req.Limit))
+	// Default PageSize if not strict
+	pageSize := int(req.PageSize)
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
+	}
+
+	messages, total, err := biz.GAiSessionBiz.GetMessages(c.Request.Context(), req.SessionID, page, pageSize)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get session messages: %s", err.Error()))
 		return
@@ -182,15 +192,16 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 			Content:          msg.Content,
 			ToolCalls:        msg.ToolCalls,
 			ToolCallID:       msg.ToolCallID,
+			CreateTime:       msg.CreateTime.Unix(),
 			PromptTokens:     int32(msg.PromptTokens),
 			CompletionTokens: int32(msg.CompletionTokens),
 			TotalTokens:      int32(msg.TotalTokens),
-			CreateTime:       msg.CreateTime.Unix(),
 		})
 	}
 
 	resp := &pb.GetSessionMessagesResponse{
-		List: pbMessages,
+		List:  pbMessages,
+		Total: total,
 	}
 	i18nresp.SuccessResponse(c, resp)
 }
@@ -224,7 +235,7 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
 	// Call Biz
-	stream, err := biz.GAiSessionBiz.Chat(c.Request.Context(), req.SessionID, req.Content, req.Tools)
+	stream, err := biz.GAiSessionBiz.Chat(c.Request.Context(), &req)
 	if err != nil {
 		s.sendSSE(c, "error", fmt.Sprintf("failed to start chat: %v", err))
 		return
@@ -235,6 +246,12 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 		if resp.Error != nil {
 			s.sendSSE(c, "error", resp.Error.Error())
 			break
+		}
+
+		// Handle Usage Event
+		if resp.Usage != nil {
+			usageBytes, _ := json.Marshal(resp.Usage)
+			s.sendSSE(c, "usage", string(usageBytes))
 		}
 
 		if resp.Content != "" {
@@ -289,4 +306,30 @@ func (s *AiSessionService) GetSessionUsageHandler(c *gin.Context) {
 	}
 
 	i18nresp.SuccessResponse(c, usage)
+}
+
+// UploadFileHandler handles file upload for chat
+func (s *AiSessionService) UploadFileHandler(c *gin.Context) {
+	// Parse multipart form
+	// Max 100MB for chat files, or configure separately
+	if err := c.Request.ParseMultipartForm(100 << 20); err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, fmt.Sprintf("failed to parse multipart form: %v", err))
+		return
+	}
+
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, fmt.Sprintf("failed to get file: %v", err))
+		return
+	}
+	defer file.Close()
+
+	// Call Biz
+	resp, err := biz.GAiFileManager.UploadFile(c.Request.Context(), file, header)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to upload file: %v", err))
+		return
+	}
+
+	i18nresp.SuccessResponse(c, resp)
 }

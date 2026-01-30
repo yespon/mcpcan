@@ -123,13 +123,37 @@ message ListSessionsResponse {
 message GetSessionMessagesRequest {
     // @inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"
     int64 sessionID = 1;
-    // @inject_tag: json:"limit" form:"limit" desc:"Limit (Last N)"
-    int32 limit = 2; // Last N
+    // @inject_tag: json:"page" form:"page" desc:"Page number"
+    int32 page = 2;
+    // @inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"
+    int32 pageSize = 3;
 }
 
 message GetSessionMessagesResponse {
     // @inject_tag: json:"list" desc:"List"
     repeated AiMessage list = 1;
+    // @inject_tag: json:"total" desc:"Total messages"
+    int64 total = 2;
+}
+
+message McpProfile {
+    // @inject_tag: json:"instanceId" desc:"MCP Instance ID"
+    string instanceId = 1;
+    // @inject_tag: json:"includeTools" desc:"List of tools to include (by name)"
+    repeated string includeTools = 2;
+    // @inject_tag: json:"enableAll" desc:"Enable all tools from instance"
+    bool enableAll = 3;
+}
+
+message ChatAttachment {
+    // @inject_tag: json:"type" desc:"Type (image, file)"
+    string type = 1;
+    // @inject_tag: json:"url" desc:"URL"
+    string url = 2;
+    // @inject_tag: json:"id" desc:"ID (for local temp files)"
+    string id = 3;
+    // @inject_tag: json:"name" desc:"Original Name"
+    string name = 4;
 }
 
 message ChatRequest {
@@ -137,14 +161,30 @@ message ChatRequest {
     int64 sessionID = 1;
     // @inject_tag: json:"content" form:"content" desc:"Content"
     string content = 2;
-    string tools = 3; // JSON string for ad-hoc tools
+    // @inject_tag: json:"tools" desc:"Tools Config (legacy JSON string)"
+    string tools = 3; 
+    // @inject_tag: json:"mcpProfile" desc:"Advanced MCP Debug Profile"
+    McpProfile mcpProfile = 4;
+    // @inject_tag: json:"attachments" desc:"Attachments"
+    repeated ChatAttachment attachments = 5;
 }
 
 message ChatResponse {
     // @inject_tag: json:"type" desc:"Type"
-    string type = 1; // text, tool_start, tool_result, error, done
+    string type = 1; // text, tool_start, tool_result, error, done, usage
     // @inject_tag: json:"content" desc:"Content"
     string content = 2;
+}
+
+message UploadFileRequest {} // Content handled via multipart upload
+
+message UploadFileResponse {
+    // @inject_tag: json:"id" desc:"File ID"
+    string id = 1;
+    // @inject_tag: json:"url" desc:"File URL (local or remote)"
+    string url = 2;
+    // @inject_tag: json:"name" desc:"Original Name"
+    string name = 3;
 }
 
 service AiSessionService {
@@ -183,6 +223,12 @@ service AiSessionService {
     rpc Chat(ChatRequest) returns (stream ChatResponse) {
         option (google.api.http) = {
             post: "/ai/sessions/{sessionID}/chat"
+            body: "*"
+        };
+    }
+    rpc UploadFile(UploadFileRequest) returns (UploadFileResponse) {
+        option (google.api.http) = {
+            post: "/ai/files/upload"
             body: "*"
         };
     }

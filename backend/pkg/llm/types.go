@@ -78,12 +78,25 @@ type ProviderConfig struct {
 	APIKey  string
 }
 
+// MessageContentPart represents a part of the message content (text or image)
+type MessageContentPart struct {
+	Type     string            `json:"type"` // text, image_url
+	Text     string            `json:"text,omitempty"`
+	ImageURL *MessageImageURL  `json:"image_url,omitempty"`
+}
+
+// MessageImageURL represents image url
+type MessageImageURL struct {
+	URL string `json:"url"`
+}
+
 // Message represents a chat message
 type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string     `json:"tool_call_id,omitempty"`
+	Role         string               `json:"role"`
+	Content      string               `json:"content"` // For backwards compatibility and simple text
+	MultiContent []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
+	ToolCalls    []ToolCall           `json:"tool_calls,omitempty"`
+	ToolCallID   string               `json:"tool_call_id,omitempty"`
 }
 
 // ToolCall represents a tool call request from LLM

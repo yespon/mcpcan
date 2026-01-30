@@ -437,6 +437,9 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/test", routerPrefix), aiModelAccessService.TestConnectionHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/:id/test", routerPrefix), aiModelAccessService.TestConnectionWithIdHandler)
 
+	// Register file upload interface
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
+
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {
 		i18n.SuccessResponse(c, gin.H{"status": "ok"})

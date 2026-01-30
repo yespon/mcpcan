@@ -6,8 +6,15 @@ type ModelInfo struct {
 	Name          string `json:"name"`          // 显示名称
 	Description   string `json:"description"`   // 模型描述
 	ContextLength int    `json:"contextLength"` // 上下文长度
-	Modality      string `json:"modality"`      // 支持模态 (text->text, text+image->text)
-	Provider      string `json:"provider"`      // 提供商 ID
+	Modality        string `json:"modality"`        // 支持模态 (text->text, text+image->text)
+	Provider        string `json:"provider"`        // 提供商 ID
+	SupportThinking bool   `json:"supportThinking"` // 是否支持深度思考 (o1, R1)
+	SupportTools    bool   `json:"supportTools"`    // 是否支持工具调用
+}
+
+// IsMultimodal returns true if the model supports image input
+func (m ModelInfo) IsMultimodal() bool {
+	return m.Modality == "text+image->text" || m.Modality == "multimodal"
 }
 
 // ProviderInfo 提供商信息

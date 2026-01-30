@@ -1,9 +1,13 @@
 package gotest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -16,13 +20,14 @@ func TestAiSession_AllOps(t *testing.T) {
 
 	var modelID int64
 	var sessionID int64
+	var tempFileToDelete string
 
 	// Prerequisite: Create a Model for session tests
 	t.Run("Setup Model", func(t *testing.T) {
 		fmt.Printf("\n[SETUP] Creating test model for session tests...\n")
 		
 		req := map[string]interface{}{
-			"name":     "Session Test Model",
+			"name":     "Session Test Doubao Model",
 			"provider": config.Ai.Provider,
 			"apiKey":   config.Ai.ApiKey,
 			"baseUrl":  config.Ai.BaseUrl,
@@ -45,7 +50,7 @@ func TestAiSession_AllOps(t *testing.T) {
 	t.Run("Create Session", func(t *testing.T) {
 		sessionName := "Session Test " + time.Now().Format("15:04:05")
 		fmt.Printf("\n[TEST] Creating AI Session: %s\n", sessionName)
-		
+
 		req := map[string]interface{}{
 			"name":          sessionName,
 			"modelAccessID": modelID,
@@ -156,7 +161,8 @@ func TestAiSession_AllOps(t *testing.T) {
 	t.Run("Get History", func(t *testing.T) {
 		fmt.Printf("[TEST] Getting chat history for session %d...\n", sessionID)
 		
-		resp, body := doRequest(t, "GET", fmt.Sprintf("/market/ai/sessions/%d/messages?limit=10", sessionID), nil)
+		// Test Default Pagination (No params -> Page 1, Size 20)
+		resp, body := doRequest(t, "GET", fmt.Sprintf("/market/ai/sessions/%d/messages", sessionID), nil)
 		commonResp := assertResponseSuccess(t, resp, body)
 
 		var data struct {
@@ -164,14 +170,95 @@ func TestAiSession_AllOps(t *testing.T) {
 				Role    string `json:"role"`
 				Content string `json:"content"`
 			} `json:"list"`
+			Total int64 `json:"total"`
 		}
 		err := json.Unmarshal(commonResp.Data, &data)
 		require.NoError(t, err, "Failed to parse history response")
 
-		fmt.Printf("[PASS] ✓ Retrieved %d messages from history\n", len(data.List))
+		fmt.Printf("[PASS] ✓ Retrieved %d messages (Default). Total: %d\n", len(data.List), data.Total)
+		assert.Greater(t, data.Total, int64(0), "Total should be > 0")
+
+		// Test Pagination
+		resp2, body2 := doRequest(t, "GET", fmt.Sprintf("/market/ai/sessions/%d/messages?page=1&pageSize=1", sessionID), nil)
+		commonResp2 := assertResponseSuccess(t, resp2, body2)
+		var data2 struct {
+			List []struct {
+				Role string `json:"role"`
+			} `json:"list"`
+			Total int64 `json:"total"`
+		}
+		json.Unmarshal(commonResp2.Data, &data2)
+		require.Equal(t, 1, len(data2.List), "Should return exactly 1 message")
+		require.Equal(t, data.Total, data2.Total, "Total should match")
+		fmt.Printf("[PASS] ✓ Pagination verified (Page 1, Size 1)\n")
 	})
 
-	// 7. Delete Session
+	// 7. File Upload & Cleanup Test (New)
+	t.Run("File Upload & Cleanup", func(t *testing.T) {
+		fmt.Printf("[TEST] Testing File Upload and Cleanup...\n")
+
+		// A. Upload File
+		dummyContent := []byte("fake image content")
+		
+		// 1. Upload
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+		fw, err := w.CreateFormFile("file", "test_img.png")
+		require.NoError(t, err)
+		fw.Write(dummyContent)
+		w.Close()
+
+		req, err := http.NewRequest("POST", config.BaseUrl + "/market/ai/files/upload", &b)
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", w.FormDataContentType())
+		req.Header.Set("X-Consum-User-Id", "1")
+		if config.Token != "" { req.Header.Set("Authorization", config.Token) }
+		
+		client := &http.Client{Timeout: 30*time.Second}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		
+		commonResp := assertResponseSuccess(t, resp, body)
+		var uploadData struct {
+			Id  string `json:"id"`
+			Url string `json:"url"`
+		}
+		err = json.Unmarshal(commonResp.Data, &uploadData)
+		require.NoError(t, err)
+		
+		fmt.Printf("[PASS] ✓ Uploaded file: %s (ID: %s)\n", uploadData.Url, uploadData.Id)
+		
+		// Verify file exists on disk
+		// uploadData.Id is the absolute path in our implementation
+		checkPath := uploadData.Id
+		if _, err := os.Stat(checkPath); os.IsNotExist(err) {
+			checkPath = "../../" + checkPath
+		}
+		_, err = os.Stat(checkPath)
+		require.NoError(t, err, "File should exist on disk (checked: %s)", checkPath)
+
+		// 2. Chat with Attachment
+		chatReq := map[string]interface{}{
+			"sessionID": sessionID,
+			"content":   "Analyze this",
+			"attachments": []map[string]string{
+				{
+					"type": "image",
+					"url":  uploadData.Url,
+				},
+			},
+		}
+		resp, body = doRequest(t, "POST", fmt.Sprintf("/market/ai/sessions/%d/chat", sessionID), chatReq)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		
+		// 3. Mark for verification in next step
+		tempFileToDelete = checkPath
+	})
+
+	// 8. Delete Session
 	t.Run("Delete Session", func(t *testing.T) {
 		fmt.Printf("[TEST] Deleting session ID: %d\n", sessionID)
 		
@@ -180,6 +267,16 @@ func TestAiSession_AllOps(t *testing.T) {
 		assertResponseSuccess(t, resp, body)
 		
 		fmt.Printf("[PASS] ✓ Deleted Session ID: %d\n", sessionID)
+		
+		// Verify file cleanup
+		if tempFileToDelete != "" {
+			_, err := os.Stat(tempFileToDelete)
+			if os.IsNotExist(err) {
+				fmt.Printf("[PASS] ✓ File cleanup successful: %s gone\n", tempFileToDelete)
+			} else {
+				t.Errorf("[FAIL] File still exists after session delete: %s", tempFileToDelete)
+			}
+		}
 	})
 
 	// Cleanup: Delete Model

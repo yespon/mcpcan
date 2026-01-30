@@ -1,72 +1,59 @@
 package llm
 
-// Supported DeepSeek Models
-var DeepSeekModels = []string{
-	"deepseek-chat",
-	"deepseek-coder",
+import (
+	"github.com/kymo-mcp/mcpcan/pkg/llm/models"
+)
+
+// Re-export Model Lists for backward compatibility
+// These lists are populated from the central registry in pkg/llm/models
+var (
+	DeepSeekModels  = models.DeepSeekProvider.GetModelIDs()
+	OpenAIModels    = models.OpenAIProvider.GetModelIDs()
+	AnthropicModels = models.AnthropicProvider.GetModelIDs()
+	GoogleModels    = models.GoogleProvider.GetModelIDs()
+	DoubaoModels    = models.DoubaoProvider.GetModelIDs()
+	QwenModels      = models.QwenProvider.GetModelIDs()
+	ZhipuModels     = models.ZhipuProvider.GetModelIDs()
+)
+
+// GetAllModels returns all supported model IDs
+func GetAllModelIDs() []string {
+	var ids []string
+	all := models.GetAllModels()
+	for _, m := range all {
+		ids = append(ids, m.ID)
+	}
+	return ids
 }
 
-// Supported OpenAI Models
-var OpenAIModels = []string{
-	"gpt-4o",
-	"gpt-4-turbo",
-	"gpt-4",
-	"gpt-3.5-turbo",
+// GetModelInfo returns the full model info including capabilities (multimodal, thinking, tools)
+func GetModelInfo(modelID string) *models.ModelInfo {
+	return models.GetModelByID(modelID)
 }
 
-// Supported Anthropic Models
-var AnthropicModels = []string{
-	"claude-3-5-sonnet-20240620",
-	"claude-3-opus-20240229",
-	"claude-3-haiku-20240307",
+// IsVisionSupported checks if the model supports multimodal input (images).
+func IsVisionSupported(modelID string) bool {
+	info := models.GetModelByID(modelID)
+	if info != nil {
+		return info.IsMultimodal()
+	}
+	return false
 }
 
-// Supported Google Models
-var GoogleModels = []string{
-	"gemini-1.5-pro",
-	"gemini-1.5-flash",
+// IsThinkingSupported checks if the model supports deep reasoning (e.g. o1, R1)
+func IsThinkingSupported(modelID string) bool {
+	info := models.GetModelByID(modelID)
+	if info != nil {
+		return info.SupportThinking
+	}
+	return false
 }
 
-// Supported Doubao Models
-var DoubaoModels = []string{
-	"doubao-pro-4k",
-	"doubao-pro-32k",
-	"doubao-pro-128k",
-	"doubao-lite-4k",
-	"doubao-lite-32k",
-	"doubao-1-5-pro-32k-250115",
-}
-
-// Supported Aliyun Qwen Models
-var QwenModels = []string{
-	"qwen-plus",
-	"qwen-max",
-	"qwen-turbo",
-	"qwen-long",
-	"qwen3-235b-a22b",
-	"qwen3-32b",
-	"qwen3-14b",
-	"qwen3-8b",
-	"qwen3-30b-a3b",
-	"qwen3-coder-480b-a35b",
-	"qwen3-coder-30b-a3b",
-	"qwen3-vl-8b",
-	"qwen2.5-7b-instruct",
-}
-
-// Supported Zhipu GLM Models
-var ZhipuModels = []string{
-	"glm-4.5",
-	"glm-4.5-air",
-	"glm-4.7-flash",
-	"glm-4-32b",
-	"glm-4",
-	"glm-4-plus",
-	"glm-4-long",
-	"glm-4-flash",
-	"glm-4-air",
-	"glm-4-airx",
-	"glm-4v",
-	"glm-4v-plus",
-	"codegeex-4",
+// IsToolsSupported checks if the model supports function calling
+func IsToolsSupported(modelID string) bool {
+	info := models.GetModelByID(modelID)
+	if info != nil {
+		return info.SupportTools
+	}
+	return false
 }

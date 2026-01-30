@@ -1,49 +1,49 @@
 # mcpcan Backend Makefile
-# AI 功能测试相关目标
+# AI Integration Test Targets
 
 .PHONY: all build test test-unit test-auth test-integration test-ai test-all coverage clean
 
-# 默认目标
+# Default target
 all: build
 
-# 构建
+# Build
 build:
-	@echo "🔨 构建项目..."
+	@echo "🔨 Building project..."
 	go build -o bin/market ./cmd/market/...
-	@echo "✅ 构建完成"
+	@echo "✅ Build complete"
 
-# 运行所有测试
+# Run all tests
 test: test-all
 
-# 单元测试
+# Unit tests
 test-unit:
-	@echo "📋 运行单元测试..."
+	@echo "📋 Running unit tests..."
 	go test -v ./pkg/common/... -count=1
-	@echo "✅ 单元测试完成"
+	@echo "✅ Unit tests complete"
 
-# 认证测试
+# Authentication tests
 test-auth:
-	@echo "🔐 运行认证测试..."
+	@echo "🔐 Running authentication tests..."
 	go test -v ./internal/market/service/... -run "Test.*Auth" -count=1
-	@echo "✅ 认证测试完成"
+	@echo "✅ Authentication tests complete"
 
-# AI 集成测试
+# AI integration tests
 test-integration:
-	@echo "🧪 运行 AI 集成测试..."
+	@echo "🧪 Running AI integration tests..."
 	go test -v ./internal/market/service/... -run "TestAiIntegration" -timeout 120s -count=1
-	@echo "✅ 集成测试完成"
+	@echo "✅ Integration tests complete"
 
-# AI 功能完整测试 (包括认证和集成)
+# AI full tests (authentication + integration)
 test-ai: test-auth test-integration
-	@echo "✅ AI 功能测试全部完成"
+	@echo "✅ AI tests complete"
 
-# 运行所有测试
+# Run all tests
 test-all: test-unit test-ai
-	@echo "✅ 所有测试完成"
+	@echo "✅ All tests complete"
 
-# 生成测试覆盖率
+# Generate test coverage
 coverage:
-	@echo "📊 生成覆盖率报告..."
+	@echo "📊 Generating coverage report..."
 	@mkdir -p coverage
 	go test -coverprofile=coverage/coverage.out \
 		./internal/market/biz/... \
@@ -51,25 +51,39 @@ coverage:
 		./pkg/common/... \
 		-count=1 || true
 	go tool cover -html=coverage/coverage.out -o coverage/coverage.html 2>/dev/null || true
-	@echo "📈 覆盖率摘要:"
+	@echo "📈 Coverage summary:"
 	@go tool cover -func=coverage/coverage.out | tail -1
-	@echo "📁 报告位置: coverage/coverage.html"
+	@echo "📁 Report location: coverage/coverage.html"
 
-# 清理
+# Clean
 clean:
-	@echo "🧹 清理构建产物..."
+	@echo "🧹 Cleaning build artifacts..."
 	rm -rf bin/
 	rm -rf coverage/
-	@echo "✅ 清理完成"
+	@echo "✅ Clean complete"
 
-# 帮助
+# API code generation
+gen-api:
+	@echo "🔧 Generating API code..."
+	cd api && buf generate
+	@echo "✅ API code generation complete"
+
+# OpenAPI 3 documentation generation
+docs:
+	@echo "📄 Generating OpenAPI 3 documentation..."
+	./scripts/gen_openapi3.sh
+	@echo "✅ Documentation generation complete"
+
+# Help
 help:
-	@echo "可用目标:"
-	@echo "  build           - 构建项目"
-	@echo "  test-unit       - 运行单元测试"
-	@echo "  test-auth       - 运行认证测试"
-	@echo "  test-integration- 运行 AI 集成测试"
-	@echo "  test-ai         - 运行 AI 功能测试 (认证+集成)"
-	@echo "  test-all        - 运行所有测试"
-	@echo "  coverage        - 生成覆盖率报告"
-	@echo "  clean           - 清理构建产物"
+	@echo "Available targets:"
+	@echo "  build           - Build the project"
+	@echo "  test-unit       - Run unit tests"
+	@echo "  test-auth       - Run authentication tests"
+	@echo "  test-integration- Run AI integration tests"
+	@echo "  test-ai         - Run AI tests (auth + integration)"
+	@echo "  test-all        - Run all tests"
+	@echo "  coverage        - Generate coverage report"
+	@echo "  gen-api         - Generate API code (protobuf)"
+	@echo "  docs            - Generate OpenAPI 3 documentation"
+	@echo "  clean           - Clean build artifacts"

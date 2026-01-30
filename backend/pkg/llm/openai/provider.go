@@ -39,11 +39,30 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 	// Convert messages
 	openaiMessages := make([]openai.ChatCompletionMessage, len(req.Messages))
 	for i, msg := range req.Messages {
-		openaiMessages[i] = openai.ChatCompletionMessage{
+		openaiMsg := openai.ChatCompletionMessage{
 			Role:       msg.Role,
 			Content:    msg.Content,
 			ToolCallID: msg.ToolCallID,
 		}
+
+		if len(msg.MultiContent) > 0 {
+			parts := make([]openai.ChatMessagePart, len(msg.MultiContent))
+			for j, p := range msg.MultiContent {
+				part := openai.ChatMessagePart{
+					Type: openai.ChatMessagePartType(p.Type),
+					Text: p.Text,
+				}
+				if p.ImageURL != nil {
+					part.ImageURL = &openai.ChatMessageImageURL{
+						URL: p.ImageURL.URL,
+					}
+				}
+				parts[j] = part
+			}
+			openaiMsg.MultiContent = parts
+			openaiMsg.Content = "" // Clear simple content if multi-content exists
+		}
+
 		if len(msg.ToolCalls) > 0 {
 			toolCalls := make([]openai.ToolCall, len(msg.ToolCalls))
 			for j, tc := range msg.ToolCalls {
@@ -56,8 +75,9 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 					},
 				}
 			}
-			openaiMessages[i].ToolCalls = toolCalls
+			openaiMsg.ToolCalls = toolCalls
 		}
+		openaiMessages[i] = openaiMsg
 	}
 
 	// Convert Tools

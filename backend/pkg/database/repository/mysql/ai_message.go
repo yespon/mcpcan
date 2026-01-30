@@ -59,6 +59,27 @@ func (r *AiMessageRepository) FindBySessionID(ctx context.Context, sessionID int
 	return messages, nil
 }
 
+// FindBySessionIDPaged 分页获取会话消息
+// 返回按 id desc 排序的消息 (新 -> 旧)，前端可按需反转
+func (r *AiMessageRepository) FindBySessionIDPaged(ctx context.Context, sessionID int64, page, pageSize int) ([]*model.AiMessage, int64, error) {
+	var messages []*model.AiMessage
+	var total int64
+
+	db := r.getDB().WithContext(ctx).Where("session_id = ?", sessionID)
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	err := db.Order("id desc").Offset(offset).Limit(pageSize).Find(&messages).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
+}
+
 // InitTable 初始化表结构
 func (r *AiMessageRepository) InitTable() error {
 	if err := r.getDB().AutoMigrate(&model.AiMessage{}); err != nil {
