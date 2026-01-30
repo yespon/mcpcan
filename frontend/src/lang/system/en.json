@@ -1,0 +1,30 @@
+{
+  "system": {
+    "role": {
+      "title": "Role Management",
+      "pageDesc": "Used to create and maintain roles, configure permission scopes, assign users, and control access to functions and resources.",
+      "add": "Create Role",
+      "edit": "Edit Role",
+      "total": "Total Roles",
+      "currentRole": "Current Role",
+      "operation": {
+        "view": "View Users",
+        "auth": "Menu Auth",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "columns": {
+        "name": "Name",
+        "level": "Level",
+        "dataScope": "Data Scope",
+        "description": "Description",
+        "createTime": "Creation Time"
+      },
+      "placeholder": {
+        "name": "Please enter role name",
+        "description": "Please enter role description",
+        "nameMaxLength": "Role name length cannot exceed 30 characters"
+      }
+    }
+  }
+}

@@ -226,6 +226,11 @@ const router = createRouter({
           },
           component: () => import('../pages/system-manage/role-manage/index.vue'),
         },
+        {
+          path: '/user-with-role',
+          name: 'userWithRole',
+          component: () => import('../pages/system-manage/user-manage/user-with-role.vue'),
+        },
       ],
     },
     {

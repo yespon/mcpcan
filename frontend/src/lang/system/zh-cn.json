@@ -1,0 +1,30 @@
+{
+  "system": {
+    "role": {
+      "title": "角色管理",
+      "pageDesc": "用于创建与维护角色，配置权限范围，分配用户，并控制功能与资源的访问权限。",
+      "add": "新建角色",
+      "edit": "编辑角色",
+      "total": "角色总数",
+      "currentRole": "当前角色",
+      "operation": {
+        "view": "查看人员",
+        "auth": "菜单授权",
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "columns": {
+        "name": "角色名称",
+        "level": "角色级别",
+        "dataScope": "数据范围",
+        "description": "描述",
+        "createTime": "创建时间"
+      },
+      "placeholder": {
+        "name": "请输入角色名称",
+        "description": "请输入角色描述",
+        "nameMaxLength": "角色名称长度不能超过30个字符"
+      }
+    }
+  }
+}

@@ -20,7 +20,7 @@
         <el-main :class="route.path === '/home' ? 'p-0' : ''" class="hide-scrollbar">
           <!-- when change language then refresh page -->
           <el-config-provider :locale="elLocale">
-            <RouterView></RouterView>
+            <RouterView class="h-full"></RouterView>
           </el-config-provider>
         </el-main>
       </el-container>

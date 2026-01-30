@@ -64,7 +64,10 @@
     "agentManage": "Agent Platform",
     "marketManage": "Market",
     "resourceManage": "File-Manage",
-    "package": "Code-Package"
+    "package": "Code-Package",
+    "roleManage": "Role-Manage",
+    "userManage": "User-Manage",
+    "departmentManage": "Dept-Manage"
   },
   "common": {
     "edit": "Edit",

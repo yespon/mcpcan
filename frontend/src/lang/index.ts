@@ -26,6 +26,9 @@ import zhCnAgent from './agent/zh-cn.json'
 // market
 import enMarket from './market/en.json'
 import zhCnMarket from './market/zh-cn.json'
+// system
+import enSystem from './system/en.json'
+import zhCnSystem from './system/zh-cn.json'
 
 const messages = {
   'zh-cn': {
@@ -37,6 +40,7 @@ const messages = {
     ...zhCodePackage,
     ...zhApiDocs,
     ...zhCnMarket,
+    ...zhCnSystem,
   },
   en: {
     ...enGlobal,
@@ -47,6 +51,7 @@ const messages = {
     ...enCodePackage,
     ...enApiDocs,
     ...enMarket,
+    ...enSystem,
   },
 }
 
