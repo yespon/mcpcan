@@ -290,7 +290,7 @@
                           {{ row.instanceName }}
                           <template #content>
                             <div class="title-instance">
-                              <div>{{ row.instanceName }}</div>
+                              <div class="text-bold text-sm">{{ row.instanceName }}</div>
                               <div class="text-primary text-bold">ID:{{ row.instanceId }}</div>
                               <div class="text-success text-bold">
                                 {{ t('mcp.instance.containerName') }}：{{ row.containerName }}
