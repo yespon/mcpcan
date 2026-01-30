@@ -41,7 +41,11 @@
         <el-col :span="18">
           <el-form-item prop="mcpServers">
             <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
-            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
+            <MonacoEditor
+              v-model="pageInfo.formData.mcpServers"
+              language="json"
+              :height="locale === 'en' ? '600px' : '300px'"
+            />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -79,6 +83,10 @@
       </el-collapse>
     </el-form>
   </div>
+  <!-- probe instance dialog model -->
+  <ProbeStatus ref="probe"></ProbeStatus>
+  <ConfigDialog ref="config"></ConfigDialog>
+  <LogDialog ref="log"></LogDialog>
 </template>
 
 <script setup lang="ts">
@@ -92,9 +100,14 @@ import { InstanceAPI } from '@/api/mcp/instance'
 import MonacoEditor from '@/components/MonacoEditor/index.vue'
 import { type InstanceResult } from '@/types/index.ts'
 import { cloneDeep } from 'lodash-es'
+import ProbeStatus from '../probe-dialog.vue'
+import ConfigDialog from '../url-config-dialog.vue'
+import LogDialog from '../log-dialog.vue'
+import { useMcpStoreHook } from '@/stores'
 
 const { t, locale } = useI18n()
 const { query, pageInfo, placeholderServer, jumpToPage } = useInstanceFormHooks()
+const { currentInstance } = toRefs(useMcpStoreHook())
 const baseInfo = ref()
 const currentOpenCollapse = ref()
 const protocolOptions = [
@@ -104,11 +117,14 @@ const protocolOptions = [
 
 const mcpServersTips = computed(() => {
   return locale.value === 'en'
-    ? `MCP service SSE/STREAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
-      After saving, the gateway access configuration will be displayed on the list page. You can also view <a href="#/template-manage">Template List</a> which provides multiple startup examples. `
-    : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看<a href="#/template-manage">部署模板</a> 提供了多个启动示例。`
+    ? `If you deploy by uploading a code package, set the working directory in the configuration: <code>"cwd": "/app/codepkg/[codezip_name]"</code>.
+When the instance starts, the platform will automatically create a default runtime container for the current MCP configuration. The container includes the <code>mcp-hosting</code> hosting component and uses a protocol adapter to expose this configuration as SSE/Streamable HTTP. It also binds to <code>0.0.0.0:8080</code> to provide the service externally.
+The MCPCAN gateway will automatically probe and detect the container's network address and complete the routing setup.
+For more startup configuration examples of different types, see <a href="#/template-manage">Deploy Templates</a>.`
+    : `若需上传代码包部署，需在配置信息中指定工作目录："cwd": "/app/codepkg/[codezip_name]"。
+实例启动时，平台将为当前 MCP 配置自动创建默认运行容器，容器内置 mcp-hosting 托管组件，通过协议适配器将本配置转换为 SSE/Streamable HTTP 协议，同时绑定至0.0.0.0:8080端口对外提供服务；MCPCAN 网关服务将自动探测并识别该容器的网络地址，完成对接。
+更多不同类型的启动配置示例，可参考<a href="#/template-manage">部署模板</a>。`
 })
-
 const headerTitleTips = computed(() => {
   return locale.value === 'en'
     ? `If this field is left empty, headers from the client will be passed through to the MCP service by default. If the MCPServers configuration defines header parameters, precedence is: MCPServers configuration headers > client request headers.`
@@ -134,7 +150,18 @@ const headerContentTips = computed(() => {
  * Handle McpProtocol Changed
  */
 const handleMcpProtocolChange = () => {}
-
+const config = ref()
+const handleConfig = () => {
+  config.value.init(Object.assign(currentInstance.value, pageInfo.value.formData))
+}
+const probe = ref()
+const handleViewStatus = () => {
+  probe.value.init(pageInfo.value.formData)
+}
+const log = ref()
+const handleViewLog = () => {
+  log.value.init(pageInfo.value.formData)
+}
 // Handle confirm save
 const handleConfirm = async () => {
   baseInfo.value.validate(async (valid: boolean) => {
@@ -216,6 +243,9 @@ const init = (instance: InstanceResult | null) => {
 }
 defineExpose({
   init,
+  handleConfig,
+  handleViewStatus,
+  handleViewLog,
   handleConfirm,
   handleSaveAsTemplate,
 })

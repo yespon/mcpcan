@@ -36,7 +36,11 @@
         </el-icon>
       </el-tooltip>
       <div class="custom-style my-4 px-5">
-        <el-segmented v-model="dialogInfo.pathType" :options="pathTypeOptions" />
+        <el-segmented
+          v-model="dialogInfo.pathType"
+          :options="pathTypeOptions"
+          :disabled="disabled"
+        />
       </div>
     </el-scrollbar>
     <template #footer>
@@ -53,7 +57,7 @@
 import { Operation, CopyDocument, Link, Key, Edit } from '@element-plus/icons-vue'
 import { setClipboardData, timestampToDate } from '@/utils/system'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { AccessType, TokenType, type InstanceResult } from '@/types'
+import { AccessType, McpProtocol, TokenType, type InstanceResult } from '@/types'
 import { JsonFormatter } from '@/utils/json'
 import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
 
@@ -73,6 +77,12 @@ const pathTypeOptions = [
 ]
 // token list
 const tokenList = ref<Array<any>>([])
+const disabled = computed(() => {
+  return !(
+    dialogInfo.value.instanceInfo.accessType === AccessType.HOSTING &&
+    dialogInfo.value.instanceInfo.mcpProtocol === McpProtocol.STDIO
+  )
+})
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
     const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
@@ -165,6 +175,8 @@ const handleTokenList = async () => {
 
 const init = (instanceInfo: any) => {
   dialogInfo.value.instanceInfo = instanceInfo
+  dialogInfo.value.pathType =
+    instanceInfo.mcpProtocol === McpProtocol.STREAMABLE_HTTP ? 'steamable_http' : 'sse'
   handleTokenList()
   dialogInfo.value.visible = true
 }
