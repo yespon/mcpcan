@@ -46,11 +46,19 @@ func (a *App) initOpenapi(ctx context.Context) error {
 	// 2. Check if same file already exists in database
 	var existingPkg *model.McpOpenapiPackage
 	for _, pkg := range existingPackages {
+		logger.Debug("Checking existing package",
+			zap.String("pkgOriginalName", pkg.OriginalName),
+			zap.String("pkgBaseOpenapiFileID", pkg.BaseOpenapiFileID),
+			zap.String("targetFileName", fileName))
 		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
 			existingPkg = pkg
 			break
 		}
 	}
+
+	logger.Info("Package lookup result",
+		zap.Int("totalPackages", len(existingPackages)),
+		zap.Bool("foundExisting", existingPkg != nil))
 
 	// 3. If exists in database
 	if existingPkg != nil {

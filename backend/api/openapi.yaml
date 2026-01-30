@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: MCPCAN OpenAPI
-  version: v1.10-dev
+  version: v1.10.0
 paths:
   /ai/models:
     get:
@@ -228,194 +228,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestConnectionResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-  /ai/sessions:
-    get:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_List
-      parameters:
-      - name: page
-        in: query
-        description: Page number
-        schema:
-          type: integer
-          format: int32
-      - name: pageSize
-        in: query
-        description: Page size
-        schema:
-          type: integer
-          format: int32
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListSessionsResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-    put:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_Update
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateSessionRequest'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateSessionResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-    post:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_Create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateSessionResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-  /ai/sessions/{id}:
-    get:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_Get
-      parameters:
-      - name: id
-        in: path
-        description: ID
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetSessionResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-    delete:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_Delete
-      parameters:
-      - name: id
-        in: path
-        description: ID
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteSessionResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-  /ai/sessions/{sessionID}/chat:
-    post:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_Chat
-      parameters:
-      - name: sessionID
-        in: path
-        description: Session ID
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChatRequest'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatResponse'
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Status'
-  /ai/sessions/{sessionID}/messages:
-    get:
-      tags:
-      - AiSessionService
-      operationId: AiSessionService_GetMessages
-      parameters:
-      - name: sessionID
-        in: path
-        description: Session ID
-        required: true
-        schema:
-          type: string
-      - name: limit
-        in: query
-        description: Limit (Last N)
-        schema:
-          type: integer
-          format: int32
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetSessionMessagesResponse'
         default:
           description: Default error response
           content:
@@ -3138,42 +2950,6 @@ components:
           - $ref: '#/components/schemas/UserRole'
           description: 新增的用户角色关联信息
       description: AddUserRoleResponse 添加用户角色关联响应
-    AiMessage:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID
-        sessionID:
-          type: string
-          description: Session ID
-        role:
-          type: string
-          description: Role
-        content:
-          type: string
-          description: Content
-        toolCalls:
-          type: string
-          description: Tool Calls
-        toolCallID:
-          type: string
-          description: Tool Call ID
-        promptTokens:
-          type: integer
-          description: Prompt Tokens
-          format: int32
-        completionTokens:
-          type: integer
-          description: Completion Tokens
-          format: int32
-        totalTokens:
-          type: integer
-          description: Total Tokens
-          format: int32
-        createTime:
-          type: string
-          description: Create Time
     AiModelAccess:
       type: object
       properties:
@@ -3201,34 +2977,6 @@ components:
         updateTime:
           type: string
           description: Update Time
-    AiSession:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID
-        name:
-          type: string
-          description: Name
-        modelAccessID:
-          type: string
-          description: Model Access ID
-        toolsConfig:
-          type: string
-          description: Tools Config (JSON)
-        maxContext:
-          type: integer
-          description: Max Context
-          format: int32
-        createTime:
-          type: string
-          description: Create Time
-        updateTime:
-          type: string
-          description: Update Time
-        modelName:
-          type: string
-          description: Model Name
     AvailableCasesResponse:
       type: object
       properties:
@@ -3357,26 +3105,6 @@ components:
             $ref: '#/components/schemas/CategoryInfo'
           description: 分类列表
       description: 分类响应
-    ChatRequest:
-      type: object
-      properties:
-        sessionID:
-          type: string
-          description: Session ID
-        content:
-          type: string
-          description: Content
-        tools:
-          type: string
-    ChatResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          description: Type
-        content:
-          type: string
-          description: Content
     CheckN8NRequest:
       type: object
       properties:
@@ -3788,32 +3516,6 @@ components:
           - $ref: '#/components/schemas/SysRole'
           description: 创建的角色信息
       description: 创建角色响应
-    CreateSessionRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name
-        modelAccessID:
-          type: string
-          description: Model Access ID
-        toolsConfig:
-          type: string
-          description: Tools Config (JSON)
-        maxContext:
-          type: integer
-          description: Max Context
-          format: int32
-        modelName:
-          type: string
-          description: Model Name
-    CreateSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-          - $ref: '#/components/schemas/AiSession'
-          description: Session
     CreateUserRequest:
       type: object
       properties:
@@ -3911,12 +3613,6 @@ components:
       type: object
       properties: {}
       description: 删除角色响应
-    DeleteSessionResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: Success
     DeleteUserResponse:
       type: object
       properties: {}
@@ -4577,21 +4273,6 @@ components:
             $ref: '#/components/schemas/PermissionTreeNode'
           description: 权限树列表
       description: 获取角色权限响应
-    GetSessionMessagesResponse:
-      type: object
-      properties:
-        list:
-          type: array
-          items:
-            $ref: '#/components/schemas/AiMessage'
-          description: List
-    GetSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-          - $ref: '#/components/schemas/AiSession'
-          description: Session
     GetStatusResp:
       type: object
       properties:
@@ -5113,17 +4794,6 @@ components:
           - $ref: '#/components/schemas/PageSysRole'
           description: 分页角色数据
       description: 角色列表响应
-    ListSessionsResponse:
-      type: object
-      properties:
-        list:
-          type: array
-          items:
-            $ref: '#/components/schemas/AiSession'
-          description: List
-        total:
-          type: string
-          description: Total
     ListStorageClassesResponse:
       type: object
       properties:
@@ -6854,35 +6524,6 @@ components:
           - $ref: '#/components/schemas/SysRole'
           description: 更新后的角色信息
       description: 更新角色响应
-    UpdateSessionRequest:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID
-        name:
-          type: string
-          description: Name
-        toolsConfig:
-          type: string
-          description: Tools Config
-        maxContext:
-          type: integer
-          description: Max Context
-          format: int32
-        modelAccessID:
-          type: string
-          description: Model Access ID
-        modelName:
-          type: string
-          description: Model Name
-    UpdateSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-          - $ref: '#/components/schemas/AiSession'
-          description: Session
     UpdateUserRequest:
       type: object
       properties:
@@ -7132,7 +6773,6 @@ components:
       description: VolumeMount volume mount configuration
 tags:
 - name: AiModelAccessService
-- name: AiSessionService
 - name: CodeService
   description: CodeService 代码管理服务
 - name: DashboardService
