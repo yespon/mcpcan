@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -16,7 +17,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/openapifile"
 )
 
-// initOpenapi 初始化OpenAPI文档
+// initOpenapi initializes OpenAPI document
 func (a *App) initOpenapi(ctx context.Context) error {
 	logger.Info("Starting OpenAPI document initialization")
 
@@ -27,6 +28,62 @@ func (a *App) initOpenapi(ctx context.Context) error {
 		return nil
 	}
 
+	fileName := filepath.Base(apiFile)
+
+	codeConfig := &common.CodeConfig{
+		Upload: common.UploadConfig{
+			MaxFileSize: 100,
+		},
+	}
+	fileManager := openapifile.NewOpenapiFileManager(codeConfig, a.config.Storage.OpenapiFilePath)
+
+	// 1. Query database first to check if record exists
+	existingPackages, err := mysql.McpOpenapiPackageRepo.FindAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query openapi packages: %w", err)
+	}
+
+	// 2. Check if same file already exists in database
+	var existingPkg *model.McpOpenapiPackage
+	for _, pkg := range existingPackages {
+		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
+			existingPkg = pkg
+			break
+		}
+	}
+
+	// 3. If exists in database
+	if existingPkg != nil {
+		// Convert relative path to absolute path
+		absFilePath, err := fileManager.ToAbsolutePath(existingPkg.OpenapiFilePath)
+		if err != nil {
+			return fmt.Errorf("failed to convert to absolute path: %w", err)
+		}
+
+		// Check if file exists on disk
+		if _, err := os.Stat(absFilePath); err == nil {
+			// File exists, skip completely
+			logger.Info("OpenAPI package already exists with file, skipping initialization",
+				zap.String("openapiFileId", existingPkg.OpenapiFileID),
+				zap.String("filePath", absFilePath))
+			return nil
+		}
+
+		// File missing, only copy file to original path, don't update database
+		logger.Info("OpenAPI record exists but file missing, restoring file",
+			zap.String("openapiFileId", existingPkg.OpenapiFileID),
+			zap.String("filePath", absFilePath))
+
+		if err := copyFile(apiFile, absFilePath); err != nil {
+			return fmt.Errorf("failed to restore openapi file: %w", err)
+		}
+
+		logger.Info("OpenAPI file restored successfully",
+			zap.String("filePath", absFilePath))
+		return nil
+	}
+
+	// 4. Not in database, upload and create record
 	file, err := os.Open(apiFile)
 	if err != nil {
 		return fmt.Errorf("failed to open openapi file: %w", err)
@@ -38,20 +95,12 @@ func (a *App) initOpenapi(ctx context.Context) error {
 		return fmt.Errorf("failed to stat openapi file: %w", err)
 	}
 
-	fileName := filepath.Base(apiFile)
 	header := &multipart.FileHeader{
 		Filename: fileName,
 		Size:     fileStat.Size(),
 		Header:   make(map[string][]string),
 	}
 	fileReader := &fileReaderWrapper{file: file}
-
-	codeConfig := &common.CodeConfig{
-		Upload: common.UploadConfig{
-			MaxFileSize: 100,
-		},
-	}
-	fileManager := openapifile.NewOpenapiFileManager(codeConfig, a.config.Storage.OpenapiFilePath)
 
 	fileInfo, err := fileManager.UploadOpenapiFile(fileReader, header)
 	if err != nil {
@@ -61,50 +110,6 @@ func (a *App) initOpenapi(ctx context.Context) error {
 	if err := fileManager.ValidateOpenapiFile(fileInfo.OpenapiFilePath); err != nil {
 		fileManager.DeleteOpenapiFile(fileInfo.OpenapiFilePath)
 		return fmt.Errorf("failed to validate openapi file: %w", err)
-	}
-
-	existingPackages, err := mysql.McpOpenapiPackageRepo.FindAll(ctx)
-	if err != nil {
-		fileManager.DeleteOpenapiFile(fileInfo.OpenapiFilePath)
-		return fmt.Errorf("failed to query openapi packages: %w", err)
-	}
-
-	var existingBase *model.McpOpenapiPackage
-	for _, pkg := range existingPackages {
-		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
-			existingBase = pkg
-			break
-		}
-	}
-
-	if existingBase != nil {
-		if _, err := os.Stat(existingBase.OpenapiFilePath); err == nil {
-			if err := fileManager.DeleteOpenapiFile(fileInfo.OpenapiFilePath); err != nil {
-				logger.Warn("Failed to delete duplicated openapi file",
-					zap.String("filePath", fileInfo.OpenapiFilePath),
-					zap.Error(err))
-			}
-			logger.Info("OpenAPI base package already exists, skipping initialization",
-				zap.String("openapiFileId", existingBase.OpenapiFileID),
-				zap.String("filePath", existingBase.OpenapiFilePath))
-			return nil
-		}
-	}
-
-	for _, pkg := range existingPackages {
-		if pkg.OriginalName == fileName && pkg.BaseOpenapiFileID == "" {
-			if err := fileManager.DeleteOpenapiFile(pkg.OpenapiFilePath); err != nil {
-				logger.Warn("Failed to delete old openapi file",
-					zap.String("openapiFileId", pkg.OpenapiFileID),
-					zap.String("filePath", pkg.OpenapiFilePath),
-					zap.Error(err))
-			}
-			if err := mysql.McpOpenapiPackageRepo.DeleteByOpenapiFileID(ctx, pkg.OpenapiFileID); err != nil {
-				logger.Warn("Failed to delete old openapi record",
-					zap.String("openapiFileId", pkg.OpenapiFileID),
-					zap.Error(err))
-			}
-		}
 	}
 
 	openapiPackage := &model.McpOpenapiPackage{
@@ -119,6 +124,36 @@ func (a *App) initOpenapi(ctx context.Context) error {
 	if err := mysql.McpOpenapiPackageRepo.Create(ctx, openapiPackage); err != nil {
 		fileManager.DeleteOpenapiFile(fileInfo.OpenapiFilePath)
 		return fmt.Errorf("failed to save openapi package: %w", err)
+	}
+
+	logger.Info("OpenAPI package initialized successfully",
+		zap.String("openapiFileId", fileInfo.OpenapiFileID),
+		zap.String("filePath", fileInfo.OpenapiFilePath))
+
+	return nil
+}
+
+// copyFile copies file from src to dst
+func copyFile(src, dst string) error {
+	// Ensure destination directory exists
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
 	}
 
 	return nil
