@@ -1,2697 +1,3116 @@
 openapi: 3.0.3
 info:
   title: MCPCAN OpenAPI
-  version: v1.10.0
+  version: v1.10-dev
 paths:
+  /ai/models:
+    get:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_List
+      parameters:
+      - name: page
+        in: query
+        description: Page number
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: Page size
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelAccessResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    put:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_Update
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModelAccessRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateModelAccessResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    post:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_Create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModelAccessRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateModelAccessResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/models/available:
+    get:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_GetAvailableModels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAvailableModelsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/models/supported:
+    get:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_GetSupportedModels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSupportedModelsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/models/test:
+    post:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_TestConnectionNew
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestConnectionRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestConnectionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/models/{id}:
+    get:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_Get
+      parameters:
+      - name: id
+        in: path
+        description: ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetModelAccessResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    delete:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_Delete
+      parameters:
+      - name: id
+        in: path
+        description: ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteModelAccessResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/models/{id}/test:
+    post:
+      tags:
+      - AiModelAccessService
+      operationId: AiModelAccessService_TestConnectionById
+      parameters:
+      - name: id
+        in: path
+        description: ID
+        required: true
+        schema:
+          type: string
+      - name: provider
+        in: query
+        description: Provider
+        schema:
+          type: string
+      - name: apiKey
+        in: query
+        description: API Key
+        schema:
+          type: string
+      - name: baseUrl
+        in: query
+        description: Base URL
+        schema:
+          type: string
+      - name: modelName
+        in: query
+        description: Model Name
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestConnectionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/sessions:
+    get:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_List
+      parameters:
+      - name: page
+        in: query
+        description: Page number
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: Page size
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSessionsResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    put:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_Update
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSessionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    post:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_Create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/sessions/{id}:
+    get:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_Get
+      parameters:
+      - name: id
+        in: path
+        description: ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSessionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+    delete:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_Delete
+      parameters:
+      - name: id
+        in: path
+        description: ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSessionResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/sessions/{sessionID}/chat:
+    post:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_Chat
+      parameters:
+      - name: sessionID
+        in: path
+        description: Session ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /ai/sessions/{sessionID}/messages:
+    get:
+      tags:
+      - AiSessionService
+      operationId: AiSessionService_GetMessages
+      parameters:
+      - name: sessionID
+        in: path
+        description: Session ID
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: Limit (Last N)
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSessionMessagesResponse'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
   /authz/depts:
     put:
       tags:
-        - DeptService
+      - DeptService
       description: 更新部门
       operationId: DeptService_UpdateDept
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DeptDTO"
+              $ref: '#/components/schemas/DeptDTO'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateDeptResponse"
+                $ref: '#/components/schemas/UpdateDeptResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     post:
       tags:
-        - DeptService
+      - DeptService
       description: 创建部门
       operationId: DeptService_CreateDept
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DeptDTO"
+              $ref: '#/components/schemas/DeptDTO'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateDeptResponse"
+                $ref: '#/components/schemas/CreateDeptResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/depts/list:
     get:
       tags:
-        - DeptService
+      - DeptService
       description: 查询部门列表
       operationId: DeptService_ListDepts
       parameters:
-        - name: page
-          in: query
-          description: 页码，从1开始
-          schema:
-            type: integer
-            format: int32
-        - name: size
-          in: query
-          description: 每页条数
-          schema:
-            type: integer
-            format: int32
-        - name: name
-          in: query
-          description: 部门名称
-          schema:
-            type: string
-        - name: code
-          in: query
-          description: 部门编码
-          schema:
-            type: string
-        - name: status
-          in: query
-          description: 状态：0-禁用，1-启用
-          schema:
-            type: integer
-            format: int32
+      - name: page
+        in: query
+        description: 页码，从1开始
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        description: 每页条数
+        schema:
+          type: integer
+          format: int32
+      - name: name
+        in: query
+        description: 部门名称
+        schema:
+          type: string
+      - name: code
+        in: query
+        description: 部门编码
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: 状态：0-禁用，1-启用
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListDeptsResponse"
+                $ref: '#/components/schemas/ListDeptsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/depts/page-depts:
     post:
       tags:
-        - DeptService
+      - DeptService
       description: 分页查询部门列表
       operationId: DeptService_PageDepts
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DeptQueryDTO"
+              $ref: '#/components/schemas/DeptQueryDTO'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PageDeptsResponse"
+                $ref: '#/components/schemas/PageDeptsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/depts/tree:
     get:
       tags:
-        - DeptService
+      - DeptService
       description: 获取部门树形结构
       operationId: DeptService_GetDeptTree
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetDeptTreeResponse"
+                $ref: '#/components/schemas/GetDeptTreeResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/depts/{id}:
     get:
       tags:
-        - DeptService
+      - DeptService
       description: 根据ID获取部门详情
       operationId: DeptService_GetDeptById
       parameters:
-        - name: id
-          in: path
-          description: 部门ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 部门ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetDeptByIdResponse"
+                $ref: '#/components/schemas/GetDeptByIdResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - DeptService
+      - DeptService
       description: 删除部门
       operationId: DeptService_DeleteDept
       parameters:
-        - name: id
-          in: path
-          description: 部门ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 部门ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteDeptResponse"
+                $ref: '#/components/schemas/DeleteDeptResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/encryption-key:
     post:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 获取加密密钥
       operationId: UserAuthService_GetEncryptionKey
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GetEncryptionKeyRequest"
+              $ref: '#/components/schemas/GetEncryptionKeyRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetEncryptionKeyResponse"
+                $ref: '#/components/schemas/GetEncryptionKeyResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/login:
     post:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 用户登录
       operationId: UserAuthService_Login
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginRequest"
+              $ref: '#/components/schemas/LoginRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
+                $ref: '#/components/schemas/LoginResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/logout:
     post:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 用户退出
       operationId: UserAuthService_Logout
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LogoutRequest"
+              $ref: '#/components/schemas/LogoutRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LogoutResponse"
+                $ref: '#/components/schemas/LogoutResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/refresh:
     post:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 刷新Token
       operationId: UserAuthService_RefreshToken
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RefreshTokenRequest"
+              $ref: '#/components/schemas/RefreshTokenRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RefreshTokenResponse"
+                $ref: '#/components/schemas/RefreshTokenResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/roles:
     post:
       tags:
-        - RoleService
+      - RoleService
       description: 创建角色
       operationId: RoleService_CreateRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRoleRequest"
+              $ref: '#/components/schemas/CreateRoleRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateRoleResponse"
+                $ref: '#/components/schemas/CreateRoleResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/roles/list-roles:
     post:
       tags:
-        - RoleService
+      - RoleService
       description: 分页查询角色列表
       operationId: RoleService_ListRoles
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListRolesRequest"
+              $ref: '#/components/schemas/ListRolesRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListRolesResponse"
+                $ref: '#/components/schemas/ListRolesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/roles/{id}:
     get:
       tags:
-        - RoleService
+      - RoleService
       description: 获取角色详情
       operationId: RoleService_GetRoleById
       parameters:
-        - name: id
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoleByIdResponse"
+                $ref: '#/components/schemas/GetRoleByIdResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     put:
       tags:
-        - RoleService
+      - RoleService
       description: 更新角色
       operationId: RoleService_UpdateRole
       parameters:
-        - name: id
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateRoleRequest"
+              $ref: '#/components/schemas/UpdateRoleRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateRoleResponse"
+                $ref: '#/components/schemas/UpdateRoleResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - RoleService
+      - RoleService
       description: 删除角色
       operationId: RoleService_DeleteRole
       parameters:
-        - name: id
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteRoleResponse"
+                $ref: '#/components/schemas/DeleteRoleResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/roles/{roleId}/permissions:
     get:
       tags:
-        - RoleService
+      - RoleService
       description: 获取角色的权限列表
       operationId: RoleService_GetRolePermissions
       parameters:
-        - name: roleId
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: roleId
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRolePermissionsResponse"
+                $ref: '#/components/schemas/GetRolePermissionsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-info:
     get:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 获取用户配置
       operationId: UserAuthService_GetUserInfo
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserInfoResponse"
+                $ref: '#/components/schemas/GetUserInfoResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles:
     get:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 查询用户角色关联
       operationId: UserRoleService_GetUserRoles
       parameters:
-        - name: userId
-          in: query
-          description: 用户ID，可选参数
-          schema:
-            type: string
-        - name: roleId
-          in: query
-          description: 角色ID，可选参数
-          schema:
-            type: string
+      - name: userId
+        in: query
+        description: 用户ID，可选参数
+        schema:
+          type: string
+      - name: roleId
+        in: query
+        description: 角色ID，可选参数
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserRolesResponse"
+                $ref: '#/components/schemas/GetUserRolesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     post:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 添加用户角色关联
       operationId: UserRoleService_AddUserRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUserRoleRequest"
+              $ref: '#/components/schemas/AddUserRoleRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AddUserRoleResponse"
+                $ref: '#/components/schemas/AddUserRoleResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 删除用户角色关联
       operationId: UserRoleService_DeleteUserRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DeleteUserRoleRequest"
+              $ref: '#/components/schemas/DeleteUserRoleRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CommonResponse"
+                $ref: '#/components/schemas/CommonResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles/batch:
     post:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 批量添加用户角色关联
       operationId: UserRoleService_BatchAddUserRole
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BatchAddUserRoleRequest"
+              $ref: '#/components/schemas/BatchAddUserRoleRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchAddUserRoleResponse"
+                $ref: '#/components/schemas/BatchAddUserRoleResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles/role/{roleId}:
     delete:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 删除角色所有用户
       operationId: UserRoleService_DeleteByRoleId
       parameters:
-        - name: roleId
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: roleId
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CommonResponse"
+                $ref: '#/components/schemas/CommonResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles/role/{roleId}/user-ids:
     get:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 获取角色用户ID列表
       operationId: UserRoleService_GetUserIdsByRoleId
       parameters:
-        - name: roleId
-          in: path
-          description: 角色ID
-          required: true
-          schema:
-            type: string
+      - name: roleId
+        in: path
+        description: 角色ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserIdsByRoleIdResponse"
+                $ref: '#/components/schemas/GetUserIdsByRoleIdResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles/user/{userId}:
     delete:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 删除用户所有角色
       operationId: UserRoleService_DeleteByUserId
       parameters:
-        - name: userId
-          in: path
-          description: 用户ID
-          required: true
-          schema:
-            type: string
+      - name: userId
+        in: path
+        description: 用户ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CommonResponse"
+                $ref: '#/components/schemas/CommonResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/user-roles/user/{userId}/role-ids:
     get:
       tags:
-        - UserRoleService
+      - UserRoleService
       description: 获取用户角色ID列表
       operationId: UserRoleService_GetRoleIdsByUserId
       parameters:
-        - name: userId
-          in: path
-          description: 用户ID
-          required: true
-          schema:
-            type: string
+      - name: userId
+        in: path
+        description: 用户ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetRoleIdsByUserIdResponse"
+                $ref: '#/components/schemas/GetRoleIdsByUserIdResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users:
     post:
       tags:
-        - UserService
+      - UserService
       description: 创建用户
       operationId: UserService_CreateUser
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUserRequest"
+              $ref: '#/components/schemas/CreateUserRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateUserResponse"
+                $ref: '#/components/schemas/CreateUserResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/get-current-user:
     get:
       tags:
-        - UserService
+      - UserService
       description: 获取当前登录用户详情
       operationId: UserService_GetCurrentUser
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetCurrentUserResponse"
+                $ref: '#/components/schemas/GetCurrentUserResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/list-users:
     post:
       tags:
-        - UserService
+      - UserService
       description: 分页查询用户列表
       operationId: UserService_ListUsers
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListUsersRequest"
+              $ref: '#/components/schemas/ListUsersRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListUsersResponse"
+                $ref: '#/components/schemas/ListUsersResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/permission-list:
     get:
       tags:
-        - UserService
+      - UserService
       description: 获取用户的权限列表
       operationId: UserService_GetUserPermissions
       parameters:
-        - name: userId
-          in: query
-          description: 用户ID，可选，不传则获取当前用户权限
-          schema:
-            type: string
+      - name: userId
+        in: query
+        description: 用户ID，可选，不传则获取当前用户权限
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserPermissionsResponse"
+                $ref: '#/components/schemas/GetUserPermissionsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/update-avatar:
     put:
       tags:
-        - UserService
+      - UserService
       description: 更新用户头像
       operationId: UserService_UpdateAvatar
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAvatarRequest"
+              $ref: '#/components/schemas/UpdateAvatarRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateAvatarResponse"
+                $ref: '#/components/schemas/UpdateAvatarResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/update-password:
     put:
       tags:
-        - UserService
+      - UserService
       description: 更新用户密码
       operationId: UserService_UpdatePassword
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdatePasswordRequest"
+              $ref: '#/components/schemas/UpdatePasswordRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdatePasswordResponse"
+                $ref: '#/components/schemas/UpdatePasswordResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/users/{id}:
     get:
       tags:
-        - UserService
+      - UserService
       description: 获取用户详情
       operationId: UserService_GetUserById
       parameters:
-        - name: id
-          in: path
-          description: 用户ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 用户ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetUserByIdResponse"
+                $ref: '#/components/schemas/GetUserByIdResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     put:
       tags:
-        - UserService
+      - UserService
       description: 更新用户
       operationId: UserService_UpdateUser
       parameters:
-        - name: id
-          in: path
-          description: 用户ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 用户ID
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateUserRequest"
+              $ref: '#/components/schemas/UpdateUserRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateUserResponse"
+                $ref: '#/components/schemas/UpdateUserResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - UserService
+      - UserService
       description: 删除用户
       operationId: UserService_DeleteUser
       parameters:
-        - name: id
-          in: path
-          description: 用户ID
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        description: 用户ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteUserResponse"
+                $ref: '#/components/schemas/DeleteUserResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /authz/validate:
     post:
       tags:
-        - UserAuthService
+      - UserAuthService
       description: 校验Token
       operationId: UserAuthService_ValidateToken
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ValidateTokenRequest"
+              $ref: '#/components/schemas/ValidateTokenRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidateTokenResponse"
+                $ref: '#/components/schemas/ValidateTokenResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/download/{packageId}:
     get:
       tags:
-        - CodeService
+      - CodeService
       description: 下载代码包
       operationId: CodeService_DownloadPackage
       parameters:
-        - name: packageId
-          in: path
-          description: 包ID
-          required: true
-          schema:
-            type: string
+      - name: packageId
+        in: path
+        description: 包ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DownloadPackageResponse"
+                $ref: '#/components/schemas/DownloadPackageResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/edit:
     post:
       tags:
-        - CodeService
+      - CodeService
       description: 编辑代码文件
       operationId: CodeService_EditCodeFile
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EditCodeFileRequest"
+              $ref: '#/components/schemas/EditCodeFileRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EditCodeFileResponse"
+                $ref: '#/components/schemas/EditCodeFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/get:
     get:
       tags:
-        - CodeService
+      - CodeService
       description: 获取代码文件内容
       operationId: CodeService_GetCodeFile
       parameters:
-        - name: packageId
-          in: query
-          description: 包ID
-          schema:
-            type: string
-        - name: filePath
-          in: query
-          description: 文件路径
-          schema:
-            type: string
+      - name: packageId
+        in: query
+        description: 包ID
+        schema:
+          type: string
+      - name: filePath
+        in: query
+        description: 文件路径
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetCodeFileResponse"
+                $ref: '#/components/schemas/GetCodeFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/packages:
     get:
       tags:
-        - CodeService
+      - CodeService
       description: 获取代码包列表
       operationId: CodeService_GetCodePackageList
       parameters:
-        - name: page
-          in: query
-          description: 页码
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: 每页数量
-          schema:
-            type: integer
-            format: int32
-        - name: name
-          in: query
-          description: 搜索关键词
-          schema:
+      - name: page
+        in: query
+        description: 页码
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: 每页数量
+        schema:
+          type: integer
+          format: int32
+      - name: name
+        in: query
+        description: 搜索关键词
+        schema:
+          type: string
+      - name: types
+        in: query
+        description: 包类型
+        schema:
+          type: array
+          items:
+            enum:
+            - PackageTypeUnspecified
+            - PackageTypeTar
+            - PackageTypeZip
+            - PackageTypeTarGz
+            - PackageTypeDxt
+            - PackageTypeMcpb
             type: string
-        - name: types
-          in: query
-          description: 包类型
-          schema:
-            type: array
-            items:
-              enum:
-                - PackageTypeUnspecified
-                - PackageTypeTar
-                - PackageTypeZip
-                - PackageTypeTarGz
-                - PackageTypeDxt
-                - PackageTypeMcpb
-              type: string
-              format: enum
+            format: enum
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CodePackageListResponse"
+                $ref: '#/components/schemas/CodePackageListResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/packages/{packageId}:
     delete:
       tags:
-        - CodeService
+      - CodeService
       description: 删除代码包
       operationId: CodeService_DeleteCodePackage
       parameters:
-        - name: packageId
-          in: path
-          description: 包ID
-          required: true
-          schema:
-            type: string
+      - name: packageId
+        in: path
+        description: 包ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteCodePackageResponse"
+                $ref: '#/components/schemas/DeleteCodePackageResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/tree:
     get:
       tags:
-        - CodeService
+      - CodeService
       description: 获取代码包结构
       operationId: CodeService_GetCodeTree
       parameters:
-        - name: packageId
-          in: query
-          description: 包ID
-          schema:
-            type: string
+      - name: packageId
+        in: query
+        description: 包ID
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetCodeTreeResponse"
+                $ref: '#/components/schemas/GetCodeTreeResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /code/upload:
     post:
       tags:
-        - CodeService
+      - CodeService
       description: 上传代码包
       operationId: CodeService_UploadPackage
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UploadPackageRequest"
+              $ref: '#/components/schemas/UploadPackageRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UploadPackageResponse"
+                $ref: '#/components/schemas/UploadPackageResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /dashboard/available-cases:
     get:
       tags:
-        - DashboardService
+      - DashboardService
       description: 可用案例
       operationId: DashboardService_AvailableCases
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AvailableCasesResponse"
+                $ref: '#/components/schemas/AvailableCasesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /dashboard/statistical:
     get:
       tags:
-        - DashboardService
+      - DashboardService
       description: 统计信息
       operationId: DashboardService_Statistical
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StatisticalResponse"
+                $ref: '#/components/schemas/StatisticalResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /environments:
     get:
       tags:
-        - McpEnvironmentService
+      - McpEnvironmentService
       description: List environments
       operationId: McpEnvironmentService_ListEnvironments
       parameters:
-        - name: environment
-          in: query
-          description: environment type filter
-          schema:
-            enum:
-              - Unknown
-              - Kubernetes
-              - Docker
-            type: string
-            format: enum
-        - name: page
-          in: query
-          description: page number
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: page size
-          schema:
-            type: integer
-            format: int32
+      - name: environment
+        in: query
+        description: environment type filter
+        schema:
+          enum:
+          - Unknown
+          - Kubernetes
+          - Docker
+          type: string
+          format: enum
+      - name: page
+        in: query
+        description: page number
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: page size
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListEnvironmentsResponse"
+                $ref: '#/components/schemas/ListEnvironmentsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /environments/namespaces:
     post:
       tags:
-        - McpEnvironmentService
+      - McpEnvironmentService
       description: Get namespace list
       operationId: McpEnvironmentService_ListNamespaces
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListNamespacesRequest"
+              $ref: '#/components/schemas/ListNamespacesRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListNamespacesResponse"
+                $ref: '#/components/schemas/ListNamespacesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /environments/{id}/test:
     post:
       tags:
-        - McpEnvironmentService
+      - McpEnvironmentService
       description: Test connectivity
       operationId: McpEnvironmentService_TestConnectivity
       parameters:
-        - name: id
-          in: path
-          description: environment ID
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: path
+        description: environment ID
+        required: true
+        schema:
+          type: integer
+          format: int32
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TestConnectivityRequest"
+              $ref: '#/components/schemas/TestConnectivityRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestConnectivityResponse"
+                $ref: '#/components/schemas/TestConnectivityResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /gateway-log/find:
     post:
       tags:
-        - GatewayLogService
+      - GatewayLogService
       description: FindGatewayLog 查询网关日志
       operationId: GatewayLogService_FindGatewayLog
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FindGatewayLogRequest"
+              $ref: '#/components/schemas/FindGatewayLogRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FindGatewayLogResponse"
+                $ref: '#/components/schemas/FindGatewayLogResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/call-tools:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: call tools
       operationId: InstanceService_CallTool
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CallToolRequest"
+              $ref: '#/components/schemas/CallToolRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CallToolResp"
+                $ref: '#/components/schemas/CallToolResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/create:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Create instance
       operationId: InstanceService_Create
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRequest"
+              $ref: '#/components/schemas/CreateRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateResp"
+                $ref: '#/components/schemas/CreateResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/disabled:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Disable instance
       operationId: InstanceService_Disabled
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DisabledRequest"
+              $ref: '#/components/schemas/DisabledRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DisabledResp"
+                $ref: '#/components/schemas/DisabledResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/edit:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Edit instance
       operationId: InstanceService_Edit
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EditRequest"
+              $ref: '#/components/schemas/EditRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EditResp"
+                $ref: '#/components/schemas/EditResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/list:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Instance list
       operationId: InstanceService_List
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListRequest"
+              $ref: '#/components/schemas/ListRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListResp"
+                $ref: '#/components/schemas/ListResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/list-tools:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: list tools
       operationId: InstanceService_ListTools
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListToolsRequest"
+              $ref: '#/components/schemas/ListToolsRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListToolsResp"
+                $ref: '#/components/schemas/ListToolsResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/logs:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: View instance runtime logs
       operationId: InstanceService_Logs
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LogsRequest"
+              $ref: '#/components/schemas/LogsRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LogsResp"
+                $ref: '#/components/schemas/LogsResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/openapi/create:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Create Openapi instance
       operationId: InstanceService_OpenapiCreate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateOpenapiRequest"
+              $ref: '#/components/schemas/CreateOpenapiRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateResp"
+                $ref: '#/components/schemas/CreateResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/openapi/edit:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Edit Openapi instance
       operationId: InstanceService_OpenapiUpdate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateOpenapiRequest"
+              $ref: '#/components/schemas/UpdateOpenapiRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EditResp"
+                $ref: '#/components/schemas/EditResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/restart:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Restart instance
       operationId: InstanceService_Restart
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RestartRequest"
+              $ref: '#/components/schemas/RestartRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RestartResp"
+                $ref: '#/components/schemas/RestartResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/status/{instanceId}:
     get:
       tags:
-        - InstanceService
+      - InstanceService
       description: Instance status probe
       operationId: InstanceService_Status
       parameters:
-        - name: instanceId
-          in: path
-          description: Instance ID
-          required: true
-          schema:
-            type: string
+      - name: instanceId
+        in: path
+        description: Instance ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetStatusResp"
+                $ref: '#/components/schemas/GetStatusResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/token/control:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Control token enable/disable
       operationId: InstanceService_TokenControl
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenControlRequest"
+              $ref: '#/components/schemas/TokenControlRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenControlResponse"
+                $ref: '#/components/schemas/TokenControlResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/token/delete:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Delete token
       operationId: InstanceService_TokenDelete
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenDeleteRequest"
+              $ref: '#/components/schemas/TokenDeleteRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenDeleteResponse"
+                $ref: '#/components/schemas/TokenDeleteResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/token/edit:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Edit tokens
       operationId: InstanceService_TokenEdit
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenEditRequest"
+              $ref: '#/components/schemas/TokenEditRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenEditResponse"
+                $ref: '#/components/schemas/TokenEditResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/token/list:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Token list
       operationId: InstanceService_TokenListByInstanceID
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TokenListByInstanceIDRequest"
+              $ref: '#/components/schemas/TokenListByInstanceIDRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TokenListByInstanceIDResponse"
+                $ref: '#/components/schemas/TokenListByInstanceIDResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /instance/{instanceId}:
     get:
       tags:
-        - InstanceService
+      - InstanceService
       description: Instance detail
       operationId: InstanceService_Detail
       parameters:
-        - name: instanceId
-          in: path
-          description: Instance ID
-          required: true
-          schema:
-            type: string
+      - name: instanceId
+        in: path
+        description: Instance ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DetailResp"
+                $ref: '#/components/schemas/DetailResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - InstanceService
+      - InstanceService
       description: Delete instance
       operationId: InstanceService_Delete
       parameters:
-        - name: instanceId
-          in: path
-          description: Instance ID
-          required: true
-          schema:
-            type: string
+      - name: instanceId
+        in: path
+        description: Instance ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteResp"
+                $ref: '#/components/schemas/DeleteResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access:
     post:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_Create
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRequest"
+              $ref: '#/components/schemas/CreateRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateResponse"
+                $ref: '#/components/schemas/CreateResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/check-n8n:
     post:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_CheckN8N
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CheckN8NRequest"
+              $ref: '#/components/schemas/CheckN8NRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CheckN8NResponse"
+                $ref: '#/components/schemas/CheckN8NResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/delete:
     delete:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_Delete
       parameters:
-        - name: accessID
-          in: query
-          schema:
-            type: string
+      - name: accessID
+        in: query
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteResponse"
+                $ref: '#/components/schemas/DeleteResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/edit:
     put:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_Update
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateRequest"
+              $ref: '#/components/schemas/UpdateRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateResponse"
+                $ref: '#/components/schemas/UpdateResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/install-n8n-plugin:
     post:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_InstallN8NPlugin
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InstallN8NPluginRequest"
+              $ref: '#/components/schemas/InstallN8NPluginRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InstallN8NPluginResponse"
+                $ref: '#/components/schemas/InstallN8NPluginResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/list:
     get:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_List
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListResponse"
+                $ref: '#/components/schemas/ListResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/list-user-space:
     post:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_ListUserSpace
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListUserSpaceRequest"
+              $ref: '#/components/schemas/ListUserSpaceRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListUserSpaceResponse"
+                $ref: '#/components/schemas/ListUserSpaceResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/test-connection:
     post:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_TestConnection
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TestConnectionRequest"
+              $ref: '#/components/schemas/TestConnectionRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestConnectionResponse"
+                $ref: '#/components/schemas/TestConnectionResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /intelligent_access/{accessID}:
     get:
       tags:
-        - IntelligentAccessService
+      - IntelligentAccessService
       operationId: IntelligentAccessService_Get
       parameters:
-        - name: accessID
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: accessID
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetResponse"
+                $ref: '#/components/schemas/GetResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /market/category:
     get:
       tags:
-        - MarketService
+      - MarketService
       description: 服务分类
       operationId: MarketService_Category
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CategoryResponse"
+                $ref: '#/components/schemas/CategoryResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /market/detail:
     get:
       tags:
-        - MarketService
+      - MarketService
       description: 服务详情
       operationId: MarketService_Detail
       parameters:
-        - name: id
-          in: query
-          description: 服务ID
-          schema:
-            type: integer
-            format: int32
+      - name: id
+        in: query
+        description: 服务ID
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DetailResponse"
+                $ref: '#/components/schemas/DetailResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /market/list:
     post:
       tags:
-        - MarketService
+      - MarketService
       description: 服务列表
       operationId: MarketService_List
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ListRequest"
+              $ref: '#/components/schemas/ListRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListResponse"
+                $ref: '#/components/schemas/ListResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /mcp_to_intelligent_task:
     post:
       tags:
-        - McpToIntelligentTaskService
+      - McpToIntelligentTaskService
       operationId: McpToIntelligentTaskService_Create
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRequest"
+              $ref: '#/components/schemas/CreateRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateResponse"
+                $ref: '#/components/schemas/CreateResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /mcp_to_intelligent_task/list:
     get:
       tags:
-        - McpToIntelligentTaskService
+      - McpToIntelligentTaskService
       operationId: McpToIntelligentTaskService_List
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            format: int32
-        - name: size
-          in: query
-          schema:
-            type: integer
-            format: int32
-        - name: keyword
-          in: query
-          schema:
-            type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: keyword
+        in: query
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListResponse"
+                $ref: '#/components/schemas/ListResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /mcp_to_intelligent_task/{id}:
     get:
       tags:
-        - McpToIntelligentTaskService
+      - McpToIntelligentTaskService
       operationId: McpToIntelligentTaskService_Get
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetResponse"
+                $ref: '#/components/schemas/GetResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /mcp_to_intelligent_task/{id}/cancel:
     post:
       tags:
-        - McpToIntelligentTaskService
+      - McpToIntelligentTaskService
       operationId: McpToIntelligentTaskService_Cancel
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CancelRequest"
+              $ref: '#/components/schemas/CancelRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CancelResponse"
+                $ref: '#/components/schemas/CancelResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/content:
     get:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 获取OpenAPI文档内容
       operationId: OpenapiService_GetOpenapiFileContent
       parameters:
-        - name: openapiFileId
-          in: query
-          description: OpenAPI文档ID
-          schema:
-            type: string
+      - name: openapiFileId
+        in: query
+        description: OpenAPI文档ID
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetOpenapiFileContentResponse"
+                $ref: '#/components/schemas/GetOpenapiFileContentResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/download/{openapiFileId}:
     get:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 下载OpenAPI文档
       operationId: OpenapiService_DownloadOpenapiFile
       parameters:
-        - name: openapiFileId
-          in: path
-          description: OpenAPI文档ID
-          required: true
-          schema:
-            type: string
+      - name: openapiFileId
+        in: path
+        description: OpenAPI文档ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DownloadOpenapiFileResponse"
+                $ref: '#/components/schemas/DownloadOpenapiFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/edit:
     post:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 编辑OpenAPI文档
       operationId: OpenapiService_EditOpenapiFile
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EditOpenapiFileRequest"
+              $ref: '#/components/schemas/EditOpenapiFileRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EditOpenapiFileResponse"
+                $ref: '#/components/schemas/EditOpenapiFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/files:
     get:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 获取OpenAPI文档列表
       operationId: OpenapiService_GetOpenapiFileList
       parameters:
-        - name: page
-          in: query
-          description: 页码
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: 每页数量
-          schema:
-            type: integer
-            format: int32
-        - name: name
-          in: query
-          description: 搜索关键词
-          schema:
+      - name: page
+        in: query
+        description: 页码
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: 每页数量
+        schema:
+          type: integer
+          format: int32
+      - name: name
+        in: query
+        description: 搜索关键词
+        schema:
+          type: string
+      - name: types
+        in: query
+        description: 文件类型
+        schema:
+          type: array
+          items:
+            enum:
+            - OpenapiFileTypeUnspecified
+            - OpenapiFileTypeJson
+            - OpenapiFileTypeYaml
             type: string
-        - name: types
-          in: query
-          description: 文件类型
-          schema:
-            type: array
-            items:
-              enum:
-                - OpenapiFileTypeUnspecified
-                - OpenapiFileTypeJson
-                - OpenapiFileTypeYaml
-              type: string
-              format: enum
+            format: enum
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OpenapiFileListResponse"
+                $ref: '#/components/schemas/OpenapiFileListResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/files/{openapiFileId}:
     delete:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 删除OpenAPI文档
       operationId: OpenapiService_DeleteOpenapiFile
       parameters:
-        - name: openapiFileId
-          in: path
-          description: OpenAPI文档ID
-          required: true
-          schema:
-            type: string
+      - name: openapiFileId
+        in: path
+        description: OpenAPI文档ID
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DeleteOpenapiFileResponse"
+                $ref: '#/components/schemas/DeleteOpenapiFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /openapi/upload:
     post:
       tags:
-        - OpenapiService
+      - OpenapiService
       description: 上传OpenAPI文档
       operationId: OpenapiService_UploadOpenapiFile
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UploadOpenapiFileRequest"
+              $ref: '#/components/schemas/UploadOpenapiFileRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UploadOpenapiFileResponse"
+                $ref: '#/components/schemas/UploadOpenapiFileResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /platform/list:
     get:
       tags:
-        - Market
+      - Market
       operationId: Market_ListMcpServer
       parameters:
-        - name: page
-          in: query
-          description: Page number
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: Page size
-          schema:
-            type: integer
-            format: int32
-        - name: name
-          in: query
-          description: Name
-          schema:
-            type: string
-        - name: categoryName
-          in: query
-          description: Category name
-          schema:
-            type: string
+      - name: page
+        in: query
+        description: Page number
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        description: Page size
+        schema:
+          type: integer
+          format: int32
+      - name: name
+        in: query
+        description: Name
+        schema:
+          type: string
+      - name: categoryName
+        in: query
+        description: Category name
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListMcpServerReply"
+                $ref: '#/components/schemas/ListMcpServerReply'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/docker/volumes:
     get:
       tags:
-        - ResourceService
+      - ResourceService
       description: 查询 Docker 卷列表
       operationId: ResourceService_ListDockerVolumes
       parameters:
-        - name: environmentId
-          in: query
-          description: 环境ID
-          schema:
-            type: integer
-            format: int32
+      - name: environmentId
+        in: query
+        description: 环境ID
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListDockerVolumesResponse"
+                $ref: '#/components/schemas/ListDockerVolumesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/docker/volumes/create:
     post:
       tags:
-        - ResourceService
+      - ResourceService
       description: 创建 Docker 卷
       operationId: ResourceService_CreateDockerVolume
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateDockerVolumeRequest"
+              $ref: '#/components/schemas/CreateDockerVolumeRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateDockerVolumeResponse"
+                $ref: '#/components/schemas/CreateDockerVolumeResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/docker/volumes/get:
     post:
       tags:
-        - ResourceService
+      - ResourceService
       description: 查看 Docker 卷详情
       operationId: ResourceService_FindDockerVolume
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FindDockerVolumeRequest"
+              $ref: '#/components/schemas/FindDockerVolumeRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FindDockerVolumeResponse"
+                $ref: '#/components/schemas/FindDockerVolumeResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/docker/volumes/remove:
     post:
       tags:
-        - ResourceService
+      - ResourceService
       description: 删除 Docker 卷
       operationId: ResourceService_RemoveDockerVolume
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RemoveDockerVolumeRequest"
+              $ref: '#/components/schemas/RemoveDockerVolumeRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RemoveDockerVolumeResponse"
+                $ref: '#/components/schemas/RemoveDockerVolumeResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/nodes:
     get:
       tags:
-        - ResourceService
+      - ResourceService
       description: 查询 Node 资源
       operationId: ResourceService_ListNodes
       parameters:
-        - name: environmentId
-          in: query
-          description: 环境ID
-          schema:
-            type: integer
-            format: int32
+      - name: environmentId
+        in: query
+        description: 环境ID
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListNodesResponse"
+                $ref: '#/components/schemas/ListNodesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/pvcs:
     get:
       tags:
-        - ResourceService
+      - ResourceService
       description: 查询 PVC 资源
       operationId: ResourceService_ListPVCs
       parameters:
-        - name: environmentId
-          in: query
-          description: 环境ID
-          schema:
-            type: integer
-            format: int32
+      - name: environmentId
+        in: query
+        description: 环境ID
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListPVCsResponse"
+                $ref: '#/components/schemas/ListPVCsResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     post:
       tags:
-        - ResourceService
+      - ResourceService
       description: 创建 PVC 资源
       operationId: ResourceService_CreatePVC
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePVCRequest"
+              $ref: '#/components/schemas/CreatePVCRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreatePVCResponse"
+                $ref: '#/components/schemas/CreatePVCResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /resources/storage-classes:
     get:
       tags:
-        - ResourceService
+      - ResourceService
       description: 查询存储类型列表
       operationId: ResourceService_ListStorageClasses
       parameters:
-        - name: environmentId
-          in: query
-          description: 环境ID
-          schema:
-            type: integer
-            format: int32
+      - name: environmentId
+        in: query
+        description: 环境ID
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListStorageClassesResponse"
+                $ref: '#/components/schemas/ListStorageClassesResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /storage/image:
     post:
       tags:
-        - StorageService
+      - StorageService
       description: UploadImage
       operationId: StorageService_UploadImage
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UploadImageRequest"
+              $ref: '#/components/schemas/UploadImageRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UploadImageResponse"
+                $ref: '#/components/schemas/UploadImageResponse'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /template/create:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Create template
       operationId: InstanceService_TemplateCreate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TemplateCreateRequest"
+              $ref: '#/components/schemas/TemplateCreateRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateCreateResp"
+                $ref: '#/components/schemas/TemplateCreateResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /template/edit:
     put:
       tags:
-        - InstanceService
+      - InstanceService
       description: Edit template
       operationId: InstanceService_TemplateEdit
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TemplateEditRequest"
+              $ref: '#/components/schemas/TemplateEditRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateEditResp"
+                $ref: '#/components/schemas/TemplateEditResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /template/list:
     post:
       tags:
-        - InstanceService
+      - InstanceService
       description: Template list
       operationId: InstanceService_TemplateList
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TemplateListRequest"
+              $ref: '#/components/schemas/TemplateListRequest'
         required: true
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateListResp"
+                $ref: '#/components/schemas/TemplateListResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
   /template/{templateId}:
     get:
       tags:
-        - InstanceService
+      - InstanceService
       description: Template detail
       operationId: InstanceService_TemplateDetail
       parameters:
-        - name: templateId
-          in: path
-          description: Template ID
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: templateId
+        in: path
+        description: Template ID
+        required: true
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateDetailResp"
+                $ref: '#/components/schemas/TemplateDetailResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
     delete:
       tags:
-        - InstanceService
+      - InstanceService
       description: Delete template
       operationId: InstanceService_TemplateDelete
       parameters:
-        - name: templateId
-          in: path
-          description: Template ID
-          required: true
-          schema:
-            type: integer
-            format: int32
+      - name: templateId
+        in: path
+        description: Template ID
+        required: true
+        schema:
+          type: integer
+          format: int32
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateDeleteResp"
+                $ref: '#/components/schemas/TemplateDeleteResp'
         default:
           description: Default error response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Status"
+                $ref: '#/components/schemas/Status'
 components:
   schemas:
     AddUserRoleRequest:
@@ -2716,16 +3135,107 @@ components:
           description: 响应消息
         userRole:
           allOf:
-            - $ref: "#/components/schemas/UserRole"
+          - $ref: '#/components/schemas/UserRole'
           description: 新增的用户角色关联信息
       description: AddUserRoleResponse 添加用户角色关联响应
+    AiMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID
+        sessionID:
+          type: string
+          description: Session ID
+        role:
+          type: string
+          description: Role
+        content:
+          type: string
+          description: Content
+        toolCalls:
+          type: string
+          description: Tool Calls
+        toolCallID:
+          type: string
+          description: Tool Call ID
+        promptTokens:
+          type: integer
+          description: Prompt Tokens
+          format: int32
+        completionTokens:
+          type: integer
+          description: Completion Tokens
+          format: int32
+        totalTokens:
+          type: integer
+          description: Total Tokens
+          format: int32
+        createTime:
+          type: string
+          description: Create Time
+    AiModelAccess:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID
+        name:
+          type: string
+          description: Name
+        provider:
+          type: string
+          description: Provider
+        apiKey:
+          type: string
+          description: API Key
+        baseUrl:
+          type: string
+          description: Base URL
+        modelName:
+          type: string
+          description: Model Name
+        createTime:
+          type: string
+          description: Create Time
+        updateTime:
+          type: string
+          description: Update Time
+    AiSession:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID
+        name:
+          type: string
+          description: Name
+        modelAccessID:
+          type: string
+          description: Model Access ID
+        toolsConfig:
+          type: string
+          description: Tools Config (JSON)
+        maxContext:
+          type: integer
+          description: Max Context
+          format: int32
+        createTime:
+          type: string
+          description: Create Time
+        updateTime:
+          type: string
+          description: Update Time
+        modelName:
+          type: string
+          description: Model Name
     AvailableCasesResponse:
       type: object
       properties:
         cases:
           type: array
           items:
-            $ref: "#/components/schemas/CaseInfo"
+            $ref: '#/components/schemas/CaseInfo'
           description: 可用案例列表
       description: AvailableCasesResponse 可用案例响应
     BatchAddUserRoleRequest:
@@ -2753,7 +3263,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/UserRole"
+            $ref: '#/components/schemas/UserRole'
           description: 批量添加的用户角色关联列表
       description: BatchAddUserRoleResponse 批量添加用户角色关联响应
     CallToolRequest:
@@ -2803,22 +3313,13 @@ components:
           description: 图标路径
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: 案例来源类型
-          format: enum
-        accessType:
-          enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
-          type: string
-          description: 案例访问类型
           format: enum
       description: CaseInfo 案例信息
     Category:
@@ -2853,9 +3354,29 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/CategoryInfo"
+            $ref: '#/components/schemas/CategoryInfo'
           description: 分类列表
       description: 分类响应
+    ChatRequest:
+      type: object
+      properties:
+        sessionID:
+          type: string
+          description: Session ID
+        content:
+          type: string
+          description: Content
+        tools:
+          type: string
+    ChatResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type
+        content:
+          type: string
+          description: Content
     CheckN8NRequest:
       type: object
       properties:
@@ -2893,12 +3414,12 @@ components:
           description: 包大小
         type:
           enum:
-            - PackageTypeUnspecified
-            - PackageTypeTar
-            - PackageTypeZip
-            - PackageTypeTarGz
-            - PackageTypeDxt
-            - PackageTypeMcpb
+          - PackageTypeUnspecified
+          - PackageTypeTar
+          - PackageTypeZip
+          - PackageTypeTarGz
+          - PackageTypeDxt
+          - PackageTypeMcpb
           type: string
           description: 包类型
           format: enum
@@ -2915,7 +3436,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/CodePackageInfo"
+            $ref: '#/components/schemas/CodePackageInfo'
           description: 代码包列表
         total:
           type: string
@@ -2975,7 +3496,7 @@ components:
           description: 响应消息
         data:
           allOf:
-            - $ref: "#/components/schemas/SysDept"
+          - $ref: '#/components/schemas/SysDept'
           description: 部门数据
       description: CreateDeptResponse 创建部门响应
     CreateDockerVolumeRequest:
@@ -2999,9 +3520,34 @@ components:
       properties:
         volume:
           allOf:
-            - $ref: "#/components/schemas/DockerVolumeInfo"
+          - $ref: '#/components/schemas/DockerVolumeInfo'
           description: 创建的卷信息
       description: CreateDockerVolumeResponse
+    CreateModelAccessRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name
+        provider:
+          type: string
+          description: Provider
+        apiKey:
+          type: string
+          description: API Key
+        baseUrl:
+          type: string
+          description: Base URL
+        modelName:
+          type: string
+          description: Model Name
+    CreateModelAccessResponse:
+      type: object
+      properties:
+        access:
+          allOf:
+          - $ref: '#/components/schemas/AiModelAccess'
+          description: Access
     CreateOpenapiRequest:
       type: object
       properties:
@@ -3023,7 +3569,7 @@ components:
         tokens:
           type: array
           items:
-            $ref: "#/components/schemas/McpToken"
+            $ref: '#/components/schemas/McpToken'
           description: Token list
         environmentId:
           type: integer
@@ -3068,7 +3614,7 @@ components:
       properties:
         pvc:
           allOf:
-            - $ref: "#/components/schemas/PVCInfo"
+          - $ref: '#/components/schemas/PVCInfo'
           description: 创建的PVC信息
       description: CreatePVCResponse 创建PVC响应
     CreateRequest:
@@ -3095,7 +3641,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -3114,10 +3660,10 @@ components:
           description: Package ID, optional
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Access mode
           format: enum
@@ -3126,11 +3672,11 @@ components:
           description: MCP server configuration
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: Instance source
           format: enum
@@ -3144,17 +3690,17 @@ components:
         tokens:
           type: array
           items:
-            $ref: "#/components/schemas/McpToken"
+            $ref: '#/components/schemas/McpToken'
           description: Token list
         notes:
           type: string
           description: Notes
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -3179,10 +3725,10 @@ components:
           description: Instance name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -3191,10 +3737,10 @@ components:
           description: Instance status
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -3203,7 +3749,7 @@ components:
       type: object
       properties:
         intelligentAccess:
-          $ref: "#/components/schemas/IntelligentAccess"
+          $ref: '#/components/schemas/IntelligentAccess'
     CreateRoleRequest:
       type: object
       properties:
@@ -3218,9 +3764,9 @@ components:
           description: 角色描述
         status:
           enum:
-            - RoleStatusUnspecified
-            - RoleStatusEnabled
-            - RoleStatusDisabled
+          - RoleStatusUnspecified
+          - RoleStatusEnabled
+          - RoleStatusDisabled
           type: string
           description: 角色状态
           format: enum
@@ -3239,9 +3785,35 @@ components:
       properties:
         role:
           allOf:
-            - $ref: "#/components/schemas/SysRole"
+          - $ref: '#/components/schemas/SysRole'
           description: 创建的角色信息
       description: 创建角色响应
+    CreateSessionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name
+        modelAccessID:
+          type: string
+          description: Model Access ID
+        toolsConfig:
+          type: string
+          description: Tools Config (JSON)
+        maxContext:
+          type: integer
+          description: Max Context
+          format: int32
+        modelName:
+          type: string
+          description: Model Name
+    CreateSessionResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+          - $ref: '#/components/schemas/AiSession'
+          description: Session
     CreateUserRequest:
       type: object
       properties:
@@ -3265,9 +3837,9 @@ components:
           description: 头像URL
         status:
           enum:
-            - UserStatusUnspecified
-            - UserStatusEnabled
-            - UserStatusDisabled
+          - UserStatusUnspecified
+          - UserStatusEnabled
+          - UserStatusDisabled
           type: string
           description: 用户状态
           format: enum
@@ -3285,7 +3857,7 @@ components:
       properties:
         user:
           allOf:
-            - $ref: "#/components/schemas/SysUser"
+          - $ref: '#/components/schemas/SysUser'
           description: 创建的用户信息
       description: 创建用户响应
     DeleteCodePackageResponse:
@@ -3309,6 +3881,12 @@ components:
           type: string
           description: 响应消息
       description: DeleteDeptResponse 删除部门响应
+    DeleteModelAccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Success
     DeleteOpenapiFileResponse:
       type: object
       properties:
@@ -3333,6 +3911,12 @@ components:
       type: object
       properties: {}
       description: 删除角色响应
+    DeleteSessionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Success
     DeleteUserResponse:
       type: object
       properties: {}
@@ -3365,9 +3949,9 @@ components:
           format: int32
         status:
           enum:
-            - DeptStatusUnspecified
-            - DeptStatusDisabled
-            - DeptStatusEnabled
+          - DeptStatusUnspecified
+          - DeptStatusDisabled
+          - DeptStatusEnabled
           type: string
           description: 状态
           format: enum
@@ -3405,10 +3989,10 @@ components:
           description: Instance name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -3417,10 +4001,10 @@ components:
           description: Instance status
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -3448,7 +4032,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -3508,7 +4092,7 @@ components:
       properties:
         service:
           allOf:
-            - $ref: "#/components/schemas/ServiceInfo"
+          - $ref: '#/components/schemas/ServiceInfo'
           description: 服务详情
       description: 服务详情响应
     DisabledRequest:
@@ -3648,7 +4232,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -3682,10 +4266,10 @@ components:
           description: Instance name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -3694,10 +4278,10 @@ components:
           description: Instance status
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -3720,7 +4304,7 @@ components:
         children:
           type: array
           items:
-            $ref: "#/components/schemas/FileNode"
+            $ref: '#/components/schemas/FileNode'
           description: 子节点
       description: FileNode 文件节点结构
     FindDockerVolumeRequest:
@@ -3739,7 +4323,7 @@ components:
       properties:
         volume:
           allOf:
-            - $ref: "#/components/schemas/DockerVolumeInfo"
+          - $ref: '#/components/schemas/DockerVolumeInfo'
           description: 卷信息
       description: FindDockerVolumeResponse
     FindGatewayLogRequest:
@@ -3758,12 +4342,12 @@ components:
           description: usage scenarios
         level:
           enum:
-            - UnspecifiedLevel
-            - TraceLevel
-            - DebugLevel
-            - InfoLevel
-            - WarnLevel
-            - ErrorLevel
+          - UnspecifiedLevel
+          - TraceLevel
+          - DebugLevel
+          - InfoLevel
+          - WarnLevel
+          - ErrorLevel
           type: string
           description: log level
           format: enum
@@ -3790,7 +4374,7 @@ components:
         logs:
           type: array
           items:
-            $ref: "#/components/schemas/GatewayLog"
+            $ref: '#/components/schemas/GatewayLog'
           description: gateway logs
         total:
           type: integer
@@ -3824,12 +4408,12 @@ components:
           description: usage scenarios
         level:
           enum:
-            - UnspecifiedLevel
-            - TraceLevel
-            - DebugLevel
-            - InfoLevel
-            - WarnLevel
-            - ErrorLevel
+          - UnspecifiedLevel
+          - TraceLevel
+          - DebugLevel
+          - InfoLevel
+          - WarnLevel
+          - ErrorLevel
           type: string
           description: log level
           format: enum
@@ -3845,6 +4429,14 @@ components:
         traceId:
           type: string
           description: trace ID
+    GetAvailableModelsResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiModelAccess'
+          description: List
     GetCodeFileResponse:
       type: object
       properties:
@@ -3857,7 +4449,7 @@ components:
       properties:
         fileStructure:
           allOf:
-            - $ref: "#/components/schemas/FileNode"
+          - $ref: '#/components/schemas/FileNode'
           description: 文件结构
       description: GetCodeTreeResponse 获取代码包结构响应
     GetCurrentUserResponse:
@@ -3865,7 +4457,7 @@ components:
       properties:
         user:
           allOf:
-            - $ref: "#/components/schemas/SysUser"
+          - $ref: '#/components/schemas/SysUser'
           description: 当前用户信息
       description: 获取当前用户响应
     GetDeptByIdResponse:
@@ -3880,7 +4472,7 @@ components:
           description: 响应消息
         data:
           allOf:
-            - $ref: "#/components/schemas/SysDept"
+          - $ref: '#/components/schemas/SysDept'
           description: 部门数据
       description: GetDeptByIdResponse 根据ID获取部门响应
     GetDeptTreeResponse:
@@ -3896,7 +4488,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/SysDept"
+            $ref: '#/components/schemas/SysDept'
           description: 部门树形数据
       description: GetDeptTreeResponse 获取部门树形结构响应
     GetEncryptionKeyRequest:
@@ -3922,6 +4514,13 @@ components:
           type: string
           description: 密钥签发时间戳
       description: 获取加密密钥响应
+    GetModelAccessResponse:
+      type: object
+      properties:
+        access:
+          allOf:
+          - $ref: '#/components/schemas/AiModelAccess'
+          description: Access
     GetOpenapiFileContentResponse:
       type: object
       properties:
@@ -3930,9 +4529,9 @@ components:
           description: 文件内容
         fileType:
           enum:
-            - OpenapiFileTypeUnspecified
-            - OpenapiFileTypeJson
-            - OpenapiFileTypeYaml
+          - OpenapiFileTypeUnspecified
+          - OpenapiFileTypeJson
+          - OpenapiFileTypeYaml
           type: string
           description: 文件类型
           format: enum
@@ -3944,13 +4543,13 @@ components:
       type: object
       properties:
         intelligentAccess:
-          $ref: "#/components/schemas/IntelligentAccess"
+          $ref: '#/components/schemas/IntelligentAccess'
     GetRoleByIdResponse:
       type: object
       properties:
         role:
           allOf:
-            - $ref: "#/components/schemas/SysRole"
+          - $ref: '#/components/schemas/SysRole'
           description: 角色信息
       description: 获取角色响应
     GetRoleIdsByUserIdResponse:
@@ -3975,9 +4574,24 @@ components:
         permissions:
           type: array
           items:
-            $ref: "#/components/schemas/PermissionTreeNode"
+            $ref: '#/components/schemas/PermissionTreeNode'
           description: 权限树列表
       description: 获取角色权限响应
+    GetSessionMessagesResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiMessage'
+          description: List
+    GetSessionResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+          - $ref: '#/components/schemas/AiSession'
+          description: Session
     GetStatusResp:
       type: object
       properties:
@@ -3999,7 +4613,7 @@ components:
         warningEvents:
           type: array
           items:
-            $ref: "#/components/schemas/ContainerEvent"
+            $ref: '#/components/schemas/ContainerEvent'
           description: Warning events
         containerReady:
           type: boolean
@@ -4011,12 +4625,20 @@ components:
           type: boolean
           description: HTTP probe success
       description: GetStatusResp instance status probe response
+    GetSupportedModelsResponse:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelProvider'
+          description: Providers
     GetUserByIdResponse:
       type: object
       properties:
         user:
           allOf:
-            - $ref: "#/components/schemas/SysUser"
+          - $ref: '#/components/schemas/SysUser'
           description: 用户信息
       description: 获取用户响应
     GetUserIdsByRoleIdResponse:
@@ -4066,7 +4688,7 @@ components:
           format: int32
         userInfo:
           allOf:
-            - $ref: "#/components/schemas/UserInfo"
+          - $ref: '#/components/schemas/UserInfo'
           description: 用户信息
       description: 获取用户配置响应
     GetUserPermissionsResponse:
@@ -4075,7 +4697,7 @@ components:
         permissions:
           type: array
           items:
-            $ref: "#/components/schemas/PermissionTreeNode"
+            $ref: '#/components/schemas/PermissionTreeNode'
           description: 权限树列表
       description: 获取用户权限响应
     GetUserRolesResponse:
@@ -4091,18 +4713,17 @@ components:
         userRoles:
           type: array
           items:
-            $ref: "#/components/schemas/UserRole"
+            $ref: '#/components/schemas/UserRole'
           description: 用户角色关联列表
       description: GetUserRolesResponse 查询用户角色关联响应
     GoogleProtobufAny:
       type: object
       properties:
-        "@type":
+        '@type':
           type: string
           description: The type of the serialized message.
       additionalProperties: true
-      description:
-        Contains an arbitrary serialized message along with a @type that
+      description: Contains an arbitrary serialized message along with a @type that
         describes the type of the serialized message.
     HeaderInfo:
       type: object
@@ -4182,7 +4803,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/SysDept"
+            $ref: '#/components/schemas/SysDept'
           description: 部门列表数据
       description: ListDeptsResponse 查询部门列表响应
     ListDockerVolumesResponse:
@@ -4191,7 +4812,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/DockerVolumeInfo"
+            $ref: '#/components/schemas/DockerVolumeInfo'
           description: Docker 卷列表
       description: ListDockerVolumesResponse
     ListEnvironmentsResponse:
@@ -4200,7 +4821,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/McpEnvironmentInfo"
+            $ref: '#/components/schemas/McpEnvironmentInfo'
           description: environment list
         total:
           type: string
@@ -4223,13 +4844,24 @@ components:
         categories:
           type: array
           items:
-            $ref: "#/components/schemas/Category"
+            $ref: '#/components/schemas/Category'
           description: Categories
         list:
           type: array
           items:
-            $ref: "#/components/schemas/McpServer"
+            $ref: '#/components/schemas/McpServer'
           description: List
+    ListModelAccessResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiModelAccess'
+          description: List
+        total:
+          type: string
+          description: Total
     ListNamespacesRequest:
       type: object
       properties:
@@ -4238,9 +4870,9 @@ components:
           description: connection configuration
         environment:
           enum:
-            - Unknown
-            - Kubernetes
-            - Docker
+          - Unknown
+          - Kubernetes
+          - Docker
           type: string
           description: environment type
           format: enum
@@ -4260,7 +4892,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/NodeInfo"
+            $ref: '#/components/schemas/NodeInfo'
           description: 节点列表数据
       description: ListNodesResponse 节点列表响应
     ListPVCsResponse:
@@ -4269,7 +4901,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/PVCInfo"
+            $ref: '#/components/schemas/PVCInfo'
           description: PVC 列表数据
       description: ListPVCsResponse PVC 列表响应
     ListRequest:
@@ -4285,17 +4917,17 @@ components:
           format: int32
         instanceName:
           type: string
-          description: "Search keyword: instance name or ID"
+          description: 'Search keyword: instance name or ID'
         environmentId:
           type: integer
           description: Environment ID
           format: int32
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -4307,10 +4939,10 @@ components:
           description: Container status (pending/running/running-unready/init-timeout-stop/run-timeout-stop/exception-force-stop/manual-stop/create-failed)
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -4338,7 +4970,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/ListResp_InstanceInfo"
+            $ref: '#/components/schemas/ListResp_InstanceInfo'
           description: Instance list
       description: ListResp instance list response
     ListResp_InstanceInfo:
@@ -4352,10 +4984,10 @@ components:
           description: Instance name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -4416,10 +5048,10 @@ components:
           description: Updated at (ms timestamp)
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -4428,20 +5060,20 @@ components:
           description: Enable tokens
         proxyProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP internal proxy protocol
           format: enum
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: Instance source
           format: enum
@@ -4460,17 +5092,17 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/IntelligentAccess"
+            $ref: '#/components/schemas/IntelligentAccess'
     ListRolesRequest:
       type: object
       properties:
         query:
           allOf:
-            - $ref: "#/components/schemas/RoleQuery"
+          - $ref: '#/components/schemas/RoleQuery'
           description: 查询条件
         pageInfo:
           allOf:
-            - $ref: "#/components/schemas/PageInfo"
+          - $ref: '#/components/schemas/PageInfo'
           description: 分页信息
       description: 角色列表请求
     ListRolesResponse:
@@ -4478,16 +5110,27 @@ components:
       properties:
         data:
           allOf:
-            - $ref: "#/components/schemas/PageSysRole"
+          - $ref: '#/components/schemas/PageSysRole'
           description: 分页角色数据
       description: 角色列表响应
+    ListSessionsResponse:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiSession'
+          description: List
+        total:
+          type: string
+          description: Total
     ListStorageClassesResponse:
       type: object
       properties:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/StorageClassInfo"
+            $ref: '#/components/schemas/StorageClassInfo'
           description: 存储类型列表数据
       description: ListStorageClassesResponse 存储类型列表响应
     ListToolsRequest:
@@ -4519,17 +5162,17 @@ components:
         userSpaces:
           type: array
           items:
-            $ref: "#/components/schemas/UserSpace"
+            $ref: '#/components/schemas/UserSpace'
     ListUsersRequest:
       type: object
       properties:
         query:
           allOf:
-            - $ref: "#/components/schemas/UserQuery"
+          - $ref: '#/components/schemas/UserQuery'
           description: 查询条件
         pageInfo:
           allOf:
-            - $ref: "#/components/schemas/PageInfo"
+          - $ref: '#/components/schemas/PageInfo'
           description: 分页信息
       description: 用户列表请求
     ListUsersResponse:
@@ -4537,7 +5180,7 @@ components:
       properties:
         data:
           allOf:
-            - $ref: "#/components/schemas/PageSysUser"
+          - $ref: '#/components/schemas/PageSysUser'
           description: 分页用户数据
       description: 用户列表响应
     LoginInfo:
@@ -4586,7 +5229,7 @@ components:
           description: 令牌过期时间(秒)
         userInfo:
           allOf:
-            - $ref: "#/components/schemas/UserInfo"
+          - $ref: '#/components/schemas/UserInfo'
           description: 用户信息
       description: 用户登录响应
     LogoutRequest:
@@ -4692,7 +5335,7 @@ components:
         categoryIds:
           type: array
           items:
-            $ref: "#/components/schemas/Category"
+            $ref: '#/components/schemas/Category'
           description: Category ID list
         description:
           type: string
@@ -4800,6 +5443,53 @@ components:
           type: string
           description: Instance ID
       description: McpToken MCP token
+    ModelInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Model ID
+        name:
+          type: string
+          description: Display Name
+        description:
+          type: string
+          description: Description
+        contextLength:
+          type: integer
+          description: Context Length
+          format: int32
+        modality:
+          type: string
+          description: Modality
+    ModelProvider:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Provider ID
+        name:
+          type: string
+          description: Provider Name
+        models:
+          type: array
+          items:
+            type: string
+          description: Model ID List (deprecated)
+        registerUrl:
+          type: string
+          description: API Key Register URL
+        docsUrl:
+          type: string
+          description: Documentation URL
+        baseUrl:
+          type: string
+          description: API Base URL
+        modelInfos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+          description: Model Details
     NodeInfo:
       type: object
       properties:
@@ -4875,9 +5565,9 @@ components:
           description: 文档大小
         type:
           enum:
-            - OpenapiFileTypeUnspecified
-            - OpenapiFileTypeJson
-            - OpenapiFileTypeYaml
+          - OpenapiFileTypeUnspecified
+          - OpenapiFileTypeJson
+          - OpenapiFileTypeYaml
           type: string
           description: 文档类型
           format: enum
@@ -4897,7 +5587,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/OpenapiFileInfo"
+            $ref: '#/components/schemas/OpenapiFileInfo'
           description: OpenAPI文档列表
         total:
           type: string
@@ -4963,7 +5653,7 @@ components:
           description: 响应消息
         data:
           allOf:
-            - $ref: "#/components/schemas/PageSysDept"
+          - $ref: '#/components/schemas/PageSysDept'
           description: 分页部门数据
       description: PageDeptsResponse 分页查询部门列表响应
     PageInfo:
@@ -4991,11 +5681,11 @@ components:
         depts:
           type: array
           items:
-            $ref: "#/components/schemas/SysDept"
+            $ref: '#/components/schemas/SysDept'
           description: 部门列表
         pageInfo:
           allOf:
-            - $ref: "#/components/schemas/PageInfo"
+          - $ref: '#/components/schemas/PageInfo'
           description: 分页信息
       description: PageSysDept 分页部门数据
     PageSysRole:
@@ -5004,11 +5694,11 @@ components:
         roles:
           type: array
           items:
-            $ref: "#/components/schemas/SysRole"
+            $ref: '#/components/schemas/SysRole'
           description: 角色列表
         pageInfo:
           allOf:
-            - $ref: "#/components/schemas/PageInfo"
+          - $ref: '#/components/schemas/PageInfo'
           description: 分页信息
       description: 分页角色响应
     PageSysUser:
@@ -5017,11 +5707,11 @@ components:
         users:
           type: array
           items:
-            $ref: "#/components/schemas/SysUser"
+            $ref: '#/components/schemas/SysUser'
           description: 用户列表
         pageInfo:
           allOf:
-            - $ref: "#/components/schemas/PageInfo"
+          - $ref: '#/components/schemas/PageInfo'
           description: 分页信息
       description: 分页用户响应
     PermissionTreeNode:
@@ -5077,7 +5767,7 @@ components:
         children:
           type: array
           items:
-            $ref: "#/components/schemas/PermissionTreeNode"
+            $ref: '#/components/schemas/PermissionTreeNode'
           description: 子权限列表
       description: 权限树节点
     RefreshTokenRequest:
@@ -5136,10 +5826,10 @@ components:
           description: Instance name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -5158,9 +5848,9 @@ components:
           description: 模糊查询(角色名称/编码)
         status:
           enum:
-            - RoleStatusUnspecified
-            - RoleStatusEnabled
-            - RoleStatusDisabled
+          - RoleStatusUnspecified
+          - RoleStatusEnabled
+          - RoleStatusDisabled
           type: string
           description: 角色状态
           format: enum
@@ -5231,7 +5921,7 @@ components:
         tools:
           type: array
           items:
-            $ref: "#/components/schemas/ServiceInfo_ToolInfo"
+            $ref: '#/components/schemas/ServiceInfo_ToolInfo'
           description: 工具列表
         subscribeStatus:
           type: string
@@ -5265,7 +5955,7 @@ components:
         params:
           type: array
           items:
-            $ref: "#/components/schemas/ServiceInfo_ParamInfo"
+            $ref: '#/components/schemas/ServiceInfo_ParamInfo'
           description: 参数列表
       description: 工具信息
     StatisticalResponse:
@@ -5309,24 +5999,21 @@ components:
           format: int32
         message:
           type: string
-          description:
-            A developer-facing error message, which should be in English.
+          description: A developer-facing error message, which should be in English.
             Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details]
             field, or localized by the client.
         details:
           type: array
           items:
-            $ref: "#/components/schemas/GoogleProtobufAny"
-          description:
-            A list of messages that carry the error details.  There is
+            $ref: '#/components/schemas/GoogleProtobufAny'
+          description: A list of messages that carry the error details.  There is
             a common set of message types for APIs to use.
-      description:
-        "The `Status` type defines a logical error model that is suitable
+      description: 'The `Status` type defines a logical error model that is suitable
         for different programming environments, including REST APIs and RPC APIs.
         It is used by [gRPC](https://github.com/grpc). Each `Status` message contains
         three pieces of data: error code, error message, and error details. You can
         find out more about this error model and how to work with it in the [API Design
-        Guide](https://cloud.google.com/apis/design/errors)."
+        Guide](https://cloud.google.com/apis/design/errors).'
     StorageClassInfo:
       type: object
       properties:
@@ -5374,9 +6061,9 @@ components:
           format: int32
         status:
           enum:
-            - DeptStatusUnspecified
-            - DeptStatusDisabled
-            - DeptStatusEnabled
+          - DeptStatusUnspecified
+          - DeptStatusDisabled
+          - DeptStatusEnabled
           type: string
           description: 状态
           format: enum
@@ -5395,7 +6082,7 @@ components:
         children:
           type: array
           items:
-            $ref: "#/components/schemas/SysDept"
+            $ref: '#/components/schemas/SysDept'
           description: 子部门列表
       description: SysDept 系统部门信息
     SysRole:
@@ -5415,9 +6102,9 @@ components:
           description: 角色描述
         status:
           enum:
-            - RoleStatusUnspecified
-            - RoleStatusEnabled
-            - RoleStatusDisabled
+          - RoleStatusUnspecified
+          - RoleStatusEnabled
+          - RoleStatusDisabled
           type: string
           description: 角色状态
           format: enum
@@ -5464,18 +6151,18 @@ components:
           description: 头像URL
         status:
           enum:
-            - UserStatusUnspecified
-            - UserStatusEnabled
-            - UserStatusDisabled
+          - UserStatusUnspecified
+          - UserStatusEnabled
+          - UserStatusDisabled
           type: string
           description: 用户状态
           format: enum
         source:
           enum:
-            - UserSourceUnspecified
-            - UserSourceSystem
-            - UserSourceRegister
-            - UserSourceImport
+          - UserSourceUnspecified
+          - UserSourceSystem
+          - UserSourceRegister
+          - UserSourceImport
           type: string
           description: 用户来源
           format: enum
@@ -5532,7 +6219,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -5547,10 +6234,10 @@ components:
           description: Package ID, optional
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -5568,10 +6255,10 @@ components:
           description: Notes
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -5583,11 +6270,11 @@ components:
           description: OpenAPI base URL
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: Template source type
           format: enum
@@ -5635,7 +6322,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -5650,10 +6337,10 @@ components:
           description: Package ID, optional
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -5671,10 +6358,10 @@ components:
           description: Notes
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -5695,11 +6382,11 @@ components:
           description: OpenAPI base URL
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: Template source type (custom/openapi)
           format: enum
@@ -5732,7 +6419,7 @@ components:
         volumeMounts:
           type: array
           items:
-            $ref: "#/components/schemas/VolumeMount"
+            $ref: '#/components/schemas/VolumeMount'
           description: Volume mount list
         startupTimeout:
           type: integer
@@ -5747,10 +6434,10 @@ components:
           description: Package ID, optional
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
@@ -5768,10 +6455,10 @@ components:
           description: Notes
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -5783,11 +6470,11 @@ components:
           description: OpenAPI base URL
         sourceType:
           enum:
-            - SourceTypeUnknown
-            - MARKET
-            - TEMPLATE
-            - CUSTOM
-            - OPENAPI
+          - SourceTypeUnknown
+          - MARKET
+          - TEMPLATE
+          - CUSTOM
+          - OPENAPI
           type: string
           description: Template source type (custom/openapi)
           format: enum
@@ -5822,19 +6509,19 @@ components:
           description: Template name
         accessType:
           enum:
-            - AccessTypeUnknown
-            - DIRECT
-            - PROXY
-            - HOSTING
+          - AccessTypeUnknown
+          - DIRECT
+          - PROXY
+          - HOSTING
           type: string
           description: Deployment mode
           format: enum
         mcpProtocol:
           enum:
-            - McpProtocolUnknown
-            - SSE
-            - STREAMABLE_HTTP
-            - STDIO
+          - McpProtocolUnknown
+          - SSE
+          - STREAMABLE_HTTP
+          - STDIO
           type: string
           description: MCP protocol
           format: enum
@@ -5845,7 +6532,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/TemplateDetailResp"
+            $ref: '#/components/schemas/TemplateDetailResp'
           description: Template list
         total:
           type: integer
@@ -5863,24 +6550,33 @@ components:
     TestConnectionRequest:
       type: object
       properties:
-        dbHost:
+        id:
           type: string
-        dbPort:
-          type: integer
-          format: int32
-        dbUser:
+          description: ID
+        provider:
           type: string
-        dbPassword:
+          description: Provider
+        apiKey:
           type: string
-        dbName:
+          description: API Key
+        baseUrl:
           type: string
+          description: Base URL
+        modelName:
+          type: string
+          description: Model Name
     TestConnectionResponse:
       type: object
       properties:
         success:
           type: boolean
+          description: Success
         message:
           type: string
+          description: Message
+        latencyMs:
+          type: string
+          description: Latency (ms)
     TestConnectivityRequest:
       type: object
       properties:
@@ -5942,7 +6638,7 @@ components:
         tokens:
           type: array
           items:
-            $ref: "#/components/schemas/McpToken"
+            $ref: '#/components/schemas/McpToken'
           description: Token list
       description: TokenEditRequest edit tokens request
     TokenEditResponse:
@@ -5973,7 +6669,7 @@ components:
         list:
           type: array
           items:
-            $ref: "#/components/schemas/McpToken"
+            $ref: '#/components/schemas/McpToken'
           description: Token list
       description: TokenListByInstanceIDResponse token list response
     UpdateAvatarRequest:
@@ -6009,9 +6705,37 @@ components:
           description: 响应消息
         data:
           allOf:
-            - $ref: "#/components/schemas/SysDept"
+          - $ref: '#/components/schemas/SysDept'
           description: 部门数据
       description: UpdateDeptResponse 更新部门响应
+    UpdateModelAccessRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID
+        name:
+          type: string
+          description: Name
+        provider:
+          type: string
+          description: Provider
+        apiKey:
+          type: string
+          description: API Key
+        baseUrl:
+          type: string
+          description: Base URL
+        modelName:
+          type: string
+          description: Model Name
+    UpdateModelAccessResponse:
+      type: object
+      properties:
+        access:
+          allOf:
+          - $ref: '#/components/schemas/AiModelAccess'
+          description: Access
     UpdateOpenapiRequest:
       type: object
       properties:
@@ -6088,7 +6812,7 @@ components:
       type: object
       properties:
         intelligentAccess:
-          $ref: "#/components/schemas/IntelligentAccess"
+          $ref: '#/components/schemas/IntelligentAccess'
     UpdateRoleRequest:
       type: object
       properties:
@@ -6106,9 +6830,9 @@ components:
           description: 角色描述
         status:
           enum:
-            - RoleStatusUnspecified
-            - RoleStatusEnabled
-            - RoleStatusDisabled
+          - RoleStatusUnspecified
+          - RoleStatusEnabled
+          - RoleStatusDisabled
           type: string
           description: 角色状态
           format: enum
@@ -6127,9 +6851,38 @@ components:
       properties:
         role:
           allOf:
-            - $ref: "#/components/schemas/SysRole"
+          - $ref: '#/components/schemas/SysRole'
           description: 更新后的角色信息
       description: 更新角色响应
+    UpdateSessionRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID
+        name:
+          type: string
+          description: Name
+        toolsConfig:
+          type: string
+          description: Tools Config
+        maxContext:
+          type: integer
+          description: Max Context
+          format: int32
+        modelAccessID:
+          type: string
+          description: Model Access ID
+        modelName:
+          type: string
+          description: Model Name
+    UpdateSessionResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+          - $ref: '#/components/schemas/AiSession'
+          description: Session
     UpdateUserRequest:
       type: object
       properties:
@@ -6150,9 +6903,9 @@ components:
           description: 头像URL
         status:
           enum:
-            - UserStatusUnspecified
-            - UserStatusEnabled
-            - UserStatusDisabled
+          - UserStatusUnspecified
+          - UserStatusEnabled
+          - UserStatusDisabled
           type: string
           description: 用户状态
           format: enum
@@ -6170,7 +6923,7 @@ components:
       properties:
         user:
           allOf:
-            - $ref: "#/components/schemas/SysUser"
+          - $ref: '#/components/schemas/SysUser'
           description: 更新后的用户信息
       description: 更新用户响应
     UploadImageRequest:
@@ -6216,9 +6969,9 @@ components:
           description: 文件路径
         fileType:
           enum:
-            - OpenapiFileTypeUnspecified
-            - OpenapiFileTypeJson
-            - OpenapiFileTypeYaml
+          - OpenapiFileTypeUnspecified
+          - OpenapiFileTypeJson
+          - OpenapiFileTypeYaml
           type: string
           description: 文件类型
           format: enum
@@ -6290,9 +7043,9 @@ components:
           description: 部门ID
         status:
           enum:
-            - UserStatusUnspecified
-            - UserStatusEnabled
-            - UserStatusDisabled
+          - UserStatusUnspecified
+          - UserStatusEnabled
+          - UserStatusDisabled
           type: string
           description: 用户状态
           format: enum
@@ -6328,7 +7081,7 @@ components:
         headers:
           type: object
           additionalProperties:
-            $ref: "#/components/schemas/HeaderInfo"
+            $ref: '#/components/schemas/HeaderInfo'
           description: key 为 实例ID, value 为每个实例需要创建的 header 内容
     ValidateTokenRequest:
       type: object
@@ -6342,11 +7095,11 @@ components:
           description: 是否有效
         userInfo:
           allOf:
-            - $ref: "#/components/schemas/UserInfo"
+          - $ref: '#/components/schemas/UserInfo'
           description: 用户信息
         loginInfo:
           allOf:
-            - $ref: "#/components/schemas/LoginInfo"
+          - $ref: '#/components/schemas/LoginInfo'
           description: 登录信息
       description: Token校验响应
     VolumeMount:
@@ -6354,7 +7107,7 @@ components:
       properties:
         type:
           type: string
-          description: "Volume type: hostPath, pvc, volume"
+          description: 'Volume type: hostPath, pvc, volume'
         mountPath:
           type: string
           description: Mount path
@@ -6378,37 +7131,39 @@ components:
           description: Volume name (required for volume type)
       description: VolumeMount volume mount configuration
 tags:
-  - name: CodeService
-    description: CodeService 代码管理服务
-  - name: DashboardService
-    description: DashboardService 仪表板服务
-  - name: DeptService
-    description: DeptService 部门管理服务
-  - name: GatewayLogService
-    description: GatewayLogService 网关日志服务
-  - name: InstanceService
-    description: InstanceService instance management service
-  - name: IntelligentAccessService
-  - name: Market
-  - name: MarketService
-    description: 市场服务
-  - name: McpEnvironmentService
-    description: McpEnvironmentService environment management service
-  - name: McpToIntelligentTaskService
-  - name: OpenapiService
-    description: OpenapiService OpenAPI文档管理服务
-  - name: ResourceService
-    description: ResourceService 资源管理服务
-  - name: RoleService
-    description: 角色服务
-  - name: StorageService
-    description: StorageService 资源管理服务
-  - name: UserAuthService
-    description: 用户认证服务
-  - name: UserRoleService
-    description: 用户角色服务
-  - name: UserService
-    description: 用户服务
+- name: AiModelAccessService
+- name: AiSessionService
+- name: CodeService
+  description: CodeService 代码管理服务
+- name: DashboardService
+  description: DashboardService 仪表板服务
+- name: DeptService
+  description: DeptService 部门管理服务
+- name: GatewayLogService
+  description: GatewayLogService 网关日志服务
+- name: InstanceService
+  description: InstanceService instance management service
+- name: IntelligentAccessService
+- name: Market
+- name: MarketService
+  description: 市场服务
+- name: McpEnvironmentService
+  description: McpEnvironmentService environment management service
+- name: McpToIntelligentTaskService
+- name: OpenapiService
+  description: OpenapiService OpenAPI文档管理服务
+- name: ResourceService
+  description: ResourceService 资源管理服务
+- name: RoleService
+  description: 角色服务
+- name: StorageService
+  description: StorageService 资源管理服务
+- name: UserAuthService
+  description: 用户认证服务
+- name: UserRoleService
+  description: 用户角色服务
+- name: UserService
+  description: 用户服务
 servers:
-  - url: https://DOMAIN/api/market
-    description: API Server
+- url: https://DOMAIN/api/market
+  description: API Server
