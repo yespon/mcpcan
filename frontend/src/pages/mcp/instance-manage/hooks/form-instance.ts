@@ -40,7 +40,18 @@ export const useInstanceFormHooks = () => {
       mcpProtocol: '',
       imgAddress: InstanceData.value.IMGADDRESS,
       notes: '',
-      mcpServers: '',
+      mcpServers: `{
+        "mcpServers": {
+          "everything": {
+            "args": [
+              "-y",
+              "@modelcontextprotocol/server-everything"
+            ],
+            "command": "npx"
+          }
+        }
+      }
+    `,
       iconPath: '',
       packageId: '',
       environmentId: '',

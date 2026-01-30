@@ -91,6 +91,19 @@ const currentComponent = computed(() => {
   }
 })
 const { currentInstance } = toRefs(useMcpStoreHook())
+const configServer = `
+{
+  "mcpServers": {
+    "everything": {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "command": "npx"
+    }
+  }
+}
+`
 // back last class page
 const handleBack = () => {
   jumpBack()
@@ -126,7 +139,7 @@ const handleGetDetail = async () => {
     })
     formData = data
     formData.accessType = data.accessType
-    formData.mcpServers = JsonFormatter.format(data.mcpServers, 2)
+    formData.mcpServers = JsonFormatter.format(data.mcpServers, 2) || configServer
     formData.environmentVariables = data.environmentVariables
       ? Object.keys(data.environmentVariables)?.map((key) => ({
           key,
@@ -148,7 +161,7 @@ const handleGetTemplateDetail = async () => {
       id: query.templateId,
     })
     formData = data
-    formData.mcpServers = JsonFormatter.format(data.mcpServers)
+    formData.mcpServers = JsonFormatter.format(data.mcpServers) || configServer
     formData.environmentVariables = data.environmentVariables
       ? Object.keys(data.environmentVariables)?.map((key) => ({
           key,
@@ -201,7 +214,7 @@ const handleInitMarketInstance = async () => {
     mcpProtocol: McpProtocol.STDIO,
     imgAddress: InstanceData.value.IMGADDRESS,
     notes: locale.value === 'zh-cn' ? currentMCP.description : currentMCP.descriptionEn,
-    mcpServers: JsonFormatter.format(currentMCP.configTemplate),
+    mcpServers: JsonFormatter.format(currentMCP.configTemplate) || configServer,
     iconPath: currentMCP.githubOwnerAvatarUrl,
     packageId: '',
     environmentId: '',

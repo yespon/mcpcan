@@ -40,8 +40,12 @@
       <el-row v-if="pageInfo.formData.mcpProtocol === 3">
         <el-col :span="18">
           <el-form-item prop="mcpServers">
-            <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
-            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
+            <template #label>{{ t('mcp.instance.formData.mcpServers') }} </template>
+            <MonacoEditor
+              v-model="pageInfo.formData.mcpServers"
+              language="json"
+              :height="locale === 'en' ? '600px' : '300px'"
+            />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -159,9 +163,10 @@
                       {{ t('common.use') }}
                     </el-button>
                   </div>
-                  <div class="p-2 rounded text-xs text-gray-500 break-all">
-                    {{ selectedCommand?.commands?.install }}
-                  </div>
+                  <div
+                    class="command-preview p-2 rounded text-xs text-gray-500 break-all"
+                    v-text="selectedCommand?.commands?.install"
+                  ></div>
                 </div>
                 <div v-if="!showCommand" class="mb-2">
                   <div class="flex justify-between items-center mb-1">
@@ -176,9 +181,10 @@
                       {{ t('common.use') }}
                     </el-button>
                   </div>
-                  <div class="p-2 rounded text-xs text-gray-500 break-all">
-                    {{ selectedCommand?.commands?.start }}
-                  </div>
+                  <div
+                    class="command-preview p-2 rounded text-xs text-gray-500 break-all"
+                    v-text="selectedCommand?.commands?.start"
+                  ></div>
                 </div>
                 <div class="tip tip-primary mb-2">
                   {{
@@ -810,11 +816,13 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
 
 const mcpServersTips = computed(() => {
   return locale.value === 'en'
-    ? `MCP service SSE/STREAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
-            After saving, the gateway access configuration will be displayed on the list page. You can also view <a href="#/template-manage">Template List</a> which provides multiple startup examples.`
-    : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
-            MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
-            <a href="#/template-manage">部署模板</a> 提供了多个启动示例。`
+    ? `If you deploy by uploading a code package, set the working directory in the configuration: <code>"cwd": "/app/codepkg/[codezip_name]"</code>.
+When the instance starts, the platform will automatically create a default runtime container for the current MCP configuration. The container includes the <code>mcp-hosting</code> hosting component and uses a protocol adapter to expose this configuration as SSE/Streamable HTTP. It also binds to <code>0.0.0.0:8080</code> to provide the service externally.
+The MCPCAN gateway will automatically probe and detect the container's network address and complete the routing setup.
+For more startup configuration examples of different types, see <a href="#/template-manage">Deploy Templates</a>.`
+    : `若需上传代码包部署，需在配置信息中指定工作目录："cwd": "/app/codepkg/[codezip_name]"。
+实例启动时，平台将为当前 MCP 配置自动创建默认运行容器，容器内置 mcp-hosting 托管组件，通过协议适配器将本配置转换为 SSE/Streamable HTTP 协议，同时绑定至0.0.0.0:8080端口对外提供服务；MCPCAN 网关服务将自动探测并识别该容器的网络地址，完成对接。
+更多不同类型的启动配置示例，可参考<a href="#/template-manage">部署模板</a>。`
 })
 const codeTips = computed(() => {
   return locale.value === 'en'
@@ -1349,6 +1357,12 @@ defineExpose({
     background-color: var(--ep-bg-purple-color-deep);
     border-color: var(--ep-btn-color-top);
   }
+}
+
+/* 保留命令字符串中的 \n 换行；并在必要时对超长 token/路径进行断行 */
+.command-preview {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 /* 让 el-collapse-item 左侧图标与标题内容顶部对齐 */
 :deep(.el-collapse-item__header) {
