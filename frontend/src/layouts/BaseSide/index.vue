@@ -102,6 +102,9 @@ const menuList = shallowRef([
   // { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian', index: '/api-docs-list' },
   { title: t('sideMenu.resourceManage'), icon: 'MCP-wenjian', index: '/resource-manage' },
   { title: t('sideMenu.agentManage'), icon: 'MCP-zhinengti', index: '/agent-manage' },
+  { title: t('sideMenu.roleManage'), icon: 'MCP-zhinengti', index: '/role-manage' },
+  { title: t('sideMenu.userManage'), icon: 'MCP-zhinengti', index: '/user-manage' },
+  { title: t('sideMenu.departmentManage'), icon: 'MCP-zhinengti', index: '/department-manage' },
 ])
 
 const handleToHome = () => {

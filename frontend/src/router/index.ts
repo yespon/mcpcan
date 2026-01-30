@@ -199,6 +199,33 @@ const router = createRouter({
           name: 'userCenter',
           component: () => import('../pages/login/user-center.vue'),
         },
+        {
+          path: '/user-manage',
+          name: 'userManage',
+          meta: {
+            title: 'userManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/user-manage/index.vue'),
+        },
+        {
+          path: '/department-manage',
+          name: 'departmentManage',
+          meta: {
+            title: 'departmentManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/department-manage/index.vue'),
+        },
+        {
+          path: '/role-manage',
+          name: 'roleManage',
+          meta: {
+            title: 'roleManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/role-manage/index.vue'),
+        },
       ],
     },
     {
