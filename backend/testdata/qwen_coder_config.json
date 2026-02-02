@@ -1,8 +1,0 @@
-{
-  "name": "Qwen3 Coder Plus (临时测试)",
-  "provider": "openai",
-  "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
-  "apiKey": "sk-sp-de748c01d0924e6b9b2c818c5edbaae0",
-  "modelName": "qwen3-coder-plus",
-  "description": "临时测试配置 - 阿里云通义千问代码模型,用于验证 AI 功能集成"
-}
