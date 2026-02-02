@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# chmod +x ./scripts/git-push.sh
+# ./scripts/git-push.sh -r "remote-http-url"
+
 # 任一命令返回非 0 时立即退出
 set -euo pipefail
 
