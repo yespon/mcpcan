@@ -24,6 +24,7 @@ type TestConfig struct {
 		BaseUrl   string `json:"baseUrl"`
 		ModelName string `json:"modelName"`
 	} `json:"ai"`
+	McpServers map[string]interface{} `json:"mcpServers"`	
 }
 
 var config TestConfig

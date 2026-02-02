@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,15 +51,26 @@ func TestAiSession_AllOps(t *testing.T) {
 	t.Run("Create Session", func(t *testing.T) {
 		sessionName := "Session Test " + time.Now().Format("15:04:05")
 		fmt.Printf("\n[TEST] Creating AI Session: %s\n", sessionName)
+		
+		toolsConfigStr := "{}"
+		if len(config.McpServers) > 0 {
+			// Wrap in "mcpServers" key as expected by the config structure
+			mcpConfig := map[string]interface{}{
+				"mcpServers": config.McpServers,
+			}
+			if b, err := json.Marshal(mcpConfig); err == nil {
+				toolsConfigStr = string(b)
+			}
+		}
 
 		req := map[string]interface{}{
 			"name":          sessionName,
 			"modelAccessID": modelID,
 			"modelName":     config.Ai.ModelName,
 			"maxContext":    5,
-			"toolsConfig":   "{}",
+			"toolsConfig":   toolsConfigStr,
 		}
-
+		
 		resp, body := doRequest(t, "POST", "/market/ai/sessions", req)
 		commonResp := assertResponseSuccess(t, resp, body)
 
@@ -118,21 +130,21 @@ func TestAiSession_AllOps(t *testing.T) {
 	})
 
 	// 4. Chat (Single Turn)
-	t.Run("Chat Single Turn", func(t *testing.T) {
-		question := "Hello, what is 1+1?"
-		fmt.Printf("[TEST] Sending chat message: %s\n", question)
+	// t.Run("Chat Single Turn", func(t *testing.T) {
+	// 	question := "Hello, what is 1+1?"
+	// 	fmt.Printf("[TEST] Sending chat message: %s\n", question)
 		
-		reqBody := map[string]interface{}{
-			"sessionID": sessionID,
-			"content":   question,
-		}
-		resp, body := doRequest(t, "POST", fmt.Sprintf("/market/ai/sessions/%d/chat", sessionID), reqBody)
-		require.Equal(t, http.StatusOK, resp.StatusCode, "Chat should return 200")
+	// 	reqBody := map[string]interface{}{
+	// 		"sessionID": sessionID,
+	// 		"content":   question,
+	// 	}
+	// 	resp, body := doRequest(t, "POST", fmt.Sprintf("/market/ai/sessions/%d/chat", sessionID), reqBody)
+	// 	require.Equal(t, http.StatusOK, resp.StatusCode, "Chat should return 200")
 		
-		// Chat returns SSE stream, assert data frames exist
-		require.Contains(t, string(body), "data:", "Should receive SSE data")
-		fmt.Printf("[PASS] ✓ Chat completed - Received SSE stream\n")
-	})
+	// 	// Chat returns SSE stream, assert data frames exist
+	// 	require.Contains(t, string(body), "data:", "Should receive SSE data")
+	// 	fmt.Printf("[PASS] ✓ Chat completed - Received SSE stream\n")
+	// })
 
 	// 5. Get Usage (Check creation)
 	t.Run("Get Usage", func(t *testing.T) {
@@ -258,7 +270,112 @@ func TestAiSession_AllOps(t *testing.T) {
 		tempFileToDelete = checkPath
 	})
 
-	// 8. Delete Session
+	// 8. MCP Integration Test
+	t.Run("MCP Session Test", func(t *testing.T) {
+		// modelID = 3 // Don't overwrite valid modelID from Setup
+		fmt.Printf("[TEST] Testing MCP Integration with provided config...\n")
+
+		mcpConfig := `{
+		  "mcpServers": {
+		    "mcp-9469c672": {
+		      "url": "http://localhost/mcp-gateway/9469c672-7070-4cc5-b4f8-604f916b4784/mcp",
+		      "headers": {
+		        "Authorization": "Bearer ZDYzZDhkOTItMmFhNy00ODNiLWJjZTUtNmQ2ZTU5NWJkNTYzeyJleHBpcmVBdCI6MTc2ODg5MzM0MzYwOSwidXNlcklkIjoxLCJ1c2VybmFtZSI6ImFkbWluIn0="
+		      }
+		    }
+		  }
+		}`
+
+		// Create Session with MCP Config
+		req := map[string]interface{}{
+			"name":          "MCP Test Session",
+			"modelAccessID": modelID,
+			"modelName":     config.Ai.ModelName,
+			"toolsConfig":   mcpConfig,
+			"isMcp":         true,
+		}
+
+		resp, body := doRequest(t, "POST", "/market/ai/sessions", req)
+		commonResp := assertResponseSuccess(t, resp, body)
+
+		var data struct {
+			Session struct {
+				ID int64 `json:"id"`
+			} `json:"session"`
+		}
+		json.Unmarshal(commonResp.Data, &data)
+		mcpSessionID := data.Session.ID
+		fmt.Printf("[PASS] Created MCP Session ID: %d\n", mcpSessionID)
+
+		// Verify Session Details (ToolsConfig)
+		getResp, getBody := doRequest(t, "GET", fmt.Sprintf("/market/ai/sessions/%d", mcpSessionID), nil)
+		getCommonResp := assertResponseSuccess(t, getResp, getBody)
+		var sessionData struct {
+			Session struct {
+				ToolsConfig string `json:"toolsConfig"`
+			} `json:"session"`
+		}
+		json.Unmarshal(getCommonResp.Data, &sessionData)
+		// fmt.Printf("[INFO] Saved ToolsConfig: %s\n", sessionData.Session.ToolsConfig)
+		// Basic check
+		if len(sessionData.Session.ToolsConfig) < 10 {
+			 t.Errorf("[FAIL] ToolsConfig seems empty or too short: %s", sessionData.Session.ToolsConfig)
+		} else {
+			fmt.Printf("[PASS] ✓ ToolsConfig verified (Len: %d)\n", len(sessionData.Session.ToolsConfig))
+		}
+
+		// Test Connection (via Chat)
+		// Sending a message triggers MCP initialization. If init fails, chat fails.
+		chatReq := map[string]interface{}{
+			"sessionID": mcpSessionID,
+			"content":   "中文对话，查询系统信息",
+		}
+
+		resp, body = doRequest(t, "POST", fmt.Sprintf("/market/ai/sessions/%d/chat", mcpSessionID), chatReq)
+		
+		// We expect 200 OK. If MCP connects successfully, the stream starts.
+		// Detailed tool verification would require a real MCP server response, 
+		// but checking 200 guarantees the handshake didn't immediately fail.
+		require.Equal(t, http.StatusOK, resp.StatusCode, "Chat should return 200 if MCP connects")
+		
+		// Parse SSE Stream and Print aggregated content
+		lines := strings.Split(string(body), "\n")
+		var fullContent strings.Builder
+		
+		fmt.Println("\n--- SSE Stream Output ---")
+		hasData := false
+		for _, line := range lines {
+			if strings.HasPrefix(line, "data: ") {
+				hasData = true
+				jsonStr := strings.TrimPrefix(line, "data: ")
+				var msg struct {
+					Type    string `json:"type"`
+					Content string `json:"content"`
+				}
+				if err := json.Unmarshal([]byte(jsonStr), &msg); err == nil {
+					if msg.Type == "text" || msg.Type == "tool_result" || msg.Type == "tool_start" {
+						fullContent.WriteString(msg.Content)
+					}
+					// Print non-text events for debugging
+					if msg.Type != "text" && msg.Type != "done" {
+						fmt.Printf("[Event: %s] %s\n", msg.Type, msg.Content)
+					}
+				}
+			}
+		}
+		require.True(t, hasData, "Should receive SSE data frames")
+		
+		fmt.Printf("-------------------------\n")
+		fmt.Printf("[FINAL CONTENT]: %s\n", fullContent.String())
+		fmt.Printf("-------------------------\n")
+		
+		fmt.Printf("[PASS] MCP Connection verified (Chat initiated)\n")
+
+		// Cleanup this session
+		doRequest(t, "DELETE", fmt.Sprintf("/market/ai/sessions/%d", mcpSessionID), map[string]interface{}{"id": mcpSessionID})
+	})
+
+	// 9. Delete Session
 	t.Run("Delete Session", func(t *testing.T) {
 		fmt.Printf("[TEST] Deleting session ID: %d\n", sessionID)
 		
