@@ -24,6 +24,23 @@ show_help() {
 }
 
 REMOTE_URL=""
+BOT_NAME="KEYMO-BOT"
+BOT_EMAIL="opensource@kymo.cn"
+
+ensure_git_identity() {
+    local existing_name=""
+    local existing_email=""
+
+    existing_name="$(git config --global user.name 2>/dev/null || true)"
+    existing_email="$(git config --global user.email 2>/dev/null || true)"
+
+    if [ -z "$existing_name" ] || [ -z "$existing_email" ]; then
+        git config --global user.name "$BOT_NAME" >/dev/null 2>&1 || return 1
+        git config --global user.email "$BOT_EMAIL" >/dev/null 2>&1 || return 1
+    fi
+
+    return 0
+}
 
 # 解析参数
 while [[ $# -gt 0 ]]; do
@@ -108,7 +125,12 @@ else
     git read-tree HEAD
     git rm -r --cached --ignore-unmatch scripts >/dev/null 2>&1 || true
     FILTERED_TREE="$(git write-tree)"
-    PUSH_REF="$(printf "%s\n" "chore: filtered push (exclude scripts/)" | git commit-tree "$FILTERED_TREE" -p HEAD)"
+    COMMIT_MSG="chore: filtered push (exclude scripts/)"
+    if ensure_git_identity; then
+        PUSH_REF="$(printf "%s\n" "$COMMIT_MSG" | git commit-tree "$FILTERED_TREE" -p HEAD)"
+    else
+        PUSH_REF="$(printf "%s\n" "$COMMIT_MSG" | GIT_AUTHOR_NAME="$BOT_NAME" GIT_AUTHOR_EMAIL="$BOT_EMAIL" GIT_COMMITTER_NAME="$BOT_NAME" GIT_COMMITTER_EMAIL="$BOT_EMAIL" git commit-tree "$FILTERED_TREE" -p HEAD)"
+    fi
 
     if [ -n "$ORIGINAL_GIT_INDEX_FILE" ]; then
         export GIT_INDEX_FILE="$ORIGINAL_GIT_INDEX_FILE"
