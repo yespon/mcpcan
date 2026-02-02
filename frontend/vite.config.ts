@@ -46,7 +46,16 @@ export default defineConfig({
     Unocss(),
     AutoImport({
       // 1. 自动导入 Vue 的 Composition API
-      imports: ['vue', '@vueuse/core', 'pinia', 'vue-router', 'vue-i18n'],
+      imports: [
+        'vue',
+        '@vueuse/core',
+        'pinia',
+        'vue-router',
+        'vue-i18n',
+        {
+          'element-plus': ['ElMessage', 'ElMessageBox', 'ElNotification'],
+        },
+      ],
       // 禁用默认导入（若有冲突）
       defaultExportByFilename: false,
       // 会自动导入 vue 中的 ref、reactive、onMounted 等所有 API

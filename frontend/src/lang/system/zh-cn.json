@@ -1,5 +1,32 @@
 {
   "system": {
+    "department": {
+      "title": "部门管理",
+      "pageDesc": "部门管理模块用于维护系统部门信息。主要功能包括：创建新部门、编辑现有部门资料、删除部门等。",
+      "operation": {
+        "add": "新增部门",
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "columns": {
+        "name": "名称",
+        "deptSort": "排序",
+        "createTime": "创建时间"
+      },
+      "placeholder": {
+        "name": "请输入部门名称",
+        "nameMaxLength": "部门名称长度不能超过20个字符",
+        "deptSort": "请输入部门排序",
+        "pid": "请选择上级部门"
+      },
+      "formData": {
+        "title": "新建部门",
+        "name": "部门名称",
+        "imageUrl": "图标",
+        "deptSort": "部门排序",
+        "pid": "上级部门"
+      }
+    },
     "role": {
       "title": "角色管理",
       "pageDesc": "用于创建与维护角色，配置权限范围，分配用户，并控制功能与资源的访问权限。",
@@ -23,7 +50,58 @@
       "placeholder": {
         "name": "请输入角色名称",
         "description": "请输入角色描述",
-        "nameMaxLength": "角色名称长度不能超过30个字符"
+        "nameMaxLength": "角色名称长度不能超过30个字符",
+        "level": "请输入角色级别"
+      }
+    },
+    "user": {
+      "title": "用户管理",
+      "subTitle": "部门列表",
+      "pageDesc": "用户管理模块用于维护系统用户账户信息。主要功能包括：创建新用户、编辑现有用户资料、重置用户密码、启用或禁用用户账户以及分配用户的系统角色。",
+      "desc": {
+        "all": "全部",
+        "select": "已选",
+        "clear": "清除"
+      },
+      "operation": {
+        "add": "添加用户",
+        "new": " 新建用户",
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "placeholder": {
+        "deptSearch": "输入部门名称搜索",
+        "userSearch": " 输入用户名",
+        "userName": "请输入用户名",
+        "nameMaxLength": "角色名称长度不能超过30个字符",
+        "emailInvalid": "请输入正确的邮箱地址",
+        "nickName": "请输入昵称",
+        "email": " 请输入邮箱",
+        "phone": " 请输入手机号码",
+        "department": "请选择部门",
+        "roles": "请选择角色"
+      },
+      "columns": {
+        "username": "用户名",
+        "nickName": "姓名",
+        "enabled": "状态",
+        "deptName": "部门",
+        "email": "邮箱",
+        "gender": "性别",
+        "phone": "电话",
+        "department": "部门",
+        "roles": "角色",
+        "createTime": "创建时间"
+      },
+      "gender": {
+        "male": "男",
+        "female": "女"
+      },
+      "status": {
+        "enabled": "启用",
+        "disabled": "禁用",
+        "loading": "加载中...",
+        "nomore": "没有更多数据了"
       }
     }
   }

@@ -1,5 +1,32 @@
 {
   "system": {
+    "department": {
+      "title": "Department Management",
+      "pageDesc": "The Department Management module is used to maintain system department information. Main functions include: creating new departments, editing existing department details, deleting departments, etc.",
+      "operation": {
+        "add": "Add",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "columns": {
+        "name": "Name",
+        "deptSort": "Sort",
+        "createTime": "Create Time"
+      },
+      "placeholder": {
+        "name": "Please enter department name",
+        "nameMaxLength": "Department name cannot exceed 20 characters",
+        "deptSort": "Please enter department sort",
+        "pid": "Please select parent department"
+      },
+      "formData": {
+        "title": "Create Department",
+        "name": "Department Name",
+        "imageUrl": "Icon",
+        "deptSort": "Sort",
+        "pid": "Parent Department"
+      }
+    },
     "role": {
       "title": "Role Management",
       "pageDesc": "Used to create and maintain roles, configure permission scopes, assign users, and control access to functions and resources.",
@@ -23,7 +50,58 @@
       "placeholder": {
         "name": "Please enter role name",
         "description": "Please enter role description",
-        "nameMaxLength": "Role name length cannot exceed 30 characters"
+        "nameMaxLength": "Role name length cannot exceed 30 characters",
+        "level": "Please enter role level"
+      }
+    },
+    "user": {
+      "title": "User Management",
+      "subTitle": "Department List",
+      "pageDesc": "The User Management module acts as a hub for user administration, enabling creation, profiling, credential management, access control, and role assignment.",
+      "desc": {
+        "all": "All",
+        "select": "Selected",
+        "clear": "Clear"
+      },
+      "operation": {
+        "add": "Add",
+        "new": "New",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "placeholder": {
+        "deptSearch": "Search by department name",
+        "userSearch": "Enter username",
+        "userName": "Please enter username",
+        "nameMaxLength": "Name length cannot exceed 30 characters",
+        "emailInvalid": "Please enter a valid email address",
+        "nickName": "Please enter nickname",
+        "email": "Please enter email",
+        "phone": "Please enter phone number",
+        "department": "Please select department",
+        "roles": "Please select roles"
+      },
+      "columns": {
+        "username": "Username",
+        "nickName": "Name",
+        "enabled": "Status",
+        "deptName": "Department",
+        "email": "Email",
+        "gender": "Gender",
+        "phone": "Phone",
+        "department": "Department",
+        "roles": "Roles",
+        "createTime": "Create Time"
+      },
+      "gender": {
+        "male": "Male",
+        "female": "Female"
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "loading": "Loading...",
+        "nomore": "No more data"
       }
     }
   }
