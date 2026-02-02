@@ -132,7 +132,7 @@ PUSH_CMD="git push -f"
 echo "Pushing local '$CURRENT_BRANCH' to remote '$CURRENT_BRANCH'..."
 
 # 执行推送
-if $PUSH_CMD "$TEMP_REMOTE" "$PUSH_REF:$CURRENT_BRANCH"; then
+if $PUSH_CMD "$TEMP_REMOTE" "$PUSH_REF:refs/heads/$CURRENT_BRANCH"; then
     echo "✅ Push successful!"
 else
     echo "❌ Push failed!"
