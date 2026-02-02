@@ -1,229 +1,8 @@
-# Generated with protoc-gen-openapi
-# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
-
 openapi: 3.0.3
 info:
-  title: ""
-  version: 0.0.1
+  title: MCPCAN OpenAPI
+  version: v1.10.0
 paths:
-  /ai/files/upload:
-    post:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_UploadFile
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UploadFileRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UploadFileResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-  /ai/sessions:
-    get:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_List
-      parameters:
-        - name: page
-          in: query
-          description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListSessionsResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-    put:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_Update
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateSessionRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UpdateSessionResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-    post:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_Create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateSessionRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CreateSessionResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-  /ai/sessions/{id}:
-    get:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_Get
-      parameters:
-        - name: id
-          in: path
-          description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetSessionResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-    delete:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_Delete
-      parameters:
-        - name: id
-          in: path
-          description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DeleteSessionResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-  /ai/sessions/{sessionID}/chat:
-    post:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_Chat
-      parameters:
-        - name: sessionID
-          in: path
-          description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ChatRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChatResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
-  /ai/sessions/{sessionID}/messages:
-    get:
-      tags:
-        - AiSessionService
-      operationId: AiSessionService_GetMessages
-      parameters:
-        - name: sessionID
-          in: path
-          description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
-          required: true
-          schema:
-            type: string
-        - name: page
-          in: query
-          description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
-          schema:
-            type: integer
-            format: int32
-        - name: pageSize
-          in: query
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetSessionMessagesResponse"
-        default:
-          description: Default error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Status"
   /authz/depts:
     put:
       tags:
@@ -282,29 +61,29 @@ paths:
       parameters:
         - name: page
           in: query
-          description: '@inject_tag: json:"page" form:"page" query:"page" desc:"页码，从1开始"'
+          description: 页码，从1开始
           schema:
             type: integer
             format: int32
         - name: size
           in: query
-          description: '@inject_tag: json:"size" form:"size" query:"size" desc:"每页条数"'
+          description: 每页条数
           schema:
             type: integer
             format: int32
         - name: name
           in: query
-          description: '@inject_tag: json:"name" form:"name" query:"name" desc:"部门名称"'
+          description: 部门名称
           schema:
             type: string
         - name: code
           in: query
-          description: '@inject_tag: json:"code" form:"code" query:"code" desc:"部门编码"'
+          description: 部门编码
           schema:
             type: string
         - name: status
           in: query
-          description: '@inject_tag: json:"status" form:"status" query:"status" desc:"状态：0-禁用，1-启用"'
+          description: 状态：0-禁用，1-启用
           schema:
             type: integer
             format: int32
@@ -374,7 +153,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" binding:"required" desc:"部门ID"'
+          description: 部门ID
           required: true
           schema:
             type: string
@@ -399,7 +178,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" binding:"required" desc:"部门ID"'
+          description: 部门ID
           required: true
           schema:
             type: string
@@ -575,7 +354,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -600,7 +379,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -631,7 +410,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -657,7 +436,7 @@ paths:
       parameters:
         - name: roleId
           in: path
-          description: '@inject_tag: json:"roleId" uri:"roleId" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -702,12 +481,12 @@ paths:
       parameters:
         - name: userId
           in: query
-          description: '@inject_tag: json:"userId" form:"userId" uri:"userId" desc:"用户ID，可选参数"'
+          description: 用户ID，可选参数
           schema:
             type: string
         - name: roleId
           in: query
-          description: '@inject_tag: json:"roleId" form:"roleId" uri:"roleId" desc:"角色ID，可选参数"'
+          description: 角色ID，可选参数
           schema:
             type: string
       responses:
@@ -805,7 +584,7 @@ paths:
       parameters:
         - name: roleId
           in: path
-          description: '@inject_tag: json:"roleId" uri:"roleId" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -831,7 +610,7 @@ paths:
       parameters:
         - name: roleId
           in: path
-          description: '@inject_tag: json:"roleId" uri:"roleId" desc:"角色ID"'
+          description: 角色ID
           required: true
           schema:
             type: string
@@ -857,7 +636,7 @@ paths:
       parameters:
         - name: userId
           in: path
-          description: '@inject_tag: json:"userId" uri:"userId" desc:"用户ID"'
+          description: 用户ID
           required: true
           schema:
             type: string
@@ -883,7 +662,7 @@ paths:
       parameters:
         - name: userId
           in: path
-          description: '@inject_tag: json:"userId" uri:"userId" desc:"用户ID"'
+          description: 用户ID
           required: true
           schema:
             type: string
@@ -978,7 +757,7 @@ paths:
       parameters:
         - name: userId
           in: query
-          description: '@inject_tag: json:"userId" uri:"id" desc:"用户ID，可选，不传则获取当前用户权限"'
+          description: 用户ID，可选，不传则获取当前用户权限
           schema:
             type: string
       responses:
@@ -1053,7 +832,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" desc:"用户ID"'
+          description: 用户ID
           required: true
           schema:
             type: string
@@ -1078,7 +857,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" desc:"用户ID"'
+          description: 用户ID
           required: true
           schema:
             type: string
@@ -1109,7 +888,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" desc:"用户ID"'
+          description: 用户ID
           required: true
           schema:
             type: string
@@ -1160,7 +939,7 @@ paths:
       parameters:
         - name: packageId
           in: path
-          description: '@inject_tag: form:"packageId" binding:"required" json:"packageId" uri:"packageId" query:"packageId" desc:"包ID"'
+          description: 包ID
           required: true
           schema:
             type: string
@@ -1211,12 +990,12 @@ paths:
       parameters:
         - name: packageId
           in: query
-          description: '@inject_tag: form:"packageId" binding:"required" desc:"包ID"'
+          description: 包ID
           schema:
             type: string
         - name: filePath
           in: query
-          description: '@inject_tag: form:"filePath" binding:"required" desc:"文件路径"'
+          description: 文件路径
           schema:
             type: string
       responses:
@@ -1241,24 +1020,24 @@ paths:
       parameters:
         - name: page
           in: query
-          description: '@inject_tag: json:"page" form:"page" desc:"页码"'
+          description: 页码
           schema:
             type: integer
             format: int32
         - name: pageSize
           in: query
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"每页数量"'
+          description: 每页数量
           schema:
             type: integer
             format: int32
         - name: name
           in: query
-          description: '@inject_tag: json:"name" form:"name" desc:"搜索关键词"'
+          description: 搜索关键词
           schema:
             type: string
         - name: types
           in: query
-          description: '@inject_tag: json:"types" form:"types" desc:"包类型"'
+          description: 包类型
           schema:
             type: array
             items:
@@ -1293,7 +1072,7 @@ paths:
       parameters:
         - name: packageId
           in: path
-          description: '@inject_tag: form:"packageId" binding:"required" json:"packageId" uri:"packageId" desc:"包ID"'
+          description: 包ID
           required: true
           schema:
             type: string
@@ -1319,7 +1098,7 @@ paths:
       parameters:
         - name: packageId
           in: query
-          description: '@inject_tag: form:"packageId" binding:"required" desc:"包ID"'
+          description: 包ID
           schema:
             type: string
       responses:
@@ -1407,7 +1186,7 @@ paths:
       parameters:
         - name: environment
           in: query
-          description: '@inject_tag: json:"environment" query:"environment" form:"environment" desc:"environment type filter"'
+          description: environment type filter
           schema:
             enum:
               - Unknown
@@ -1417,13 +1196,13 @@ paths:
             format: enum
         - name: page
           in: query
-          description: '@inject_tag: json:"page" query:"page" form:"page" desc:"page number"'
+          description: page number
           schema:
             type: integer
             format: int32
         - name: pageSize
           in: query
-          description: '@inject_tag: json:"pageSize" query:"pageSize" form:"pageSize" desc:"page size"'
+          description: page size
           schema:
             type: integer
             format: int32
@@ -1474,7 +1253,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: '@inject_tag: json:"id" uri:"id" desc:"environment ID"'
+          description: environment ID
           required: true
           schema:
             type: integer
@@ -1782,7 +1561,7 @@ paths:
       parameters:
         - name: instanceId
           in: path
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
           required: true
           schema:
             type: string
@@ -1908,7 +1687,7 @@ paths:
       parameters:
         - name: instanceId
           in: path
-          description: '@inject_tag: json:"instanceId" uri:"instanceId" form:"instanceId" desc:"Instance ID"'
+          description: Instance ID
           required: true
           schema:
             type: string
@@ -1933,7 +1712,7 @@ paths:
       parameters:
         - name: instanceId
           in: path
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
           required: true
           schema:
             type: string
@@ -2187,7 +1966,7 @@ paths:
       parameters:
         - name: id
           in: query
-          description: '@inject_tag: json:"id" query:"id" form:"id" desc:"服务ID"'
+          description: 服务ID
           schema:
             type: integer
             format: int32
@@ -2349,7 +2128,7 @@ paths:
       parameters:
         - name: openapiFileId
           in: query
-          description: '@inject_tag: form:"openapiFileId" binding:"required" desc:"OpenAPI文档ID"'
+          description: OpenAPI文档ID
           schema:
             type: string
       responses:
@@ -2374,7 +2153,7 @@ paths:
       parameters:
         - name: openapiFileId
           in: path
-          description: '@inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" uri:"openapiFileId" query:"openapiFileId" desc:"OpenAPI文档ID"'
+          description: OpenAPI文档ID
           required: true
           schema:
             type: string
@@ -2425,24 +2204,24 @@ paths:
       parameters:
         - name: page
           in: query
-          description: '@inject_tag: json:"page" form:"page" desc:"页码"'
+          description: 页码
           schema:
             type: integer
             format: int32
         - name: pageSize
           in: query
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"每页数量"'
+          description: 每页数量
           schema:
             type: integer
             format: int32
         - name: name
           in: query
-          description: '@inject_tag: json:"name" form:"name" desc:"搜索关键词"'
+          description: 搜索关键词
           schema:
             type: string
         - name: types
           in: query
-          description: '@inject_tag: json:"types" form:"types" desc:"文件类型"'
+          description: 文件类型
           schema:
             type: array
             items:
@@ -2474,7 +2253,7 @@ paths:
       parameters:
         - name: openapiFileId
           in: path
-          description: '@inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" uri:"openapiFileId" desc:"OpenAPI文档ID"'
+          description: OpenAPI文档ID
           required: true
           schema:
             type: string
@@ -2524,24 +2303,24 @@ paths:
       parameters:
         - name: page
           in: query
-          description: '@inject_tag: json:"page" form:"page" uri:"page" desc:"Page number"'
+          description: Page number
           schema:
             type: integer
             format: int32
         - name: pageSize
           in: query
-          description: '@inject_tag: json:"pageSize" form:"pageSize" uri:"pageSize" desc:"Page size"'
+          description: Page size
           schema:
             type: integer
             format: int32
         - name: name
           in: query
-          description: '@inject_tag: json:"name" form:"name" uri:"name" desc:"Name"'
+          description: Name
           schema:
             type: string
         - name: categoryName
           in: query
-          description: '@inject_tag: json:"categoryName" form:"categoryName" uri:"categoryName" desc:"Category name"'
+          description: Category name
           schema:
             type: string
       responses:
@@ -2566,7 +2345,7 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           schema:
             type: integer
             format: int32
@@ -2667,7 +2446,7 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           schema:
             type: integer
             format: int32
@@ -2693,7 +2472,7 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           schema:
             type: integer
             format: int32
@@ -2743,7 +2522,7 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           schema:
             type: integer
             format: int32
@@ -2869,7 +2648,7 @@ paths:
       parameters:
         - name: templateId
           in: path
-          description: '@inject_tag: json:"templateId" form:"templateId" uri:"templateId" desc:"Template ID"'
+          description: Template ID
           required: true
           schema:
             type: integer
@@ -2895,7 +2674,7 @@ paths:
       parameters:
         - name: templateId
           in: path
-          description: '@inject_tag: json:"templateId" form:"templateId" uri:"templateId" desc:"Template ID"'
+          description: Template ID
           required: true
           schema:
             type: integer
@@ -2920,90 +2699,26 @@ components:
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" form:"userId" desc:"用户ID"'
+          description: 用户ID
         roleId:
           type: string
-          description: '@inject_tag: json:"roleId" form:"roleId" desc:"角色ID"'
+          description: 角色ID
       description: AddUserRoleRequest 添加用户角色关联请求
     AddUserRoleResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         userRole:
           allOf:
             - $ref: "#/components/schemas/UserRole"
-          description: '@inject_tag: json:"data" desc:"新增的用户角色关联信息"'
+          description: 新增的用户角色关联信息
       description: AddUserRoleResponse 添加用户角色关联响应
-    AiMessage:
-      type: object
-      properties:
-        id:
-          type: string
-          description: '@inject_tag: json:"id" desc:"ID"'
-        sessionID:
-          type: string
-          description: '@inject_tag: json:"sessionID" desc:"Session ID"'
-        role:
-          type: string
-          description: '@inject_tag: json:"role" desc:"Role"'
-        content:
-          type: string
-          description: '@inject_tag: json:"content" desc:"Content"'
-        toolCalls:
-          type: string
-          description: '@inject_tag: json:"toolCalls" desc:"Tool Calls"'
-        toolCallID:
-          type: string
-          description: '@inject_tag: json:"toolCallID" desc:"Tool Call ID"'
-        promptTokens:
-          type: integer
-          description: '@inject_tag: json:"promptTokens" desc:"Prompt Tokens"'
-          format: int32
-        completionTokens:
-          type: integer
-          description: '@inject_tag: json:"completionTokens" desc:"Completion Tokens"'
-          format: int32
-        totalTokens:
-          type: integer
-          description: '@inject_tag: json:"totalTokens" desc:"Total Tokens"'
-          format: int32
-        createTime:
-          type: string
-          description: '@inject_tag: json:"createTime" desc:"Create Time"'
-    AiSession:
-      type: object
-      properties:
-        id:
-          type: string
-          description: '@inject_tag: json:"id" desc:"ID"'
-        name:
-          type: string
-          description: '@inject_tag: json:"name" desc:"Name"'
-        modelAccessID:
-          type: string
-          description: '@inject_tag: json:"modelAccessID" desc:"Model Access ID"'
-        toolsConfig:
-          type: string
-          description: '@inject_tag: json:"toolsConfig" desc:"Tools Config (JSON)"'
-        maxContext:
-          type: integer
-          description: '@inject_tag: json:"maxContext" desc:"Max Context"'
-          format: int32
-        createTime:
-          type: string
-          description: '@inject_tag: json:"createTime" desc:"Create Time"'
-        updateTime:
-          type: string
-          description: '@inject_tag: json:"updateTime" desc:"Update Time"'
-        modelName:
-          type: string
-          description: '@inject_tag: json:"modelName" desc:"Model Name"'
     AvailableCasesResponse:
       type: object
       properties:
@@ -3011,51 +2726,51 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CaseInfo"
-          description: '@inject_tag: json:"cases" desc:"可用案例列表"'
+          description: 可用案例列表
       description: AvailableCasesResponse 可用案例响应
     BatchAddUserRoleRequest:
       type: object
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" form:"userId" desc:"用户ID"'
+          description: 用户ID
         roleIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleIds" form:"roleIds" desc:"角色ID列表"'
+          description: 角色ID列表
       description: BatchAddUserRoleRequest 批量添加用户角色关联请求
     BatchAddUserRoleResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
-          description: '@inject_tag: json:"data" desc:"批量添加的用户角色关联列表"'
+          description: 批量添加的用户角色关联列表
       description: BatchAddUserRoleResponse 批量添加用户角色关联响应
     CallToolRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         domain:
           type: string
-          description: '@inject_tag: json:"domain" form:"domain" desc:"Domain"'
+          description: Domain
         toolName:
           type: string
-          description: '@inject_tag: json:"toolName" form:"toolName" desc:"Tool name"'
+          description: Tool name
         arguments:
           type: string
-          description: '@inject_tag: json:"arguments" form:"arguments" desc:"Tool arguments"'
+          description: Tool arguments
     CallToolResp:
       type: object
       properties: {}
@@ -3072,20 +2787,20 @@ components:
       properties:
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" desc:"模板ID"'
+          description: 模板ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"模板名称"'
+          description: 模板名称
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"模板描述"'
+          description: 模板描述
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" desc:"图标路径"'
+          description: 图标路径
         sourceType:
           enum:
             - SourceTypeUnknown
@@ -3094,7 +2809,7 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" desc:"案例来源类型"'
+          description: 案例来源类型
           format: enum
         accessType:
           enum:
@@ -3103,7 +2818,7 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"案例访问类型"'
+          description: 案例访问类型
           format: enum
       description: CaseInfo 案例信息
     Category:
@@ -3111,26 +2826,26 @@ components:
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"ID"'
+          description: ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Name"'
+          description: Name
         code:
           type: string
-          description: '@inject_tag: json:"code" desc:"Code"'
+          description: Code
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"Total count"'
+          description: Total count
     CategoryInfo:
       type: object
       properties:
         id:
           type: integer
-          description: '@inject_tag: json:"id" desc:"分类ID"'
+          description: 分类ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"分类名称"'
+          description: 分类名称
       description: 分类信息
     CategoryResponse:
       type: object
@@ -3139,53 +2854,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CategoryInfo"
-          description: '@inject_tag: json:"list" desc:"分类列表"'
+          description: 分类列表
       description: 分类响应
-    ChatAttachment:
-      type: object
-      properties:
-        type:
-          type: string
-          description: '@inject_tag: json:"type" desc:"Type (image, file)"'
-        url:
-          type: string
-          description: '@inject_tag: json:"url" desc:"URL"'
-        id:
-          type: string
-          description: '@inject_tag: json:"id" desc:"ID (for local temp files)"'
-        name:
-          type: string
-          description: '@inject_tag: json:"name" desc:"Original Name"'
-    ChatRequest:
-      type: object
-      properties:
-        sessionID:
-          type: string
-          description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
-        content:
-          type: string
-          description: '@inject_tag: json:"content" form:"content" desc:"Content"'
-        tools:
-          type: string
-          description: '@inject_tag: json:"tools" desc:"Tools Config (legacy JSON string)"'
-        mcpProfile:
-          allOf:
-            - $ref: "#/components/schemas/McpProfile"
-          description: '@inject_tag: json:"mcpProfile" desc:"Advanced MCP Debug Profile"'
-        attachments:
-          type: array
-          items:
-            $ref: "#/components/schemas/ChatAttachment"
-          description: '@inject_tag: json:"attachments" desc:"Attachments"'
-    ChatResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          description: '@inject_tag: json:"type" desc:"Type"'
-        content:
-          type: string
-          description: '@inject_tag: json:"content" desc:"Content"'
     CheckN8NRequest:
       type: object
       properties:
@@ -3211,16 +2881,16 @@ components:
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"包ID"'
+          description: 包ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"包名称"'
+          description: 包名称
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"包路径"'
+          description: 包路径
         size:
           type: string
-          description: '@inject_tag: json:"size" desc:"包大小"'
+          description: 包大小
         type:
           enum:
             - PackageTypeUnspecified
@@ -3230,14 +2900,14 @@ components:
             - PackageTypeDxt
             - PackageTypeMcpb
           type: string
-          description: '@inject_tag: json:"type" desc:"包类型"'
+          description: 包类型
           format: enum
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"更新时间"'
+          description: 更新时间
       description: CodePackageInfo 代码包信息
     CodePackageListResponse:
       type: object
@@ -3246,17 +2916,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CodePackageInfo"
-          description: '@inject_tag: json:"list" desc:"代码包列表"'
+          description: 代码包列表
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"总数量"'
+          description: 总数量
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"当前页码"'
+          description: 当前页码
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"每页数量"'
+          description: 每页数量
           format: int32
       description: CodePackageListResponse 代码包列表响应
     CommonResponse:
@@ -3264,33 +2934,33 @@ components:
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: CommonResponse 通用响应
     ContainerEvent:
       type: object
       properties:
         type:
           type: string
-          description: '@inject_tag: json:"type" desc:"Event type"'
+          description: Event type
         reason:
           type: string
-          description: '@inject_tag: json:"reason" desc:"Event reason"'
+          description: Event reason
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Event message"'
+          description: Event message
         firstTimestamp:
           type: string
-          description: '@inject_tag: json:"firstTimestamp" desc:"First occurrence time (timestamp)"'
+          description: First occurrence time (timestamp)
         lastTimestamp:
           type: string
-          description: '@inject_tag: json:"lastTimestamp" desc:"Last occurrence time (timestamp)"'
+          description: Last occurrence time (timestamp)
         count:
           type: integer
-          description: '@inject_tag: json:"count" desc:"Occurrence count"'
+          description: Occurrence count
           format: int32
       description: ContainerEvent container event
     CreateDeptResponse:
@@ -3298,31 +2968,31 @@ components:
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           allOf:
             - $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"data" desc:"部门数据"'
+          description: 部门数据
       description: CreateDeptResponse 创建部门响应
     CreateDockerVolumeRequest:
       type: object
       properties:
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"卷名称"'
+          description: 卷名称
         labels:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"labels" form:"labels" desc:"标签"'
+          description: 标签
       description: CreateDockerVolumeRequest
     CreateDockerVolumeResponse:
       type: object
@@ -3330,68 +3000,68 @@ components:
         volume:
           allOf:
             - $ref: "#/components/schemas/DockerVolumeInfo"
-          description: '@inject_tag: json:"volume" desc:"创建的卷信息"'
+          description: 创建的卷信息
       description: CreateDockerVolumeResponse
     CreateOpenapiRequest:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         openapiFileID:
           type: string
-          description: '@inject_tag: json:"openapiFileID,omitempty" form:"openapiFileID" desc:"OpenAPI document ID, required"'
+          description: OpenAPI document ID, required
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Description"'
+          description: Description
         chooseOpenapiFileID:
           type: string
-          description: '@inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"Selected OpenAPI document ID"'
+          description: Selected OpenAPI document ID
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" form:"enabledToken" desc:"Enable tokens"'
+          description: Enable tokens
         tokens:
           type: array
           items:
             $ref: "#/components/schemas/McpToken"
-          description: '@inject_tag: json:"tokens" form:"tokens" desc:"Token list"'
+          description: Token list
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" form:"environmentId" desc:"Environment ID"'
+          description: Environment ID
           format: int32
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"Base access path"'
+          description: Base access path
       description: CreateOpenapiRequest create instance request
     CreatePVCRequest:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"PVC名称"'
+          description: PVC名称
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           format: int32
         nodeName:
           type: string
-          description: '@inject_tag: json:"nodeName" form:"nodeName" desc:"节点名称"'
+          description: 节点名称
         storageSize:
           type: integer
-          description: '@inject_tag: json:"storageSize" form:"storageSize" desc:"存储大小(GB)"'
+          description: 存储大小(GB)
           format: int32
         accessMode:
           type: string
-          description: '@inject_tag: json:"accessMode" form:"accessMode" desc:"读写策略(ReadWriteOnce, ReadOnlyMany, ReadWriteMany)"'
+          description: 读写策略(ReadWriteOnce, ReadOnlyMany, ReadWriteMany)
         storageClass:
           type: string
-          description: '@inject_tag: json:"storageClass" form:"storageClass" desc:"存储类名称(可选)"'
+          description: 存储类名称(可选)
         hostPath:
           type: string
-          description: '@inject_tag: json:"hostPath" form:"hostPath" desc:"主机路径(可选，用于创建HostPath类型的PVC)"'
+          description: 主机路径(可选，用于创建HostPath类型的PVC)
       description: CreatePVCRequest 创建PVC请求
     CreatePVCResponse:
       type: object
@@ -3399,49 +3069,49 @@ components:
         pvc:
           allOf:
             - $ref: "#/components/schemas/PVCInfo"
-          description: '@inject_tag: json:"pvc" desc:"创建的PVC信息"'
+          description: 创建的PVC信息
       description: CreatePVCResponse 创建PVC响应
     CreateRequest:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         port:
           type: integer
-          description: '@inject_tag: json:"port" form:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" form:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" form:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" form:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" form:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" form:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" form:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" form:"environmentId" desc:"Environment ID"'
+          description: Environment ID
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"'
+          description: Package ID, optional
         accessType:
           enum:
             - AccessTypeUnknown
@@ -3449,11 +3119,11 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Access mode"'
+          description: Access mode
           format: enum
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         sourceType:
           enum:
             - SourceTypeUnknown
@@ -3462,23 +3132,23 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" form:"sourceType" desc:"Instance source"'
+          description: Instance source
           format: enum
         mcpServerId:
           type: string
-          description: '@inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP server ID"'
+          description: MCP server ID
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" form:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
         tokens:
           type: array
           items:
             $ref: "#/components/schemas/McpToken"
-          description: '@inject_tag: json:"tokens" form:"tokens" desc:"Token list"'
+          description: Token list
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -3486,27 +3156,27 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" form:"enabledToken" desc:"Enable tokens"'
+          description: Enable tokens
       description: CreateRequest create instance request
     CreateResp:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Instance name"'
+          description: Instance name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -3514,11 +3184,11 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"Instance status"'
+          description: Instance status
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -3526,7 +3196,7 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
       description: CreateResp create instance response
     CreateResponse:
@@ -3539,30 +3209,30 @@ components:
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"角色名称"'
+          description: 角色名称
         code:
           type: string
-          description: '@inject_tag: json:"code" desc:"角色编码"'
+          description: 角色编码
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"角色描述"'
+          description: 角色描述
         status:
           enum:
             - RoleStatusUnspecified
             - RoleStatusEnabled
             - RoleStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"角色状态"'
+          description: 角色状态
           format: enum
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序字段"'
+          description: 排序字段
           format: int32
         permissionIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"permissionIds" desc:"权限ID列表"'
+          description: 权限ID列表
       description: 创建角色请求
     CreateRoleResponse:
       type: object
@@ -3570,71 +3240,45 @@ components:
         role:
           allOf:
             - $ref: "#/components/schemas/SysRole"
-          description: '@inject_tag: json:"role" desc:"创建的角色信息"'
+          description: 创建的角色信息
       description: 创建角色响应
-    CreateSessionRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Name"'
-        modelAccessID:
-          type: string
-          description: '@inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"'
-        toolsConfig:
-          type: string
-          description: '@inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config (JSON)"'
-        maxContext:
-          type: integer
-          description: '@inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"'
-          format: int32
-        modelName:
-          type: string
-          description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
-    CreateSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-            - $ref: "#/components/schemas/AiSession"
-          description: '@inject_tag: json:"session" desc:"Session"'
     CreateUserRequest:
       type: object
       properties:
         username:
           type: string
-          description: '@inject_tag: json:"username" desc:"用户名"'
+          description: 用户名
         fullName:
           type: string
-          description: '@inject_tag: json:"fullName" desc:"用户全名"'
+          description: 用户全名
         password:
           type: string
-          description: '@inject_tag: json:"password" desc:"密码"'
+          description: 密码
         email:
           type: string
-          description: '@inject_tag: json:"email" desc:"电子邮箱"'
+          description: 电子邮箱
         phone:
           type: string
-          description: '@inject_tag: json:"phone" desc:"手机号码"'
+          description: 手机号码
         avatar:
           type: string
-          description: '@inject_tag: json:"avatar" desc:"头像URL"'
+          description: 头像URL
         status:
           enum:
             - UserStatusUnspecified
             - UserStatusEnabled
             - UserStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"用户状态"'
+          description: 用户状态
           format: enum
         deptId:
           type: string
-          description: '@inject_tag: json:"deptId" desc:"部门ID"'
+          description: 部门ID
         roleIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
+          description: 角色ID列表
       description: 创建用户请求
     CreateUserResponse:
       type: object
@@ -3642,45 +3286,45 @@ components:
         user:
           allOf:
             - $ref: "#/components/schemas/SysUser"
-          description: '@inject_tag: json:"user" desc:"创建的用户信息"'
+          description: 创建的用户信息
       description: 创建用户响应
     DeleteCodePackageResponse:
       type: object
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"是否成功"'
+          description: 是否成功
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: DeleteCodePackageResponse 删除代码包响应
     DeleteDeptResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: DeleteDeptResponse 删除部门响应
     DeleteOpenapiFileResponse:
       type: object
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"是否成功"'
+          description: 是否成功
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: DeleteOpenapiFileResponse 删除OpenAPI文档响应
     DeleteResp:
       type: object
       properties:
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: DeleteResp delete instance response
     DeleteResponse:
       type: object
@@ -3689,12 +3333,6 @@ components:
       type: object
       properties: {}
       description: 删除角色响应
-    DeleteSessionResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          description: '@inject_tag: json:"success" desc:"Success"'
     DeleteUserResponse:
       type: object
       properties: {}
@@ -3704,26 +3342,26 @@ components:
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" form:"userId" desc:"用户ID"'
+          description: 用户ID
         roleId:
           type: string
-          description: '@inject_tag: json:"roleId" form:"roleId" desc:"角色ID"'
+          description: 角色ID
       description: DeleteUserRoleRequest 删除用户角色关联请求
     DeptDTO:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id,omitempty" desc:"部门ID"'
+          description: 部门ID
         name:
           type: string
-          description: '@inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"'
+          description: 部门名称
         parentId:
           type: string
-          description: '@inject_tag: json:"parentId" desc:"父部门ID"'
+          description: 父部门ID
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序"'
+          description: 排序
           format: int32
         status:
           enum:
@@ -3731,7 +3369,7 @@ components:
             - DeptStatusDisabled
             - DeptStatusEnabled
           type: string
-          description: '@inject_tag: json:"status" binding:"required" desc:"状态"'
+          description: 状态
           format: enum
       description: DeptDTO 部门数据传输对象
     DeptQueryDTO:
@@ -3739,21 +3377,21 @@ components:
       properties:
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"页码，从1开始"'
+          description: 页码，从1开始
           format: int32
         size:
           type: integer
-          description: '@inject_tag: json:"size" desc:"每页条数"'
+          description: 每页条数
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name,omitempty" desc:"部门名称"'
+          description: 部门名称
         code:
           type: string
-          description: '@inject_tag: json:"code,omitempty" desc:"部门编码"'
+          description: 部门编码
         status:
           type: integer
-          description: '@inject_tag: json:"status,omitempty" desc:"状态：0-禁用，1-启用"'
+          description: 状态：0-禁用，1-启用
           format: int32
       description: DeptQueryDTO 部门查询条件
     DetailResp:
@@ -3761,10 +3399,10 @@ components:
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Instance name"'
+          description: Instance name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -3772,11 +3410,11 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"Instance status"'
+          description: Instance status
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -3784,86 +3422,86 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         notes:
           type: string
-          description: '@inject_tag: json:"notes" desc:"Notes"'
+          description: Notes
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         port:
           type: integer
-          description: '@inject_tag: json:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" desc:"Environment ID"'
+          description: Environment ID
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" desc:"Package ID, optional"'
+          description: Package ID, optional
         imgAddress:
           type: string
-          description: '@inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"'
+          description: Image address
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" desc:"Icon path"'
+          description: Icon path
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" desc:"Enable tokens"'
+          description: Enable tokens
         mcpServerId:
           type: string
-          description: '@inject_tag: json:"mcpServerId" desc:"MCP server ID"'
+          description: MCP server ID
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
         containerName:
           type: string
-          description: '@inject_tag: json:"containerName" desc:"Container name"'
+          description: Container name
         containerServiceName:
           type: string
-          description: '@inject_tag: json:"containerServiceName" desc:"Container service name"'
+          description: Container service name
         containerIsReady:
           type: boolean
-          description: '@inject_tag: json:"containerIsReady" desc:"Container ready"'
+          description: Container ready
         containerStatus:
           type: string
-          description: '@inject_tag: json:"containerStatus" desc:"Container status"'
+          description: Container status
         containerLastMessage:
           type: string
-          description: '@inject_tag: json:"containerLastMessage" desc:"Container last message"'
+          description: Container last message
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" desc:"Base access path"'
+          description: Base access path
       description: DetailResp instance detail response
     DetailResponse:
       type: object
@@ -3871,62 +3509,62 @@ components:
         service:
           allOf:
             - $ref: "#/components/schemas/ServiceInfo"
-          description: '@inject_tag: json:"service" desc:"服务详情"'
+          description: 服务详情
       description: 服务详情响应
     DisabledRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
       description: DisabledRequest disable instance request
     DisabledResp:
       type: object
       properties:
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: DisabledResp disable instance response
     DockerVolumeInfo:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"卷名称"'
+          description: 卷名称
         driver:
           type: string
-          description: '@inject_tag: json:"driver" desc:"驱动"'
+          description: 驱动
         mountpoint:
           type: string
-          description: '@inject_tag: json:"mountpoint" desc:"挂载点"'
+          description: 挂载点
         labels:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"labels" desc:"标签"'
+          description: 标签
         options:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"options" desc:"选项"'
+          description: 选项
         scope:
           type: string
-          description: '@inject_tag: json:"scope" desc:"作用域"'
+          description: 作用域
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         status:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"status" desc:"状态信息"'
+          description: 状态信息
       description: DockerVolumeInfo Docker 卷信息结构
     DownloadOpenapiFileResponse:
       type: object
       properties:
         fileContent:
           type: string
-          description: '@inject_tag: json:"fileContent" desc:"文件内容"'
+          description: 文件内容
           format: bytes
       description: DownloadOpenapiFileResponse 下载OpenAPI文档响应
     DownloadPackageResponse:
@@ -3934,7 +3572,7 @@ components:
       properties:
         fileContent:
           type: string
-          description: '@inject_tag: json:"fileContent" desc:"文件内容"'
+          description: 文件内容
           format: bytes
       description: DownloadPackageResponse 下载代码包响应
     EditCodeFileRequest:
@@ -3942,106 +3580,106 @@ components:
       properties:
         packageId:
           type: string
-          description: '@inject_tag: form:"packageId" binding:"required" json:"packageId" desc:"包ID"'
+          description: 包ID
         filePath:
           type: string
-          description: '@inject_tag: form:"filePath" binding:"required" json:"filePath" desc:"文件路径"'
+          description: 文件路径
         content:
           type: string
-          description: '@inject_tag: form:"content" binding:"required" json:"content" desc:"文件内容"'
+          description: 文件内容
       description: EditCodeFileRequest 编辑代码文件请求
     EditCodeFileResponse:
       type: object
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"是否成功"'
+          description: 是否成功
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: EditCodeFileResponse 编辑代码文件响应
     EditOpenapiFileRequest:
       type: object
       properties:
         openapiFileId:
           type: string
-          description: '@inject_tag: form:"openapiFileId" binding:"required" json:"openapiFileId" desc:"OpenAPI文档ID"'
+          description: OpenAPI文档ID
         content:
           type: string
-          description: '@inject_tag: form:"content" binding:"required" json:"content" desc:"文件内容"'
+          description: 文件内容
       description: EditOpenapiFileRequest 编辑OpenAPI文档请求
     EditOpenapiFileResponse:
       type: object
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"是否成功"'
+          description: 是否成功
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
       description: EditOpenapiFileResponse 编辑OpenAPI文档响应
     EditRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         port:
           type: integer
-          description: '@inject_tag: json:"port" form:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" form:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" form:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" form:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" form:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" form:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" form:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"'
+          description: Package ID, optional
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
       description: EditRequest edit instance request
     EditResp:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Instance name"'
+          description: Instance name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -4049,11 +3687,11 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"Instance status"'
+          description: Instance status
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -4061,7 +3699,7 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
       description: EditResp edit instance response
     FileNode:
@@ -4069,32 +3707,32 @@ components:
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"文件名"'
+          description: 文件名
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"文件路径"'
+          description: 文件路径
         isDir:
           type: boolean
-          description: '@inject_tag: json:"isDir" desc:"是否为目录"'
+          description: 是否为目录
         size:
           type: string
-          description: '@inject_tag: json:"size,omitempty" desc:"文件大小"'
+          description: 文件大小
         children:
           type: array
           items:
             $ref: "#/components/schemas/FileNode"
-          description: '@inject_tag: json:"children,omitempty" desc:"子节点"'
+          description: 子节点
       description: FileNode 文件节点结构
     FindDockerVolumeRequest:
       type: object
       properties:
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"卷名称"'
+          description: 卷名称
       description: FindDockerVolumeRequest
     FindDockerVolumeResponse:
       type: object
@@ -4102,22 +3740,22 @@ components:
         volume:
           allOf:
             - $ref: "#/components/schemas/DockerVolumeInfo"
-          description: '@inject_tag: json:"volume" desc:"卷信息"'
+          description: 卷信息
       description: FindDockerVolumeResponse
     FindGatewayLogRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" desc:"实例ID"'
+          description: 实例ID
         token:
           type: string
-          description: '@inject_tag: json:"token" form:"token" desc:"token"'
+          description: token
         usages:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"usages" form:"usages" desc:"usage scenarios"'
+          description: usage scenarios
         level:
           enum:
             - UnspecifiedLevel
@@ -4127,25 +3765,25 @@ components:
             - WarnLevel
             - ErrorLevel
           type: string
-          description: '@inject_tag: json:"level" form:"level" desc:"log level"'
+          description: log level
           format: enum
         startTime:
           type: string
-          description: '@inject_tag: json:"startTime" form:"startTime" desc:"start time：seconds since epoch"'
+          description: start time：seconds since epoch
         endTime:
           type: string
-          description: '@inject_tag: json:"endTime" form:"endTime" desc:"end time：seconds since epoch"'
+          description: end time：seconds since epoch
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"page size"'
+          description: page size
           format: int32
         page:
           type: integer
-          description: '@inject_tag: json:"page" form:"page" desc:"page number"'
+          description: page number
           format: int32
         traceId:
           type: string
-          description: '@inject_tag: json:"traceId" form:"traceId" desc:"trace ID"'
+          description: trace ID
     FindGatewayLogResponse:
       type: object
       properties:
@@ -4153,37 +3791,37 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/GatewayLog"
-          description: '@inject_tag: json:"logs" form:"logs" desc:"gateway logs"'
+          description: gateway logs
         total:
           type: integer
-          description: '@inject_tag: json:"total" form:"total" desc:"total count"'
+          description: total count
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"page size"'
+          description: page size
           format: int32
         page:
           type: integer
-          description: '@inject_tag: json:"page" form:"page" desc:"page number"'
+          description: page number
           format: int32
     GatewayLog:
       type: object
       properties:
         id:
           type: integer
-          description: '@inject_tag: json:"id" form:"id" desc:"log ID"'
+          description: log ID
           format: uint32
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" desc:"instance ID"'
+          description: instance ID
         token:
           type: string
-          description: '@inject_tag: json:"token" form:"token" desc:"token"'
+          description: token
         usages:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"usages" form:"usages" desc:"usage scenarios"'
+          description: usage scenarios
         level:
           enum:
             - UnspecifiedLevel
@@ -4193,26 +3831,26 @@ components:
             - WarnLevel
             - ErrorLevel
           type: string
-          description: '@inject_tag: json:"level" form:"level" desc:"log level"'
+          description: log level
           format: enum
         event:
           type: string
-          description: '@inject_tag: json:"event" form:"event" desc:"event type"'
+          description: event type
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" form:"createdAt" desc:"creation time"'
+          description: creation time
         log:
           type: string
-          description: '@inject_tag: json:"log" form:"log" desc:"log details"'
+          description: log details
         traceId:
           type: string
-          description: '@inject_tag: json:"traceId" form:"traceId" desc:"trace ID"'
+          description: trace ID
     GetCodeFileResponse:
       type: object
       properties:
         content:
           type: string
-          description: '@inject_tag: json:"content" desc:"文件内容"'
+          description: 文件内容
       description: GetCodeFileResponse 获取代码文件内容响应
     GetCodeTreeResponse:
       type: object
@@ -4220,7 +3858,7 @@ components:
         fileStructure:
           allOf:
             - $ref: "#/components/schemas/FileNode"
-          description: '@inject_tag: json:"fileStructure" desc:"文件结构"'
+          description: 文件结构
       description: GetCodeTreeResponse 获取代码包结构响应
     GetCurrentUserResponse:
       type: object
@@ -4228,38 +3866,38 @@ components:
         user:
           allOf:
             - $ref: "#/components/schemas/SysUser"
-          description: '@inject_tag: json:"user" desc:"当前用户信息"'
+          description: 当前用户信息
       description: 获取当前用户响应
     GetDeptByIdResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           allOf:
             - $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"data" desc:"部门数据"'
+          description: 部门数据
       description: GetDeptByIdResponse 根据ID获取部门响应
     GetDeptTreeResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           type: array
           items:
             $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"data" desc:"部门树形数据"'
+          description: 部门树形数据
       description: GetDeptTreeResponse 获取部门树形结构响应
     GetEncryptionKeyRequest:
       type: object
@@ -4270,37 +3908,37 @@ components:
       properties:
         keyId:
           type: string
-          description: '@inject_tag: json:"keyId" desc:"密钥ID"'
+          description: 密钥ID
         publicKey:
           type: string
-          description: '@inject_tag: json:"publicKey" desc:"公钥(Base64编码)"'
+          description: 公钥(Base64编码)
         algorithm:
           type: string
-          description: '@inject_tag: json:"algorithm" desc:"加密算法"'
+          description: 加密算法
         expiresAt:
           type: string
-          description: '@inject_tag: json:"expiresAt" desc:"密钥过期时间戳"'
+          description: 密钥过期时间戳
         issuedAt:
           type: string
-          description: '@inject_tag: json:"issuedAt" desc:"密钥签发时间戳"'
+          description: 密钥签发时间戳
       description: 获取加密密钥响应
     GetOpenapiFileContentResponse:
       type: object
       properties:
         content:
           type: string
-          description: '@inject_tag: json:"content" desc:"文件内容"'
+          description: 文件内容
         fileType:
           enum:
             - OpenapiFileTypeUnspecified
             - OpenapiFileTypeJson
             - OpenapiFileTypeYaml
           type: string
-          description: '@inject_tag: json:"fileType" desc:"文件类型"'
+          description: 文件类型
           format: enum
         baseOpenapiFileID:
           type: string
-          description: '@inject_tag: json:"baseOpenapiFileID" desc:"基于哪个 openapi 文档的id"'
+          description: 基于哪个 openapi 文档的id
       description: GetOpenapiFileContentResponse 获取OpenAPI文档内容响应
     GetResponse:
       type: object
@@ -4313,23 +3951,23 @@ components:
         role:
           allOf:
             - $ref: "#/components/schemas/SysRole"
-          description: '@inject_tag: json:"role" desc:"角色信息"'
+          description: 角色信息
       description: 获取角色响应
     GetRoleIdsByUserIdResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"data" desc:"角色ID列表"'
+          description: 角色ID列表
       description: GetRoleIdsByUserIdResponse 根据用户ID获取角色ID列表响应
     GetRolePermissionsResponse:
       type: object
@@ -4338,58 +3976,40 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PermissionTreeNode"
-          description: '@inject_tag: json:"permissions" desc:"权限树列表"'
+          description: 权限树列表
       description: 获取角色权限响应
-    GetSessionMessagesResponse:
-      type: object
-      properties:
-        list:
-          type: array
-          items:
-            $ref: "#/components/schemas/AiMessage"
-          description: '@inject_tag: json:"list" desc:"List"'
-        total:
-          type: string
-          description: '@inject_tag: json:"total" desc:"Total messages"'
-    GetSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-            - $ref: "#/components/schemas/AiSession"
-          description: '@inject_tag: json:"session" desc:"Session"'
     GetStatusResp:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"Instance status"'
+          description: Instance status
         containerName:
           type: string
-          description: '@inject_tag: json:"containerName" desc:"Container name"'
+          description: Container name
         runtimeType:
           type: string
-          description: '@inject_tag: json:"runtimeType" desc:"Runtime type"'
+          description: Runtime type
         errorMessage:
           type: string
-          description: '@inject_tag: json:"errorMessage" desc:"Error message"'
+          description: Error message
         warningEvents:
           type: array
           items:
             $ref: "#/components/schemas/ContainerEvent"
-          description: '@inject_tag: json:"warningEvents" desc:"Warning events"'
+          description: Warning events
         containerReady:
           type: boolean
-          description: '@inject_tag: json:"containerReady" desc:"Container ready"'
+          description: Container ready
         serviceReady:
           type: boolean
-          description: '@inject_tag: json:"serviceReady" desc:"Service ready"'
+          description: Service ready
         probeHttp:
           type: boolean
-          description: '@inject_tag: json:"probeHttp" desc:"HTTP probe success"'
+          description: HTTP probe success
       description: GetStatusResp instance status probe response
     GetUserByIdResponse:
       type: object
@@ -4397,57 +4017,57 @@ components:
         user:
           allOf:
             - $ref: "#/components/schemas/SysUser"
-          description: '@inject_tag: json:"user" desc:"用户信息"'
+          description: 用户信息
       description: 获取用户响应
     GetUserIdsByRoleIdResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"data" desc:"用户ID列表"'
+          description: 用户ID列表
       description: GetUserIdsByRoleIdResponse 根据角色ID获取用户ID列表响应
     GetUserInfoResponse:
       type: object
       properties:
         tokenExpiry:
           type: string
-          description: '@inject_tag: json:"tokenExpiry" desc:"Token有效期(秒)"'
+          description: Token有效期(秒)
         refreshTokenExpiry:
           type: string
-          description: '@inject_tag: json:"refreshTokenExpiry" desc:"刷新Token有效期(秒)"'
+          description: 刷新Token有效期(秒)
         theme:
           type: string
-          description: '@inject_tag: json:"theme" desc:"主题设置"'
+          description: 主题设置
         language:
           type: string
-          description: '@inject_tag: json:"language" desc:"语言设置"'
+          description: 语言设置
         timezone:
           type: string
-          description: '@inject_tag: json:"timezone" desc:"时区设置"'
+          description: 时区设置
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"分页大小"'
+          description: 分页大小
           format: int32
         enableNotification:
           type: boolean
-          description: '@inject_tag: json:"enableNotification" desc:"是否启用通知"'
+          description: 是否启用通知
         autoLogout:
           type: integer
-          description: '@inject_tag: json:"autoLogout" desc:"自动登出时间(分钟)"'
+          description: 自动登出时间(分钟)
           format: int32
         userInfo:
           allOf:
             - $ref: "#/components/schemas/UserInfo"
-          description: '@inject_tag: json:"userInfo" desc:"用户信息"'
+          description: 用户信息
       description: 获取用户配置响应
     GetUserPermissionsResponse:
       type: object
@@ -4456,23 +4076,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PermissionTreeNode"
-          description: '@inject_tag: json:"permissions" desc:"权限树列表"'
+          description: 权限树列表
       description: 获取用户权限响应
     GetUserRolesResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应状态码"'
+          description: 响应状态码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         userRoles:
           type: array
           items:
             $ref: "#/components/schemas/UserRole"
-          description: '@inject_tag: json:"data" desc:"用户角色关联列表"'
+          description: 用户角色关联列表
       description: GetUserRolesResponse 查询用户角色关联响应
     GoogleProtobufAny:
       type: object
@@ -4481,7 +4101,9 @@ components:
           type: string
           description: The type of the serialized message.
       additionalProperties: true
-      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+      description:
+        Contains an arbitrary serialized message along with a @type that
+        describes the type of the serialized message.
     HeaderInfo:
       type: object
       properties:
@@ -4552,16 +4174,16 @@ components:
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           type: array
           items:
             $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"data" desc:"部门列表数据"'
+          description: 部门列表数据
       description: ListDeptsResponse 查询部门列表响应
     ListDockerVolumesResponse:
       type: object
@@ -4570,7 +4192,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DockerVolumeInfo"
-          description: '@inject_tag: json:"list" desc:"Docker 卷列表"'
+          description: Docker 卷列表
       description: ListDockerVolumesResponse
     ListEnvironmentsResponse:
       type: object
@@ -4579,17 +4201,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/McpEnvironmentInfo"
-          description: '@inject_tag: json:"list" desc:"environment list"'
+          description: environment list
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"total count"'
+          description: total count
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"current page number"'
+          description: current page number
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"page size"'
+          description: page size
           format: int32
       description: ListEnvironmentsResponse environment list response
     ListMcpServerReply:
@@ -4597,30 +4219,30 @@ components:
       properties:
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"Total count"'
+          description: Total count
         categories:
           type: array
           items:
             $ref: "#/components/schemas/Category"
-          description: '@inject_tag: json:"categories" desc:"Categories"'
+          description: Categories
         list:
           type: array
           items:
             $ref: "#/components/schemas/McpServer"
-          description: '@inject_tag: json:"list" desc:"List"'
+          description: List
     ListNamespacesRequest:
       type: object
       properties:
         config:
           type: string
-          description: '@inject_tag: json:"config" form:"config" desc:"connection configuration"'
+          description: connection configuration
         environment:
           enum:
             - Unknown
             - Kubernetes
             - Docker
           type: string
-          description: '@inject_tag: json:"environment" form:"environment" desc:"environment type"'
+          description: environment type
           format: enum
       description: ListNamespacesRequest get namespace list request
     ListNamespacesResponse:
@@ -4630,7 +4252,7 @@ components:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"list" desc:"namespace list"'
+          description: namespace list
       description: ListNamespacesResponse get namespace list response
     ListNodesResponse:
       type: object
@@ -4639,7 +4261,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeInfo"
-          description: '@inject_tag: json:"list" desc:"节点列表数据"'
+          description: 节点列表数据
       description: ListNodesResponse 节点列表响应
     ListPVCsResponse:
       type: object
@@ -4648,25 +4270,25 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PVCInfo"
-          description: '@inject_tag: json:"list" desc:"PVC 列表数据"'
+          description: PVC 列表数据
       description: ListPVCsResponse PVC 列表响应
     ListRequest:
       type: object
       properties:
         page:
           type: integer
-          description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
+          description: Page number
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
+          description: Page size
           format: int32
         instanceName:
           type: string
-          description: '@inject_tag: json:"instanceName" form:"instanceName" desc:"Search keyword: instance name or ID"'
+          description: "Search keyword: instance name or ID"
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" form:"environmentId" desc:"Environment ID"'
+          description: Environment ID
           format: int32
         accessType:
           enum:
@@ -4675,16 +4297,14 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: '@inject_tag: json:"status" form:"status" desc:"Instance status (active/inactive)"'
+          description: Instance status (active/inactive)
         containerStatus:
           type: string
-          description: |-
-            Field number 7 is missing; fix containerStatus field number to 7
-             @inject_tag: json:"containerStatus" form:"containerStatus" desc:"Container status (pending/running/running-unready/init-timeout-stop/run-timeout-stop/exception-force-stop/manual-stop/create-failed)"
+          description: Container status (pending/running/running-unready/init-timeout-stop/run-timeout-stop/exception-force-stop/manual-stop/create-failed)
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -4692,44 +4312,44 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         sortBy:
           type: string
-          description: '@inject_tag: json:"sortBy" form:"sortBy" desc:"Sort field (createdAt/updatedAt/instanceName)"'
+          description: Sort field (createdAt/updatedAt/instanceName)
         sortOrder:
           type: string
-          description: '@inject_tag: json:"sortOrder" form:"sortOrder" desc:"Sort order (asc/desc)"'
+          description: Sort order (asc/desc)
       description: ListRequest instance list request
     ListResp:
       type: object
       properties:
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"Total count"'
+          description: Total count
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"Current page number"'
+          description: Current page number
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"Page size"'
+          description: Page size
           format: int32
         list:
           type: array
           items:
             $ref: "#/components/schemas/ListResp_InstanceInfo"
-          description: '@inject_tag: json:"list" desc:"Instance list"'
+          description: Instance list
       description: ListResp instance list response
     ListResp_InstanceInfo:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         instanceName:
           type: string
-          description: '@inject_tag: json:"instanceName" desc:"Instance name"'
+          description: Instance name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -4737,65 +4357,63 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: |-
-            Remove duplicate accessType field, enum already indicates access mode
-             @inject_tag: json:"status" desc:"Instance status (active/inactive)"
+          description: Instance status (active/inactive)
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" desc:"Environment ID"'
+          description: Environment ID
           format: uint32
         environmentName:
           type: string
-          description: '@inject_tag: json:"environmentName" desc:"Environment name"'
+          description: Environment name
         containerStatus:
           type: string
-          description: '@inject_tag: json:"containerStatus" desc:"Container status (pending/running/running-unready/init-timeout-stop/run-timeout-stop/exception-force-stop/manual-stop/create-failed)"'
+          description: Container status (pending/running/running-unready/init-timeout-stop/run-timeout-stop/exception-force-stop/manual-stop/create-failed)
         containerName:
           type: string
-          description: '@inject_tag: json:"containerName" desc:"Container name"'
+          description: Container name
         containerServiceName:
           type: string
-          description: '@inject_tag: json:"containerServiceName" desc:"Container service name"'
+          description: Container service name
         containerIsReady:
           type: boolean
-          description: '@inject_tag: json:"containerIsReady" desc:"Container ready"'
+          description: Container ready
         containerCreateOptions:
           type: string
-          description: '@inject_tag: json:"containerCreateOptions" desc:"Container create options (JSON)"'
+          description: Container create options (JSON)
         containerLastMessage:
           type: string
-          description: '@inject_tag: json:"containerLastMessage" desc:"Container last status message"'
+          description: Container last status message
         containerInitTimeoutStopAt:
           type: string
-          description: '@inject_tag: json:"containerInitTimeoutStopAt" desc:"Container init timeout stop time (ms timestamp)"'
+          description: Container init timeout stop time (ms timestamp)
         containerRunTimeoutStopAt:
           type: string
-          description: '@inject_tag: json:"containerRunTimeoutStopAt" desc:"Container run timeout stop time (ms timestamp)"'
+          description: Container run timeout stop time (ms timestamp)
         sourceConfig:
           type: string
-          description: '@inject_tag: json:"sourceConfig" desc:"MCP source service config (JSON)"'
+          description: MCP source service config (JSON)
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" desc:"Icon path"'
+          description: Icon path
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" desc:"Service path"'
+          description: Service path
         publicProxyPath:
           type: string
-          description: '@inject_tag: json:"publicProxyPath" desc:"MCP public proxy service path"'
+          description: MCP public proxy service path
         isDeleted:
           type: boolean
-          description: '@inject_tag: json:"isDeleted" desc:"Deleted"'
+          description: Deleted
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"Created at (ms timestamp)"'
+          description: Created at (ms timestamp)
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"Updated at (ms timestamp)"'
+          description: Updated at (ms timestamp)
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -4803,11 +4421,11 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" desc:"Enable tokens"'
+          description: Enable tokens
         proxyProtocol:
           enum:
             - McpProtocolUnknown
@@ -4815,7 +4433,7 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"proxyProtocol" desc:"MCP internal proxy protocol"'
+          description: MCP internal proxy protocol
           format: enum
         sourceType:
           enum:
@@ -4825,17 +4443,17 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" form:"sourceType" desc:"Instance source"'
+          description: Instance source
           format: enum
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" desc:"Base access path"'
+          description: Base access path
         imageAddress:
           type: string
-          description: '@inject_tag: json:"imageAddress" desc:"Image address"'
+          description: Image address
     ListResponse:
       type: object
       properties:
@@ -4849,11 +4467,11 @@ components:
         query:
           allOf:
             - $ref: "#/components/schemas/RoleQuery"
-          description: '@inject_tag: json:"query" form:"query" desc:"查询条件"'
+          description: 查询条件
         pageInfo:
           allOf:
             - $ref: "#/components/schemas/PageInfo"
-          description: '@inject_tag: json:"pageInfo" form:"pageInfo" desc:"分页信息"'
+          description: 分页信息
       description: 角色列表请求
     ListRolesResponse:
       type: object
@@ -4861,19 +4479,8 @@ components:
         data:
           allOf:
             - $ref: "#/components/schemas/PageSysRole"
-          description: '@inject_tag: json:"data" desc:"分页角色数据"'
+          description: 分页角色数据
       description: 角色列表响应
-    ListSessionsResponse:
-      type: object
-      properties:
-        list:
-          type: array
-          items:
-            $ref: "#/components/schemas/AiSession"
-          description: '@inject_tag: json:"list" desc:"List"'
-        total:
-          type: string
-          description: '@inject_tag: json:"total" desc:"Total"'
     ListStorageClassesResponse:
       type: object
       properties:
@@ -4881,17 +4488,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StorageClassInfo"
-          description: '@inject_tag: json:"list" desc:"存储类型列表数据"'
+          description: 存储类型列表数据
       description: ListStorageClassesResponse 存储类型列表响应
     ListToolsRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         domain:
           type: string
-          description: '@inject_tag: json:"domain" form:"domain" desc:"Domain"'
+          description: Domain
     ListToolsResp:
       type: object
       properties: {}
@@ -4919,11 +4526,11 @@ components:
         query:
           allOf:
             - $ref: "#/components/schemas/UserQuery"
-          description: '@inject_tag: json:"query" form:"query" desc:"查询条件"'
+          description: 查询条件
         pageInfo:
           allOf:
             - $ref: "#/components/schemas/PageInfo"
-          description: '@inject_tag: json:"pageInfo" form:"pageInfo" desc:"分页信息"'
+          description: 分页信息
       description: 用户列表请求
     ListUsersResponse:
       type: object
@@ -4931,66 +4538,66 @@ components:
         data:
           allOf:
             - $ref: "#/components/schemas/PageSysUser"
-          description: '@inject_tag: json:"data" desc:"分页用户数据"'
+          description: 分页用户数据
       description: 用户列表响应
     LoginInfo:
       type: object
       properties:
         loginTime:
           type: string
-          description: '@inject_tag: json:"loginTime" desc:"登录时间"'
+          description: 登录时间
         loginIp:
           type: string
-          description: '@inject_tag: json:"loginIp" desc:"登录IP"'
+          description: 登录IP
         userAgent:
           type: string
-          description: '@inject_tag: json:"userAgent" desc:"用户代理"'
+          description: 用户代理
         expiresAt:
           type: string
-          description: '@inject_tag: json:"expiresAt" desc:"过期时间"'
+          description: 过期时间
       description: 登录信息
     LoginRequest:
       type: object
       properties:
         username:
           type: string
-          description: '@inject_tag: json:"username" form:"username" desc:"用户名"'
+          description: 用户名
         encryptedPassword:
           type: string
-          description: '@inject_tag: json:"encryptedPassword" form:"encryptedPassword" desc:"加密后的密码"'
+          description: 加密后的密码
         keyId:
           type: string
-          description: '@inject_tag: json:"keyId" form:"keyId" desc:"密钥ID"'
+          description: 密钥ID
         timestamp:
           type: string
-          description: '@inject_tag: json:"timestamp" form:"timestamp" desc:"时间戳"'
+          description: 时间戳
       description: 用户登录请求
     LoginResponse:
       type: object
       properties:
         token:
           type: string
-          description: '@inject_tag: json:"token" desc:"访问令牌"'
+          description: 访问令牌
         refreshToken:
           type: string
-          description: '@inject_tag: json:"refreshToken" desc:"刷新令牌"'
+          description: 刷新令牌
         expiresIn:
           type: string
-          description: '@inject_tag: json:"expiresIn" desc:"令牌过期时间(秒)"'
+          description: 令牌过期时间(秒)
         userInfo:
           allOf:
             - $ref: "#/components/schemas/UserInfo"
-          description: '@inject_tag: json:"userInfo" desc:"用户信息"'
+          description: 用户信息
       description: 用户登录响应
     LogoutRequest:
       type: object
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" form:"userId" desc:"用户ID"'
+          description: 用户ID
         token:
           type: string
-          description: '@inject_tag: json:"token" form:"token" desc:"访问令牌"'
+          description: 访问令牌
       description: 用户退出请求
     LogoutResponse:
       type: object
@@ -5001,10 +4608,10 @@ components:
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         lines:
           type: integer
-          description: '@inject_tag: json:"lines" form:"lines" desc:"Number of log lines, default 100"'
+          description: Number of log lines, default 100
           format: int32
       description: LogsRequest view instance runtime logs request
     LogsResp:
@@ -5012,291 +4619,277 @@ components:
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         isManaged:
           type: boolean
-          description: '@inject_tag: json:"isManaged" desc:"Managed instance"'
+          description: Managed instance
         logs:
           type: string
-          description: '@inject_tag: json:"logs" desc:"Log content, returned only for managed instances"'
+          description: Log content, returned only for managed instances
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: LogsResp view instance runtime logs response
     McpEnvironmentInfo:
       type: object
       properties:
         id:
           type: integer
-          description: '@inject_tag: json:"id" desc:"environment ID"'
+          description: environment ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"environment name"'
+          description: environment name
         environment:
           type: string
-          description: '@inject_tag: json:"environment" desc:"runtime environment type"'
+          description: runtime environment type
         config:
           type: string
-          description: '@inject_tag: json:"config" desc:"connection configuration"'
+          description: connection configuration
         namespace:
           type: string
-          description: '@inject_tag: json:"namespace" desc:"namespace"'
+          description: namespace
         dockerHost:
           type: string
-          description: '@inject_tag: json:"dockerHost" desc:"docker host"'
+          description: docker host
         dockerUseTLS:
           type: boolean
-          description: '@inject_tag: json:"dockerUseTLS" desc:"enable tls"'
+          description: enable tls
         dockerCaData:
           type: string
-          description: '@inject_tag: json:"dockerCaData" desc:"ca data"'
+          description: ca data
         dockerCertData:
           type: string
-          description: '@inject_tag: json:"dockerCertData" desc:"cert data"'
+          description: cert data
         dockerKeyData:
           type: string
-          description: '@inject_tag: json:"dockerKeyData" desc:"key data"'
+          description: key data
         dockerNetwork:
           type: string
-          description: '@inject_tag: json:"dockerNetwork" desc:"docker network"'
+          description: docker network
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"creation time"'
+          description: creation time
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"update time"'
+          description: update time
       description: McpEnvironmentInfo environment information
-    McpProfile:
-      type: object
-      properties:
-        instanceId:
-          type: string
-          description: '@inject_tag: json:"instanceId" desc:"MCP Instance ID"'
-        includeTools:
-          type: array
-          items:
-            type: string
-          description: '@inject_tag: json:"includeTools" desc:"List of tools to include (by name)"'
-        enableAll:
-          type: boolean
-          description: '@inject_tag: json:"enableAll" desc:"Enable all tools from instance"'
     McpServer:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"ID"'
+          description: ID
         iconUrl:
           type: string
-          description: '@inject_tag: json:"iconUrl" desc:"Icon URL"'
+          description: Icon URL
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Name"'
+          description: Name
         nameEn:
           type: string
-          description: '@inject_tag: json:"nameEn" desc:"English name"'
+          description: English name
         categoryIds:
           type: array
           items:
             $ref: "#/components/schemas/Category"
-          description: '@inject_tag: json:"categoryIds" desc:"Category ID list"'
+          description: Category ID list
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"Description"'
+          description: Description
         descriptionEn:
           type: string
-          description: '@inject_tag: json:"descriptionEn" desc:"English description"'
+          description: English description
         status:
           type: integer
-          description: '@inject_tag: json:"status" desc:"Status"'
+          description: Status
           format: int32
         publishTime:
           type: string
-          description: '@inject_tag: json:"publishTime" desc:"Publish time"'
+          description: Publish time
         createTime:
           type: string
-          description: '@inject_tag: json:"createTime" desc:"Create time"'
+          description: Create time
         updateTime:
           type: string
-          description: '@inject_tag: json:"updateTime" desc:"Update time"'
+          description: Update time
         configTemplate:
           type: string
-          description: '@inject_tag: json:"configTemplate" desc:"Config template"'
+          description: Config template
         deployMode:
           type: integer
-          description: '@inject_tag: json:"deployMode" desc:"Deploy mode"'
+          description: Deploy mode
           format: int32
         mcpProtocol:
           type: integer
-          description: '@inject_tag: json:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: int32
         imageUrl:
           type: string
-          description: '@inject_tag: json:"imageUrl" desc:"Image URL"'
+          description: Image URL
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" desc:"Init script"'
+          description: Init script
         tags:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"tags" desc:"Tags"'
+          description: Tags
         githubStargazersCount:
           type: integer
-          description: '@inject_tag: json:"githubStargazersCount" desc:"Github Stargazers count"'
+          description: Github Stargazers count
           format: int32
         githubWatchersCount:
           type: integer
-          description: '@inject_tag: json:"githubWatchersCount" desc:"Github Watchers count"'
+          description: Github Watchers count
           format: int32
         githubForksCount:
           type: integer
-          description: '@inject_tag: json:"githubForksCount" desc:"Github Forks count"'
+          description: Github Forks count
           format: int32
         githubLicenseName:
           type: string
-          description: '@inject_tag: json:"githubLicenseName" desc:"Github License"'
+          description: Github License
         githubReadme:
           type: string
-          description: '@inject_tag: json:"githubReadme" desc:"Github Readme"'
+          description: Github Readme
         githubDefaultBranch:
           type: string
-          description: '@inject_tag: json:"githubDefaultBranch" desc:"Github Default branch"'
+          description: Github Default branch
         githubDefaultBranchLastTime:
           type: string
-          description: '@inject_tag: json:"githubDefaultBranchLastTime" desc:"Github Default branch last update time"'
+          description: Github Default branch last update time
         githubOwner:
           type: string
-          description: '@inject_tag: json:"githubOwner" desc:"Github Owner"'
+          description: Github Owner
         githubOwnerAvatarUrl:
           type: string
-          description: '@inject_tag: json:"githubOwnerAvatarUrl" desc:"Github Owner avatar URL"'
+          description: Github Owner avatar URL
         githubRepoUrl:
           type: string
-          description: '@inject_tag: json:"githubRepoUrl" desc:"Github Repo URL"'
+          description: Github Repo URL
     McpToken:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"Token ID"'
+          description: Token ID
         token:
           type: string
-          description: '@inject_tag: json:"token" desc:"Token content"'
+          description: Token content
         headers:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"headers" desc:"Optional custom headers"'
+          description: Optional custom headers
         enabled:
           type: boolean
-          description: '@inject_tag: json:"enabled" desc:"Whether to enable the token"'
+          description: Whether to enable the token
         expireAt:
           type: string
-          description: '@inject_tag: json:"expireAt" desc:"Expiration time"'
+          description: Expiration time
         publishAt:
           type: string
-          description: '@inject_tag: json:"publishAt" desc:"Publish time"'
+          description: Publish time
         usages:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"usages" desc:"List of usage scenarios"'
+          description: List of usage scenarios
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
       description: McpToken MCP token
     NodeInfo:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"节点名称"'
+          description: 节点名称
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"节点状态 (Ready, NotReady, Unknown)"'
+          description: 节点状态 (Ready, NotReady, Unknown)
         roles:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roles" desc:"节点角色 (master, worker)"'
+          description: 节点角色 (master, worker)
         version:
           type: string
-          description: '@inject_tag: json:"version" desc:"Kubelet 版本"'
+          description: Kubelet 版本
         internalIp:
           type: string
-          description: '@inject_tag: json:"internalIP" desc:"内部IP"'
+          description: 内部IP
         externalIp:
           type: string
-          description: '@inject_tag: json:"externalIP" desc:"外部IP"'
+          description: 外部IP
         operatingSystem:
           type: string
-          description: '@inject_tag: json:"operatingSystem" desc:"操作系统"'
+          description: 操作系统
         architecture:
           type: string
-          description: '@inject_tag: json:"architecture" desc:"架构"'
+          description: 架构
         kernelVersion:
           type: string
-          description: '@inject_tag: json:"kernelVersion" desc:"内核版本"'
+          description: 内核版本
         containerRuntime:
           type: string
-          description: '@inject_tag: json:"containerRuntime" desc:"容器运行时"'
+          description: 容器运行时
         allocatableMemory:
           type: string
-          description: '@inject_tag: json:"allocatableMemory" desc:"可分配内存"'
+          description: 可分配内存
         allocatableCpu:
           type: string
-          description: '@inject_tag: json:"allocatableCpu" desc:"可分配CPU"'
+          description: 可分配CPU
         allocatablePods:
           type: string
-          description: '@inject_tag: json:"allocatablePods" desc:"可分配Pod数量"'
+          description: 可分配Pod数量
         labels:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"labels" desc:"标签"'
+          description: 标签
         annotations:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"annotations" desc:"注解"'
+          description: 注解
         creationTime:
           type: string
-          description: '@inject_tag: json:"creationTime" desc:"创建时间"'
+          description: 创建时间
       description: NodeInfo 节点信息结构体
     OpenapiFileInfo:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"文档ID"'
+          description: 文档ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"文档名称"'
+          description: 文档名称
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"文档路径"'
+          description: 文档路径
         size:
           type: string
-          description: '@inject_tag: json:"size" desc:"文档大小"'
+          description: 文档大小
         type:
           enum:
             - OpenapiFileTypeUnspecified
             - OpenapiFileTypeJson
             - OpenapiFileTypeYaml
           type: string
-          description: '@inject_tag: json:"type" desc:"文档类型"'
+          description: 文档类型
           format: enum
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"更新时间"'
+          description: 更新时间
         baseOpenapiFileID:
           type: string
-          description: '@inject_tag: json:"baseOpenapiFileID" desc:"基于哪个 openapi 文档的id"'
+          description: 基于哪个 openapi 文档的id
       description: OpenapiFileInfo OpenAPI文档信息
     OpenapiFileListResponse:
       type: object
@@ -5305,17 +4898,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OpenapiFileInfo"
-          description: '@inject_tag: json:"list" desc:"OpenAPI文档列表"'
+          description: OpenAPI文档列表
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"总数量"'
+          description: 总数量
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"当前页码"'
+          description: 当前页码
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"每页数量"'
+          description: 每页数量
           format: int32
       description: OpenapiFileListResponse OpenAPI文档列表响应
     PVCInfo:
@@ -5323,73 +4916,73 @@ components:
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"PVC 名称"'
+          description: PVC 名称
         namespace:
           type: string
-          description: '@inject_tag: json:"namespace" desc:"命名空间"'
+          description: 命名空间
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"状态 (Pending, Bound, Lost)"'
+          description: 状态 (Pending, Bound, Lost)
         volumeName:
           type: string
-          description: '@inject_tag: json:"volumeName" desc:"绑定的卷名称"'
+          description: 绑定的卷名称
         storageClass:
           type: string
-          description: '@inject_tag: json:"storageClass" desc:"存储类名称"'
+          description: 存储类名称
         capacity:
           type: string
-          description: '@inject_tag: json:"capacity" desc:"容量"'
+          description: 容量
         accessModes:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"accessModes" desc:"访问模式"'
+          description: 访问模式
         labels:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"labels" desc:"标签"'
+          description: 标签
         creationTime:
           type: string
-          description: '@inject_tag: json:"creationTime" desc:"创建时间"'
+          description: 创建时间
         pods:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"pods" desc:"绑定的Pod数量"'
+          description: 绑定的Pod数量
       description: PVCInfo PVC 信息结构
     PageDeptsResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           allOf:
             - $ref: "#/components/schemas/PageSysDept"
-          description: '@inject_tag: json:"data" desc:"分页部门数据"'
+          description: 分页部门数据
       description: PageDeptsResponse 分页查询部门列表响应
     PageInfo:
       type: object
       properties:
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"当前页码"'
+          description: 当前页码
           format: int32
         size:
           type: integer
-          description: '@inject_tag: json:"size" desc:"每页大小"'
+          description: 每页大小
           format: int32
         total:
           type: string
-          description: '@inject_tag: json:"total" desc:"总记录数"'
+          description: 总记录数
         pages:
           type: integer
-          description: '@inject_tag: json:"pages" desc:"总页数"'
+          description: 总页数
           format: int32
       description: 分页信息
     PageSysDept:
@@ -5399,11 +4992,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"depts" desc:"部门列表"'
+          description: 部门列表
         pageInfo:
           allOf:
             - $ref: "#/components/schemas/PageInfo"
-          description: '@inject_tag: json:"pageInfo" desc:"分页信息"'
+          description: 分页信息
       description: PageSysDept 分页部门数据
     PageSysRole:
       type: object
@@ -5412,11 +5005,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SysRole"
-          description: '@inject_tag: json:"roles" desc:"角色列表"'
+          description: 角色列表
         pageInfo:
           allOf:
             - $ref: "#/components/schemas/PageInfo"
-          description: '@inject_tag: json:"pageInfo" desc:"分页信息"'
+          description: 分页信息
       description: 分页角色响应
     PageSysUser:
       type: object
@@ -5425,122 +5018,122 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SysUser"
-          description: '@inject_tag: json:"users" desc:"用户列表"'
+          description: 用户列表
         pageInfo:
           allOf:
             - $ref: "#/components/schemas/PageInfo"
-          description: '@inject_tag: json:"pageInfo" desc:"分页信息"'
+          description: 分页信息
       description: 分页用户响应
     PermissionTreeNode:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"权限ID"'
+          description: 权限ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"权限名称"'
+          description: 权限名称
         code:
           type: string
-          description: '@inject_tag: json:"code" desc:"权限编码"'
+          description: 权限编码
         type:
           type: integer
-          description: '@inject_tag: json:"type" desc:"权限类型"'
+          description: 权限类型
           format: int32
         parentId:
           type: string
-          description: '@inject_tag: json:"parentId" desc:"父权限ID"'
+          description: 父权限ID
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"路由路径"'
+          description: 路由路径
         component:
           type: string
-          description: '@inject_tag: json:"component" desc:"组件路径"'
+          description: 组件路径
         icon:
           type: string
-          description: '@inject_tag: json:"icon" desc:"图标"'
+          description: 图标
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序字段"'
+          description: 排序字段
           format: int32
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"权限状态"'
+          description: 权限状态
         activePath:
           type: string
-          description: '@inject_tag: json:"activePath" desc:"默认选中"'
+          description: 默认选中
         componentName:
           type: string
-          description: '@inject_tag: json:"componentName" desc:"组件名称"'
+          description: 组件名称
         hidden:
           type: boolean
-          description: '@inject_tag: json:"hidden" desc:"是否隐藏"'
+          description: 是否隐藏
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         iframe:
           type: boolean
-          description: '@inject_tag: json:"iframe" desc:"是否iframe"'
+          description: 是否iframe
         children:
           type: array
           items:
             $ref: "#/components/schemas/PermissionTreeNode"
-          description: '@inject_tag: json:"children" desc:"子权限列表"'
+          description: 子权限列表
       description: 权限树节点
     RefreshTokenRequest:
       type: object
       properties:
         refreshToken:
           type: string
-          description: '@inject_tag: json:"refreshToken" form:"refreshToken" desc:"刷新令牌"'
+          description: 刷新令牌
       description: Token刷新请求
     RefreshTokenResponse:
       type: object
       properties:
         token:
           type: string
-          description: '@inject_tag: json:"token" desc:"新的访问令牌"'
+          description: 新的访问令牌
         refreshToken:
           type: string
-          description: '@inject_tag: json:"refreshToken" desc:"新的刷新令牌"'
+          description: 新的刷新令牌
         expiresIn:
           type: string
-          description: '@inject_tag: json:"expiresIn" desc:"令牌过期时间(秒)"'
+          description: 令牌过期时间(秒)
       description: Token刷新响应
     RemoveDockerVolumeRequest:
       type: object
       properties:
         environmentId:
           type: integer
-          description: '@inject_tag: json:"environmentId" query:"environmentId" form:"environmentId" desc:"环境ID"'
+          description: 环境ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"卷名称"'
+          description: 卷名称
       description: RemoveDockerVolumeRequest
     RemoveDockerVolumeResponse:
       type: object
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"是否成功"'
+          description: 是否成功
       description: RemoveDockerVolumeResponse
     RestartRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"'
+          description: Instance ID
       description: RestartRequest restart instance request
     RestartResp:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"Instance name"'
+          description: Instance name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -5548,163 +5141,163 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"Instance status"'
+          description: Instance status
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Status message"'
+          description: Status message
       description: RestartResp restart instance response
     RoleQuery:
       type: object
       properties:
         blurry:
           type: string
-          description: '@inject_tag: json:"blurry" desc:"模糊查询(角色名称/编码)"'
+          description: 模糊查询(角色名称/编码)
         status:
           enum:
             - RoleStatusUnspecified
             - RoleStatusEnabled
             - RoleStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"角色状态"'
+          description: 角色状态
           format: enum
         createdAt:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间范围[开始时间, 结束时间]"'
+          description: 创建时间范围[开始时间, 结束时间]
       description: 查询条件
     ServiceInfo:
       type: object
       properties:
         id:
           type: integer
-          description: '@inject_tag: json:"id" desc:"服务ID"'
+          description: 服务ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"服务名称"'
+          description: 服务名称
         categoryIds:
           type: array
           items:
             type: integer
             format: int32
-          description: '@inject_tag: json:"categoryIds" desc:"服务分类ID列表"'
+          description: 服务分类ID列表
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"服务描述"'
+          description: 服务描述
         detail:
           type: string
-          description: '@inject_tag: json:"detail" desc:"服务详细信息"'
+          description: 服务详细信息
         secretTips:
           type: string
-          description: '@inject_tag: json:"secretTips" desc:"密钥提示信息"'
+          description: 密钥提示信息
         cloudApiUrl:
           type: string
-          description: '@inject_tag: json:"cloudApiUrl" desc:"云API地址"'
+          description: 云API地址
         iconUrl:
           type: string
-          description: '@inject_tag: json:"iconUrl" desc:"图标URL"'
+          description: 图标URL
         providerName:
           type: string
-          description: '@inject_tag: json:"providerName" desc:"服务提供方名称"'
+          description: 服务提供方名称
         providerContact:
           type: string
-          description: '@inject_tag: json:"providerContact" desc:"服务提供方联系方式"'
+          description: 服务提供方联系方式
         overview:
           type: string
-          description: '@inject_tag: json:"overview" desc:"服务概览"'
+          description: 服务概览
         configTemplate:
           type: string
-          description: '@inject_tag: json:"configTemplate" desc:"配置模板"'
+          description: 配置模板
         deployMode:
           type: string
-          description: '@inject_tag: json:"deployMode" desc:"部署模式"'
+          description: 部署模式
         codeUrl:
           type: string
-          description: '@inject_tag: json:"codeUrl" desc:"代码URL"'
+          description: 代码URL
         imageUrl:
           type: string
-          description: '@inject_tag: json:"imageUrl" desc:"镜像URL"'
+          description: 镜像URL
         publishTime:
           type: string
-          description: '@inject_tag: json:"publishTime" desc:"发布时间"'
+          description: 发布时间
         status:
           type: string
-          description: '@inject_tag: json:"status" desc:"服务状态"'
+          description: 服务状态
         tools:
           type: array
           items:
             $ref: "#/components/schemas/ServiceInfo_ToolInfo"
-          description: '@inject_tag: json:"tools" desc:"工具列表"'
+          description: 工具列表
         subscribeStatus:
           type: string
-          description: '@inject_tag: json:"subscribeStatus" desc:"订阅状态"'
+          description: 订阅状态
         categoryIdsJson:
           type: string
-          description: '@inject_tag: json:"categoryIdsJson" desc:"分类ID JSON字符串"'
+          description: 分类ID JSON字符串
       description: 服务详情
     ServiceInfo_ParamInfo:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"参数名称"'
+          description: 参数名称
         type:
           type: string
-          description: '@inject_tag: json:"type" desc:"参数类型"'
+          description: 参数类型
         required:
           type: boolean
-          description: '@inject_tag: json:"required" desc:"是否必填"'
+          description: 是否必填
       description: 参数信息
     ServiceInfo_ToolInfo:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"工具名称"'
+          description: 工具名称
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"工具描述"'
+          description: 工具描述
         params:
           type: array
           items:
             $ref: "#/components/schemas/ServiceInfo_ParamInfo"
-          description: '@inject_tag: json:"params" desc:"参数列表"'
+          description: 参数列表
       description: 工具信息
     StatisticalResponse:
       type: object
       properties:
         totalInstances:
           type: integer
-          description: '@inject_tag: json:"totalInstances" desc:"实例总数"'
+          description: 实例总数
           format: int32
         activeInstances:
           type: integer
-          description: '@inject_tag: json:"activeInstances" desc:"已启用实例数量"'
+          description: 已启用实例数量
           format: int32
         inactiveInstances:
           type: integer
-          description: '@inject_tag: json:"inactiveInstances" desc:"已禁用实例数量"'
+          description: 已禁用实例数量
           format: int32
         proxyInstances:
           type: integer
-          description: '@inject_tag: json:"proxyInstances" desc:"代理模式实例数量"'
+          description: 代理模式实例数量
           format: int32
         directInstances:
           type: integer
-          description: '@inject_tag: json:"directInstances" desc:"直连模式实例数量"'
+          description: 直连模式实例数量
           format: int32
         hostingInstances:
           type: integer
-          description: '@inject_tag: json:"hostingInstances" desc:"托管模式实例数量"'
+          description: 托管模式实例数量
           format: int32
         totalEnvironments:
           type: integer
-          description: '@inject_tag: json:"totalEnvironments" desc:"环境总数"'
+          description: 环境总数
           format: int32
       description: StatisticalResponse 统计响应
     Status:
@@ -5716,57 +5309,68 @@ components:
           format: int32
         message:
           type: string
-          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+          description:
+            A developer-facing error message, which should be in English.
+            Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details]
+            field, or localized by the client.
         details:
           type: array
           items:
             $ref: "#/components/schemas/GoogleProtobufAny"
-          description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
-      description: "The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors)."
+          description:
+            A list of messages that carry the error details.  There is
+            a common set of message types for APIs to use.
+      description:
+        "The `Status` type defines a logical error model that is suitable
+        for different programming environments, including REST APIs and RPC APIs.
+        It is used by [gRPC](https://github.com/grpc). Each `Status` message contains
+        three pieces of data: error code, error message, and error details. You can
+        find out more about this error model and how to work with it in the [API Design
+        Guide](https://cloud.google.com/apis/design/errors)."
     StorageClassInfo:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"存储类型名称"'
+          description: 存储类型名称
         provisioner:
           type: string
-          description: '@inject_tag: json:"provisioner" desc:"动态 provisioner"'
+          description: 动态 provisioner
         reclaimPolicy:
           type: string
-          description: '@inject_tag: json:"reclaimPolicy" desc:"回收策略"'
+          description: 回收策略
         volumeBindingMode:
           type: string
-          description: '@inject_tag: json:"volumeBindingMode" desc:"卷绑定模式"'
+          description: 卷绑定模式
         parameters:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"parameters" desc:"参数"'
+          description: 参数
         allowVolumeExpansion:
           type: boolean
-          description: '@inject_tag: json:"allowVolumeExpansion" desc:"是否支持动态扩容"'
+          description: 是否支持动态扩容
         mountOptions:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"mountOptions" desc:"挂载选项"'
+          description: 挂载选项
       description: StorageClassInfo 存储类型信息结构体
     SysDept:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"部门ID"'
+          description: 部门ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"部门名称"'
+          description: 部门名称
         parentId:
           type: string
-          description: '@inject_tag: json:"parentId" desc:"父部门ID"'
+          description: 父部门ID
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序"'
+          description: 排序
           format: int32
         status:
           enum:
@@ -5774,97 +5378,97 @@ components:
             - DeptStatusDisabled
             - DeptStatusEnabled
           type: string
-          description: '@inject_tag: json:"status" desc:"状态"'
+          description: 状态
           format: enum
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"更新时间"'
+          description: 更新时间
         createdBy:
           type: string
-          description: '@inject_tag: json:"createdBy" desc:"创建人"'
+          description: 创建人
         updatedBy:
           type: string
-          description: '@inject_tag: json:"updatedBy" desc:"更新人"'
+          description: 更新人
         children:
           type: array
           items:
             $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"children,omitempty" desc:"子部门列表"'
+          description: 子部门列表
       description: SysDept 系统部门信息
     SysRole:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"角色ID"'
+          description: 角色ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"角色名称"'
+          description: 角色名称
         code:
           type: string
-          description: '@inject_tag: json:"code" desc:"角色编码"'
+          description: 角色编码
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"角色描述"'
+          description: 角色描述
         status:
           enum:
             - RoleStatusUnspecified
             - RoleStatusEnabled
             - RoleStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"角色状态"'
+          description: 角色状态
           format: enum
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序字段"'
+          description: 排序字段
           format: int32
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"更新时间"'
+          description: 更新时间
         createdBy:
           type: string
-          description: '@inject_tag: json:"createdBy" desc:"创建者"'
+          description: 创建者
         updatedBy:
           type: string
-          description: '@inject_tag: json:"updatedBy" desc:"更新者"'
+          description: 更新者
       description: 角色信息
     SysUser:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"用户ID"'
+          description: 用户ID
         username:
           type: string
-          description: '@inject_tag: json:"username" desc:"用户名"'
+          description: 用户名
         fullName:
           type: string
-          description: '@inject_tag: json:"fullName" desc:"用户全名"'
+          description: 用户全名
         password:
           type: string
-          description: '@inject_tag: json:"password" desc:"密码"'
+          description: 密码
         email:
           type: string
-          description: '@inject_tag: json:"email" desc:"电子邮箱"'
+          description: 电子邮箱
         phone:
           type: string
-          description: '@inject_tag: json:"phone" desc:"手机号码"'
+          description: 手机号码
         avatar:
           type: string
-          description: '@inject_tag: json:"avatar" desc:"头像URL"'
+          description: 头像URL
         status:
           enum:
             - UserStatusUnspecified
             - UserStatusEnabled
             - UserStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"用户状态"'
+          description: 用户状态
           format: enum
         source:
           enum:
@@ -5873,74 +5477,74 @@ components:
             - UserSourceRegister
             - UserSourceImport
           type: string
-          description: '@inject_tag: json:"source" desc:"用户来源"'
+          description: 用户来源
           format: enum
         deptId:
           type: string
-          description: '@inject_tag: json:"deptId" desc:"部门ID"'
+          description: 部门ID
         deptName:
           type: string
-          description: '@inject_tag: json:"deptName" desc:"部门名称"'
+          description: 部门名称
         roleIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
+          description: 角色ID列表
         roleNames:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleNames" desc:"角色名称列表"'
+          description: 角色名称列表
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间"'
+          description: 创建时间
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" desc:"更新时间"'
+          description: 更新时间
         createdBy:
           type: string
-          description: '@inject_tag: json:"createdBy" desc:"创建者"'
+          description: 创建者
         updatedBy:
           type: string
-          description: '@inject_tag: json:"updatedBy" desc:"更新者"'
+          description: 更新者
       description: 用户信息
     TemplateCreateRequest:
       type: object
       properties:
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         port:
           type: integer
-          description: '@inject_tag: json:"port" form:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" form:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" form:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" form:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" form:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" form:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" form:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"'
+          description: Package ID, optional
         accessType:
           enum:
             - AccessTypeUnknown
@@ -5948,20 +5552,20 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         imgAddress:
           type: string
-          description: '@inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"'
+          description: Image address
         mcpServerId:
           type: string
-          description: '@inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP server ID"'
+          description: MCP server ID
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -5969,14 +5573,14 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"'
+          description: OpenAPI base URL
         sourceType:
           enum:
             - SourceTypeUnknown
@@ -5985,18 +5589,18 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type"'
+          description: Template source type
           format: enum
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
       description: TemplateCreateRequest template create request
     TemplateCreateResp:
       type: object
       properties:
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
       description: TemplateCreateResp template create response
     TemplateDeleteResp:
@@ -6008,42 +5612,42 @@ components:
       properties:
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" form:"templateId" uri:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         port:
           type: integer
-          description: '@inject_tag: json:"port" form:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" form:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" form:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" form:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" form:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" form:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" form:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"'
+          description: Package ID, optional
         accessType:
           enum:
             - AccessTypeUnknown
@@ -6051,20 +5655,20 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         imgAddress:
           type: string
-          description: '@inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"'
+          description: Image address
         mcpServerId:
           type: string
-          description: '@inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP server ID"'
+          description: MCP server ID
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -6072,23 +5676,23 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         createdAt:
           type: string
-          description: '@inject_tag: json:"createdAt" form:"createdAt" desc:"Created at"'
+          description: Created at
         updatedAt:
           type: string
-          description: '@inject_tag: json:"updatedAt" form:"updatedAt" desc:"Updated at"'
+          description: Updated at
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"'
+          description: OpenAPI base URL
         sourceType:
           enum:
             - SourceTypeUnknown
@@ -6097,7 +5701,7 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type (custom/openapi)"'
+          description: Template source type (custom/openapi)
           format: enum
       description: TemplateDetailResp template detail response
     TemplateEditRequest:
@@ -6105,42 +5709,42 @@ components:
       properties:
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" form:"templateId" uri:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         port:
           type: integer
-          description: '@inject_tag: json:"port" form:"port" desc:"Port"'
+          description: Port
           format: int32
         initScript:
           type: string
-          description: '@inject_tag: json:"initScript" form:"initScript" desc:"Initialization script"'
+          description: Initialization script
         command:
           type: string
-          description: '@inject_tag: json:"command" form:"command" desc:"Startup command"'
+          description: Startup command
         environmentVariables:
           type: object
           additionalProperties:
             type: string
-          description: '@inject_tag: json:"environmentVariables" form:"environmentVariables" desc:"Environment variables"'
+          description: Environment variables
         volumeMounts:
           type: array
           items:
             $ref: "#/components/schemas/VolumeMount"
-          description: '@inject_tag: json:"volumeMounts" form:"volumeMounts" desc:"Volume mount list"'
+          description: Volume mount list
         startupTimeout:
           type: integer
-          description: '@inject_tag: json:"startupTimeout" form:"startupTimeout" desc:"Startup timeout (seconds)"'
+          description: Startup timeout (seconds)
           format: int32
         runningTimeout:
           type: integer
-          description: '@inject_tag: json:"runningTimeout" form:"runningTimeout" desc:"Running timeout (seconds)"'
+          description: Running timeout (seconds)
           format: int32
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId,omitempty" form:"packageId" desc:"Package ID, optional"'
+          description: Package ID, optional
         accessType:
           enum:
             - AccessTypeUnknown
@@ -6148,20 +5752,20 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         mcpServers:
           type: string
-          description: '@inject_tag: json:"mcpServers" form:"mcpServers" desc:"MCP server configuration"'
+          description: MCP server configuration
         imgAddress:
           type: string
-          description: '@inject_tag: json:"imgAddress" form:"imgAddress" desc:"Image address"'
+          description: Image address
         mcpServerId:
           type: string
-          description: '@inject_tag: json:"mcpServerId" form:"mcpServerId" desc:"MCP server ID"'
+          description: MCP server ID
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Notes"'
+          description: Notes
         mcpProtocol:
           enum:
             - McpProtocolUnknown
@@ -6169,14 +5773,14 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"OpenAPI base URL"'
+          description: OpenAPI base URL
         sourceType:
           enum:
             - SourceTypeUnknown
@@ -6185,37 +5789,37 @@ components:
             - CUSTOM
             - OPENAPI
           type: string
-          description: '@inject_tag: json:"sourceType" form:"sourceType" desc:"Template source type (custom/openapi)"'
+          description: Template source type (custom/openapi)
           format: enum
         servicePath:
           type: string
-          description: '@inject_tag: json:"servicePath" form:"servicePath" desc:"Service path"'
+          description: Service path
       description: TemplateEditRequest template edit request
     TemplateEditResp:
       type: object
       properties:
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: TemplateEditResp template edit response
     TemplateListRequest:
       type: object
       properties:
         page:
           type: integer
-          description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
+          description: Page number
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
+          description: Page size
           format: int32
         templateId:
           type: integer
-          description: '@inject_tag: json:"templateId" form:"templateId" desc:"Template ID"'
+          description: Template ID
           format: int32
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Template name"'
+          description: Template name
         accessType:
           enum:
             - AccessTypeUnknown
@@ -6223,7 +5827,7 @@ components:
             - PROXY
             - HOSTING
           type: string
-          description: '@inject_tag: json:"accessType" form:"accessType" desc:"Deployment mode"'
+          description: Deployment mode
           format: enum
         mcpProtocol:
           enum:
@@ -6232,7 +5836,7 @@ components:
             - STREAMABLE_HTTP
             - STDIO
           type: string
-          description: '@inject_tag: json:"mcpProtocol" form:"mcpProtocol" desc:"MCP protocol"'
+          description: MCP protocol
           format: enum
       description: TemplateListRequest template list request
     TemplateListResp:
@@ -6242,18 +5846,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TemplateDetailResp"
-          description: '@inject_tag: json:"list" desc:"Template list"'
+          description: Template list
         total:
           type: integer
-          description: '@inject_tag: json:"total" desc:"Total records"'
+          description: Total records
           format: int32
         page:
           type: integer
-          description: '@inject_tag: json:"page" desc:"Current page number"'
+          description: Current page number
           format: int32
         pageSize:
           type: integer
-          description: '@inject_tag: json:"pageSize" desc:"Page size"'
+          description: Page size
           format: int32
       description: TemplateListResp template list response
     TestConnectionRequest:
@@ -6282,7 +5886,7 @@ components:
       properties:
         id:
           type: integer
-          description: '@inject_tag: json:"id" uri:"id" desc:"environment ID"'
+          description: environment ID
           format: int32
       description: TestConnectivityRequest connectivity test request
     TestConnectivityResponse:
@@ -6290,47 +5894,47 @@ components:
       properties:
         success:
           type: boolean
-          description: '@inject_tag: json:"success" desc:"test success status"'
+          description: test success status
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"test result message"'
+          description: test result message
       description: TestConnectivityResponse connectivity test response
     TokenControlRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" form:"enabledToken" desc:"Whether to enable token"'
+          description: Whether to enable token
       description: TokenControlRequest control token enable/disable request
     TokenControlResponse:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         enabledToken:
           type: boolean
-          description: '@inject_tag: json:"enabledToken" desc:"Whether token is enabled"'
+          description: Whether token is enabled
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: TokenControlResponse control token enable/disable response
     TokenDeleteRequest:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"Token ID"'
+          description: Token ID
       description: TokenDeleteRequest delete token request
     TokenDeleteResponse:
       type: object
       properties:
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: TokenDeleteResponse delete token response
     TokenEditRequest:
       type: object
@@ -6339,29 +5943,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/McpToken"
-          description: '@inject_tag: json:"tokens" form:"tokens" desc:"Token list"'
+          description: Token list
       description: TokenEditRequest edit tokens request
     TokenEditResponse:
       type: object
       properties:
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"Response message"'
+          description: Response message
       description: TokenEditResponse edit tokens response
     TokenListByInstanceIDRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         token:
           type: string
-          description: '@inject_tag: json:"token" form:"token" desc:"Token"'
+          description: Token
         usages:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"usages" form:"usages" desc:"Token usage scenarios"'
+          description: Token usage scenarios
       description: TokenListByInstanceIDRequest token list request
     TokenListByInstanceIDResponse:
       type: object
@@ -6370,14 +5974,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/McpToken"
-          description: '@inject_tag: json:"tokens" desc:"Token list"'
+          description: Token list
       description: TokenListByInstanceIDResponse token list response
     UpdateAvatarRequest:
       type: object
       properties:
         image:
           type: string
-          description: '@inject_tag: json:"image" form:"image" desc:"头像文件"'
+          description: 头像文件
           format: bytes
       description: 更新头像请求
     UpdateAvatarResponse:
@@ -6385,66 +5989,66 @@ components:
       properties:
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"图片路径"'
+          description: 图片路径
         size:
           type: string
-          description: '@inject_tag: json:"size" desc:"图片大小"'
+          description: 图片大小
         mime:
           type: string
-          description: '@inject_tag: json:"mime" desc:"图片MIME类型"'
+          description: 图片MIME类型
       description: 更新头像响应
     UpdateDeptResponse:
       type: object
       properties:
         code:
           type: integer
-          description: '@inject_tag: json:"code" desc:"响应码"'
+          description: 响应码
           format: int32
         message:
           type: string
-          description: '@inject_tag: json:"message" desc:"响应消息"'
+          description: 响应消息
         data:
           allOf:
             - $ref: "#/components/schemas/SysDept"
-          description: '@inject_tag: json:"data" desc:"部门数据"'
+          description: 部门数据
       description: UpdateDeptResponse 更新部门响应
     UpdateOpenapiRequest:
       type: object
       properties:
         instanceId:
           type: string
-          description: '@inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"'
+          description: Instance ID
         name:
           type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Instance name"'
+          description: Instance name
         openapiFileID:
           type: string
-          description: '@inject_tag: json:"openapiFileID,omitempty" form:"openapiFileID" desc:"OpenAPI document ID, required"'
+          description: OpenAPI document ID, required
         notes:
           type: string
-          description: '@inject_tag: json:"notes" form:"notes" desc:"Description"'
+          description: Description
         chooseOpenapiFileID:
           type: string
-          description: '@inject_tag: json:"chooseOpenapiFileID" form:"chooseOpenapiFileID" desc:"Selected OpenAPI document ID"'
+          description: Selected OpenAPI document ID
         iconPath:
           type: string
-          description: '@inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"'
+          description: Icon path
         openapiBaseUrl:
           type: string
-          description: '@inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"Base access path"'
+          description: Base access path
       description: UpdateOpenapiRequest edit instance request
     UpdatePasswordRequest:
       type: object
       properties:
         oldPassword:
           type: string
-          description: '@inject_tag: json:"oldPassword" desc:"原密码"'
+          description: 原密码
         newPassword:
           type: string
-          description: '@inject_tag: json:"newPassword" desc:"新密码"'
+          description: 新密码
         confirmPassword:
           type: string
-          description: '@inject_tag: json:"confirmPassword" desc:"确认新密码"'
+          description: 确认新密码
       description: 更新密码请求
     UpdatePasswordResponse:
       type: object
@@ -6490,33 +6094,33 @@ components:
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"角色ID"'
+          description: 角色ID
         name:
           type: string
-          description: '@inject_tag: json:"name" desc:"角色名称"'
+          description: 角色名称
         code:
           type: string
-          description: '@inject_tag: json:"code" desc:"角色编码"'
+          description: 角色编码
         description:
           type: string
-          description: '@inject_tag: json:"description" desc:"角色描述"'
+          description: 角色描述
         status:
           enum:
             - RoleStatusUnspecified
             - RoleStatusEnabled
             - RoleStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"角色状态"'
+          description: 角色状态
           format: enum
         sort:
           type: integer
-          description: '@inject_tag: json:"sort" desc:"排序字段"'
+          description: 排序字段
           format: int32
         permissionIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"permissionIds" desc:"权限ID列表"'
+          description: 权限ID列表
       description: 更新角色请求
     UpdateRoleResponse:
       type: object
@@ -6524,71 +6128,42 @@ components:
         role:
           allOf:
             - $ref: "#/components/schemas/SysRole"
-          description: '@inject_tag: json:"role" desc:"更新后的角色信息"'
+          description: 更新后的角色信息
       description: 更新角色响应
-    UpdateSessionRequest:
-      type: object
-      properties:
-        id:
-          type: string
-          description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
-        name:
-          type: string
-          description: '@inject_tag: json:"name" form:"name" desc:"Name"'
-        toolsConfig:
-          type: string
-          description: '@inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config"'
-        maxContext:
-          type: integer
-          description: '@inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"'
-          format: int32
-        modelAccessID:
-          type: string
-          description: '@inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"'
-        modelName:
-          type: string
-          description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
-    UpdateSessionResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-            - $ref: "#/components/schemas/AiSession"
-          description: '@inject_tag: json:"session" desc:"Session"'
     UpdateUserRequest:
       type: object
       properties:
         id:
           type: string
-          description: '@inject_tag: json:"id" desc:"用户ID"'
+          description: 用户ID
         fullName:
           type: string
-          description: '@inject_tag: json:"fullName" desc:"用户全名"'
+          description: 用户全名
         email:
           type: string
-          description: '@inject_tag: json:"email" desc:"电子邮箱"'
+          description: 电子邮箱
         phone:
           type: string
-          description: '@inject_tag: json:"phone" desc:"手机号码"'
+          description: 手机号码
         avatar:
           type: string
-          description: '@inject_tag: json:"avatar" desc:"头像URL"'
+          description: 头像URL
         status:
           enum:
             - UserStatusUnspecified
             - UserStatusEnabled
             - UserStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"用户状态"'
+          description: 用户状态
           format: enum
         deptId:
           type: string
-          description: '@inject_tag: json:"deptId" desc:"部门ID"'
+          description: 部门ID
         roleIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
+          description: 角色ID列表
       description: 更新用户请求
     UpdateUserResponse:
       type: object
@@ -6596,29 +6171,14 @@ components:
         user:
           allOf:
             - $ref: "#/components/schemas/SysUser"
-          description: '@inject_tag: json:"user" desc:"更新后的用户信息"'
+          description: 更新后的用户信息
       description: 更新用户响应
-    UploadFileRequest:
-      type: object
-      properties: {}
-    UploadFileResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: '@inject_tag: json:"id" desc:"File ID"'
-        url:
-          type: string
-          description: '@inject_tag: json:"url" desc:"File URL (local or remote)"'
-        name:
-          type: string
-          description: '@inject_tag: json:"name" desc:"Original Name"'
     UploadImageRequest:
       type: object
       properties:
         image:
           type: string
-          description: '@inject_tag: json:"image" form:"image" desc:"图片文件"'
+          description: 图片文件
           format: bytes
       description: UploadImageRequest 上传图片请求
     UploadImageResponse:
@@ -6626,41 +6186,41 @@ components:
       properties:
         path:
           type: string
-          description: '@inject_tag: json:"path" desc:"图片路径"'
+          description: 图片路径
         size:
           type: string
-          description: '@inject_tag: json:"size" desc:"图片大小"'
+          description: 图片大小
         mime:
           type: string
-          description: '@inject_tag: json:"mime" desc:"图片MIME类型"'
+          description: 图片MIME类型
       description: UploadImageResponse 上传图片响应
     UploadOpenapiFileRequest:
       type: object
       properties:
         file:
           type: string
-          description: '@inject_tag: form:"file" binding:"required" desc:"上传文件"'
+          description: 上传文件
           format: bytes
         baseOpenapiFileID:
           type: string
-          description: '@inject_tag: form:"baseOpenapiFileID" binding:"required" desc:"基于哪个 openapi file"'
+          description: 基于哪个 openapi file
       description: UploadOpenapiFileRequest OpenAPI文档上传请求
     UploadOpenapiFileResponse:
       type: object
       properties:
         openapiFileId:
           type: string
-          description: '@inject_tag: json:"openapiFileId" desc:"OpenAPI文档ID"'
+          description: OpenAPI文档ID
         filePath:
           type: string
-          description: '@inject_tag: json:"filePath" desc:"文件路径"'
+          description: 文件路径
         fileType:
           enum:
             - OpenapiFileTypeUnspecified
             - OpenapiFileTypeJson
             - OpenapiFileTypeYaml
           type: string
-          description: '@inject_tag: json:"fileType" desc:"文件类型"'
+          description: 文件类型
           format: enum
       description: UploadOpenapiFileResponse OpenAPI文档上传响应
     UploadPackageRequest:
@@ -6668,7 +6228,7 @@ components:
       properties:
         file:
           type: string
-          description: '@inject_tag: form:"file" binding:"required" desc:"上传文件"'
+          description: 上传文件
           format: bytes
       description: UploadPackageRequest 代码包上传请求
     UploadPackageResponse:
@@ -6676,81 +6236,81 @@ components:
       properties:
         packageId:
           type: string
-          description: '@inject_tag: json:"packageId" desc:"包ID"'
+          description: 包ID
         packagePath:
           type: string
-          description: '@inject_tag: json:"packagePath" desc:"包路径"'
+          description: 包路径
       description: UploadPackageResponse 代码包上传响应
     UserInfo:
       type: object
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" desc:"用户ID"'
+          description: 用户ID
         username:
           type: string
-          description: '@inject_tag: json:"username" desc:"用户名"'
+          description: 用户名
         nickname:
           type: string
-          description: '@inject_tag: json:"nickname" desc:"昵称"'
+          description: 昵称
         email:
           type: string
-          description: '@inject_tag: json:"email" desc:"邮箱"'
+          description: 邮箱
         phone:
           type: string
-          description: '@inject_tag: json:"phone" desc:"手机号"'
+          description: 手机号
         avatar:
           type: string
-          description: '@inject_tag: json:"avatar" desc:"头像"'
+          description: 头像
         deptId:
           type: string
-          description: '@inject_tag: json:"deptId" desc:"部门ID"'
+          description: 部门ID
         deptName:
           type: string
-          description: '@inject_tag: json:"deptName" desc:"部门名称"'
+          description: 部门名称
         roleIds:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
+          description: 角色ID列表
         roleNames:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"roleNames" desc:"角色名称列表"'
+          description: 角色名称列表
       description: 用户信息
     UserQuery:
       type: object
       properties:
         blurry:
           type: string
-          description: '@inject_tag: json:"blurry" desc:"模糊查询(用户名/邮箱)"'
+          description: 模糊查询(用户名/邮箱)
         deptId:
           type: string
-          description: '@inject_tag: json:"deptId" desc:"部门ID"'
+          description: 部门ID
         status:
           enum:
             - UserStatusUnspecified
             - UserStatusEnabled
             - UserStatusDisabled
           type: string
-          description: '@inject_tag: json:"status" desc:"用户状态"'
+          description: 用户状态
           format: enum
         createdAt:
           type: array
           items:
             type: string
-          description: '@inject_tag: json:"createdAt" desc:"创建时间范围[开始时间, 结束时间]"'
+          description: 创建时间范围[开始时间, 结束时间]
       description: 查询条件
     UserRole:
       type: object
       properties:
         userId:
           type: string
-          description: '@inject_tag: json:"userId" form:"userId" uri:"userId" desc:"用户ID"'
+          description: 用户ID
         roleId:
           type: string
-          description: '@inject_tag: json:"roleId" form:"roleId" uri:"roleId" desc:"角色ID"'
+          description: 角色ID
       description: UserRole 用户角色关联信息
     UserSpace:
       type: object
@@ -6779,46 +6339,45 @@ components:
       properties:
         valid:
           type: boolean
-          description: '@inject_tag: json:"valid" desc:"是否有效"'
+          description: 是否有效
         userInfo:
           allOf:
             - $ref: "#/components/schemas/UserInfo"
-          description: '@inject_tag: json:"userInfo" desc:"用户信息"'
+          description: 用户信息
         loginInfo:
           allOf:
             - $ref: "#/components/schemas/LoginInfo"
-          description: '@inject_tag: json:"loginInfo" desc:"登录信息"'
+          description: 登录信息
       description: Token校验响应
     VolumeMount:
       type: object
       properties:
         type:
           type: string
-          description: '@inject_tag: json:"type" desc:"Volume type: hostPath, pvc, volume"'
+          description: "Volume type: hostPath, pvc, volume"
         mountPath:
           type: string
-          description: '@inject_tag: json:"mountPath" desc:"Mount path"'
+          description: Mount path
         readOnly:
           type: boolean
-          description: '@inject_tag: json:"readOnly" desc:"Read only"'
+          description: Read only
         subPath:
           type: string
-          description: '@inject_tag: json:"subPath" desc:"Sub path"'
+          description: Sub path
         pvcName:
           type: string
-          description: '@inject_tag: json:"pvcName" desc:"PVC name"'
+          description: PVC name
         hostPath:
           type: string
-          description: '@inject_tag: json:"hostPath" desc:"Host path (required for hostPath type)"'
+          description: Host path (required for hostPath type)
         nodeName:
           type: string
-          description: '@inject_tag: json:"nodeName" desc:"Node name (required for hostPath type)"'
+          description: Node name (required for hostPath type)
         volumeName:
           type: string
-          description: '@inject_tag: json:"volumeName" desc:"Volume name (required for volume type)"'
+          description: Volume name (required for volume type)
       description: VolumeMount volume mount configuration
 tags:
-  - name: AiSessionService
   - name: CodeService
     description: CodeService 代码管理服务
   - name: DashboardService
@@ -6850,3 +6409,6 @@ tags:
     description: 用户角色服务
   - name: UserService
     description: 用户服务
+servers:
+  - url: https://DOMAIN/api/market
+    description: API Server
