@@ -162,6 +162,7 @@ func (a *App) setupRoutes() {
 
 	// User related routes
 	userGroup := authzGroup.Group("/users")
+	userGroup.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
 	{
 		userGroup.POST("", userService.CreateUser)
 		userGroup.GET("/:id", userService.GetUserById)
