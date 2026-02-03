@@ -44,8 +44,8 @@
         "authTitle": "Menu Authorization"
       },
       "operation": {
-        "view": "View Users",
-        "auth": "Menu Auth",
+        "view": "Users",
+        "auth": "Menu",
         "edit": "Edit",
         "delete": "Delete"
       },
