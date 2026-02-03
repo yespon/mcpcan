@@ -100,15 +100,17 @@ const formData = ref<any>({
   confirmPassword: '',
 })
 const rules = ref({
-  newPassword: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
-  confirmPassword: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  newPassword: [{ required: true, message: t('login.message.password.required'), trigger: 'blur' }],
+  confirmPassword: [
+    { required: true, message: t('login.message.password.confirm'), trigger: 'blur' },
+  ],
 })
 const imageUrl = ref('')
-const { logout } = useUserStore()
+const { logout, validateInfo } = useUserStore()
 const { jumpBack } = useRouterHooks()
 
 // 上传成功
-const handleAvatarSuccess = (
+const handleAvatarSuccess = async (
   response: { code: number; message: string },
   uploadFile: { raw: Blob | MediaSource },
 ) => {
@@ -117,6 +119,7 @@ const handleAvatarSuccess = (
     return
   }
   imageUrl.value = URL.createObjectURL(uploadFile.raw!)
+  validateInfo()
 }
 
 /**
