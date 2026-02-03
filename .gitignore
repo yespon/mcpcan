@@ -11,6 +11,11 @@
 .DS_Store
 .agent/*
 .vscode/docs/*
+.vscode/docs
+.opencode
+.amazonq
+.trae
+openspec
 
 # Test binary, built with `go test -c`
 *.test
@@ -52,5 +57,3 @@ backend/test/go-test/*
 # .agent
 .agent/
 
-# .vscode
-.vscode/docs
