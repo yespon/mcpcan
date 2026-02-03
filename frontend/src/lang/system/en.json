@@ -11,6 +11,7 @@
       "columns": {
         "name": "Name",
         "deptSort": "Sort",
+        "status": "Status",
         "createTime": "Create Time"
       },
       "placeholder": {
@@ -66,6 +67,7 @@
       "operation": {
         "add": "Add",
         "new": "New",
+        "update": "Update User",
         "edit": "Edit",
         "delete": "Delete"
       },

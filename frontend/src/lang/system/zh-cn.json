@@ -11,6 +11,7 @@
       "columns": {
         "name": "名称",
         "deptSort": "排序",
+        "status": "状态",
         "createTime": "创建时间"
       },
       "placeholder": {
@@ -21,6 +22,7 @@
       },
       "formData": {
         "title": "新建部门",
+        "edit": "编辑部门",
         "name": "部门名称",
         "imageUrl": "图标",
         "deptSort": "部门排序",
@@ -65,7 +67,8 @@
       },
       "operation": {
         "add": "添加用户",
-        "new": " 新建用户",
+        "new": " 新增用户",
+        "update": "编辑用户",
         "edit": "编辑",
         "delete": "删除"
       },
