@@ -5,7 +5,12 @@
 *.so
 *.dylib
 
+# IDEA
 .trae
+.idea
+.DS_Store
+.agent/*
+.vscode/docs/*
 
 # Test binary, built with `go test -c`
 *.test
@@ -42,9 +47,8 @@ cmd/**/data/
 cmd/**/init-data/
 cmd/**/logs/
 
-.idea
-.DS_Store
-
+# backend test
+backend/test/go-test/*
 # .agent
 .agent/
 

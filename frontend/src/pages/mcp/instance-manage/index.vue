@@ -128,7 +128,7 @@
               <div class="flex-sub ml-2 ellipsis-two">{{ row.instanceName }}</div>
               <template #content>
                 <div class="title-instance">
-                  <div>{{ row.instanceName }}</div>
+                  <div class="text-bold text-sm">{{ row.instanceName }}</div>
                   <div class="text-primary text-bold">ID:{{ row.instanceId }}</div>
                   <div class="text-success text-bold">
                     {{ t('mcp.instance.containerName') }}：{{ row.containerName }}
@@ -227,8 +227,8 @@
               class="base-btn-link"
               @click="
                 row.status === InstanceStatus.INACTIVE
-                  ? handleRestartInstance(row)
-                  : handleStopInstance(row)
+                  ? handleRestartInstance(row.instanceId)
+                  : handleStopInstance(row.instanceId)
               "
             >
               {{
@@ -243,7 +243,7 @@
               size="small"
               link
               class="base-btn-link"
-              @click="handleRestartInstance(row)"
+              @click="handleRestartInstance(row.instanceId)"
             >
               {{ t('mcp.instance.action.reStart') }}
             </el-button>
@@ -257,7 +257,12 @@
             >
               {{ t('mcp.instance.action.probe') }}
             </el-button>
-            <el-button size="small" type="danger" link @click="handleDeleteInstance(row)">
+            <el-button
+              size="small"
+              type="danger"
+              link
+              @click="handleDeleteInstance(row.instanceId)"
+            >
               {{ t('mcp.instance.action.delete') }}
             </el-button>
           </div>
@@ -279,43 +284,52 @@
                 </div>
                 <div class="flex-grow-1 flex flex-col">
                   <div class="flex justify-between">
-                    <div class="flex">
-                      <div class="max-w-[120px] u-line-1 font-bold text-[16px] cursor-pointer">
-                        <el-tooltip :content="row.instanceName" placement="top" trigger="click">
+                    <div class="flex items-center flex-grow-1">
+                      <div class="max-w-[110px] u-line-1 font-bold text-[16px] cursor-pointer">
+                        <el-tooltip placement="top">
                           {{ row.instanceName }}
+                          <template #content>
+                            <div class="title-instance">
+                              <div class="text-bold text-sm">{{ row.instanceName }}</div>
+                              <div class="text-primary text-bold">ID:{{ row.instanceId }}</div>
+                              <div class="text-success text-bold">
+                                {{ t('mcp.instance.containerName') }}：{{ row.containerName }}
+                              </div>
+                            </div>
+                          </template>
                         </el-tooltip>
                       </div>
-                      <div class="ml-2">
+                      <div class="ml-1 text-sm">
                         <div
-                          class="flex color-[#67C23A]"
+                          class="flex color-[#67C23A] items-center"
                           v-if="row.accessType === AccessType.HOSTING"
                         >
-                          <el-icon :size="16" class="mr-2" color="#67C23A">
+                          <el-icon :size="16" class="mr-1" color="#67C23A">
                             <i class="icon iconfont MCP-anquan"></i>
                           </el-icon>
                           {{ t('mcp.type.hosting') }}
                         </div>
                         <div
-                          class="flex color-[#E6A23C]"
+                          class="flex color-[#E6A23C] items-center"
                           v-if="row.accessType === AccessType.PROXY"
                         >
-                          <el-icon :size="16" class="mr-2" color="#E6A23C">
+                          <el-icon :size="16" class="mr-1" color="#E6A23C">
                             <i class="icon iconfont MCP-daili"></i>
                           </el-icon>
                           {{ t('mcp.type.proxy') }}
                         </div>
                         <div
-                          class="flex color-[#409EFF]"
+                          class="flex color-[#409EFF] items-center"
                           v-if="row.accessType === AccessType.DIRECT"
                         >
-                          <el-icon :size="16" class="mr-2" color="#409EFF">
+                          <el-icon :size="16" class="mr-1" color="#409EFF">
                             <i class="icon iconfont MCP-zhilian"></i>
                           </el-icon>
                           {{ t('mcp.type.direct') }}
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center">
+                    <div class="flex items-center h-[32px]">
                       <el-tooltip v-if="row.accessType === AccessType.HOSTING" placement="top">
                         <el-icon
                           :size="16"
@@ -333,33 +347,20 @@
                           </span>
                         </template>
                       </el-tooltip>
-                      <el-tooltip
-                        :content="t('mcp.instance.card.containerControl')"
-                        placement="top"
-                        trigger="click"
-                      >
-                        <el-switch
-                          v-if="row.accessType === AccessType.HOSTING"
-                          v-model="row.status"
-                          style="--el-switch-on-color: #13ce66"
-                          inline-prompt
-                          :active-text="t('mcp.instance.card.start')"
-                          :inactive-text="t('mcp.instance.card.stop')"
-                          :active-value="InstanceStatus.ACTIVE"
-                          :inactive-value="InstanceStatus.INACTIVE"
-                          :loading="row.loading"
-                          @click="handleSwitchInstance(row)"
-                        ></el-switch>
-                      </el-tooltip>
+                      <el-tag>{{
+                        mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
+                      }}</el-tag>
                     </div>
                   </div>
                   <div
-                    class="mt-1 flex-grow-1 h-0 text-justify break-all pr-1 text-sm leading-normal ellipsis-three"
+                    class="mt-1 line-height-[20px] flex-grow-1 h-0 text-justify break-words pr-1 text-xs leading-normal ellipsis-three"
                   >
                     <el-tooltip placement="top" trigger="click">
                       {{ row.notes }}
                       <template #content>
-                        <div style="width: 300px">{{ row.notes }}</div>
+                        <div style="width: 300px; text-align: justify; word-break: break-word">
+                          {{ row.notes }}
+                        </div>
                       </template>
                     </el-tooltip>
                   </div>
@@ -367,9 +368,6 @@
               </div>
               <div class="flex justify-between mt-2">
                 <div class="flex items-center">
-                  <el-tag>{{
-                    mcpProtocolOptions.find((item) => item.value === row.mcpProtocol)?.label
-                  }}</el-tag>
                   <div class="ml-2">
                     <el-tooltip :content="t('mcp.instance.action.logs')" placement="top">
                       <el-icon
@@ -411,7 +409,7 @@
                       <el-icon
                         :size="16"
                         class="mx-2 cursor-pointer link-hover"
-                        @click="handleDeleteInstance(row)"
+                        @click="handleDeleteInstance(row.instanceId)"
                         color="#F56C6C"
                       >
                         <Delete />
@@ -419,9 +417,30 @@
                     </el-tooltip>
                   </div>
                 </div>
-                <mcp-button size="small" @click="handleViewConfig(row)">{{
-                  t('mcp.instance.card.configUrl')
-                }}</mcp-button>
+                <div class="flex">
+                  <el-tooltip
+                    :content="t('mcp.instance.card.containerControl')"
+                    placement="top"
+                    trigger="click"
+                  >
+                    <el-switch
+                      v-if="row.accessType !== AccessType.DIRECT"
+                      v-model="row.status"
+                      style="--el-switch-on-color: #13ce66"
+                      inline-prompt
+                      size="small"
+                      :active-text="t('mcp.instance.card.start')"
+                      :inactive-text="t('mcp.instance.card.stop')"
+                      :active-value="InstanceStatus.ACTIVE"
+                      :inactive-value="InstanceStatus.INACTIVE"
+                      :loading="row.loading"
+                      @click="handleSwitchInstance(row)"
+                    ></el-switch>
+                  </el-tooltip>
+                  <mcp-button size="small" class="ml-2" @click="handleViewConfig(row)">{{
+                    t('mcp.instance.card.configUrl')
+                  }}</mcp-button>
+                </div>
               </div>
             </div>
             <el-checkbox
@@ -437,7 +456,7 @@
 
     <!-- view detail model -->
     <InstanceDetail ref="instanceDetail"></InstanceDetail>
-    <AccessTypeDialog ref="accessTypeDialog"></AccessTypeDialog>
+    <AccessTypeDialog ref="accessTypeDialog" @on-refresh="init"></AccessTypeDialog>
     <!-- view config model -->
     <ViewConfig ref="viewConfig" @on-refresh="init"></ViewConfig>
     <!-- probe instance dialog model -->
@@ -698,7 +717,7 @@ const handleEditInstance = (row: InstanceResult) => {
   }
   currentInstance.value = row
   if (row.sourceType === SourceType.OPENAPI) {
-    openAPIDialog.value.init(row.instanceId)
+    openAPIDialog.value.init(row.instanceId, 'edit')
     return
   }
   // accessTypeDialog.value.init(row)

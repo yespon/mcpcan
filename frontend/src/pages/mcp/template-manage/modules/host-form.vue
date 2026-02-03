@@ -40,12 +40,8 @@
       <el-row v-if="pageInfo.formData.mcpProtocol === 3">
         <el-col :span="18">
           <el-form-item prop="mcpServers">
-            <template #label>{{ t('mcp.instance.formData.mcpServers') }} </template>
-            <MonacoEditor
-              v-model="pageInfo.formData.mcpServers"
-              language="json"
-              :height="locale === 'en' ? '600px' : '300px'"
-            />
+            <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
+            <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
         </el-col>
         <el-col :span="6">
@@ -163,10 +159,9 @@
                       {{ t('common.use') }}
                     </el-button>
                   </div>
-                  <div
-                    class="command-preview p-2 rounded text-xs text-gray-500 break-all"
-                    v-text="selectedCommand?.commands?.install"
-                  ></div>
+                  <div class="p-2 rounded text-xs text-gray-500 break-all">
+                    {{ selectedCommand?.commands?.install }}
+                  </div>
                 </div>
                 <div v-if="!showCommand" class="mb-2">
                   <div class="flex justify-between items-center mb-1">
@@ -181,10 +176,9 @@
                       {{ t('common.use') }}
                     </el-button>
                   </div>
-                  <div
-                    class="command-preview p-2 rounded text-xs text-gray-500 break-all"
-                    v-text="selectedCommand?.commands?.start"
-                  ></div>
+                  <div class="p-2 rounded text-xs text-gray-500 break-all">
+                    {{ selectedCommand?.commands?.start }}
+                  </div>
                 </div>
                 <div class="tip tip-primary mb-2">
                   {{
@@ -625,31 +619,6 @@
             </el-button>
           </el-form-item>
         </el-collapse-item>
-        <el-collapse-item v-if="!pageInfo.formData.instanceId" name="3">
-          <template #title>
-            <div>
-              <div class="mr-1 font-bold">{{ t('mcp.instance.hostingForm.headerTitle') }}</div>
-              <Transition name="tip-fade">
-                <div
-                  v-show="currentOpenCollapse !== '3'"
-                  class="flex-1 tip tip-primary my-2 line-height-[18px]"
-                  style="margin-left: -16px"
-                  v-html="headerTitleTips"
-                ></div>
-              </Transition>
-            </div>
-          </template>
-          <div>
-            <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
-          </div>
-          <Transition name="tip-fade">
-            <div
-              v-show="currentOpenCollapse === '3'"
-              class="flex-1 tip tip-primary my-2 line-height-[18px]"
-              v-html="headerContentTips"
-            ></div>
-          </Transition>
-        </el-collapse-item>
       </el-collapse>
     </el-form>
   </div>
@@ -729,10 +698,6 @@
       </div>
     </div>
   </el-dialog>
-  <!-- probe instance dialog model -->
-  <ProbeStatus ref="probe"></ProbeStatus>
-  <ConfigDialog ref="config"></ConfigDialog>
-  <LogDialog ref="log"></LogDialog>
 </template>
 
 <script setup lang="ts">
@@ -744,11 +709,10 @@ import {
   Download,
   UploadFilled,
 } from '@element-plus/icons-vue'
-import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
+import { useTemplateFormHooks } from '../hooks/form-template.ts'
 import Upload from '@/components/upload/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import TokenForm from './token-form.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import { AccessType, InstanceData, McpProtocol, NodeVisible } from '@/types/instance'
 import {
@@ -765,9 +729,6 @@ import { TemplateAPI } from '@/api/mcp/template'
 import { cloneDeep } from 'lodash-es'
 import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
-import ProbeStatus from '../probe-dialog.vue'
-import ConfigDialog from '../url-config-dialog.vue'
-import LogDialog from '../log-dialog.vue'
 import deployTemplateData from '@/config/deploy-temlate-data.json'
 import MonacoEditor from '@/components/MonacoEditor/index.vue'
 import { CodeAPI } from '@/api/code/index'
@@ -783,7 +744,7 @@ const {
   selectedPvc,
   selectVisible,
   exampleList,
-} = useInstanceFormHooks()
+} = useTemplateFormHooks()
 const { packageList, envList, nodeList, pvcList, volumeList, currentInstance } =
   toRefs(useMcpStoreHook())
 const {
@@ -816,13 +777,11 @@ const handleSuccess = (response: { code: number; data: { path: string } }) => {
 
 const mcpServersTips = computed(() => {
   return locale.value === 'en'
-    ? `If you deploy by uploading a code package, set the working directory in the configuration: <code>"cwd": "/app/codepkg/[codezip_name]"</code>.
-When the instance starts, the platform will automatically create a default runtime container for the current MCP configuration. The container includes the <code>mcp-hosting</code> hosting component and uses a protocol adapter to expose this configuration as SSE/Streamable HTTP. It also binds to <code>0.0.0.0:8080</code> to provide the service externally.
-The MCPCAN gateway will automatically probe and detect the container's network address and complete the routing setup.
-For more startup configuration examples of different types, see <a href="#/template-manage">Deploy Templates</a>.`
-    : `若需上传代码包部署，需在配置信息中指定工作目录："cwd": "/app/codepkg/[codezip_name]"。
-实例启动时，平台将为当前 MCP 配置自动创建默认运行容器，容器内置 mcp-hosting 托管组件，通过协议适配器将本配置转换为 SSE/Streamable HTTP 协议，同时绑定至0.0.0.0:8080端口对外提供服务；MCPCAN 网关服务将自动探测并识别该容器的网络地址，完成对接。
-更多不同类型的启动配置示例，可参考<a href="#/template-manage">部署模板</a>。`
+    ? `MCP service SSE/STREAMABLE_HTTP protocol configuration is currently in proxy mode, and the traffic will be forwarded to the MCP configuration provided through the platform gateway.
+            After saving, the gateway access configuration will be displayed on the list page. You can also view <a href="#/template-manage">Template List</a> which provides multiple startup examples.`
+    : `MCP服务SSE/STEAMABLE_HTTP协议配置当前为代理模式，流量会通过此平台网关转发到此配置提供的
+            MCP 配置中，保存后会在列表页显示网关访问配置。也可以查看
+            <a href="#/template-manage">部署模板</a> 提供了多个启动示例。`
 })
 const codeTips = computed(() => {
   return locale.value === 'en'
@@ -1357,12 +1316,6 @@ defineExpose({
     background-color: var(--ep-bg-purple-color-deep);
     border-color: var(--ep-btn-color-top);
   }
-}
-
-/* 保留命令字符串中的 \n 换行；并在必要时对超长 token/路径进行断行 */
-.command-preview {
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 /* 让 el-collapse-item 左侧图标与标题内容顶部对齐 */
 :deep(.el-collapse-item__header) {

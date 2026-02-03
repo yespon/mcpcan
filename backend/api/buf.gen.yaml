@@ -8,12 +8,20 @@ plugins:
     out: .
     opt:
       - paths=source_relative
+  # OpenAPI 2.0 (Swagger) - 保留兼容
   - name: openapiv2
     out: .
     opt:
       - allow_delete_body=true
-
       - use_go_templates=true
+  # OpenAPI 3.0
+  - plugin: buf.build/community/google-gnostic-openapi
+    out: .
+    opt:
+      - naming=json
+      - depth=2
+      - enum_type=string
+      - fq_schema_naming=false
   - name: grpc-gateway
     out: .
     opt:

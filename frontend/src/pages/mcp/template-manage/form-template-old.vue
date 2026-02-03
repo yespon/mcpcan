@@ -2,9 +2,9 @@
   <div v-loading="pageInfo.loading">
     <div class="page-title flex justify-between items-center">
       {{
-        query.instanceId
-          ? t('mcp.instance.pageDesc.editTitle')
-          : t('mcp.instance.pageDesc.createTitle')
+        pageInfo.formData.templateId
+          ? t('mcp.template.pageDesc.editTitle')
+          : t('mcp.template.pageDesc.createTitle')
       }}
       <el-button v-if="layout" @click="handleBack" class="link-hover">
         <el-icon class="mr-2">
@@ -23,33 +23,19 @@
     >
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item :label="t('mcp.instance.formData.instanceName')" prop="name">
+          <el-form-item :label="t('mcp.template.formData.name')" prop="name">
             <el-input
               v-model="pageInfo.formData.name"
-              :placeholder="t('mcp.instance.formData.instanceName')"
+              :placeholder="t('mcp.template.formData.name')"
             />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item :label="t('mcp.instance.formData.sourceType')" prop="sourceType">
-            <el-select
-              v-model="pageInfo.formData.sourceType"
-              :placeholder="t('mcp.instance.formData.sourceType')"
-              disabled
-            >
-              <el-option
-                v-for="source in sourceOptions"
-                :key="source.value"
-                :label="source.label"
-                :value="source.value"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
+        <el-col :span="12"></el-col>
+
         <el-col :span="12">
           <el-form-item :label="t('mcp.instance.form.accessType')" prop="accessType">
             <template #label>
-              <span class="mr-10">{{ t('mcp.instance.form.accessType') }}</span>
+              <span class="mr-4">{{ t('mcp.instance.form.accessType') }}</span>
             </template>
             <el-select
               v-model="pageInfo.formData.accessType"
@@ -97,7 +83,6 @@
             />
           </el-form-item>
         </el-col>
-
         <el-col :span="12">
           <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
             <el-input
@@ -111,9 +96,9 @@
             <Upload v-model="pageInfo.formData.iconPath"></Upload>
           </el-form-item>
         </el-col>
+        <el-col :span="12"> </el-col>
       </el-row>
     </el-form>
-
     <div v-if="showImgAddress" class="mt-6">
       <div class="config-info">
         <!-- <span class="text-red">*</span> -->
@@ -216,13 +201,12 @@
             </el-form-item>
           </el-col>
           <!-- 选择环境 -->
-          <el-col :span="12">
+          <el-col :span="12" v-if="false">
             <el-form-item :label="t('mcp.instance.formData.environmentId')" prop="environmentId">
               <el-select
                 v-model="pageInfo.formData.environmentId"
                 :placeholder="t('mcp.instance.formData.environmentId')"
                 @change="handleChangeEnvironmentId"
-                disabled
               >
                 <el-option
                   v-for="(env, index) in envList"
@@ -281,7 +265,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item prop="command">
+            <el-form-item :label="t('mcp.instance.formData.command')" prop="command">
               <template #label>
                 <span class="mr-2">{{ t('mcp.instance.formData.command') }}</span>
                 <el-tooltip effect="light" placement="top" class="ml-6" :raw-content="true">
@@ -291,7 +275,6 @@
                   </template>
                 </el-tooltip>
               </template>
-
               <el-input
                 v-model="pageInfo.formData.command"
                 :placeholder="
@@ -348,196 +331,115 @@
                         :placeholder="t('mcp.instance.formData.volumeType')"
                         style="width: 200px"
                       >
-                        <el-option label="HostPath" value="hostPath" />
-                        <el-option
-                          v-if="currentEnvironment.environment === 'kubernetes'"
-                          label="PVC"
-                          value="pvc"
-                        />
-                        <el-option
-                          v-if="currentEnvironment.environment === 'docker'"
-                          label="Volume"
-                          value="volume"
-                        />
+                        <el-option label="HostPath" value="HostPath" />
+                        <el-option label="PVC" value="PVC" />
                       </el-select>
                     </div>
-                    <template v-if="currentEnvironment.environment === 'kubernetes'">
-                      <template v-if="volume.type === 'hostPath'">
-                        <div class="flex align-end">
+                    <template v-if="volume.type === 'HostPath'">
+                      <div class="flex align-end">
+                        <div>
                           <div>
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.nodeName') }}
-                            </div>
-                            <el-select
-                              v-model="volume.nodeName"
-                              :placeholder="t('mcp.instance.formData.nodeName')"
-                              style="width: 200px"
-                            >
-                              <el-option
-                                v-for="(node, index) in nodeList"
-                                :key="index"
-                                :label="node.name"
-                                :value="node.name"
-                              />
-                            </el-select>
+                            <span class="text-red">*</span>{{ t('mcp.instance.formData.nodeName') }}
                           </div>
-                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
-                          <div>
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.hostPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.hostPath"
-                              :placeholder="t('mcp.instance.formData.hostPath')"
+                          <el-select
+                            v-model="volume.nodeName"
+                            :placeholder="t('mcp.instance.formData.nodeName')"
+                            style="width: 200px"
+                          >
+                            <el-option
+                              v-for="(node, index) in nodeList"
+                              :key="index"
+                              :label="node.name"
+                              :value="node.name"
                             />
-                          </div>
+                          </el-select>
                         </div>
-                        <div class="flex align-end">
-                          <div class="mr-2">
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.mountPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.mountPath"
-                              :placeholder="t('mcp.instance.formData.mountPath')"
-                              style="width: 200px"
-                            />
-                          </div>
+                        <el-button class="mr-2 ml-2" :icon="RefreshRight" />
+                        <div>
                           <div>
-                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                            <el-switch v-model="volume.readOnly" />
+                            <span class="text-red">*</span>{{ t('mcp.instance.formData.hostPath') }}
                           </div>
+                          <el-input
+                            v-model="volume.hostPath"
+                            :placeholder="t('mcp.instance.formData.hostPath')"
+                          />
                         </div>
-                      </template>
-
-                      <template v-if="volume.type === 'pvc'">
-                        <div class="flex align-end">
+                      </div>
+                      <div class="flex align-end">
+                        <div class="mr-2">
                           <div>
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.pvcName') }}
-                            </div>
-                            <el-select
-                              v-model="volume.pvcName"
-                              placeholder="PVC"
-                              style="width: 200px"
-                              @change="handlePvcChange($event, volume)"
-                            >
-                              <el-option
-                                v-for="(pvc, index) in pvcList"
-                                :key="index"
-                                :value="pvc.name"
-                                :disabled="disabledPvcNode(pvc)"
-                              >
-                                <span>{{ pvc.name }}</span>
-                                <el-tag v-if="disabledPvcNode(pvc)" color="orange">
-                                  {{ t('mcp.template.formData.isBind') }}
-                                </el-tag>
-                              </el-option>
-                            </el-select>
+                            <span class="text-red">*</span
+                            >{{ t('mcp.instance.formData.mountPath') }}
                           </div>
-                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
-                          <div class="mr-2">
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.mountPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.mountPath"
-                              :placeholder="t('mcp.instance.formData.mountPath')"
-                            />
-                          </div>
-                          <div>
-                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                            <el-switch
-                              v-model="volume.readOnly"
-                              :disabled="disabledReadOnly(volume.pvcName)"
-                            />
-                          </div>
+                          <el-input
+                            v-model="volume.mountPath"
+                            :placeholder="t('mcp.instance.formData.mountPath')"
+                            style="width: 200px"
+                          />
                         </div>
-                        <el-space v-if="!selectedPvc(volume.pvcName)">
-                          <el-text type="secondary">
-                            {{ t('mcp.template.formData.accessModes') }}:
-                            {{ selectedPvc(volume.pvcName).accessModes?.join(', ') }}
-                          </el-text>
-                          <template v-if="selectedPvc(volume.pvcName).pods?.length > 0">
-                            <el-text type="secondary">
-                              {{ t('mcp.template.formData.pods') }}:
-                              {{ selectedPvc(volume.pvcName).pods.join(', ') }}
-                            </el-text>
-                          </template>
-                        </el-space>
-                      </template>
+                        <div>
+                          <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                          <el-switch v-model="volume.readOnly" />
+                        </div>
+                      </div>
                     </template>
-                    <template v-if="currentEnvironment.environment === 'docker'">
-                      <template v-if="volume.type === 'hostPath'">
-                        <div class="flex align-end">
-                          <div class="mr-2">
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.hostPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.hostPath"
-                              :placeholder="t('mcp.instance.formData.hostPath')"
-                            />
-                          </div>
-                          <div class="mr-2">
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.mountPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.mountPath"
-                              :placeholder="t('mcp.instance.formData.mountPath')"
-                              style="width: 200px"
-                            />
-                          </div>
-                          <div>
-                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                            <el-switch v-model="volume.readOnly" />
-                          </div>
-                        </div>
-                      </template>
 
-                      <template v-if="volume.type === 'volume'">
-                        <div class="flex align-end">
+                    <template v-if="volume.type === 'PVC'">
+                      <div class="flex align-end">
+                        <div>
                           <div>
-                            <div><span class="text-red">*</span>{{ 'volumeName' }}</div>
-                            <el-select
-                              v-model="volume.volumeName"
-                              placeholder="volumeName"
-                              style="width: 200px"
+                            <span class="text-red">*</span>{{ t('mcp.instance.formData.pvcName') }}
+                          </div>
+                          <el-select
+                            v-model="volume.pvcName"
+                            placeholder="PVC"
+                            style="width: 200px"
+                            @change="handlePvcChange($event, volume)"
+                          >
+                            <el-option
+                              v-for="(pvc, index) in pvcList"
+                              :key="index"
+                              :value="pvc.name"
+                              :disabled="disabledPvcNode(pvc)"
                             >
-                              <el-option
-                                v-for="(pvc, index) in volumeList"
-                                :key="index"
-                                :value="pvc.name"
-                              >
-                                <span>{{ pvc.name }}</span>
-                              </el-option>
-                            </el-select>
-                          </div>
-                          <el-button class="mr-2 ml-2" :icon="RefreshRight" />
-                          <div class="mr-2">
-                            <div>
-                              <span class="text-red">*</span
-                              >{{ t('mcp.instance.formData.mountPath') }}
-                            </div>
-                            <el-input
-                              v-model="volume.mountPath"
-                              :placeholder="t('mcp.instance.formData.mountPath')"
-                            />
-                          </div>
-                          <div>
-                            <div>{{ t('mcp.instance.formData.readOnly') }}</div>
-                            <el-switch v-model="volume.readOnly" />
-                          </div>
+                              <span>{{ pvc.name }}</span>
+                              <el-tag v-if="disabledPvcNode(pvc)" color="orange">
+                                {{ t('mcp.template.formData.isBind') }}
+                              </el-tag>
+                            </el-option>
+                          </el-select>
                         </div>
-                      </template>
+                        <el-button class="mr-2 ml-2" :icon="RefreshRight" />
+                        <div class="mr-2">
+                          <div>
+                            <span class="text-red">*</span
+                            >{{ t('mcp.instance.formData.mountPath') }}
+                          </div>
+                          <el-input
+                            v-model="volume.mountPath"
+                            :placeholder="t('mcp.instance.formData.mountPath')"
+                          />
+                        </div>
+                        <div>
+                          <div>{{ t('mcp.instance.formData.readOnly') }}</div>
+                          <el-switch
+                            v-model="volume.readOnly"
+                            :disabled="disabledReadOnly(volume.pvcName)"
+                          />
+                        </div>
+                      </div>
+                      <el-space v-if="!selectedPvc(volume.pvcName).length">
+                        <el-text type="secondary">
+                          {{ t('mcp.template.formData.accessModes') }}:
+                          {{ selectedPvc(volume.pvcName).accessModes?.join(', ') }}
+                        </el-text>
+                        <template v-if="selectedPvc(volume.pvcName).pods?.length > 0">
+                          <el-text type="secondary">
+                            {{ t('mcp.template.formData.pods') }}:
+                            {{ selectedPvc(volume.pvcName).pods.join(', ') }}
+                          </el-text>
+                        </template>
+                      </el-space>
                     </template>
                   </el-card>
                 </el-col>
@@ -550,73 +452,56 @@
         </el-row>
       </el-form>
     </div>
-    <el-row v-if="!pageInfo.formData.instanceId">
-      <el-col :span="12">
-        <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
-      </el-col>
-    </el-row>
     <div class="action-footer mt-4 flex">
       <el-button @click="handleCancel" class="mr-4">{{ t('common.cancel') }}</el-button>
-      <mcp-button @click="handleConfirm" class="mr-4">{{
-        query.instanceId ? t('mcp.instance.action.save') : t('mcp.instance.action.add')
-      }}</mcp-button>
-      <!-- v-if="!query.instanceId && pageInfo.formData.sourceType !== SourceType.TEMPLATE" -->
-      <!-- v-if="pageInfo.formData.sourceType === SourceType.CUSTOM" -->
-      <mcp-button @click="handleSaveAsTemplate">{{
-        t('mcp.instance.action.asTemplate')
-      }}</mcp-button>
+      <mcp-button @click="handleConfirm">{{ t('mcp.template.action.save') }}</mcp-button>
+      <!-- <span class="ml-4">
+        <mcp-button @click="handleSaveAndInstance">{{
+          t('mcp.template.action.saveAndInstance')
+        }}</mcp-button>
+      </span> -->
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { Plus, Remove, CircleClose, RefreshRight, UploadFilled } from '@element-plus/icons-vue'
-import { InstanceAPI } from '@/api/mcp/instance'
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
-import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
+import { TemplateAPI } from '@/api/mcp/template'
+import { ElMessage } from 'element-plus'
+import { formatFileSize, timestampToDate } from '@/utils/system'
 import { useMcpStoreHook } from '@/stores'
+import { useTemplateFormHooks } from './hooks/form-template'
 import { JsonFormatter } from '@/utils/json'
-import { useInstanceFormHooks } from './hooks/form-instance.ts'
+import { ElLoading } from 'element-plus'
 import Upload from '@/components/upload/index.vue'
 import Select from '@/components/mcp-select/index.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import McpButton from '@/components/mcp-button/index.vue'
-import { TemplateAPI } from '@/api/mcp/template'
-import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
-import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index.ts'
+import { AccessType, McpProtocol, InstanceData, NodeVisible } from '@/types/instance'
+import { type VolumeMountsItme, type PvcForm, type Code } from '@/types/index'
 import { cloneDeep } from 'lodash-es'
-import TokenForm from './modules/components/token-form.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const layout = useLayout()
 const {
-  query,
   jumpToPage,
   jumpBack,
-  userInfo,
+  router,
+  query,
   pageInfo,
   originForm,
   placeholderServer,
   showImgAddress,
   showMcpServers,
-  showCommand,
   showServicePath,
+  showCommand,
   disabledPvcNode,
   selectedPvc,
   disabledReadOnly,
   selectVisible,
-  currentMCP,
-} = useInstanceFormHooks()
-
-const { packageList, envList, nodeList, pvcList, volumeList, sourceOptions, accessTypeOptions } =
-  toRefs(useMcpStoreHook())
-const {
-  handleGetPackageList,
-  handleGetEnvList,
-  handleGetNodeList,
-  handleGetPvcList,
-  handleGetVolumeList,
-} = useMcpStoreHook()
+} = useTemplateFormHooks()
+const { packageList, envList, nodeList, pvcList, accessTypeOptions } = toRefs(useMcpStoreHook())
+const { handleGetPackageList, handleGetEnvList, handleGetNodeList, handleGetPvcList } =
+  useMcpStoreHook()
 
 // MCP protocol options
 const mcpProtocolOptions = computed(() => {
@@ -638,13 +523,6 @@ const currentPackage = computed(() => {
       (item: { id: string }) => item.id === pageInfo.value.formData.packageId,
     ) || { name: '', size: '', createdAt: '' }
   )
-})
-
-/**
- * Current environment
- */
-const currentEnvironment = computed(() => {
-  return envList.value?.find((item: any) => item.id === pageInfo.value.formData.environmentId) || {}
 })
 
 const handleFormat = () => {
@@ -711,7 +589,6 @@ const handleAddVolume = () => {
     hostPath: '',
     mountPath: '',
     pvcName: '',
-    volumeName: '',
     readOnly: false,
   })
 }
@@ -725,7 +602,7 @@ const handleDeleteVolume = (index: number) => {
 }
 
 /**
- * Update readOnly status
+ *  Update readOnly status
  * @param key - $event
  * @param volume - item of pvc
  */
@@ -750,89 +627,37 @@ const handlePvcChange = (key: any, volume: VolumeMountsItme) => {
  * Handle cancel
  */
 const handleCancel = () => {
-  // jumpBack()
-  jumpToPage({
-    url: '/instance-manage',
-    data: {},
-  })
+  // router.push('/template-manage')
+  jumpBack()
 }
 /**
- * Handle confirm save
+ * Handle confirm
  */
 const baseInfo = ref()
 const configInfo = ref()
 const handleConfirm = async () => {
-  if (pageInfo.value.formData.accessType === AccessType.HOSTING && query.instanceId) {
-    const result = await ElMessageBox.confirm(
-      t('mcp.instance.pageDesc.confirmEdit'),
-      t('common.warn'),
-      {
-        confirmButtonText: t('common.ok'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-        customClass: 'tips-box',
-        center: true,
-        showClose: false,
-        confirmButtonClass: 'is-plain el-button--danger danger-btn',
-        customStyle: {
-          width: '517px',
-          height: '247px',
-        },
-      },
-    )
-    if (result !== 'confirm') return
-  }
-  // valid baseInfo
-  const validateBase = new Promise<boolean>((resolve) => {
-    baseInfo.value.validate((valid: boolean) => resolve(valid))
+  await handleSaveTemplate()
+  jumpToPage({
+    url: '/template-manage',
+    data: {},
   })
-  // valid configInfo
-  const validateConfig = new Promise<boolean>((resolve) => {
-    if (configInfo.value) {
-      configInfo.value.validate((valid: boolean) => resolve(valid))
-    } else {
-      resolve(true)
-    }
-  })
-  const [isBaseValid, isConfigValid] = await Promise.all([validateBase, validateConfig])
-  console.log(1212, pageInfo.value.formData)
-
-  // pass and handle create
-  if (isBaseValid && isConfigValid) {
-    try {
-      pageInfo.value.loading = true
-      if (!pageInfo.value.formData.instanceId) {
-        if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
-          pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
-            pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
-              header.key,
-              header.value,
-            ]),
-          )
-        }
-      }
-      await (query.instanceId ? InstanceAPI.edit : InstanceAPI.create)({
-        ...pageInfo.value.formData,
-        environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
-          (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
-          {},
-        ),
-      })
-      ElMessage.success(query.instanceId ? t('action.edit') : t('action.create'))
-      handleCancel()
-    } finally {
-      pageInfo.value.loading = false
-    }
-  } else {
-    // One form failed validation
-    ElMessage.warning(t('mcp.template.rules.validForm'))
-  }
 }
 
 /**
- * save as a template
+ * Handle save template and create a instance
  */
-const handleSaveAsTemplate = async () => {
+// const handleSaveAndInstance = async () => {
+//   const result = await handleSaveTemplate()
+//   jumpToPage({
+//     url: '/new-instance',
+//     data: { templateId: result.templateId || query.templateId },
+//   })
+// }
+
+/**
+ * Handle confirm save
+ */
+const handleSaveTemplate = async () => {
   try {
     pageInfo.value.loading = true
     // valid baseInfo
@@ -853,7 +678,7 @@ const handleSaveAsTemplate = async () => {
     if (isBaseValid && isConfigValid) {
       try {
         pageInfo.value.loading = true
-        const data = await TemplateAPI.create({
+        const data = await (query.templateId ? TemplateAPI.edit : TemplateAPI.create)({
           ...pageInfo.value.formData,
           environmentVariables: pageInfo.value.formData.environmentVariables?.reduce(
             (obj: any, item: any) => ({ ...obj, [item.key]: item.value }),
@@ -861,12 +686,16 @@ const handleSaveAsTemplate = async () => {
           ),
         })
         pageInfo.value.visible = false
-        ElMessage.success(t('action.create'))
+        ElMessage.success(
+          pageInfo.value.formData.templateId ? t('action.edit') : t('action.create'),
+        )
         return data
+        // router.push('/template-manage')
       } finally {
         pageInfo.value.loading = false
       }
     } else {
+      // One form failed validation
       ElMessage.warning(t('mcp.template.rules.validForm'))
     }
   } finally {
@@ -877,30 +706,9 @@ const handleSaveAsTemplate = async () => {
 /**
  * Handle change environment event
  */
-const handleChangeEnvironmentId = async (e: number | undefined) => {
-  pageInfo.value.formData.environmentId = e
-  if (envList.value.find((item) => item.id === e)?.environment === 'docker') {
-    handleGetVolumeList(pageInfo.value.formData.environmentId)
-  } else {
-    handleGetNodeList(pageInfo.value.formData.environmentId)
-    handleGetPvcList(pageInfo.value.formData.environmentId)
-  }
-}
-
-/**
- * Handle get instance detail info
- */
-const handleGetDetail = async () => {
-  const data = await InstanceAPI.detail({
-    instanceId: query.instanceId,
-  })
-  originForm.value = cloneDeep(data)
-  pageInfo.value.formData = data
-  pageInfo.value.formData.mcpServers = JsonFormatter.format(data.mcpServers)
-  pageInfo.value.formData.environmentVariables = Object.keys(data.environmentVariables)?.map(
-    (key) => ({ key, value: data.environmentVariables[key] }),
-  )
-  pageInfo.value.formData.volumeMounts = data.volumeMounts || []
+const handleChangeEnvironmentId = async () => {
+  handleGetNodeList(pageInfo.value.formData.environmentId)
+  handleGetPvcList(pageInfo.value.formData.environmentId)
 }
 
 /**
@@ -910,6 +718,7 @@ const handleGetTemplateDetail = async () => {
   const data = await TemplateAPI.detail({
     id: query.templateId,
   })
+  originForm.value = cloneDeep(data)
   pageInfo.value.formData = data
   pageInfo.value.formData.mcpServers = JsonFormatter.format(data.mcpServers)
   pageInfo.value.formData.environmentVariables = data.environmentVariables
@@ -919,71 +728,8 @@ const handleGetTemplateDetail = async () => {
       }))
     : []
   pageInfo.value.formData.volumeMounts = data.volumeMounts || []
-  pageInfo.value.formData.sourceType = SourceType.TEMPLATE
-
-  // default open token
-  let tokenValue =
-    'Bearer ' +
-    getToken(
-      JSON.stringify({
-        expireAt: Date.now(),
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  pageInfo.value.formData.enabledToken = true
-  pageInfo.value.formData.tokens = [
-    {
-      expireAt: '',
-      enabled: true,
-      publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: tokenValue }],
-      token: tokenValue,
-      usages: ['default'],
-    },
-  ]
+  handleMcpProtocolChange(originForm.value.mcpProtocol)
 }
-
-const handleInitMarketInstance = async () => {
-  let tokenValue =
-    'Bearer ' +
-    getToken(
-      JSON.stringify({
-        expireAt: Date.now(),
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  pageInfo.value.formData = {
-    sourceType: SourceType.MARKET,
-    name: locale.value === 'zh-cn' ? currentMCP.name : currentMCP.nameEn,
-    accessType: AccessType.HOSTING,
-    mcpProtocol: McpProtocol.STDIO,
-    imgAddress: InstanceData.value.IMGADDRESS,
-    notes: locale.value === 'zh-cn' ? currentMCP.description : currentMCP.descriptionEn,
-    mcpServers: JsonFormatter.format(currentMCP.configTemplate),
-    iconPath: currentMCP.githubOwnerAvatarUrl,
-    packageId: '',
-    environmentId: '',
-    port: InstanceData.value.PORT,
-    environmentVariables: [],
-    volumeMounts: [],
-    initScript: InstanceData.value.INITSCRIPT,
-    command: '',
-    enabledToken: true,
-    tokens: [
-      {
-        enabled: true,
-        expireAt: '',
-        publishAt: new Date().getTime(),
-        headers: [{ key: 'Authorization', value: tokenValue }],
-        token: tokenValue,
-        usages: ['default'],
-      },
-    ],
-  }
-}
-
 // back last class page
 const handleBack = () => {
   jumpBack()
@@ -993,27 +739,15 @@ const handleBack = () => {
  * init data
  * @param form - instance form data
  */
-const init = async () => {
+const init = () => {
   let loadingInstance
   try {
     loadingInstance = ElLoading.service({ fullscreen: true, text: t('status.loading') + '...' })
-    await handleGetEnvList()
+    handleGetEnvList()
     handleGetPackageList()
-    // create By template
     if (query.templateId) {
-      await handleGetTemplateDetail()
+      handleGetTemplateDetail()
     }
-    // create by market
-    if (query.from === 'market') {
-      await handleInitMarketInstance()
-    }
-
-    // edit instance
-    if (query.instanceId) {
-      handleGetDetail()
-    }
-    // 默认选中第一个环境变量;所以上诉均没有return
-    handleChangeEnvironmentId(envList.value[0]?.id)
   } finally {
     loadingInstance?.close()
   }

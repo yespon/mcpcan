@@ -56,7 +56,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
+import { useTemplateFormHooks } from '../hooks/form-template.ts'
 import Upload from '@/components/upload/index.vue'
 import { JsonFormatter } from '@/utils/json'
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
@@ -68,7 +68,7 @@ import { type InstanceResult } from '@/types/index.ts'
 import { cloneDeep } from 'lodash-es'
 
 const { t } = useI18n()
-const { query, pageInfo, placeholderServer, jumpToPage } = useInstanceFormHooks()
+const { query, pageInfo, placeholderServer, jumpToPage } = useTemplateFormHooks()
 const baseInfo = ref()
 const protocolOptions = [
   { label: 'SSE', value: 1 },

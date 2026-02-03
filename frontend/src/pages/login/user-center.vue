@@ -80,7 +80,7 @@ import baseConfig from '@/config/base_config.ts'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import { Storage } from '@/utils/storage'
 import AuthAPI from '@/api/auth-api.ts'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import McpImage from '@/components/mcp-image/index.vue'
 
@@ -100,22 +100,26 @@ const formData = ref<any>({
   confirmPassword: '',
 })
 const rules = ref({
-  newPassword: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
-  confirmPassword: [{ required: true, message: t('mcp.instance.rules.name'), trigger: 'blur' }],
+  newPassword: [{ required: true, message: t('login.message.password.required'), trigger: 'blur' }],
+  confirmPassword: [
+    { required: true, message: t('login.message.password.confirm'), trigger: 'blur' },
+  ],
 })
 const imageUrl = ref('')
-const { logout } = useUserStore()
+const { logout, validateInfo } = useUserStore()
 const { jumpBack } = useRouterHooks()
 
 // 上传成功
-const handleAvatarSuccess = (
-  response: { code: number },
+const handleAvatarSuccess = async (
+  response: { code: number; message: string },
   uploadFile: { raw: Blob | MediaSource },
 ) => {
   if (response.code !== 0) {
+    ElMessage.error(response.message)
     return
   }
   imageUrl.value = URL.createObjectURL(uploadFile.raw!)
+  validateInfo()
 }
 
 /**

@@ -63,7 +63,8 @@
       "cookie": "Please enter cookie; Use cookie to connect and sync agent platform namespaces",
       "baseUrl": "Please enter platform URL",
       "username": "Please enter userName",
-      "password": "Please enter password"
+      "password": "Please enter password",
+      "cozeUserID": "Please enter Coze user UID"
     },
     "sync": {
       "platform": "Platform: ",

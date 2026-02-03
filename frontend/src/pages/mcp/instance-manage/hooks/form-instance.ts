@@ -14,7 +14,7 @@ export const useInstanceFormHooks = () => {
   const { t } = useI18n()
   const { jumpBack, jumpToPage } = useRouterHooks()
   const router = useRouter()
-  const { query, meta } = useRoute()
+  const { query, meta, path } = useRoute()
   const selectVisible = ref(false)
   const originForm = ref<any>()
   const { userInfo } = useUserStore()
@@ -40,7 +40,18 @@ export const useInstanceFormHooks = () => {
       mcpProtocol: '',
       imgAddress: InstanceData.value.IMGADDRESS,
       notes: '',
-      mcpServers: '',
+      mcpServers: `{
+        "mcpServers": {
+          "everything": {
+            "args": [
+              "-y",
+              "@modelcontextprotocol/server-everything"
+            ],
+            "command": "npx"
+          }
+        }
+      }
+    `,
       iconPath: '',
       packageId: '',
       environmentId: '',
@@ -55,7 +66,7 @@ export const useInstanceFormHooks = () => {
           enabled: true,
           expireAt: '',
           publishAt: new Date().getTime(),
-          headers: [{ key: 'Authorization', value: tokenValue }],
+          headers: [{ key: 'Authorization', value: '' }],
           token: tokenValue,
           usages: ['default'],
         },
@@ -102,7 +113,7 @@ export const useInstanceFormHooks = () => {
             // 1.Verification when the current deployment mode is SSE or steamableHttp
             if (
               [AccessType.DIRECT, AccessType.PROXY].includes(pageInfo.value.formData.accessType) &&
-              [McpProtocol.SSE, McpProtocol.STEAMABLE_HTTP].includes(
+              [McpProtocol.SSE, McpProtocol.STREAMABLE_HTTP].includes(
                 pageInfo.value.formData.mcpProtocol,
               )
             ) {
@@ -178,7 +189,7 @@ export const useInstanceFormHooks = () => {
     return !(
       pageInfo.value.formData.accessType === AccessType.HOSTING &&
       (pageInfo.value.formData.mcpProtocol === McpProtocol.SSE ||
-        pageInfo.value.formData.mcpProtocol === McpProtocol.STEAMABLE_HTTP)
+        pageInfo.value.formData.mcpProtocol === McpProtocol.STREAMABLE_HTTP)
     )
   })
 
@@ -199,7 +210,7 @@ export const useInstanceFormHooks = () => {
     return (
       pageInfo.value.formData.accessType === AccessType.HOSTING &&
       (pageInfo.value.formData.mcpProtocol === McpProtocol.SSE ||
-        pageInfo.value.formData.mcpProtocol === McpProtocol.STEAMABLE_HTTP)
+        pageInfo.value.formData.mcpProtocol === McpProtocol.STREAMABLE_HTTP)
     )
   })
 
@@ -231,6 +242,7 @@ export const useInstanceFormHooks = () => {
     query,
     router,
     meta,
+    path,
     jumpBack,
     jumpToPage,
     userInfo,

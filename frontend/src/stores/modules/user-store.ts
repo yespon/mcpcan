@@ -112,6 +112,8 @@ export const useUserStore = defineStore('user', () => {
           resolve(data)
         })
         .catch((err) => {
+          // 登录失败重新获取秘钥
+          handleGetEncryptionKey()
           reject(err)
         })
     })
@@ -145,6 +147,28 @@ export const useUserStore = defineStore('user', () => {
     return new Promise<UserInfo>((resolve, reject) => {
       UserAPI.getInfo()
         .then((data) => {
+          if (!data) {
+            reject('Verification failed, please Login again.')
+            return
+          }
+          Object.assign(userInfo.value, { ...data })
+          resolve(data)
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    })
+  }
+  /**
+   * Handle get user info data
+   *
+   * @returns {UserInfo}
+   */
+  function validateInfo() {
+    return new Promise<UserInfo>((resolve, reject) => {
+      AuthAPI.validate()
+        .then((data) => {
+          userInfo.value = data.userInfo
           if (!data) {
             reject('Verification failed, please Login again.')
             return
@@ -220,6 +244,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     isLogin: () => !!Storage.get('token'),
     getUserInfo,
+    validateInfo,
     login,
     logout,
     // resetAllState,

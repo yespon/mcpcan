@@ -97,6 +97,7 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 	// Convert to response format
 	cases := make([]*pb.CaseInfo, 0, len(templates))
 	for _, template := range templates {
+		protoAccessType, _ := common.ConvertToProtoAccessType(template.AccessType)
 		caseInfo := &pb.CaseInfo{
 			TemplateId:  int32(template.ID),
 			Name:        template.Name,
@@ -104,6 +105,7 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 			CreatedAt:   template.CreatedAt.Unix(),
 			IconPath:    template.IconPath,
 			SourceType:  common.ConvertSourceType(template.SourceType),
+			AccessType:  protoAccessType,
 		}
 		cases = append(cases, caseInfo)
 	}

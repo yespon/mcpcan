@@ -10,26 +10,48 @@
     </div>
     <div class="flex justify-center">
       <div class="form-body position-relative">
+        <div class="form-title flex items-center">
+          {{ t('mcp.instance.accessType.title') }}-{{
+            [
+              t('mcp.instance.accessType.direct'),
+              t('mcp.instance.accessType.proxy'),
+              t('mcp.instance.accessType.hosting'),
+            ][Number(query.type) - 1]
+          }}
+        </div>
         <component ref="formComponent" :is="currentComponent"></component>
         <div class="footer-action">
           <div
             :class="
-              query.instanceId && Number(query.type) !== AccessType.DIRECT
+              route.query.instanceId && Number(route.query.type) !== AccessType.DIRECT
                 ? 'flex justify-between items-center'
                 : 'text-center'
             "
           >
-            <div v-if="query.instanceId && Number(query.type) !== AccessType.DIRECT" class="flex">
-              <el-button link type="primary" @click="handleConfig"> 访问配置 </el-button>
+            <div
+              v-if="route.query.instanceId && Number(route.query.type) !== AccessType.DIRECT"
+              class="flex"
+            >
+              <el-button link type="primary" @click="handleConfig">
+                {{ t('mcp.instance.action.accessConfig') }}
+              </el-button>
               <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="warning" @click="handleViewStatus"> 状态探测 </el-button>
+              <el-button link type="warning" @click="handleViewStatus">
+                {{ t('mcp.instance.action.probe') }}
+              </el-button>
               <el-divider direction="vertical" class="!h-4 !my-auto" />
-              <el-button link type="success" @click="handleViewLog"> 查看日志 </el-button>
+              <el-button link type="success" @click="handleViewLog">
+                {{ t('mcp.instance.action.viewLogs') }}
+              </el-button>
             </div>
             <div class="flex justify-center">
-              <mcp-button @click="handleConfirm" class="mr-4"> 保存并运行 </mcp-button>
-              <mcp-button plain @click="handleSaveAsTemplate" class="mr-4"> 另存为模板 </mcp-button>
-              <el-button @click="handleClose">返回列表</el-button>
+              <mcp-button @click="handleConfirm" class="mr-4">
+                {{ t('mcp.instance.action.saveAndRun') }}
+              </mcp-button>
+              <mcp-button plain @click="handleSaveAsTemplate" class="mr-4">
+                {{ t('mcp.instance.action.asTemplate') }}
+              </mcp-button>
+              <el-button @click="handleClose"> {{ t('mcp.instance.action.backList') }} </el-button>
             </div>
           </div>
         </div>
@@ -43,7 +65,7 @@ import { useInstanceFormHooks } from './hooks/form-instance.ts'
 import HostForm from './modules/components/host-form.vue'
 import ProxyForm from './modules/components/proxy-form.vue'
 import DirectForm from './modules/components/direct-form.vue'
-import { AccessType, McpProtocol, SourceType, InstanceData, NodeVisible } from '@/types/instance'
+import { AccessType, McpProtocol, SourceType, InstanceData } from '@/types/instance'
 import McpButton from '@/components/mcp-button/index.vue'
 import { useMcpStoreHook } from '@/stores'
 import { InstanceAPI } from '@/api/mcp/instance'
@@ -54,7 +76,8 @@ import { formatFileSize, timestampToDate, getToken } from '@/utils/system'
 const { t, locale } = useI18n()
 const layout = useLayout()
 const formComponent = ref()
-const { query, pageInfo, userInfo, jumpBack, currentMCP } = useInstanceFormHooks()
+const { query, pageInfo, userInfo, jumpBack, jumpToPage, currentMCP } = useInstanceFormHooks()
+const route = useRoute()
 const currentComponent = computed(() => {
   switch (Number(query.type)) {
     case AccessType.HOSTING:
@@ -68,6 +91,19 @@ const currentComponent = computed(() => {
   }
 })
 const { currentInstance } = toRefs(useMcpStoreHook())
+const configServer = `
+{
+  "mcpServers": {
+    "everything": {
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
+      "command": "npx"
+    }
+  }
+}
+`
 // back last class page
 const handleBack = () => {
   jumpBack()
@@ -76,7 +112,10 @@ const handleConfig = () => {
   formComponent.value.handleConfig()
 }
 const handleClose = () => {
-  jumpBack()
+  // jumpBack()
+  jumpToPage({
+    url: '/instance-manage',
+  })
 }
 const handleViewStatus = () => {
   formComponent.value.handleViewStatus()
@@ -92,60 +131,70 @@ const handleSaveAsTemplate = () => {
 }
 // instance details
 const handleGetDetail = async () => {
-  let formData: any = {}
-  const data = await InstanceAPI.detail({
-    instanceId: query.instanceId,
-  })
-  formData = data
-  formData.accessType = data.accessType
-  formData.mcpServers = JsonFormatter.format(data.mcpServers, 2)
-  formData.environmentVariables = data.environmentVariables
-    ? Object.keys(data.environmentVariables)?.map((key) => ({
-        key,
-        value: data.environmentVariables[key],
-      }))
-    : []
-  formData.volumeMounts = data.volumeMounts || []
-  return formData
+  try {
+    pageInfo.value.loading = true
+    let formData: any = {}
+    const data = await InstanceAPI.detail({
+      instanceId: query.instanceId,
+    })
+    formData = data
+    formData.accessType = data.accessType
+    formData.mcpServers = JsonFormatter.format(data.mcpServers, 2) || configServer
+    formData.environmentVariables = data.environmentVariables
+      ? Object.keys(data.environmentVariables)?.map((key) => ({
+          key,
+          value: data.environmentVariables[key],
+        }))
+      : []
+    formData.volumeMounts = data.volumeMounts || []
+    return formData
+  } finally {
+    pageInfo.value.loading = false
+  }
 }
 // template details
 const handleGetTemplateDetail = async () => {
-  let formData: any = {}
-  const data = await TemplateAPI.detail({
-    id: query.templateId,
-  })
-  formData = data
-  formData.mcpServers = JsonFormatter.format(data.mcpServers)
-  formData.environmentVariables = data.environmentVariables
-    ? Object.keys(data.environmentVariables)?.map((key) => ({
-        key,
-        value: data.environmentVariables[key],
-      }))
-    : []
-  formData.volumeMounts = data.volumeMounts || []
-  formData.sourceType = SourceType.TEMPLATE
-  // default open token
-  let tokenValue =
-    'Bearer ' +
-    getToken(
-      JSON.stringify({
-        expireAt: Date.now(),
-        userId: userInfo.userId,
-        username: userInfo.username,
-      }),
-    )
-  formData.enabledToken = true
-  formData.tokens = [
-    {
-      expireAt: '',
-      enabled: true,
-      publishAt: new Date().getTime(),
-      headers: [{ key: 'Authorization', value: tokenValue }],
-      token: tokenValue,
-      usages: ['default'],
-    },
-  ]
-  return formData
+  try {
+    pageInfo.value.loading = true
+    let formData: any = {}
+    const data = await TemplateAPI.detail({
+      id: query.templateId,
+    })
+    formData = data
+    formData.mcpServers = JsonFormatter.format(data.mcpServers) || configServer
+    formData.environmentVariables = data.environmentVariables
+      ? Object.keys(data.environmentVariables)?.map((key) => ({
+          key,
+          value: data.environmentVariables[key],
+        }))
+      : []
+    formData.volumeMounts = data.volumeMounts || []
+    formData.sourceType = SourceType.TEMPLATE
+    // default open token
+    let tokenValue =
+      'Bearer ' +
+      getToken(
+        JSON.stringify({
+          expireAt: Date.now(),
+          userId: userInfo.userId,
+          username: userInfo.username,
+        }),
+      )
+    formData.enabledToken = true
+    formData.tokens = [
+      {
+        expireAt: '',
+        enabled: true,
+        publishAt: new Date().getTime(),
+        headers: [{ key: 'Authorization', value: '' }],
+        token: tokenValue,
+        usages: ['default'],
+      },
+    ]
+    return formData
+  } finally {
+    pageInfo.value.loading = false
+  }
 }
 //instacen  market details
 const handleInitMarketInstance = async () => {
@@ -165,7 +214,7 @@ const handleInitMarketInstance = async () => {
     mcpProtocol: McpProtocol.STDIO,
     imgAddress: InstanceData.value.IMGADDRESS,
     notes: locale.value === 'zh-cn' ? currentMCP.description : currentMCP.descriptionEn,
-    mcpServers: JsonFormatter.format(currentMCP.configTemplate),
+    mcpServers: JsonFormatter.format(currentMCP.configTemplate) || configServer,
     iconPath: currentMCP.githubOwnerAvatarUrl,
     packageId: '',
     environmentId: '',
@@ -180,7 +229,7 @@ const handleInitMarketInstance = async () => {
         enabled: true,
         expireAt: '',
         publishAt: new Date().getTime(),
-        headers: [{ key: 'Authorization', value: tokenValue }],
+        headers: [{ key: 'Authorization', value: '' }],
         token: tokenValue,
         usages: ['default'],
       },
@@ -238,6 +287,32 @@ onMounted(() => {
 }
 .form-body {
   width: 850px;
+}
+.form-title {
+  font-family:
+    PingFangSC,
+    PingFang SC;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 28px;
+
+  /* 布局与间距 */
+  margin-bottom: 24px;
+  padding: 12px 0;
+
+  /* 简约分割风格 */
+  text-align: left;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.form-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  margin-right: 8px;
+  background-color: var(--el-color-primary);
+  vertical-align: text-bottom;
+  border-radius: 2px;
 }
 .footer-action {
   position: sticky;

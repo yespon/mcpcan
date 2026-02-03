@@ -56,6 +56,12 @@ const AuthAPI = {
       params,
     })
   },
+  validate() {
+    return request<any, any>({
+      url: `/authz/validate`,
+      method: 'get',
+    })
+  },
 }
 
 export default AuthAPI

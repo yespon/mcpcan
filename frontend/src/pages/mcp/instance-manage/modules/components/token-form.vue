@@ -287,7 +287,7 @@ onMounted(init)
 </script>
 <style lang="scss" scoped>
 :deep(.el-form-item__label) {
-  width: 100%;
+  width: 100% !important;
 }
 :deep(.el-form-item__content) {
   display: block;
