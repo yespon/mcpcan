@@ -13,27 +13,21 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 )
 
-var SkipPaths = []string{
-	"/health",
-	"/authz/encryption-key",
-	"/authz/login",
-	"/authz/logout",
-	"/authz/register",
-	"/authz/refresh",
-	"/authz/validate",
-	"/market/code/download",
-	"/market/openapi/download",
-}
+// var SkipPaths = []string{
+// 	"/health",
+// 	"/authz/encryption-key",
+// 	"/authz/login",
+// 	"/authz/logout",
+// 	"/authz/register",
+// 	"/authz/refresh",
+// 	"/authz/validate",
+// 	"/market/code/download",
+// 	"/market/openapi/download",
+// }
 
 // AuthTokenMiddleware User token validation middleware
 func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Skip authentication for login and other public endpoints
-		if shouldSkipAuth(c.Request.URL.Path) {
-			c.Next()
-			return
-		}
-
 		tokenString := ExtractToken(c)
 		if tokenString == "" {
 			i18n.Unauthorized(c, "missing auth token")
@@ -80,16 +74,6 @@ func AuthTokenMiddleware(secret string) gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Next()
 	}
-}
-
-// shouldSkipAuth Check if authentication should be skipped
-func shouldSkipAuth(path string) bool {
-	for _, skipPath := range SkipPaths {
-		if strings.HasPrefix(path, skipPath) {
-			return true
-		}
-	}
-	return false
 }
 
 // ExtractToken Extract token

@@ -159,6 +159,28 @@ export const useUserStore = defineStore('user', () => {
         })
     })
   }
+  /**
+   * Handle get user info data
+   *
+   * @returns {UserInfo}
+   */
+  function validateInfo() {
+    return new Promise<UserInfo>((resolve, reject) => {
+      AuthAPI.validate()
+        .then((data) => {
+          userInfo.value = data.userInfo
+          if (!data) {
+            reject('Verification failed, please Login again.')
+            return
+          }
+          Object.assign(userInfo.value, { ...data })
+          resolve(data)
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    })
+  }
 
   /**
    * Logout
@@ -222,6 +244,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo,
     isLogin: () => !!Storage.get('token'),
     getUserInfo,
+    validateInfo,
     login,
     logout,
     // resetAllState,

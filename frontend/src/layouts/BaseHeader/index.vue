@@ -137,7 +137,7 @@ import GlareHover from '@/components/Animation/GlareHover.vue'
 const { t, locale } = useI18n()
 const systemStore = useSystemStoreHook()
 const { themeType } = toRefs(systemStore)
-const { userInfo } = useUserStore()
+const { userInfo } = storeToRefs(useUserStore())
 const { jumpBack, jumpToPage } = useRouterHooks()
 const github = 'https://github.com/kymo-mcp/mcpcan'
 const issues = 'https://github.com/kymo-mcp/mcpcan/issues'
