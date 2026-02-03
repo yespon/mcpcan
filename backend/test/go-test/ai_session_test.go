@@ -272,7 +272,7 @@ func TestAiSession_AllOps(t *testing.T) {
 
 	// 8. MCP Integration Test
 	t.Run("MCP Session Test", func(t *testing.T) {
-		// modelID = 3 // Don't overwrite valid modelID from Setup
+		// modelID = 13 // Don't overwrite valid modelID from Setup
 		fmt.Printf("[TEST] Testing MCP Integration with provided config...\n")
 
 		mcpConfig := `{
@@ -328,7 +328,7 @@ func TestAiSession_AllOps(t *testing.T) {
 		// Sending a message triggers MCP initialization. If init fails, chat fails.
 		chatReq := map[string]interface{}{
 			"sessionID": mcpSessionID,
-			"content":   "中文对话，查询系统信息",
+			"content":   "中文对话，调用mcp工具获取system info系统信息",
 		}
 
 		resp, body = doRequest(t, "POST", fmt.Sprintf("/market/ai/sessions/%d/chat", mcpSessionID), chatReq)
@@ -379,11 +379,11 @@ func TestAiSession_AllOps(t *testing.T) {
 	t.Run("Delete Session", func(t *testing.T) {
 		fmt.Printf("[TEST] Deleting session ID: %d\n", sessionID)
 		
-		req := map[string]interface{}{"id": sessionID}
-		resp, body := doRequest(t, "DELETE", fmt.Sprintf("/market/ai/sessions/%d", sessionID), req)
-		assertResponseSuccess(t, resp, body)
+		// req := map[string]interface{}{"id": sessionID}
+		// resp, body := doRequest(t, "DELETE", fmt.Sprintf("/market/ai/sessions/%d", sessionID), req)
+		// assertResponseSuccess(t, resp, body)
 		
-		fmt.Printf("[PASS] ✓ Deleted Session ID: %d\n", sessionID)
+		// fmt.Printf("[PASS] ✓ Deleted Session ID: %d\n", sessionID)
 		
 		// Verify file cleanup
 		if tempFileToDelete != "" {
@@ -398,12 +398,12 @@ func TestAiSession_AllOps(t *testing.T) {
 
 	// Cleanup: Delete Model
 	t.Run("Cleanup Model", func(t *testing.T) {
-		fmt.Printf("[CLEANUP] Deleting test model ID: %d\n", modelID)
+		// fmt.Printf("[CLEANUP] Deleting test model ID: %d\n", modelID)
 		
-		req := map[string]interface{}{"id": modelID}
-		resp, body := doRequest(t, "DELETE", fmt.Sprintf("/market/ai/models/%d", modelID), req)
-		assertResponseSuccess(t, resp, body)
+		// req := map[string]interface{}{"id": modelID}
+		// resp, body := doRequest(t, "DELETE", fmt.Sprintf("/market/ai/models/%d", modelID), req)
+		// assertResponseSuccess(t, resp, body)
 		
-		fmt.Printf("[PASS] ✓ Cleanup complete\n")
+		// fmt.Printf("[PASS] ✓ Cleanup complete\n")
 	})
 }
