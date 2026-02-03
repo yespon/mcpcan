@@ -1,116 +1,128 @@
 package service
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"go.uber.org/zap"
 
-	"github.com/kymo-mcp/mcpcan/api/authz/role"
+	pb "github.com/kymo-mcp/mcpcan/api/authz/role"
 	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 )
 
 // RoleService role HTTP service
 type RoleService struct {
-	roleData *biz.RoleData
+	roleBiz *biz.RoleData
 }
 
 // NewRoleService creates role service instance
 func NewRoleService() *RoleService {
 	return &RoleService{
-		roleData: biz.NewRoleData(nil),
+		roleBiz: biz.NewRoleData(context.Background()),
 	}
 }
 
 // CreateRole creates role
 func (s *RoleService) CreateRole(c *gin.Context) {
-	var req role.CreateRoleRequest
+	var req pb.CreateRoleRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
-
-	// Check if role name already exists
-	existingRole, err := s.roleData.GetRoleByName(c.Request.Context(), req.Name)
-	if err == nil && existingRole != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "role name already exists")
+	if req.Name == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "name is required")
 		return
 	}
+	if req.Level <= 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "level is required")
+		return
+	}
+
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	var level = int(req.Level)
 
 	// Convert request to model
-	roleModel := s.convertCreateRequestToModel(&req)
+	roleModel := &model.SysRole{
+		Name:        req.Name,
+		Description: &req.Description,
+		Level:       &level,
+		DataScope:   &req.DataScope,
+		CreateBy:    &userInfo.Username,
+		UpdateBy:    &userInfo.Username,
+	}
 
 	// Create role
-	if err := s.roleData.CreateRole(c.Request.Context(), roleModel); err != nil {
-		logger.Error("create role failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "create role failed")
+	if err := mysql.SysRoleRepo.Create(c.Request.Context(), roleModel); err != nil {
+		logger.Error("Failed to create role", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to create role: %v", err))
 		return
 	}
 
-	// Return created role information
-	response := s.convertModelToProto(roleModel)
-	common.GinSuccess(c, response)
+	// Convert model to response
+	respData := s.convertModelToProto(roleModel)
+
+	common.GinSuccess(c, respData)
 }
 
 // UpdateRole updates role
 func (s *RoleService) UpdateRole(c *gin.Context) {
-	var req role.UpdateRoleRequest
+	var req pb.UpdateRoleRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
-
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "invalid role ID")
+	if req.Name == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "name is required")
 		return
 	}
-	req.Id = int64(id)
-
-	// Get existing role
-	existingRole, err := s.roleData.GetRoleByID(c.Request.Context(), uint(req.Id))
-	if err != nil {
-		logger.Error("get role failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "role does not exist")
+	if req.Level <= 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "level is required")
 		return
 	}
 
-	// Update model
-	s.updateModelFromRequest(existingRole, &req)
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	// Get role by ID
+	roleModel, err := mysql.SysRoleRepo.FindByID(c.Request.Context(), uint(req.Id))
+	if err != nil {
+		logger.Error("Failed to get role", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get role: %v", err))
+		return
+	}
+
+	var level = int(req.Level)
+	roleModel.Name = req.Name
+	roleModel.Description = &req.Description
+	roleModel.Level = &level
+	roleModel.DataScope = &req.DataScope
+	roleModel.UpdateBy = &userInfo.Username
 
 	// Update role
-	if err := s.roleData.UpdateRole(c.Request.Context(), existingRole); err != nil {
-		logger.Error("update role failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "update role failed")
+	if err := mysql.SysRoleRepo.Update(c.Request.Context(), roleModel); err != nil {
+		logger.Error("Failed to update role", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to update role: %v", err))
 		return
 	}
 
-	// Return updated role information
-	response := s.convertModelToProto(existingRole)
-	common.GinSuccess(c, response)
-}
+	// Convert model to response
+	respData := s.convertModelToProto(roleModel)
 
-// GetRoleById gets role by ID
-func (s *RoleService) GetRoleById(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "invalid role ID")
-		return
-	}
-
-	roleModel, err := s.roleData.GetRoleByID(c.Request.Context(), uint(id))
-	if err != nil {
-		logger.Error("get role failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "role does not exist")
-		return
-	}
-
-	response := s.convertModelToProto(roleModel)
-	common.GinSuccess(c, response)
+	common.GinSuccess(c, respData)
 }
 
 // DeleteRole deletes role
@@ -118,173 +130,202 @@ func (s *RoleService) DeleteRole(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "invalid role ID")
+		common.GinError(c, i18nresp.CodeBadRequest, "Invalid role ID")
 		return
 	}
 
-	if err := s.roleData.DeleteRole(c.Request.Context(), uint(id)); err != nil {
-		logger.Error("delete role failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "delete role failed")
+	// Delete role
+	if err := s.roleBiz.BatchDeleteRoles(c.Request.Context(), []uint{uint(id)}); err != nil {
+		logger.Error("Failed to delete role", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to delete role: %v", err))
 		return
 	}
 
-	common.GinSuccess(c, gin.H{"message": "delete successful"})
+	common.GinSuccess(c, nil)
+}
+
+// BatchDeleteRole batch deletes roles
+func (s *RoleService) BatchDeleteRole(c *gin.Context) {
+
+	var req pb.BatchDeleteRolesRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+	// Convert IDs to uint slice
+	var roleIDs []uint
+	for _, id := range req.Ids {
+		roleIDs = append(roleIDs, uint(id))
+	}
+
+	// Batch delete roles
+	if err := mysql.SysRoleRepo.BatchDelete(c.Request.Context(), roleIDs); err != nil {
+		logger.Error("Failed to batch delete roles", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch delete roles: %v", err))
+		return
+	}
+
+	common.GinSuccess(c, nil)
 }
 
 // ListRoles gets role list with pagination
 func (s *RoleService) ListRoles(c *gin.Context) {
-	var req role.ListRolesRequest
+	var req pb.ListRolesRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
 
-	// Convert query parameters
-	pageNum := int(req.PageInfo.Page)
-	pageSize := int(req.PageInfo.Size)
-	if pageNum <= 0 {
-		pageNum = 1
+	// Set default page and page size if not provided
+	page := int(req.Page)
+	if page <= 0 {
+		page = 1
 	}
+
+	pageSize := int(req.Size)
 	if pageSize <= 0 {
 		pageSize = 10
 	}
 
-	roles, total, err := s.roleData.GetRoleListWithPagination(c.Request.Context(), pageNum, pageSize, req.Query.Blurry, nil)
+	// Use blurry query as keyword
+	keyword := req.Blurry
+
+	// Get roles with pagination
+	roles, total, err := mysql.SysRoleRepo.FindWithPagination(c.Request.Context(), page, pageSize, keyword, nil)
 	if err != nil {
-		logger.Error("get role list failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "get role list failed")
+		logger.Error("Failed to get roles with pagination", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get roles: %v", err))
 		return
 	}
 
-	// Convert to Proto format
-	var protoRoles []*role.SysRole
-	for _, r := range roles {
-		protoRoles = append(protoRoles, s.convertModelToProto(r))
+	// Convert models to response
+	var respRoles []*pb.SysRole
+	for _, role := range roles {
+		respRoles = append(respRoles, s.convertModelToProto(role))
 	}
 
-	// Build pagination response
-	response := &role.ListRolesResponse{
-		Data: &role.PageSysRole{
-			Roles: protoRoles,
-			PageInfo: &role.PageInfo{
-				Page:  int32(pageNum),
-				Size:  int32(pageSize),
-				Total: total,
-				Pages: int32((total + int64(pageSize) - 1) / int64(pageSize)),
-			},
-		},
-	}
-
-	common.GinSuccess(c, response)
+	common.GinSuccess(c, &pb.ListRolesResponse{
+		Total: total,
+		Roles: respRoles,
+	})
 }
 
-// GetRolePermissions gets role permissions
-func (s *RoleService) GetRolePermissions(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "invalid role ID")
+// convertModelToProto converts model.SysRole to pb.SysRole
+func (s *RoleService) convertModelToProto(role *model.SysRole) *pb.SysRole {
+
+	resp := &pb.SysRole{
+		Id:        int64(role.RoleID),
+		Name:      role.Name,
+		CreatedAt: 0,
+		UpdatedAt: 0,
+	}
+
+	if role.Level != nil {
+		level := int32(*role.Level)
+		resp.Level = int64(level)
+	}
+
+	// Set description if exists
+	if role.Description != nil {
+		resp.Description = *role.Description
+	}
+
+	// Set created time if exists
+	if role.CreateTime != nil {
+		resp.CreatedAt = role.CreateTime.Unix()
+	}
+
+	// Set updated time if exists
+	if role.UpdateTime != nil {
+		resp.UpdatedAt = role.UpdateTime.Unix()
+	}
+
+	// Set created by if exists
+	if role.CreateBy != nil {
+		resp.CreatedBy = *role.CreateBy
+	}
+
+	// Set updated by if exists
+	if role.UpdateBy != nil {
+		resp.UpdatedBy = *role.UpdateBy
+	}
+
+	return resp
+}
+
+// SaveRoleMenus saves role menus
+func (s *RoleService) SaveRoleMenus(c *gin.Context) {
+	var req pb.SaveRoleMenusRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
 
-	// Get role permissions
-	permissions, err := s.roleData.GetRolePermissions(c.Request.Context(), uint(id))
+	err := mysql.SysRolesMenusRepo.BatchDeleteByRoleID(c.Request.Context(), req.RoleID)
 	if err != nil {
-		logger.Error("get role permissions failed", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "get role permissions failed")
+		logger.Error("Failed to batch delete role menus", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch delete role menus: %v", err))
 		return
 	}
 
-	// Convert to permission tree format
-	permissionTree := s.convertPermissionsToTree(permissions)
-
-	response := &role.GetRolePermissionsResponse{
-		Permissions: permissionTree,
+	associations := []*model.SysRolesMenus{}
+	for _, menuID := range req.MenuIDs {
+		associations = append(associations, &model.SysRolesMenus{
+			RoleID: req.RoleID,
+			MenuID: menuID,
+		})
 	}
 
-	common.GinSuccess(c, response)
+	err = mysql.SysRolesMenusRepo.BatchCreate(c.Request.Context(), associations)
+	if err != nil {
+		logger.Error("Failed to batch create role menus", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch create role menus: %v", err))
+		return
+	}
+
+	common.GinSuccess(c, nil)
 }
 
-// convertCreateRequestToModel converts create request to model
-func (s *RoleService) convertCreateRequestToModel(req *role.CreateRoleRequest) *model.SysRole {
-	roleModel := &model.SysRole{
-		Name: req.Name,
+// FindRoleMenus finds role menus
+func (s *RoleService) FindRoleMenus(c *gin.Context) {
+	var req pb.FindRoleMenusRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
 	}
 
-	if req.Description != "" {
-		roleModel.Description = &req.Description
+	roleMenus, err := mysql.SysRolesMenusRepo.BatchFindByRoleID(c.Request.Context(), req.RoleIDs)
+	if err != nil {
+		logger.Error("Failed to find role menus", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to find role menus: %v", err))
+		return
 	}
 
-	if req.Sort > 0 {
-		level := int(req.Sort)
-		roleModel.Level = &level
+	// Convert models to response
+	menuIds := []int64{}
+	var menuRoleId = make(map[int64]int64)
+	for _, menu := range roleMenus {
+		menuIds = append(menuIds, menu.MenuID)
+		menuRoleId[menu.MenuID] = menu.RoleID
 	}
 
-	return roleModel
-}
-
-// updateModelFromRequest updates model from update request
-func (s *RoleService) updateModelFromRequest(roleModel *model.SysRole, req *role.UpdateRoleRequest) {
-	roleModel.Name = req.Name
-
-	if req.Description != "" {
-		roleModel.Description = &req.Description
-	} else {
-		roleModel.Description = nil
+	menus, err := mysql.SysMenuRepo.FindByIDs(c.Request.Context(), menuIds)
+	if err != nil {
+		logger.Error("Failed to find role menus", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to find role menus: %v", err))
+		return
 	}
 
-	if req.Sort > 0 {
-		level := int(req.Sort)
-		roleModel.Level = &level
-	} else {
-		roleModel.Level = nil
-	}
-}
-
-// convertPermissionsToTree converts permission string list to permission tree structure
-func (s *RoleService) convertPermissionsToTree(permissions []string) []*role.PermissionTreeNode {
-	permissionTree := make([]*role.PermissionTreeNode, 0, len(permissions))
-
-	// Create a permission tree node for each permission string
-	for i, perm := range permissions {
-		node := &role.PermissionTreeNode{
-			Id:     int64(i + 1), // Temporary ID, should be obtained from permission table
-			Name:   perm,
-			Code:   perm,
-			Type:   1, // Default type
-			Status: "enabled",
-			Hidden: false,
-		}
-		permissionTree = append(permissionTree, node)
+	sysRoleMenus := []*pb.SysRoleMenu{}
+	var permissions []string
+	for _, menu := range menus {
+		permissions = append(permissions, menu.GetPermission())
+		sysRoleMenus = append(sysRoleMenus, &pb.SysRoleMenu{
+			Id:         menu.MenuID,
+			Name:       menu.GetName(),
+			Permission: menu.GetPermission(),
+			RoleId:     menuRoleId[menu.MenuID],
+		})
 	}
 
-	return permissionTree
-}
-
-// convertModelToProto converts model to Proto
-func (s *RoleService) convertModelToProto(roleModel *model.SysRole) *role.SysRole {
-	roleProto := &role.SysRole{
-		Id:   int64(roleModel.RoleID),
-		Name: roleModel.Name,
-	}
-
-	if roleModel.Description != nil {
-		roleProto.Description = *roleModel.Description
-	}
-
-	if roleModel.Level != nil {
-		roleProto.Sort = int32(*roleModel.Level)
-	}
-
-	// Default status is enabled
-	roleProto.Status = role.RoleStatus_RoleStatusEnabled
-
-	if roleModel.CreateTime != nil {
-		roleProto.CreatedAt = roleModel.CreateTime.Unix()
-	}
-
-	if roleModel.UpdateTime != nil {
-		roleProto.UpdatedAt = roleModel.UpdateTime.Unix()
-	}
-
-	return roleProto
+	common.GinSuccess(c, &pb.FindRoleMenusResponse{
+		Menus:       sysRoleMenus,
+		Permissions: permissions,
+	})
 }

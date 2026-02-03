@@ -96,8 +96,12 @@ func (a *App) loadMysql() error {
 				return (&model.SysUsersRoles{}).TableName(), nil
 			},
 			func() (string, error) {
-				mysql.NewSysRolesDeptsRepository()
-				return (&model.SysRolesDepts{}).TableName(), nil
+				mysql.NewSysMenuRepository()
+				return (&model.SysMenu{}).TableName(), nil
+			},
+			func() (string, error) {
+				mysql.NewSysRolesMenusRepository()
+				return (&model.SysRolesMenus{}).TableName(), nil
 			},
 		}
 	}
@@ -137,6 +141,8 @@ func (a *App) setupMiddleware() {
 
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(config.GlobalConfig.Secret))
+	// set user info to context
+	a.ginEngine.Use(middleware.AppendUserMiddleware())
 }
 
 // setupRoutes sets up routes
@@ -158,24 +164,48 @@ func (a *App) setupRoutes() {
 		return
 	}
 
-	userService := service.NewUserService()
+	deptService := service.NewDeptService()
+	deptGroup := authzGroup.Group("/depts")
+	{
+		deptGroup.POST("", deptService.CreateDept)
+		deptGroup.PUT("", deptService.UpdateDept)
+		deptGroup.DELETE("/:id", deptService.DeleteDept)
+		deptGroup.DELETE("/batch-delete", deptService.BatchDeleteDept)
+		deptGroup.PUT("/:id/status", deptService.UpdateDeptStatus)
+		deptGroup.GET("/list-depts", deptService.FindDepts)
+		deptGroup.GET("/tree", deptService.GetDeptTree)
+	}
 
-	// User related routes
+	roleService := service.NewRoleService()
+	roleGroup := authzGroup.Group("/roles")
+	{
+		roleGroup.POST("", roleService.CreateRole)
+		roleGroup.PUT("", roleService.UpdateRole)
+		roleGroup.DELETE("/:id", roleService.DeleteRole)
+		roleGroup.DELETE("/batch-delete", roleService.BatchDeleteRole)
+		roleGroup.GET("/list-roles", roleService.ListRoles)
+		roleGroup.POST("/save-menus", roleService.SaveRoleMenus)
+		roleGroup.POST("/find-menus", roleService.FindRoleMenus)
+	}
+
+	userService := service.NewUserService()
 	userGroup := authzGroup.Group("/users")
 	userGroup.Use(middleware.AuthTokenMiddleware(config.GlobalConfig.Secret))
 	{
 		userGroup.POST("", userService.CreateUser)
-		userGroup.GET("/:id", userService.GetUserById)
 		userGroup.PUT("/:id", userService.UpdateUser)
 		userGroup.DELETE("/:id", userService.DeleteUser)
-		userGroup.GET("", userService.ListUsers)
-		// update-password
+		userGroup.DELETE("/batch-delete", userService.BatchDelete)
+		userGroup.GET("/list-users", userService.ListUsers)
 		userGroup.PUT("/update-password", userService.UpdatePassword)
-		// update-avatar
 		userGroup.PUT("/update-avatar", userService.UpdateAvatar)
 	}
 
-	// Authentication related routes - updated to use UserAuthService
+	menuService := service.NewMenuService()
+	menuGroup := authzGroup.Group("/menus")
+	{
+		menuGroup.GET("/tree", menuService.GetMenuTree)
+	}
 
 	{
 		// User login

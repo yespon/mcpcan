@@ -1,108 +1,166 @@
 package service
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
+	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"go.uber.org/zap"
 
-	"github.com/kymo-mcp/mcpcan/api/authz/dept"
-	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
+	pb "github.com/kymo-mcp/mcpcan/api/authz/dept"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 )
 
 // DeptService department HTTP service
 type DeptService struct {
-	deptData *biz.DeptData
+	biz *biz.DeptData
 }
 
 // NewDeptService creates department service instance
 func NewDeptService() *DeptService {
 	return &DeptService{
-		deptData: biz.NewDeptData(nil),
+		biz: biz.NewDeptData(context.Background()),
 	}
 }
 
 // CreateDept creates department
 func (s *DeptService) CreateDept(c *gin.Context) {
-	var req dept.CreateDeptRequest
+	var req pb.CreateDeptRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	if req.Dept.Name == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "Department name is required")
+		return
+	}
+	if req.Dept.Sort <= 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "Department sort is required")
+		return
+	}
+
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
 
 	// Convert request to model
-	deptModel := s.convertCreateRequestToModel(&req)
+	deptModel := &model.SysDept{
+		Name:     req.Dept.Name,
+		DeptSort: int(req.Dept.Sort),
+		Source:   model.DeptSourcePlatform,
+		CreateBy: &[]string{userInfo.Username}[0],
+		UpdateBy: &[]string{userInfo.Username}[0],
+	}
+	if req.Dept.Status == pb.DeptStatus_DeptStatusEnabled {
+		deptModel.Enabled = 1
+	} else {
+		deptModel.Enabled = 0
+	}
+
+	if req.Dept.ImageURL != "" {
+		imageURL := req.Dept.ImageURL
+		deptModel.ImageURL = &imageURL
+	}
+
+	// Set parent department ID if provided
+	var parentDept *model.SysDept
+	if req.Dept.ParentID > 0 {
+		parentID := uint(req.Dept.ParentID)
+		parentDept, err = mysql.SysDeptRepo.FindByID(c.Request.Context(), parentID)
+		if err != nil {
+			logger.Error("Failed to get parent department", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get parent department: %v", err))
+			return
+		}
+		if parentDept == nil {
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Parent department with ID %d does not exist", parentID))
+			return
+		}
+		deptModel.PID = &parentID
+	}
 
 	// Create department
-	if err := s.deptData.CreateDept(c.Request.Context(), deptModel); err != nil {
+	if err := mysql.SysDeptRepo.Create(c.Request.Context(), deptModel); err != nil {
 		logger.Error("Failed to create department", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to create department")
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to create department: %v", err))
 		return
 	}
 
-	// Return created department information
-	deptProto := s.convertModelToProto(deptModel)
-	common.GinSuccess(c, deptProto)
+	// Convert model to response
+	respData := s.convertModelToProto(deptModel)
+
+	common.GinSuccess(c, respData)
 }
 
 // UpdateDept updates department
 func (s *DeptService) UpdateDept(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "Invalid department ID")
-		return
-	}
-
-	var req dept.UpdateDeptRequest
+	var req pb.UpdateDeptRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
 
-	// Get existing department
-	existingDept, err := s.deptData.GetDeptByID(c.Request.Context(), uint(id))
-	if err != nil {
-		logger.Error("Failed to get department", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Department not found")
+	if req.Dept.Name == "" {
+		common.GinError(c, i18nresp.CodeInternalError, "Department name is required")
+		return
+	}
+	if req.Dept.Sort <= 0 {
+		common.GinError(c, i18nresp.CodeInternalError, "Department sort is required")
 		return
 	}
 
-	// Update model
-	s.updateModelFromRequest(existingDept, &req)
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	// Get department by ID
+	deptModel, err := mysql.SysDeptRepo.FindByID(c.Request.Context(), uint(req.Dept.Id))
+	if err != nil {
+		logger.Error("Failed to get department", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get department: %v", err))
+		return
+	}
+
+	// Update department fields
+	deptModel.Name = req.Dept.Name
+	deptModel.DeptSort = int(req.Dept.Sort)
+	deptModel.ImageURL = &req.Dept.ImageURL
+	deptModel.UpdateBy = &userInfo.Username
+	if req.Dept.Status == pb.DeptStatus_DeptStatusEnabled {
+		deptModel.Enabled = 1
+	} else {
+		deptModel.Enabled = 0
+	}
+
+	// Update parent department ID if provided
+	if req.Dept.ParentID > 0 {
+		parentID := uint(req.Dept.ParentID)
+		deptModel.PID = &parentID
+	} else {
+		deptModel.PID = nil
+	}
 
 	// Update department
-	if err := s.deptData.UpdateDept(c.Request.Context(), existingDept); err != nil {
+	if err := mysql.SysDeptRepo.Update(c.Request.Context(), deptModel); err != nil {
 		logger.Error("Failed to update department", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to update department")
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to update department: %v", err))
 		return
 	}
 
-	// Return updated department information
-	deptProto := s.convertModelToProto(existingDept)
-	common.GinSuccess(c, deptProto)
-}
+	// Convert model to response
+	respData := s.convertModelToProto(deptModel)
 
-// GetDeptById gets department by ID
-func (s *DeptService) GetDeptById(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "Invalid department ID")
-		return
-	}
-
-	deptModel, err := s.deptData.GetDeptByID(c.Request.Context(), uint(id))
-	if err != nil {
-		logger.Error("Failed to get department", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Department not found")
-		return
-	}
-
-	deptProto := s.convertModelToProto(deptModel)
-	common.GinSuccess(c, deptProto)
+	common.GinSuccess(c, respData)
 }
 
 // DeleteDept deletes department
@@ -110,204 +168,175 @@ func (s *DeptService) DeleteDept(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "Invalid department ID")
+		common.GinError(c, i18nresp.CodeBadRequest, "Invalid department ID")
 		return
 	}
 
-	if err := s.deptData.DeleteDept(c.Request.Context(), uint(id)); err != nil {
-		logger.Error("Failed to delete department", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to delete department")
+	if err := s.biz.BatchDeleteDepts(c.Request.Context(), []uint{uint(id)}); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to delete department: %v", err))
 		return
 	}
 
 	common.GinSuccess(c, nil)
 }
 
-// GetDeptTree gets department tree structure
-func (s *DeptService) GetDeptTree(c *gin.Context) {
-	deptTree, err := s.deptData.GetDeptTree(c.Request.Context())
-	if err != nil {
-		logger.Error("Failed to get department tree", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to get department tree")
-		return
-	}
-
-	// Convert to Proto format
-	treeProto := make([]*dept.SysDept, 0, len(deptTree))
-	for _, d := range deptTree {
-		treeProto = append(treeProto, s.convertModelToProto(d))
-	}
-
-	common.GinSuccess(c, treeProto)
-}
-
-// ListDepts gets department list
-func (s *DeptService) ListDepts(c *gin.Context) {
-	var req dept.ListDeptsRequest
-	if err := common.BindAndValidateQuery(c, &req); err != nil {
-		return
-	}
-
-	// Convert status parameter
-	var status *bool
-	if req.Status != 0 {
-		enabled := req.Status == 1
-		status = &enabled
-	}
-
-	deptList, err := s.deptData.GetDeptList(c.Request.Context(), req.Name, status)
-	if err != nil {
-		logger.Error("Failed to get department list", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to get department list")
-		return
-	}
-
-	// Convert to Proto format
-	listProto := make([]*dept.SysDept, 0, len(deptList))
-	for _, d := range deptList {
-		listProto = append(listProto, s.convertModelToProto(d))
-	}
-
-	common.GinSuccess(c, listProto)
-}
-
-// PageDepts gets department list with pagination
-func (s *DeptService) PageDepts(c *gin.Context) {
-	var req dept.PageDeptsRequest
+// BatchDeleteDept batch deletes departments
+func (s *DeptService) BatchDeleteDept(c *gin.Context) {
+	var req pb.BatchDeleteDeptRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
 
-	// Convert status parameter
-	var status *bool
-	if req.Query != nil && req.Query.Status != 0 {
-		enabled := req.Query.Status == 1
-		status = &enabled
+	// Convert IDs to uint slice
+	var deptIDs []uint
+	for _, id := range req.Ids {
+		deptIDs = append(deptIDs, uint(id))
 	}
-
-	var name string
-	if req.Query != nil {
-		name = req.Query.Name
-	}
-
-	deptList, err := s.deptData.GetDeptList(c.Request.Context(), name, status)
-	if err != nil {
-		logger.Error("Failed to get department list", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, "Failed to get department list")
+	if err := s.biz.BatchDeleteDepts(c.Request.Context(), deptIDs); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to delete department: %v", err))
 		return
 	}
 
-	// Simple pagination handling (should be implemented in data layer)
-	page := int(req.Query.Page)
-	size := int(req.Query.Size)
-	if page <= 0 {
-		page = 1
-	}
-	if size <= 0 {
-		size = 10
-	}
-
-	total := int64(len(deptList))
-	start := (page - 1) * size
-	end := start + size
-
-	if start >= len(deptList) {
-		deptList = []*model.SysDept{}
-	} else if end > len(deptList) {
-		deptList = deptList[start:]
-	} else {
-		deptList = deptList[start:end]
-	}
-
-	// Convert to Proto format
-	listProto := make([]*dept.SysDept, 0, len(deptList))
-	for _, d := range deptList {
-		listProto = append(listProto, s.convertModelToProto(d))
-	}
-
-	// Build pagination response
-	pageInfo := &dept.PageInfo{
-		TotalElements:    total,
-		TotalPages:       int32((total + int64(size) - 1) / int64(size)),
-		First:            page == 1,
-		Last:             int64(end) >= total,
-		Size:             int32(size),
-		Number:           int32(page),
-		NumberOfElements: int32(len(listProto)),
-		Empty:            len(listProto) == 0,
-	}
-
-	response := &dept.PageSysDept{
-		Depts:    listProto,
-		PageInfo: pageInfo,
-	}
-
-	common.GinSuccess(c, response)
+	common.GinSuccess(c, nil)
 }
 
-// convertCreateRequestToModel converts create request to model
-func (s *DeptService) convertCreateRequestToModel(req *dept.CreateDeptRequest) *model.SysDept {
-	deptModel := &model.SysDept{}
-	deptModel.Name = req.Dept.Name
-	deptModel.DeptSort = int(req.Dept.Sort)
-
-	if req.Dept.ParentId > 0 {
-		parentId := uint(req.Dept.ParentId)
-		deptModel.PID = &parentId
+// UpdateDeptStatus updates department status
+func (s *DeptService) UpdateDeptStatus(c *gin.Context) {
+	var req pb.UpdateDeptStatusRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
 	}
 
-	if req.Dept.Status == dept.DeptStatus_DeptStatusEnabled {
-		deptModel.Enabled = true
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	// Get department by ID
+	deptModel, err := mysql.SysDeptRepo.FindByID(c.Request.Context(), uint(req.Id))
+	if err != nil {
+		logger.Error("Failed to get department", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get department: %v", err))
+		return
+	}
+
+	deptModel.UpdateBy = &[]string{userInfo.Username}[0]
+	// Update status
+	if req.Status == int32(pb.DeptStatus_DeptStatusEnabled) {
+		deptModel.Enabled = 1
 	} else {
-		deptModel.Enabled = false
+		deptModel.Enabled = 0
 	}
 
-	return deptModel
+	// Update department
+	if err := mysql.SysDeptRepo.Update(c.Request.Context(), deptModel); err != nil {
+		logger.Error("Failed to update department status", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to update department status: %v", err))
+		return
+	}
+
+	common.GinSuccess(c, nil)
 }
 
-// updateModelFromRequest updates model from update request
-func (s *DeptService) updateModelFromRequest(deptModel *model.SysDept, req *dept.UpdateDeptRequest) {
-	if req.Dept.Name != "" {
-		deptModel.Name = req.Dept.Name
+// FindDepts gets department list with pagination
+func (s *DeptService) FindDepts(c *gin.Context) {
+	var req pb.ListDeptsRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
 	}
-	if req.Dept.Sort > 0 {
-		deptModel.DeptSort = int(req.Dept.Sort)
+
+	var pid *uint
+	if req.Pid > 0 {
+		pid = &[]uint{uint(req.Pid)}[0]
 	}
-	if req.Dept.ParentId > 0 {
-		parentId := uint(req.Dept.ParentId)
-		deptModel.PID = &parentId
+
+	// Get departments with pagination
+	depts, _, err := mysql.SysDeptRepo.FindWithPagination(c.Request.Context(), 1, 99999, req.Name, pid, req.Status)
+	if err != nil {
+		logger.Error("Failed to get departments with pagination", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get departments: %v", err))
+		return
 	}
-	if req.Dept.Status == dept.DeptStatus_DeptStatusEnabled {
-		deptModel.Enabled = true
-	} else if req.Dept.Status == dept.DeptStatus_DeptStatusDisabled {
-		deptModel.Enabled = false
+
+	// Convert models to response
+	var respDepts []*pb.SysDept
+	for _, dept := range depts {
+		respDepts = append(respDepts, s.convertModelToProto(dept))
 	}
+
+	common.GinSuccess(c, respDepts)
 }
 
-// convertModelToProto converts model to Proto
-func (s *DeptService) convertModelToProto(deptModel *model.SysDept) *dept.SysDept {
-	deptProto := &dept.SysDept{
-		Id:   int64(deptModel.DeptID),
-		Name: deptModel.Name,
-		Sort: int32(deptModel.DeptSort),
+// convertModelToProto converts model.SysDept to pb.SysDept
+func (s *DeptService) convertModelToProto(dept *model.SysDept) *pb.SysDept {
+	resp := &pb.SysDept{
+		Id:        int64(dept.DeptID),
+		Name:      dept.Name,
+		Sort:      int32(dept.DeptSort),
+		Status:    pb.DeptStatus_DeptStatusDisabled,
+		CreatedAt: 0,
+		UpdatedAt: 0,
 	}
 
-	if deptModel.PID != nil {
-		deptProto.ParentId = int64(*deptModel.PID)
+	if dept.Enabled == 1 {
+		resp.Status = pb.DeptStatus_DeptStatusEnabled
 	}
 
-	if deptModel.Enabled {
-		deptProto.Status = dept.DeptStatus_DeptStatusEnabled
-	} else {
-		deptProto.Status = dept.DeptStatus_DeptStatusDisabled
+	if dept.PID != nil {
+		resp.ParentID = int64(*dept.PID)
 	}
 
-	if deptModel.CreateTime != nil {
-		deptProto.CreatedAt = deptModel.CreateTime.Unix()
-	}
-	if deptModel.UpdateTime != nil {
-		deptProto.UpdatedAt = deptModel.UpdateTime.Unix()
+	if dept.CreateTime != nil {
+		resp.CreatedAt = dept.CreateTime.Unix()
 	}
 
-	return deptProto
+	if dept.UpdateTime != nil {
+		resp.UpdatedAt = dept.UpdateTime.Unix()
+	}
+
+	if dept.CreateBy != nil {
+		resp.CreatedBy = *dept.CreateBy
+	}
+
+	if dept.UpdateBy != nil {
+		resp.UpdatedBy = *dept.UpdateBy
+	}
+
+	return resp
+}
+
+// GetDeptTree gets department tree
+func (s *DeptService) GetDeptTree(c *gin.Context) {
+	var req pb.GetDeptTreeRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	// Get departments with pagination
+	depts, _, err := mysql.SysDeptRepo.FindWithPagination(c.Request.Context(), 1, 99999, "", nil, int32(pb.DeptStatus_DeptStatusEnabled))
+	if err != nil {
+		logger.Error("Failed to get departments with pagination", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get departments: %v", err))
+		return
+	}
+
+	var deptMap map[uint]*pb.SysDept = make(map[uint]*pb.SysDept)
+	for _, dept := range depts {
+		deptMap[dept.DeptID] = s.convertModelToProto(dept)
+	}
+
+	var rootDepts []*pb.SysDept
+	for _, dept := range depts {
+		if dept.PID == nil || *dept.PID == 0 {
+			rootDepts = append(rootDepts, deptMap[dept.DeptID])
+		} else {
+			if parent, ok := deptMap[*dept.PID]; ok {
+				parent.Children = append(parent.Children, s.convertModelToProto(dept))
+				deptMap[*dept.PID] = parent
+			}
+		}
+	}
+
+	common.GinSuccess(c, rootDepts)
 }

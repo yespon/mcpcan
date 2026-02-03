@@ -48,12 +48,12 @@ message SysUser {
   UserStatus status = 8;       
   // @inject_tag: json:"source" desc:"用户来源"
   UserSource source = 9;       
-  // @inject_tag: json:"deptId" desc:"部门ID"
-  int64 deptId = 10;           
+  // @inject_tag: json:"deptID" desc:"部门ID"
+  int64 deptID = 10;
   // @inject_tag: json:"deptName" desc:"部门名称"
   string deptName = 11;        
-  // @inject_tag: json:"roleIds" desc:"角色ID列表"
-  repeated int64 roleIds = 12; 
+  // @inject_tag: json:"roleIDs" desc:"角色ID列表"
+  repeated int64 roleIDs = 12;
   // @inject_tag: json:"roleNames" desc:"角色名称列表"
   repeated string roleNames = 13; 
   // @inject_tag: json:"createdAt" desc:"创建时间"
@@ -90,8 +90,8 @@ message PageSysUser {
 message UserQuery {
   // @inject_tag: json:"blurry" desc:"模糊查询(用户名/邮箱)"
   string blurry = 1;           
-  // @inject_tag: json:"deptId" desc:"部门ID"
-  int64 deptId = 2;            
+  // @inject_tag: json:"deptID" desc:"部门ID"
+  int64 deptID = 2;
   // @inject_tag: json:"status" desc:"用户状态"
   UserStatus status = 3;       
   // @inject_tag: json:"createdAt" desc:"创建时间范围[开始时间, 结束时间]"
@@ -108,8 +108,8 @@ message PermissionTreeNode {
   string code = 3;                        
   // @inject_tag: json:"type" desc:"权限类型"
   int32 type = 4;                         
-  // @inject_tag: json:"parentId" desc:"父权限ID"
-  int64 parentId = 5;                     
+  // @inject_tag: json:"parentID" desc:"父权限ID"
+  int64 parentID = 5;
   // @inject_tag: json:"path" desc:"路由路径"
   string path = 6;                        
   // @inject_tag: json:"component" desc:"组件路径"
@@ -146,14 +146,12 @@ message CreateUserRequest {
   string email = 4;            
   // @inject_tag: json:"phone" desc:"手机号码"
   string phone = 5;            
-  // @inject_tag: json:"avatar" desc:"头像URL"
-  string avatar = 6;           
   // @inject_tag: json:"status" desc:"用户状态"
   UserStatus status = 7;       
-  // @inject_tag: json:"deptId" desc:"部门ID"
-  int64 deptId = 8;            
-  // @inject_tag: json:"roleIds" desc:"角色ID列表"
-  repeated int64 roleIds = 9;  
+  // @inject_tag: json:"deptID" desc:"部门ID"
+  int64 deptID = 8;
+  // @inject_tag: json:"roleIDs" desc:"角色ID列表"
+  repeated int64 roleIDs = 9;
 }
 
 // 创建用户响应
@@ -176,10 +174,12 @@ message UpdateUserRequest {
   string avatar = 5;           
   // @inject_tag: json:"status" desc:"用户状态"
   UserStatus status = 6;       
-  // @inject_tag: json:"deptId" desc:"部门ID"
-  int64 deptId = 7;            
-  // @inject_tag: json:"roleIds" desc:"角色ID列表"
-  repeated int64 roleIds = 8;  
+  // @inject_tag: json:"deptID" desc:"部门ID"
+  int64 deptID = 7;
+  // @inject_tag: json:"roleIDs" desc:"角色ID列表"
+  repeated int64 roleIDs = 8;
+  // @inject_tag: json:"password" desc:"密码"
+  string password = 9;
 }
 
 // 更新用户响应
@@ -213,39 +213,26 @@ message DeleteUserResponse {
 
 // 用户列表请求
 message ListUsersRequest {
-  // @inject_tag: json:"query" form:"query" desc:"查询条件"
-  UserQuery query = 1;    
-  // @inject_tag: json:"pageInfo" form:"pageInfo" desc:"分页信息"
-  PageInfo pageInfo = 2;  
+  // @inject_tag: json:"blurry" desc:"模糊查询(用户名/邮箱)"
+  string blurry = 1;
+  // @inject_tag: json:"deptId" desc:"部门ID"
+  repeated int64 deptIDs = 2;
+  // @inject_tag: json:"status" desc:"用户状态"
+  UserStatus status = 3;
+  // @inject_tag: json:"page" desc:"当前页码"
+  int32 page = 4;
+  // @inject_tag: json:"size" desc:"每页大小"
+  int32 size = 5;
+  // @inject_tag: json:"roleID" desc:"角色ID"
+  int64 roleID = 6;
 }
 
 // 用户列表响应
 message ListUsersResponse {
-  // @inject_tag: json:"data" desc:"分页用户数据"
-  PageSysUser data = 1;  
-}
-
-// 获取当前用户请求
-message GetCurrentUserRequest {
-  // 空请求，从token中获取用户信息
-}
-
-// 获取当前用户响应
-message GetCurrentUserResponse {
-  // @inject_tag: json:"user" desc:"当前用户信息"
-  SysUser user = 1;  
-}
-
-// 获取用户权限请求
-message GetUserPermissionsRequest {
-  // @inject_tag: json:"userId" uri:"id" desc:"用户ID，可选，不传则获取当前用户权限"
-  int64 userId = 1;  
-}
-
-// 获取用户权限响应
-message GetUserPermissionsResponse {
-  // @inject_tag: json:"permissions" desc:"权限树列表"
-  repeated PermissionTreeNode permissions = 1;  
+  // @inject_tag: json:"users" desc:"用户列表"
+  repeated SysUser users = 1;
+  // @inject_tag: json:"total" desc:"总记录数"
+  int64 total = 3;
 }
 
 // 更新密码请求
@@ -279,6 +266,19 @@ message UpdateAvatarResponse {
   string mime = 3;
 }
 
+message BatchDeleteUserRequest {
+  // @inject_tag: json:"userIDs" desc:"用户ID列表"
+  repeated int64 userIDs = 1;
+}
+
+message GetCurrentUserRequest {
+
+}
+
+message GetCurrentUserResponse {
+  SysUser users = 1;
+}
+
 // 用户服务
 service UserService {
   // 创建用户
@@ -297,17 +297,18 @@ service UserService {
     };
   }
 
-  // 获取用户详情
-  rpc GetUserById(GetUserByIdRequest) returns (GetUserByIdResponse) {
-    option (google.api.http) = {
-      get: "/authz/users/{id}"
-    };
-  }
-
   // 删除用户
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
     option (google.api.http) = {
       delete: "/authz/users/{id}"
+    };
+  }
+
+  // 批量删除用户
+  rpc BatchDelete(BatchDeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {
+      delete: "/authz/users/batch-delete"
+      body: "*"
     };
   }
 
@@ -319,19 +320,13 @@ service UserService {
     };
   }
 
-  // 获取当前登录用户详情
-  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {
-    option (google.api.http) = {
-      get: "/authz/users/get-current-user"
-    };
-  }
+//  // 获取当前登录用户详情
+//  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {
+//    option (google.api.http) = {
+//      get: "/authz/users/get-current-user"
+//    };
+//  }
 
-  // 获取用户的权限列表
-  rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse) {
-    option (google.api.http) = {
-      get: "/authz/users/permission-list"
-    };
-  }
 
   // 更新用户密码
   rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {

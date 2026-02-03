@@ -1,0 +1,53 @@
+### 校验当前 token
+GET http://localhost:8082/authz/validate
+Content-Type: application/json
+Authorization: {{token}}
+
+
+### 用户列表
+GET http://localhost:8082/authz/users/list-users
+Content-Type: application/json
+Authorization: {{token}}
+
+### 创建用户
+POST http://localhost:8082/authz/users
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "username": "testuser",
+  "fullName": "testuser",
+  "password": "123456",
+  "email": "testuser@example.com",
+  "phone": "12345678901",
+  "status": 1,
+  "deptID": 5,
+  "roleIDs": [
+    7
+  ]
+}
+
+### 更新用户
+PUT http://localhost:8082/authz/users/6
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "fullName": "testuser1",
+  "password": "123456",
+  "email": "testuser@example.com",
+  "phone": "12345678901",
+  "status": 1,
+  "deptID": 5,
+  "roleIDs": [
+    1
+  ]
+}
+
+### 删除用户
+DELETE http://localhost:8082/authz/users/6
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+
+
