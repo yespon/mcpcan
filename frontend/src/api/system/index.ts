@@ -67,6 +67,13 @@ export const RoleAPI = {
       method: 'DELETE',
     })
   },
+  removeUser(data: any) {
+    return request<any, any>({
+      url: `/authz/roles/users/remove`,
+      method: 'POST',
+      data,
+    })
+  },
   // 给角色授权菜单
   saveRoleMenus(roleId: string, menuIds: string[]) {
     return request<any, any>({
@@ -206,9 +213,9 @@ export const UserAPI = {
 // 列表请求
 export interface TableData {
   /** 页码 */
-  page: string
+  page: string | number
   /** 每页显示数量 */
-  pageSize: string
+  pageSize: string | number
   /** 允许传入其他任意类型的参数 */
   [key: string]: any
 }

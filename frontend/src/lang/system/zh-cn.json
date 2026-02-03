@@ -3,6 +3,9 @@
     "department": {
       "title": "部门管理",
       "pageDesc": "部门管理模块用于维护系统部门信息。主要功能包括：创建新部门、编辑现有部门资料、删除部门等。",
+      "desc": {
+        "delete": "确定删除吗,如果存在下级节点则一并删除，此操作不能撤销."
+      },
       "operation": {
         "add": "新增部门",
         "edit": "编辑",
@@ -26,7 +29,8 @@
         "name": "部门名称",
         "imageUrl": "图标",
         "deptSort": "部门排序",
-        "pid": "上级部门"
+        "pid": "上级部门",
+        "status": "是否启用"
       }
     },
     "role": {
@@ -36,6 +40,10 @@
       "edit": "编辑角色",
       "total": "角色总数",
       "currentRole": "当前角色",
+      "desc": {
+        "delete": "你确定要删除该角色吗？",
+        "authTitle": "菜单授权"
+      },
       "operation": {
         "view": "查看人员",
         "auth": "菜单授权",
@@ -63,7 +71,10 @@
       "desc": {
         "all": "全部",
         "select": "已选",
-        "clear": "清除"
+        "clear": "清除",
+        "remove": "确定用户移除",
+        "delete": "你确定要删除该用户吗？",
+        "topDept": "顶级部门"
       },
       "operation": {
         "add": "添加用户",

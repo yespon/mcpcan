@@ -3,6 +3,9 @@
     "department": {
       "title": "Department Management",
       "pageDesc": "The Department Management module is used to maintain system department information. Main functions include: creating new departments, editing existing department details, deleting departments, etc.",
+      "desc": {
+        "delete": "Are you sure you want to delete? If there are sub-nodes, they will be deleted together. This action cannot be undone."
+      },
       "operation": {
         "add": "Add",
         "edit": "Edit",
@@ -25,7 +28,8 @@
         "name": "Department Name",
         "imageUrl": "Icon",
         "deptSort": "Sort",
-        "pid": "Parent Department"
+        "pid": "Parent Department",
+        "status": "Status"
       }
     },
     "role": {
@@ -35,6 +39,10 @@
       "edit": "Edit Role",
       "total": "Total Roles",
       "currentRole": "Current Role",
+      "desc": {
+        "delete": "Are you sure you want to delete this role?",
+        "authTitle": "Menu Authorization"
+      },
       "operation": {
         "view": "View Users",
         "auth": "Menu Auth",
@@ -62,7 +70,10 @@
       "desc": {
         "all": "All",
         "select": "Selected",
-        "clear": "Clear"
+        "clear": "Clear",
+        "remove": "Are you sure you want to remove this user?",
+        "delete": "Are you sure you want to delete this user?",
+        "topDept": "Top Department"
       },
       "operation": {
         "add": "Add",
