@@ -13,17 +13,17 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/redis"
 )
 
-var SkipPaths = []string{
-	"/health",
-	"/authz/encryption-key",
-	"/authz/login",
-	"/authz/logout",
-	"/authz/register",
-	"/authz/refresh",
-	"/authz/validate",
-	"/market/code/download",
-	"/market/openapi/download",
-}
+// var SkipPaths = []string{
+// 	"/health",
+// 	"/authz/encryption-key",
+// 	"/authz/login",
+// 	"/authz/logout",
+// 	"/authz/register",
+// 	"/authz/refresh",
+// 	"/authz/validate",
+// 	"/market/code/download",
+// 	"/market/openapi/download",
+// }
 
 // AuthTokenMiddleware User token validation middleware
 func AuthTokenMiddleware(secret string) gin.HandlerFunc {
