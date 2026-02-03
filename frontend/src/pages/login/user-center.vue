@@ -110,7 +110,7 @@ const { logout, validateInfo } = useUserStore()
 const { jumpBack } = useRouterHooks()
 
 // 上传成功
-const handleAvatarSuccess = (
+const handleAvatarSuccess = async (
   response: { code: number; message: string },
   uploadFile: { raw: Blob | MediaSource },
 ) => {
