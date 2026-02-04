@@ -22,6 +22,8 @@ message SysMenuTreeNode {
   string engTitle = 7;
   // @inject_tag: json:"children" desc:"子菜单"
   repeated SysMenuTreeNode children = 5;
+  // @inject_tag: json:"permission" desc:"权限"
+  string permission = 8;
 }
 
 

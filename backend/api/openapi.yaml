@@ -5268,6 +5268,9 @@ components:
                     items:
                         $ref: '#/components/schemas/SysMenuTreeNode'
                     description: '@inject_tag: json:"children" desc:"子菜单"'
+                permission:
+                    type: string
+                    description: '@inject_tag: json:"permission" desc:"权限"'
         SysRole:
             type: object
             properties:

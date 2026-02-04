@@ -59,13 +59,14 @@ func filterMenuTree(menuTree []*menu.Menu, permissionKey map[string]*model.SysMe
 		if sysMenu, ok := permissionKey[m.Permission]; ok {
 			// 创建新的SysMenuTreeNode
 			treeNode := &pb.SysMenuTreeNode{
-				Id:       sysMenu.MenuID,
-				Title:    m.Title,
-				Path:     m.Path,
-				EngTitle: m.EngTitle,
-				Type:     int64(m.Type),
-				Sort:     int32(m.Sort),
-				Children: filteredChildren,
+				Id:         sysMenu.MenuID,
+				Title:      m.Title,
+				Path:       m.Path,
+				EngTitle:   m.EngTitle,
+				Type:       int64(m.Type),
+				Sort:       int32(m.Sort),
+				Children:   filteredChildren,
+				Permission: m.Permission,
 			}
 			result = append(result, treeNode)
 		} else if len(filteredChildren) > 0 {
