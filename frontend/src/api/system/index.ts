@@ -4,28 +4,28 @@ import { create } from 'lodash-es'
 
 export const RoleAPI = {
   list(data: TableData) {
-    // return request<TableData, List<any>>({
-    //   url: `/authz/roles/page-roles`,
-    //   method: 'POST',
-    //   data,
-    // })
-    return new Promise<any>((resolve) => {
-      resolve({
-        list: [
-          {
-            id: 1,
-            name: `测试角色`,
-            level: 1,
-            dataScope: '全部数据权限',
-            description: '拥有系统所有权限',
-            createTime: '2025-02-02 12:00:00',
-          },
-        ],
-        page: 1,
-        pageSize: 10,
-        total: 100,
-      })
+    return request<TableData, List<any>>({
+      url: `/authz/roles/list-roles`,
+      method: 'GET',
+      data,
     })
+    // return new Promise<any>((resolve) => {
+    //   resolve({
+    //     list: [
+    //       {
+    //         id: 1,
+    //         name: `测试角色`,
+    //         level: 1,
+    //         dataScope: '全部数据权限',
+    //         description: '拥有系统所有权限',
+    //         createTime: '2025-02-02 12:00:00',
+    //       },
+    //     ],
+    //     page: 1,
+    //     pageSize: 10,
+    //     total: 100,
+    //   })
+    // })
   },
   allList() {
     // return request<any, List<any>>({
@@ -85,29 +85,46 @@ export const RoleAPI = {
       },
     })
   },
+  // 获取所有菜单列表
+  getAllMenus() {
+    return request<any, any>({
+      url: `/authz/menus/tree`,
+      method: 'GET',
+    })
+  },
+  // 获取当前角色的菜单权限
+  getRoleMenus(roleIds: any[]) {
+    return request<any, any>({
+      url: `/authz/roles/find-menus`,
+      method: 'POST',
+      data: {
+        roleIDs: roleIds,
+      },
+    })
+  },
 }
 export const DeptAPI = {
   list(data: TableData) {
-    // return request<TableData, List<any>>({
-    //   url: `/authz/depts/page-depts`,
-    //   method: 'POST',
-    //   data,
-    // })
-    return new Promise<any>((resolve) => {
-      resolve({
-        list: [
-          {
-            id: 1,
-            name: `测试部门`,
-            deptSort: 1,
-            createTime: '2025-02-02 12:00:00',
-          },
-        ],
-        page: 1,
-        pageSize: 10,
-        total: 10,
-      })
+    return request<TableData, List<any>>({
+      url: `/authz/depts/page-depts`,
+      method: 'POST',
+      data,
     })
+    // return new Promise<any>((resolve) => {
+    //   resolve({
+    //     list: [
+    //       {
+    //         id: 1,
+    //         name: `测试部门`,
+    //         deptSort: 1,
+    //         createTime: '2025-02-02 12:00:00',
+    //       },
+    //     ],
+    //     page: 1,
+    //     pageSize: 10,
+    //     total: 10,
+    //   })
+    // })
   },
   create(data: any) {
     return request<any, any>({

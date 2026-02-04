@@ -1,6 +1,7 @@
 import { store } from '@/stores'
 import AuthAPI, { type LoginFormData, type EncryptionInfo } from '@/api/auth-api.ts'
 import UserAPI, { type UserInfo } from '@/api/user/user-api'
+import { RoleAPI } from '@/api/system/index.ts'
 import { defineStore } from 'pinia'
 import { Storage } from '@/utils/storage'
 import { useStorage } from '@vueuse/core'
@@ -12,6 +13,33 @@ export const useUserStore = defineStore('user', () => {
   const userInfo = useStorage('userInfo', {} as UserInfo)
   const encryptionInfo = ref<EncryptionInfo>({} as EncryptionInfo)
   const loginFormData = useStorage('loginFormData', {} as string)
+  const allMenus = useStorage('allMenus', [] as any[])
+  const allAuths = useStorage('allAuths', {} as any)
+  const currentBtnAuths = computed(() => {
+    return allAuths.value?.menus
+      ?.filter((item: any) => item.type === 2 && item.permission)
+      .map((item: any) => item.permission)
+  })
+  const currentMenuAuths = computed(() => {
+    const menus: any[] = allAuths.value?.menus || []
+    const permissions: string[] = allAuths.value?.permissions || []
+    if (!Array.isArray(menus) || !Array.isArray(permissions) || permissions.length === 0) return []
+    const permissionSet = new Set<string>(permissions)
+    const filterMenuTree = (list: any[]): any[] => {
+      if (!Array.isArray(list) || list.length === 0) return []
+      return list
+        .filter((item) => {
+          return (item?.type === 0 || item?.type === 1) && permissionSet.has(item?.permission)
+        })
+        .map((item) => {
+          return {
+            ...item,
+            children: filterMenuTree(item.children || []),
+          }
+        })
+    }
+    return filterMenuTree(menus)
+  })
 
   // PEM interchange ArrayBuffer
   function pemToArrayBuffer(pem: string) {
@@ -240,11 +268,73 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
+  /**
+   * get all menu list
+   */
+  function getMenus() {
+    return new Promise<any[]>((resolve, reject) => {
+      RoleAPI.getAllMenus()
+        .then((data) => {
+          allMenus.value = data
+          resolve(data)
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    })
+  }
+
+  /**
+   * get current user role auth
+   */
+  function getRoleAuth() {
+    return new Promise<any[]>((resolve, reject) => {
+      RoleAPI.getRoleMenus([...(userInfo.value.roleIds || [])])
+        .then((data) => {
+          allAuths.value = data
+          resolve(data)
+        })
+        .catch((error) => {
+          reject(error)
+        })
+    })
+  }
+
+  /**
+   * Handle menu authorization
+   * @returns menu tree with role auth
+   */
+  function handleMenuAuth() {
+    return Promise.all([getMenus(), getRoleAuth()]).then(([allMenus, roleMenus]) => {
+      const menuMap = new Map<string, any>()
+      allMenus.forEach((menu) => {
+        menuMap.set(menu.id, { ...menu, children: [] })
+      })
+      roleMenus.forEach((menu: any) => {
+        if (menuMap.has(menu.id)) {
+          menuMap.get(menu.id).checked = true
+        }
+      })
+      const menuTree: any[] = []
+      menuMap.forEach((menu) => {
+        if (menu.parentId && menuMap.has(menu.parentId)) {
+          menuMap.get(menu.parentId).children.push(menu)
+        } else {
+          menuTree.push(menu)
+        }
+      })
+      return menuTree
+    })
+  }
+
   return {
     userInfo,
     isLogin: () => !!Storage.get('token'),
     getUserInfo,
     validateInfo,
+    handleMenuAuth,
+    currentBtnAuths,
+    currentMenuAuths,
     login,
     logout,
     // resetAllState,

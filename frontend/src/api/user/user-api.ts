@@ -30,4 +30,6 @@ export interface UserInfo {
 
   /** 头像URL */
   avatar?: string
+  roleIds: string[]
+  [key: string]: any
 }
