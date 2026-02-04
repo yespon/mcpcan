@@ -5317,6 +5317,18 @@ components:
                 roleId:
                     type: string
                     description: '@inject_tag: json:"roleId" desc:"角色ID"'
+                type:
+                    type: string
+                    description: '@inject_tag: json:"type" desc:"类型"'
+                engName:
+                    type: string
+                    description: '@inject_tag: json:"engName" desc:"英文名称"'
+                sort:
+                    type: string
+                    description: '@inject_tag: json:"sort" desc:"排序"'
+                path:
+                    type: string
+                    description: '@inject_tag: json:"path" desc:"路径"'
         SysUser:
             type: object
             properties:

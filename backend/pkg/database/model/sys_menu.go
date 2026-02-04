@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // SysMenu 菜单数据库模型
 type SysMenu struct {
@@ -27,11 +30,11 @@ type SysMenu struct {
 }
 
 // GetName 获取菜单名称
-func (m *SysMenu) GetName() string {
-	if m.Name == nil {
+func (m *SysMenu) GetTitle() string {
+	if m.Title == nil {
 		return ""
 	}
-	return *m.Name
+	return *m.Title
 }
 
 func (m *SysMenu) GetPermission() string {
@@ -39,6 +42,38 @@ func (m *SysMenu) GetPermission() string {
 		return ""
 	}
 	return *m.Permission
+}
+
+// GetType 获取菜单类型
+func (m *SysMenu) GetType() string {
+	if m.Type == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d", *m.Type)
+}
+
+// GetEngTitle 获取英文标题
+func (m *SysMenu) GetEngTitle() string {
+	if m.EngTitle == nil {
+		return ""
+	}
+	return *m.EngTitle
+}
+
+// GetMenuSort 获取排序
+func (m *SysMenu) GetMenuSort() int64 {
+	if m.MenuSort == nil {
+		return 0
+	}
+	return int64(*m.MenuSort)
+}
+
+// GetPath 获取路径
+func (m *SysMenu) GetPath() string {
+	if m.Path == nil {
+		return ""
+	}
+	return *m.Path
 }
 
 // TableName 指定表名

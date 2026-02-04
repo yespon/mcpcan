@@ -318,9 +318,13 @@ func (s *RoleService) FindRoleMenus(c *gin.Context) {
 		permissions = append(permissions, menu.GetPermission())
 		sysRoleMenus = append(sysRoleMenus, &pb.SysRoleMenu{
 			Id:         menu.MenuID,
-			Name:       menu.GetName(),
+			Name:       menu.GetTitle(),
 			Permission: menu.GetPermission(),
 			RoleId:     menuRoleId[menu.MenuID],
+			Type:       menu.GetType(),
+			EngName:    menu.GetEngTitle(),
+			Sort:       menu.GetMenuSort(),
+			Path:       menu.GetPath(),
 		})
 	}
 

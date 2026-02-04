@@ -140,6 +140,14 @@ message SysRoleMenu {
   string permission = 3;
   // @inject_tag: json:"roleId" desc:"角色ID"
   int64 roleId = 4;
+  // @inject_tag: json:"type" desc:"类型"
+  string type = 5;
+  // @inject_tag: json:"engName" desc:"英文名称"
+  string engName = 6;
+  // @inject_tag: json:"sort" desc:"排序"
+  int64 sort = 7;
+  // @inject_tag: json:"path" desc:"路径"
+  string path = 8;
 }
 
 message FindRoleMenusResponse {
