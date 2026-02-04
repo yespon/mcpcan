@@ -6,16 +6,17 @@
 *.dylib
 
 # IDEA
-.trae
-.idea
-.DS_Store
-.agent/*
-.vscode/docs/*
-.vscode/docs
-.opencode
-.amazonq
-.trae
-openspec
+*.trae
+*.idea
+*.DS_Store
+*.agent/*
+*.vscode/docs/*
+*.vscode/docs
+*.opencode
+*.amazonq
+*.trae
+*openspec
+*AGENTS.md
 
 # Test binary, built with `go test -c`
 *.test
