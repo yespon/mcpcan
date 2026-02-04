@@ -248,7 +248,7 @@ func (s *UserService) ListUsers(c *gin.Context) {
 	}
 
 	response := &user.ListUsersResponse{
-		Users: userProtos,
+		List:  userProtos,
 		Total: total,
 	}
 	common.GinSuccess(c, response)

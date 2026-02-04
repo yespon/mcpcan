@@ -204,7 +204,7 @@ func (s *RoleService) ListRoles(c *gin.Context) {
 
 	common.GinSuccess(c, &pb.ListRolesResponse{
 		Total: total,
-		Roles: respRoles,
+		List:  respRoles,
 	})
 }
 

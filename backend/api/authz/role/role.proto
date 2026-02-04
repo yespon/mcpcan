@@ -110,8 +110,8 @@ message ListRolesRequest {
 
 // 角色列表响应
 message ListRolesResponse {
-  // @inject_tag: json:"roles" desc:"角色列表"
-  repeated SysRole roles = 1;
+  // @inject_tag: json:"list" desc:"角色列表"
+  repeated SysRole list = 1;
   // @inject_tag: json:"total" desc:"总记录数"
   int64 total = 2;
 }
@@ -183,8 +183,7 @@ service RoleService {
 
   rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
     option (google.api.http) = {
-      post: "/authz/roles/list-roles"
-      body: "*"
+      get: "/authz/roles/list-roles"
     };
   }
 

@@ -229,8 +229,8 @@ message ListUsersRequest {
 
 // 用户列表响应
 message ListUsersResponse {
-  // @inject_tag: json:"users" desc:"用户列表"
-  repeated SysUser users = 1;
+  // @inject_tag: json:"list" desc:"用户列表"
+  repeated SysUser list = 1;
   // @inject_tag: json:"total" desc:"总记录数"
   int64 total = 3;
 }
@@ -315,8 +315,7 @@ service UserService {
   // 分页查询用户列表
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
     option (google.api.http) = {
-      post: "/authz/users/list-users"
-      body: "*"
+      get: "/authz/users/list-users"
     };
   }
 

@@ -151,8 +151,8 @@ message ListDeptsResponse {
     int32 code = 1;
     // @inject_tag: json:"message" desc:"响应消息"
     string message = 2;
-    // @inject_tag: json:"data" desc:"部门列表数据"
-    repeated SysDept data = 3;
+    // @inject_tag: json:"list" desc:"部门列表数据"
+    repeated SysDept list = 3;
 }
 
 // PageDeptsRequest 分页查询部门列表请求

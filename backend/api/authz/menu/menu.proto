@@ -33,8 +33,8 @@ message GetMenuTreeResponse {
   int32 code = 1;
   // @inject_tag: json:"message" desc:"响应消息"
   string message = 2;
-  // @inject_tag: json:"data" desc:"菜单数据"
-  repeated SysMenuTreeNode menus = 3;
+  // @inject_tag: json:"list" desc:"菜单数据"
+  repeated SysMenuTreeNode list = 3;
 }
 
 // MenuService 菜单管理服务
