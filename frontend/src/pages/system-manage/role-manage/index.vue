@@ -7,12 +7,20 @@
 
 <script setup lang="ts">
 const RoleManage = shallowRef<any>(null)
-RoleManage.value = defineAsyncComponent({
-  loader: () => import('@/components/mcpcan-tools/mcpcan-business/web/role-manage/index.vue'),
-  // 如果组件不存在/构建时未包含，会走到这里
-  onError(_err, _retry, fail) {
-    RoleManage.value = null
-    fail()
-  },
-})
+// 使用 import.meta.glob 避免构建时因文件不存在而报错
+const modules = import.meta.glob(
+  '@/components/mcpcan-tools/mcpcan-business/web/role-manage/index.vue',
+)
+const loader = Object.values(modules)[0]
+
+if (loader) {
+  RoleManage.value = defineAsyncComponent({
+    loader: loader as any,
+    // 如果组件加载失败
+    onError(_err, _retry, fail) {
+      RoleManage.value = null
+      fail()
+    },
+  })
+}
 </script>
