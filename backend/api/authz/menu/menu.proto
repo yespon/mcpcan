@@ -39,7 +39,7 @@ message GetMenuTreeResponse {
 
 // MenuService 菜单管理服务
 service MenuService {
-  // 获取部门树形结构
+  // 获取菜单树结构
   rpc GetMenuTree(GetMenuTreeRequest) returns (GetMenuTreeResponse) {
     option (google.api.http) = {
       get: "/authz/menus/tree"

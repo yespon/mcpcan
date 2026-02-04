@@ -216,12 +216,14 @@ service DeptService {
         };
     }
 
+    // 批量删除部门
     rpc BatchDeleteDept(BatchDeleteDeptRequest) returns (BatchDeleteDeptResponse) {
         option (google.api.http) = {
             delete: "/authz/depts/batch-delete"
         };
     }
 
+    // 更新部门状态
     rpc UpdateDeptStatus(UpdateDeptStatusRequest) returns (UpdateDeptStatusResponse) {
         option (google.api.http) = {
             put: "/authz/depts/{id}/status"

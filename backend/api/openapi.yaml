@@ -59,6 +59,7 @@ paths:
         delete:
             tags:
                 - DeptService
+            description: 批量删除部门
             operationId: DeptService_BatchDeleteDept
             parameters:
                 - name: ids
@@ -166,6 +167,7 @@ paths:
         put:
             tags:
                 - DeptService
+            description: 更新部门状态
             operationId: DeptService_UpdateDeptStatus
             parameters:
                 - name: id
@@ -270,7 +272,7 @@ paths:
         get:
             tags:
                 - MenuService
-            description: 获取部门树形结构
+            description: 获取菜单树结构
             operationId: MenuService_GetMenuTree
             responses:
                 "200":
@@ -363,6 +365,7 @@ paths:
         delete:
             tags:
                 - RoleService
+            description: 批量删除角色
             operationId: RoleService_BatchDeleteRoles
             requestBody:
                 content:
@@ -387,6 +390,7 @@ paths:
         post:
             tags:
                 - RoleService
+            description: 查询角色菜单
             operationId: RoleService_FindRoleMenus
             parameters:
                 - name: roleIDs
@@ -412,6 +416,7 @@ paths:
         get:
             tags:
                 - RoleService
+            description: 分页查询角色列表
             operationId: RoleService_ListRoles
             parameters:
                 - name: blurry
@@ -448,6 +453,7 @@ paths:
         post:
             tags:
                 - RoleService
+            description: 保存角色菜单
             operationId: RoleService_SaveRoleMenus
             requestBody:
                 content:
