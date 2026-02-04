@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/authz/menu"
@@ -44,7 +43,7 @@ func (s *MenuService) GetMenuTree(c *gin.Context) {
 	menuTree := menu.GetMenus()
 	filteredTree := filterMenuTree(menuTree, permissionKey)
 
-	c.JSON(http.StatusOK, filteredTree)
+	common.GinSuccess(c, filteredTree)
 }
 
 // 根据 permissionKey 过滤菜单树, 返回的是 pb.SysMenuTreeNode 类型，id 通过 map 的 key 去匹配设置
