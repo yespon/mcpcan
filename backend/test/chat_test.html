@@ -1000,6 +1000,9 @@
                           args: "?",
                           result: ev.content,
                         });
+                      } else if (ev.type === "error") {
+                          ElementPlus.ElMessage.error(ev.content);
+                          aiMsg.content += `\n[System Error: ${ev.content}]`;
                       } else if (ev.usage) aiMsg.usage = ev.usage;
                     } catch (e) {}
                   }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
 
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
 	openai "github.com/sashabaranov/go-openai"
@@ -16,7 +17,6 @@ func init() {
 	llm.RegisterProvider(llm.ProviderOpenAI, factory)
 	llm.RegisterProvider(llm.ProviderDeepSeek, factory)
 	llm.RegisterProvider(llm.ProviderMoonshot, factory)
-	llm.RegisterProvider(llm.ProviderDoubao, factory)
 	llm.RegisterProvider(llm.ProviderQwen, factory)
 	llm.RegisterProvider(llm.ProviderZhipu, factory)
 	llm.RegisterProvider(llm.ProviderXAI, factory)
@@ -120,10 +120,14 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 		chatReq.Temperature = req.Temperature
 	}
 
+	// ...
+	log.Printf("[Provider Debug] CreateChatCompletionStream Model=%s", req.Model)
 	stream, err := p.client.CreateChatCompletionStream(ctx, chatReq)
 	if err != nil {
+		log.Printf("[Provider Error] CreateChatCompletionStream failed: %v", err)
 		return nil, err
 	}
+	log.Printf("[Provider Debug] Stream created successfully")
 
 	responseChan := make(chan llm.StreamResponse)
 
@@ -134,12 +138,15 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 		for {
 			response, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
+				log.Printf("[Provider Debug] Stream EOF")
 				return
 			}
 			if err != nil {
+				log.Printf("[Provider Error] Stream Recv failed: %v", err)
 				responseChan <- llm.StreamResponse{Error: err}
 				return
 			}
+			// log.Printf("[Provider Debug] Recv chunk: %d choices", len(response.Choices))
 
 			resp := llm.StreamResponse{}
 

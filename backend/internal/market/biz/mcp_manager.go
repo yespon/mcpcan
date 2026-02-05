@@ -61,12 +61,14 @@ func (m *McpManager) Initialize(ctx context.Context, configJSON string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	successCount := 0
 	for name, srv := range config.McpServers {
 		// 存储配置用于后续重连
 		m.configs[name] = srv
 
 		// 初始化客户端
 		if err := m.initializeClient(ctx, name, srv); err != nil {
+			fmt.Printf("[MCP Manager] failed to init client %s: %v\n", name, err)
 			// 初始化失败,标记为不健康,但不返回错误
 			m.healthStatus[name] = false
 			continue
@@ -74,7 +76,13 @@ func (m *McpManager) Initialize(ctx context.Context, configJSON string) error {
 
 		// 标记为健康
 		m.healthStatus[name] = true
+		successCount++
 	}
+
+	if len(config.McpServers) > 0 && successCount == 0 {
+		return fmt.Errorf("all mcp servers failed to initialize")
+	}
+
 	return nil
 }
 

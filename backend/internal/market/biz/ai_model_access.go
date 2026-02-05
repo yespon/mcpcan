@@ -9,6 +9,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	_ "github.com/kymo-mcp/mcpcan/pkg/llm/doubao"
 	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai"
 )
 
