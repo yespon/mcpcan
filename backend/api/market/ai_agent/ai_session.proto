@@ -23,6 +23,10 @@ message AiSession {
     int64 updateTime = 7;
     // @inject_tag: json:"modelName" desc:"Model Name"
     string modelName = 8;
+    // @inject_tag: json:"temperature" desc:"Temperature(0.0-2.0)"
+    float temperature = 9;
+    // @inject_tag: json:"systemPrompt" desc:"System Prompt"
+    string systemPrompt = 10;
 }
 
 message AiMessage {
@@ -59,6 +63,10 @@ message CreateSessionRequest {
     int32 maxContext = 4;
     // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
     string modelName = 5;
+    // @inject_tag: json:"temperature" form:"temperature" desc:"Temperature"
+    float temperature = 6;
+    // @inject_tag: json:"systemPrompt" form:"systemPrompt" desc:"System Prompt"
+    string systemPrompt = 7;
 }
 
 message CreateSessionResponse {
@@ -79,6 +87,10 @@ message UpdateSessionRequest {
     int64 modelAccessID = 5;
     // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
     string modelName = 6;
+    // @inject_tag: json:"temperature" form:"temperature" desc:"Temperature"
+    float temperature = 7;
+    // @inject_tag: json:"systemPrompt" form:"systemPrompt" desc:"System Prompt"
+    string systemPrompt = 8;
 }
 
 message UpdateSessionResponse {

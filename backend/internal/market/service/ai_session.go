@@ -283,6 +283,8 @@ func (s *AiSessionService) convertModelToProto(m *model.AiSession) *pb.AiSession
 		Name:          m.Name,
 		ModelAccessID: m.ModelAccessID,
 		ModelName:     m.ModelName,
+		Temperature:   float32(m.Temperature),
+		SystemPrompt:  m.SystemPrompt,
 		ToolsConfig:   string(m.ToolsConfig),
 		MaxContext:    int32(m.MaxContext),
 		CreateTime:    m.CreateTime.Unix(),

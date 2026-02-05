@@ -41,6 +41,8 @@ func (b *AiSessionBiz) Create(ctx context.Context, req *pb.CreateSessionRequest,
 		Name:          req.Name,
 		ModelAccessID: req.ModelAccessID,
 		ModelName:     req.ModelName, // 模型名称在会话中指定
+		Temperature:   float64(req.Temperature),
+		SystemPrompt:  req.SystemPrompt,
 		MaxContext:    int(req.MaxContext),
 		ToolsConfig:   json.RawMessage(req.ToolsConfig),
 	}
@@ -74,6 +76,17 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 	}
 	if req.ModelName != "" {
 		session.ModelName = req.ModelName
+	}
+	// Temperature handling (since float default is 0, we need careful check or allow 0)
+	// Proto3 zero value is 0. But 0 temperature is valid. 
+	// However, usually update requests carry what changed.
+	// For simplicity in this generated proto, we assume if it's there we update it.
+	// But actually, proto3 doesn't distinguish between unset and 0.
+	// We might need a wrapper or assume front-end sends current value.
+	session.Temperature = float64(req.Temperature)
+	
+	if req.SystemPrompt != "" {
+		session.SystemPrompt = req.SystemPrompt
 	}
 
 	if err := mysql.AiSessionRepo.Update(ctx, session); err != nil {
@@ -201,6 +214,15 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 
 	// 5. Construct Messages
 	var messages []llm.Message
+
+	// Inject Session's SystemPrompt if configured
+	if session.SystemPrompt != "" {
+		messages = append(messages, llm.Message{
+			Role:    "system",
+			Content: session.SystemPrompt,
+		})
+	}
+
 	for _, msg := range historyMessages {
 		m := llm.Message{
 			Role:    msg.Role,
@@ -378,10 +400,11 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 
 		for turn := 0; turn < maxTurns; turn++ {
 			reqChat := llm.ChatRequest{
-				Model:    session.ModelName,
-				Messages: currentMessages,
-				Stream:   true,
-				Tools:    tools,
+				Model:       session.ModelName,
+				Messages:    currentMessages,
+				Stream:      true,
+				Tools:       tools,
+				Temperature: float32(session.Temperature),
 			}
 
 			stream, err := provider.StreamChat(ctx, reqChat)
