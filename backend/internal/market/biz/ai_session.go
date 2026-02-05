@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -335,8 +336,13 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 
 	systemInstruction := ""
 
+	// Debug: log the config being used for MCP
+	log.Printf("[MCP Debug] Session %d, configToUse length=%d, value=%s", sessionID, len(configToUse), configToUse)
+
 	if len(configToUse) > 0 && configToUse != "{}" && configToUse != "null" {
+		log.Printf("[MCP Debug] Initializing MCP tools...")
 		if err := mcpManager.Initialize(ctx, configToUse); err != nil {
+			log.Printf("[MCP Error] Failed to init: %v", err)
 			mcpManager.Close()
 			return nil, fmt.Errorf("failed to init mcp tools: %v", err)
 		}
@@ -345,6 +351,12 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		if err != nil {
 			mcpManager.Close()
 			return nil, fmt.Errorf("failed to get tools: %v", err)
+		}
+
+		// Robust Check: If toolsConfig was provided but no tools found, return error
+		if len(allTools) == 0 {
+			mcpManager.Close()
+			return nil, fmt.Errorf("mcp initialization successful but no tools found. please check your mcp status or config")
 		}
 
 		if useProfile && !enableAllTools && len(requestedTools) > 0 {

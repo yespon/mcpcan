@@ -97,7 +97,40 @@
             class="h-full flex flex-col"
           >
             <div class="flex flex-1 gap-4 overflow-hidden h-full">
-              <!-- Left Layout -->
+              <!-- Sidebar: Session List -->
+              <div class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
+                <div class="p-2 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center bg-white">
+                   <span>History</span>
+                   <div>
+                      <el-button link size="small" :icon="Refresh" @click="refreshSessions"></el-button>
+                      <el-button link size="small" type="primary" @click="createNewConfig">New</el-button>
+                   </div>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2">
+                   <div 
+                      v-for="s in sessionList" 
+                      :key="s.id"
+                      class="group p-2 rounded cursor-pointer mb-1 text-xs hover:bg-blue-50 relative border border-transparent hover:border-blue-200"
+                      :class="{'bg-blue-100 text-blue-700 font-bold border-blue-300': sessionID === s.id}"
+                      @click="loadSession(s.id)"
+                   >
+                      <div class="truncate pr-4">{{ s.name }}</div>
+                      <div class="text-gray-400 scale-90 origin-left mt-1">{{ new Date(s.createTime * 1000).toLocaleString() }}</div>
+                      
+                      <!-- Delete Button (visible on hover) -->
+                      <div class="absolute right-1 top-1 hidden group-hover:block">
+                        <el-popconfirm title="Delete?" @confirm="deleteSession(s.id)" width="160">
+                          <template #reference>
+                            <el-icon @click.stop class="text-gray-400 hover:text-red-500"><Close /></el-icon>
+                          </template>
+                        </el-popconfirm>
+                      </div>
+                   </div>
+                   <div v-if="sessionList.length === 0" class="text-gray-400 text-center mt-4">No sessions</div>
+                </div>
+              </div>
+
+              <!-- Main Chat Area -->
               <div class="flex-1 flex flex-col overflow-hidden">
                 <!-- Session Toolbar -->
                 <div
@@ -195,13 +228,17 @@
                     @click="createSession"
                     :loading="creatingSession"
                     :disabled="!selectedModelId"
+                    v-if="!sessionID" 
                   >
-                    New Session
+                    Start Chat
                   </el-button>
                   <span
                     v-if="sessionID"
-                    class="text-green-600 font-bold ml-2 text-xs"
-                    >ID: {{ sessionID }}</span
+                    class="text-green-600 font-bold ml-2 text-xs flex items-center gap-1"
+                    >
+                    <el-icon><ChatDotRound /></el-icon>
+                    Session #{{ sessionID }}
+                    </span
                   >
                 </div>
 
@@ -573,6 +610,51 @@
           const creatingSession = ref(false);
           const selectedFile = ref(null);
           const mcpLogs = ref([]);
+          const sessionList = ref([]);
+
+          const refreshSessions = async () => {
+             try {
+                const res = await api('/market/ai/sessions?page=1&pageSize=50');
+                sessionList.value = res.list || [];
+             } catch(e) { console.error(e); }
+          };
+
+          const loadSession = async (id) => {
+             sessionID.value = id;
+             messages.value = [];
+             try {
+                const res = await api(`/market/ai/sessions/${id}/messages?page=1&pageSize=50`);
+                if (res.list) {
+                    messages.value = res.list.map(m => ({
+                        role: m.role,
+                        content: m.content,
+                        tools: m.toolCalls && m.toolCalls !== "[]" ? JSON.parse(m.toolCalls) : [],
+                        usage: { totalTokens: m.totalTokens || 0 }
+                    })).reverse(); 
+                }
+             } catch(e) { ElementPlus.ElMessage.error(e.message); }
+          };
+
+          const deleteSession = async (id) => {
+            try {
+              // Assuming DELETE endpoint exists, if not, user needs to implement it.
+              // Based on standard REST, it should be DELETE /market/ai/sessions/:id
+              await api(`/market/ai/sessions/${id}`, 'DELETE');
+              ElementPlus.ElMessage.success('Session deleted');
+              if (sessionID.value === id) {
+                sessionID.value = null;
+                messages.value = [];
+              }
+              refreshSessions();
+            } catch (e) {
+              ElementPlus.ElMessage.error('Delete failed: ' + e.message);
+            }
+          };
+
+          const createNewConfig = () => {
+            sessionID.value = null;
+            messages.value = [];
+          };
 
           // Model Manager State
           const models = ref([]);
@@ -942,7 +1024,9 @@
             // Try to init
             await api("/market/ai/models/supported").catch(() => {}); // Just to trigger config load
             fetchSupportedProviders();
+            fetchSupportedProviders();
             refreshModels();
+            refreshSessions();
           });
 
           return {
@@ -960,6 +1044,11 @@
             createSession,
             sendMessage,
             handleFileChange,
+            sessionList,
+            refreshSessions,
+            loadSession,
+            deleteSession,
+            createNewConfig,
             // Models
             models,
             modelsLoading,

@@ -17,6 +17,14 @@ func init() {
 	llm.RegisterProvider(llm.ProviderDeepSeek, factory)
 	llm.RegisterProvider(llm.ProviderMoonshot, factory)
 	llm.RegisterProvider(llm.ProviderDoubao, factory)
+	llm.RegisterProvider(llm.ProviderQwen, factory)
+	llm.RegisterProvider(llm.ProviderZhipu, factory)
+	llm.RegisterProvider(llm.ProviderXAI, factory)
+	llm.RegisterProvider(llm.ProviderMistral, factory)
+	llm.RegisterProvider(llm.ProviderOllama, factory)
+	llm.RegisterProvider(llm.ProviderOpenRouter, factory)
+	llm.RegisterProvider(llm.ProviderLiteLLM, factory)
+	llm.RegisterProvider(llm.ProviderAzureOpenAI, factory)
 }
 
 type Provider struct {
