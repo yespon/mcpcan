@@ -117,10 +117,10 @@ message ListRolesResponse {
 }
 
 message SaveRoleMenusRequest {
-  // @inject_tag: json:"roleID" desc:"角色ID"
-  int64 roleID = 1;
-  // @inject_tag: json:"menuIDs" desc:"菜单ID列表"
-  repeated int64 menuIDs = 2;
+  // @inject_tag: json:"roleId" desc:"角色ID"
+  int64 roleId = 1;
+  // @inject_tag: json:"menuIds" desc:"菜单ID列表"
+  repeated int64 menuIds = 2;
 }
 
 message SaveRoleMenusResponse {
@@ -128,7 +128,7 @@ message SaveRoleMenusResponse {
 }
 
 message FindRoleMenusRequest {
-  repeated int64 roleIDs = 1;
+  repeated int64 roleIds = 1;
 }
 
 message SysRoleMenu {

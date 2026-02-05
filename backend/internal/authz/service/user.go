@@ -69,8 +69,8 @@ func (s *UserService) CreateUser(c *gin.Context) {
 	}
 
 	// Create user roles associations
-	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIDs))
-	for _, roleID := range req.RoleIDs {
+	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
+	for _, roleID := range req.RoleIds {
 		associations = append(associations, &model.SysUsersRoles{
 			UserID: userModel.UserID,
 			RoleID: uint(roleID),
@@ -140,8 +140,8 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 		return
 	}
 	// Create user roles associations
-	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIDs))
-	for _, roleID := range req.RoleIDs {
+	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
+	for _, roleID := range req.RoleIds {
 		associations = append(associations, &model.SysUsersRoles{
 			UserID: existingUser.UserID,
 			RoleID: uint(roleID),
@@ -183,7 +183,7 @@ func (s *UserService) BatchDelete(c *gin.Context) {
 	}
 
 	var deleteUserId []uint
-	for _, userId := range req.UserIDs {
+	for _, userId := range req.UserIds {
 		deleteUserId = append(deleteUserId, uint(userId))
 	}
 
@@ -221,7 +221,7 @@ func (s *UserService) ListUsers(c *gin.Context) {
 		enable = &[]bool{false}[0]
 	}
 	var depIds []uint
-	for _, depId := range req.DeptIDs {
+	for _, depId := range req.DeptIds {
 		depIds = append(depIds, uint(depId))
 	}
 
@@ -263,8 +263,8 @@ func (s *UserService) convertCreateRequestToModel(req *user.CreateUserRequest) *
 		Phone:    &req.Phone,
 	}
 
-	if req.DeptID > 0 {
-		deptID := uint(req.DeptID)
+	if req.DeptId > 0 {
+		deptID := uint(req.DeptId)
 		userModel.DeptID = &deptID
 	}
 
@@ -293,8 +293,8 @@ func (s *UserService) updateModelFromRequest(userModel *model.SysUser, req *user
 	if req.Phone != "" {
 		userModel.Phone = &req.Phone
 	}
-	if req.DeptID > 0 {
-		deptID := uint(req.DeptID)
+	if req.DeptId > 0 {
+		deptID := uint(req.DeptId)
 		userModel.DeptID = &deptID
 	}
 	switch req.Status {
@@ -476,7 +476,7 @@ func (s *UserService) convertModelToProto(userModel *model.SysUser) *user.SysUse
 	}
 
 	if userModel.DeptID != nil {
-		userProto.DeptID = int64(*userModel.DeptID)
+		userProto.DeptId = int64(*userModel.DeptID)
 	}
 
 	if *userModel.Enabled {
@@ -502,8 +502,8 @@ func setUsersRoleAndDeptInfo(ctx context.Context, users []*user.SysUser) error {
 	for _, u := range users {
 		userMap[uint(u.Id)] = u
 		userIDs = append(userIDs, uint(u.Id))
-		if u.DeptID > 0 {
-			deptIDs = append(deptIDs, uint(u.DeptID))
+		if u.DeptId > 0 {
+			deptIDs = append(deptIDs, uint(u.DeptId))
 		}
 	}
 
@@ -517,7 +517,7 @@ func setUsersRoleAndDeptInfo(ctx context.Context, users []*user.SysUser) error {
 		roleIDs = append(roleIDs, ur.RoleID)
 		u := userMap[ur.UserID]
 		if u != nil {
-			u.RoleIDs = append(u.RoleIDs, int64(ur.RoleID))
+			u.RoleIds = append(u.RoleIds, int64(ur.RoleID))
 		}
 	}
 	roles, err := mysql.SysRoleRepo.FindByIDs(ctx, roleIDs)
@@ -541,11 +541,11 @@ func setUsersRoleAndDeptInfo(ctx context.Context, users []*user.SysUser) error {
 
 	// 设置部门名称，和角色信息
 	for _, u := range users {
-		dept := deptMap[uint(u.DeptID)]
+		dept := deptMap[uint(u.DeptId)]
 		if dept != nil {
 			u.DeptName = dept.Name
 		}
-		for _, roleID := range u.RoleIDs {
+		for _, roleID := range u.RoleIds {
 			role := roleMap[uint(roleID)]
 			if role != nil {
 				u.RoleNames = append(u.RoleNames, role.Name)

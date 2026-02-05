@@ -258,7 +258,7 @@ func (s *RoleService) SaveRoleMenus(c *gin.Context) {
 		return
 	}
 
-	err := mysql.SysRolesMenusRepo.BatchDeleteByRoleID(c.Request.Context(), req.RoleID)
+	err := mysql.SysRolesMenusRepo.BatchDeleteByRoleID(c.Request.Context(), req.RoleId)
 	if err != nil {
 		logger.Error("Failed to batch delete role menus", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch delete role menus: %v", err))
@@ -266,9 +266,9 @@ func (s *RoleService) SaveRoleMenus(c *gin.Context) {
 	}
 
 	associations := []*model.SysRolesMenus{}
-	for _, menuID := range req.MenuIDs {
+	for _, menuID := range req.MenuIds {
 		associations = append(associations, &model.SysRolesMenus{
-			RoleID: req.RoleID,
+			RoleID: req.RoleId,
 			MenuID: menuID,
 		})
 	}
@@ -290,7 +290,7 @@ func (s *RoleService) FindRoleMenus(c *gin.Context) {
 		return
 	}
 
-	roleMenus, err := mysql.SysRolesMenusRepo.BatchFindByRoleID(c.Request.Context(), req.RoleIDs)
+	roleMenus, err := mysql.SysRolesMenusRepo.BatchFindByRoleID(c.Request.Context(), req.RoleIds)
 	if err != nil {
 		logger.Error("Failed to find role menus", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to find role menus: %v", err))

@@ -37,11 +37,11 @@ func (s *DeptService) CreateDept(c *gin.Context) {
 		return
 	}
 
-	if req.Dept.Name == "" {
+	if req.Name == "" {
 		common.GinError(c, i18nresp.CodeInternalError, "Department name is required")
 		return
 	}
-	if req.Dept.Sort <= 0 {
+	if req.Sort <= 0 {
 		common.GinError(c, i18nresp.CodeInternalError, "Department sort is required")
 		return
 	}
@@ -54,27 +54,27 @@ func (s *DeptService) CreateDept(c *gin.Context) {
 
 	// Convert request to model
 	deptModel := &model.SysDept{
-		Name:     req.Dept.Name,
-		DeptSort: int(req.Dept.Sort),
+		Name:     req.Name,
+		DeptSort: int(req.Sort),
 		Source:   model.DeptSourcePlatform,
 		CreateBy: &[]string{userInfo.Username}[0],
 		UpdateBy: &[]string{userInfo.Username}[0],
 	}
-	if req.Dept.Status == pb.DeptStatus_DeptStatusEnabled {
+	if req.Status == pb.DeptStatus_DeptStatusEnabled {
 		deptModel.Enabled = 1
 	} else {
 		deptModel.Enabled = 0
 	}
 
-	if req.Dept.ImageURL != "" {
-		imageURL := req.Dept.ImageURL
+	if req.ImageURL != "" {
+		imageURL := req.ImageURL
 		deptModel.ImageURL = &imageURL
 	}
 
 	// Set parent department ID if provided
 	var parentDept *model.SysDept
-	if req.Dept.ParentID > 0 {
-		parentID := uint(req.Dept.ParentID)
+	if req.ParentId > 0 {
+		parentID := uint(req.ParentId)
 		parentDept, err = mysql.SysDeptRepo.FindByID(c.Request.Context(), parentID)
 		if err != nil {
 			logger.Error("Failed to get parent department", zap.Error(err))
@@ -108,11 +108,11 @@ func (s *DeptService) UpdateDept(c *gin.Context) {
 		return
 	}
 
-	if req.Dept.Name == "" {
+	if req.Name == "" {
 		common.GinError(c, i18nresp.CodeInternalError, "Department name is required")
 		return
 	}
-	if req.Dept.Sort <= 0 {
+	if req.Sort <= 0 {
 		common.GinError(c, i18nresp.CodeInternalError, "Department sort is required")
 		return
 	}
@@ -124,7 +124,7 @@ func (s *DeptService) UpdateDept(c *gin.Context) {
 	}
 
 	// Get department by ID
-	deptModel, err := mysql.SysDeptRepo.FindByID(c.Request.Context(), uint(req.Dept.Id))
+	deptModel, err := mysql.SysDeptRepo.FindByID(c.Request.Context(), uint(req.Id))
 	if err != nil {
 		logger.Error("Failed to get department", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get department: %v", err))
@@ -132,19 +132,19 @@ func (s *DeptService) UpdateDept(c *gin.Context) {
 	}
 
 	// Update department fields
-	deptModel.Name = req.Dept.Name
-	deptModel.DeptSort = int(req.Dept.Sort)
-	deptModel.ImageURL = &req.Dept.ImageURL
+	deptModel.Name = req.Name
+	deptModel.DeptSort = int(req.Sort)
+	deptModel.ImageURL = &req.ImageURL
 	deptModel.UpdateBy = &userInfo.Username
-	if req.Dept.Status == pb.DeptStatus_DeptStatusEnabled {
+	if req.Status == pb.DeptStatus_DeptStatusEnabled {
 		deptModel.Enabled = 1
 	} else {
 		deptModel.Enabled = 0
 	}
 
 	// Update parent department ID if provided
-	if req.Dept.ParentID > 0 {
-		parentID := uint(req.Dept.ParentID)
+	if req.ParentId > 0 {
+		parentID := uint(req.ParentId)
 		deptModel.PID = &parentID
 	} else {
 		deptModel.PID = nil
@@ -247,8 +247,8 @@ func (s *DeptService) FindDepts(c *gin.Context) {
 	}
 
 	var pid *uint
-	if req.Pid > 0 {
-		pid = &[]uint{uint(req.Pid)}[0]
+	if req.ParentId > 0 {
+		pid = &[]uint{uint(req.ParentId)}[0]
 	}
 
 	// Get departments with pagination
@@ -284,7 +284,7 @@ func (s *DeptService) convertModelToProto(dept *model.SysDept) *pb.SysDept {
 	}
 
 	if dept.PID != nil {
-		resp.ParentID = int64(*dept.PID)
+		resp.ParentId = int64(*dept.PID)
 	}
 
 	if dept.CreateTime != nil {

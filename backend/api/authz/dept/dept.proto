@@ -20,8 +20,8 @@ message SysDept {
     int64 id = 1;
     // @inject_tag: json:"name" desc:"部门名称"
     string name = 2;
-    // @inject_tag: json:"parentID" desc:"父部门ID"
-    int64 parentID = 3;
+    // @inject_tag: json:"parentId" desc:"父部门ID"
+    int64 parentId = 3;
     // @inject_tag: json:"sort" desc:"排序"
     int32 sort = 4;
     // @inject_tag: json:"status" desc:"状态"
@@ -44,8 +44,8 @@ message DeptDTO {
     int64 id = 1;
     // @inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"
     string name = 2;
-    // @inject_tag: json:"parentID" desc:"父部门ID"
-    int64 parentID = 3;
+    // @inject_tag: json:"parentId" desc:"父部门ID"
+    int64 parentId = 3;
     // @inject_tag: json:"sort" desc:"排序"
     int32 sort = 4;
     // @inject_tag: json:"status" binding:"required" desc:"状态"
@@ -64,14 +64,24 @@ message DeptQueryDTO {
     string name = 3;
     // @inject_tag: json:"status,omitempty" desc:"状态：1-禁用，2-启用"
     int32 status = 5;
-    // @inject_tag: json:"pid,omitempty" desc:"父部门ID"
-    int64 pid = 6;
+    // @inject_tag: json:"parentId,omitempty" desc:"父部门ID"
+    int64 parentId = 6;
 }
 
 // CreateDeptRequest 创建部门请求
 message CreateDeptRequest {
-    // @inject_tag: json:"dept" binding:"required" desc:"部门信息"
-    DeptDTO dept = 1;
+  // @inject_tag: json:"id,omitempty" desc:"部门ID"
+  int64 id = 1;
+  // @inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"
+  string name = 2;
+  // @inject_tag: json:"parentId" desc:"父部门ID"
+  int64 parentId = 3;
+  // @inject_tag: json:"sort" desc:"排序"
+  int32 sort = 4;
+  // @inject_tag: json:"status" binding:"required" desc:"状态"
+  DeptStatus status = 5;
+  // @inject_tag: json:"imageURL,omitempty" desc:"部门图片URL"
+  string imageURL = 6;
 }
 
 // CreateDeptResponse 创建部门响应
@@ -86,8 +96,18 @@ message CreateDeptResponse {
 
 // UpdateDeptRequest 更新部门请求
 message UpdateDeptRequest {
-    // @inject_tag: json:"dept" binding:"required" desc:"部门信息"
-    DeptDTO dept = 1;
+  // @inject_tag: json:"id,omitempty" desc:"部门ID"
+  int64 id = 1;
+  // @inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"
+  string name = 2;
+  // @inject_tag: json:"parentId" desc:"父部门ID"
+  int64 parentId = 3;
+  // @inject_tag: json:"sort" desc:"排序"
+  int32 sort = 4;
+  // @inject_tag: json:"status" binding:"required" desc:"状态"
+  DeptStatus status = 5;
+  // @inject_tag: json:"imageURL,omitempty" desc:"部门图片URL"
+  string imageURL = 6;
 }
 
 // UpdateDeptResponse 更新部门响应
@@ -161,8 +181,8 @@ message ListDeptsRequest {
     string name = 1;
     // @inject_tag: json:"status,omitempty" desc:"状态：1-禁用，2-启用"
     int32 status = 2;
-    // @inject_tag: json:"pid,omitempty" desc:"父部门ID"
-    int64 pid = 3;
+    // @inject_tag: json:"parentId,omitempty" desc:"父部门ID"
+    int64 parentId = 3;
 }
 
 message BatchDeleteDeptRequest {
@@ -197,7 +217,6 @@ service DeptService {
     rpc CreateDept(CreateDeptRequest) returns (CreateDeptResponse) {
         option (google.api.http) = {
             post: "/authz/depts"
-            body: "dept"
         };
     }
     
@@ -205,7 +224,6 @@ service DeptService {
     rpc UpdateDept(UpdateDeptRequest) returns (UpdateDeptResponse) {
         option (google.api.http) = {
             put: "/authz/depts"
-            body: "dept"
         };
     }
     

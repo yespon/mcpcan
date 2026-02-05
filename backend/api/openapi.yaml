@@ -12,12 +12,43 @@ paths:
                 - DeptService
             description: 更新部门
             operationId: DeptService_UpdateDept
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/DeptDTO'
-                required: true
+            parameters:
+                - name: id
+                  in: query
+                  description: '@inject_tag: json:"id,omitempty" desc:"部门ID"'
+                  schema:
+                    type: string
+                - name: name
+                  in: query
+                  description: '@inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"'
+                  schema:
+                    type: string
+                - name: parentId
+                  in: query
+                  description: '@inject_tag: json:"parentId" desc:"父部门ID"'
+                  schema:
+                    type: string
+                - name: sort
+                  in: query
+                  description: '@inject_tag: json:"sort" desc:"排序"'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: status
+                  in: query
+                  description: '@inject_tag: json:"status" binding:"required" desc:"状态"'
+                  schema:
+                    enum:
+                        - DeptStatusUnspecified
+                        - DeptStatusDisabled
+                        - DeptStatusEnabled
+                    type: string
+                    format: enum
+                - name: imageURL
+                  in: query
+                  description: '@inject_tag: json:"imageURL,omitempty" desc:"部门图片URL"'
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -36,12 +67,43 @@ paths:
                 - DeptService
             description: 创建部门
             operationId: DeptService_CreateDept
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/DeptDTO'
-                required: true
+            parameters:
+                - name: id
+                  in: query
+                  description: '@inject_tag: json:"id,omitempty" desc:"部门ID"'
+                  schema:
+                    type: string
+                - name: name
+                  in: query
+                  description: '@inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"'
+                  schema:
+                    type: string
+                - name: parentId
+                  in: query
+                  description: '@inject_tag: json:"parentId" desc:"父部门ID"'
+                  schema:
+                    type: string
+                - name: sort
+                  in: query
+                  description: '@inject_tag: json:"sort" desc:"排序"'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: status
+                  in: query
+                  description: '@inject_tag: json:"status" binding:"required" desc:"状态"'
+                  schema:
+                    enum:
+                        - DeptStatusUnspecified
+                        - DeptStatusDisabled
+                        - DeptStatusEnabled
+                    type: string
+                    format: enum
+                - name: imageURL
+                  in: query
+                  description: '@inject_tag: json:"imageURL,omitempty" desc:"部门图片URL"'
+                  schema:
+                    type: string
             responses:
                 "200":
                     description: OK
@@ -100,9 +162,9 @@ paths:
                   schema:
                     type: integer
                     format: int32
-                - name: pid
+                - name: parentId
                   in: query
-                  description: '@inject_tag: json:"pid,omitempty" desc:"父部门ID"'
+                  description: '@inject_tag: json:"parentId,omitempty" desc:"父部门ID"'
                   schema:
                     type: string
             responses:
@@ -393,7 +455,7 @@ paths:
             description: 查询角色菜单
             operationId: RoleService_FindRoleMenus
             parameters:
-                - name: roleIDs
+                - name: roleIds
                   in: query
                   schema:
                     type: array
@@ -788,9 +850,9 @@ paths:
                   description: '@inject_tag: json:"blurry" desc:"模糊查询(用户名/邮箱)"'
                   schema:
                     type: string
-                - name: deptIDs
+                - name: deptIds
                   in: query
-                  description: '@inject_tag: json:"deptId" desc:"部门ID"'
+                  description: '@inject_tag: json:"deptId" desc:"部门Id"'
                   schema:
                     type: array
                     items:
@@ -817,9 +879,9 @@ paths:
                   schema:
                     type: integer
                     format: int32
-                - name: roleID
+                - name: roleId
                   in: query
-                  description: '@inject_tag: json:"roleID" desc:"角色ID"'
+                  description: '@inject_tag: json:"roleId" desc:"角色ID"'
                   schema:
                     type: string
             responses:
@@ -2819,11 +2881,11 @@ components:
         BatchDeleteUserRequest:
             type: object
             properties:
-                userIDs:
+                userIds:
                     type: array
                     items:
                         type: string
-                    description: '@inject_tag: json:"userIDs" desc:"用户ID列表"'
+                    description: '@inject_tag: json:"userIds" desc:"用户ID列表"'
         CallToolRequest:
             type: object
             properties:
@@ -3322,14 +3384,14 @@ components:
                     type: string
                     description: '@inject_tag: json:"status" desc:"用户状态"'
                     format: enum
-                deptID:
+                deptId:
                     type: string
-                    description: '@inject_tag: json:"deptID" desc:"部门ID"'
-                roleIDs:
+                    description: '@inject_tag: json:"deptId" desc:"部门ID"'
+                roleIds:
                     type: array
                     items:
                         type: string
-                    description: '@inject_tag: json:"roleIDs" desc:"角色ID列表"'
+                    description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
             description: 创建用户请求
         CreateUserResponse:
             type: object
@@ -3398,34 +3460,6 @@ components:
                     type: string
                     description: '@inject_tag: json:"roleId" form:"roleId" desc:"角色ID"'
             description: DeleteUserRoleRequest 删除用户角色关联请求
-        DeptDTO:
-            type: object
-            properties:
-                id:
-                    type: string
-                    description: '@inject_tag: json:"id,omitempty" desc:"部门ID"'
-                name:
-                    type: string
-                    description: '@inject_tag: json:"name" binding:"required,max=50" desc:"部门名称"'
-                parentID:
-                    type: string
-                    description: '@inject_tag: json:"parentID" desc:"父部门ID"'
-                sort:
-                    type: integer
-                    description: '@inject_tag: json:"sort" desc:"排序"'
-                    format: int32
-                status:
-                    enum:
-                        - DeptStatusUnspecified
-                        - DeptStatusDisabled
-                        - DeptStatusEnabled
-                    type: string
-                    description: '@inject_tag: json:"status" binding:"required" desc:"状态"'
-                    format: enum
-                imageURL:
-                    type: string
-                    description: '@inject_tag: json:"imageURL,omitempty" desc:"部门图片URL"'
-            description: DeptDTO 部门数据传输对象
         DetailResp:
             type: object
             properties:
@@ -5013,14 +5047,14 @@ components:
         SaveRoleMenusRequest:
             type: object
             properties:
-                roleID:
+                roleId:
                     type: string
-                    description: '@inject_tag: json:"roleID" desc:"角色ID"'
-                menuIDs:
+                    description: '@inject_tag: json:"roleId" desc:"角色ID"'
+                menuIds:
                     type: array
                     items:
                         type: string
-                    description: '@inject_tag: json:"menuIDs" desc:"菜单ID列表"'
+                    description: '@inject_tag: json:"menuIds" desc:"菜单ID列表"'
         SaveRoleMenusResponse:
             type: object
             properties: {}
@@ -5208,9 +5242,9 @@ components:
                 name:
                     type: string
                     description: '@inject_tag: json:"name" desc:"部门名称"'
-                parentID:
+                parentId:
                     type: string
-                    description: '@inject_tag: json:"parentID" desc:"父部门ID"'
+                    description: '@inject_tag: json:"parentId" desc:"父部门ID"'
                 sort:
                     type: integer
                     description: '@inject_tag: json:"sort" desc:"排序"'
@@ -5370,17 +5404,17 @@ components:
                     type: string
                     description: '@inject_tag: json:"source" desc:"用户来源"'
                     format: enum
-                deptID:
+                deptId:
                     type: string
-                    description: '@inject_tag: json:"deptID" desc:"部门ID"'
+                    description: '@inject_tag: json:"deptId" desc:"部门ID"'
                 deptName:
                     type: string
                     description: '@inject_tag: json:"deptName" desc:"部门名称"'
-                roleIDs:
+                roleIds:
                     type: array
                     items:
                         type: string
-                    description: '@inject_tag: json:"roleIDs" desc:"角色ID列表"'
+                    description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
                 roleNames:
                     type: array
                     items:
@@ -6043,14 +6077,14 @@ components:
                     type: string
                     description: '@inject_tag: json:"status" desc:"用户状态"'
                     format: enum
-                deptID:
+                deptId:
                     type: string
-                    description: '@inject_tag: json:"deptID" desc:"部门ID"'
-                roleIDs:
+                    description: '@inject_tag: json:"deptId" desc:"部门ID"'
+                roleIds:
                     type: array
                     items:
                         type: string
-                    description: '@inject_tag: json:"roleIDs" desc:"角色ID列表"'
+                    description: '@inject_tag: json:"roleIds" desc:"角色ID列表"'
                 password:
                     type: string
                     description: '@inject_tag: json:"password" desc:"密码"'
