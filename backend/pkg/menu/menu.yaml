@@ -58,7 +58,7 @@
 - permission: mcpcan_template
   title: 部署模版
   engTitle: Template
-  path: /template
+  path: /template-manage
   type: 1
   sort: 40
   children:
@@ -144,7 +144,7 @@
     - permission: mcpcan_rbac_manage:user
       title: 用户管理
       engTitle: User Manage
-      path: /users
+      path: /user-manage
       type: 1
       sort: 10
       children:
@@ -160,7 +160,7 @@
     - permission: mcpcan_rbac_manage:dept
       title: 部门管理
       engTitle: Dept Manage
-      path: /depts
+      path: /department-manage
       type: 1
       sort: 20
       children:
@@ -176,7 +176,7 @@
     - permission: mcpcan_rbac_manage:role
       title: 角色管理
       engTitle: Role Manage
-      path: /roles
+      path: /role-manage
       type: 1
       sort: 30
       children:
