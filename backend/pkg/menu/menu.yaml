@@ -138,6 +138,7 @@
 - permission: mcpcan_rbac_manage
   title: 权限管理
   engTitle: RBAC Manage
+  path: /auth-manage
   type: 0
   sort: 80
   children:
@@ -195,4 +196,5 @@
         - permission: mcpcan_rbac_manage:role:menus
           title: 角色菜单列表
           type: 2
+
 
