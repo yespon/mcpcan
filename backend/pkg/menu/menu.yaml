@@ -9,7 +9,7 @@
 - permission: mcpcan_instance
   title: MCP实例
   engTitle: Mcp Instance
-  path: /resource-manage
+  path: /instance-manage
   type: 1
   sort: 20
   children:
