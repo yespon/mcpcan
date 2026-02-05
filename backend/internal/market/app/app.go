@@ -451,6 +451,9 @@ func (a *App) setupMiddleware() {
 	// Add panic recovery middleware
 	a.ginEngine.Use(middleware.PanicRecovery())
 
+	// Add CORS middleware (must be early to handle OPTIONS)
+	a.ginEngine.Use(middleware.CORSMiddleware())
+
 	// Add request response logging middleware
 	a.ginEngine.Use(middleware.RequestResponseLoggingMiddleware())
 

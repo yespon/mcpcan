@@ -24,7 +24,7 @@ func NewAiModelAccessService(ctx context.Context) *AiModelAccessService {
 	}
 }
 
-// TestConnectionHandler tests connection to the model
+	// TestConnectionHandler tests connection to the model
 func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
 	var req biz.TestConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -38,7 +38,7 @@ func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, resp)
+	i18nresp.SuccessResponse(c, resp)
 }
 
 // TestConnectionWithIdHandler tests connection to an existing model by ID
@@ -60,7 +60,7 @@ func (s *AiModelAccessService) TestConnectionWithIdHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, resp)
+	i18nresp.SuccessResponse(c, resp)
 }
 
 // CreateHandler creates a new ai model access
