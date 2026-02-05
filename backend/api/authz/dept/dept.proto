@@ -36,6 +36,8 @@ message SysDept {
     string updatedBy = 9;
     // @inject_tag: json:"children,omitempty" desc:"子部门列表"
     repeated SysDept children = 10;
+    // @inject_tag: json:"hasChildren" desc:"是否有子部门"
+    bool hasChildren = 11;
 }
 
 // DeptDTO 部门数据传输对象
@@ -167,12 +169,8 @@ message GetDeptTreeResponse {
 
 // ListDeptsResponse 查询部门列表响应
 message ListDeptsResponse {
-    // @inject_tag: json:"code" desc:"响应码"
-    int32 code = 1;
-    // @inject_tag: json:"message" desc:"响应消息"
-    string message = 2;
     // @inject_tag: json:"list" desc:"部门列表数据"
-    repeated SysDept list = 3;
+    repeated SysDept list = 1;
 }
 
 // PageDeptsRequest 分页查询部门列表请求

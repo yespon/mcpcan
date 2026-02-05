@@ -199,6 +199,8 @@ func (a *App) setupRoutes() {
 		userGroup.GET("/list-users", userService.ListUsers)
 		userGroup.PUT("/update-password", userService.UpdatePassword)
 		userGroup.PUT("/update-avatar", userService.UpdateAvatar)
+		userGroup.POST("/add-role", userService.AddUserRole)
+		userGroup.POST("/remove-role", userService.RemoveUserRole)
 	}
 
 	menuService := service.NewMenuService()

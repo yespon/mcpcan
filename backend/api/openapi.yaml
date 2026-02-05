@@ -511,7 +511,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /authz/roles/menus:
+    /authz/roles/save-menus:
         post:
             tags:
                 - RoleService
@@ -813,6 +813,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /authz/users/add-role:
+        post:
+            tags:
+                - UserService
+            description: 给用户添加角色
+            operationId: UserService_AddUserRole
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/AddUserRoleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/AddUserRoleResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /authz/users/batch-delete:
         delete:
             tags:
@@ -852,7 +877,7 @@ paths:
                     type: string
                 - name: deptIds
                   in: query
-                  description: '@inject_tag: json:"deptId" desc:"部门Id"'
+                  description: '@inject_tag: json:"deptIds" desc:"部门Id"'
                   schema:
                     type: array
                     items:
@@ -891,6 +916,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ListUsersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /authz/users/remove-role:
+        post:
+            tags:
+                - UserService
+            description: 移除用户角色
+            operationId: UserService_RemoveUserRole
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RemoveUserRoleRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RemoveUserRoleResponse'
                 default:
                     description: Default error response
                     content:
@@ -2796,28 +2846,17 @@ components:
         AddUserRoleRequest:
             type: object
             properties:
-                userId:
-                    type: string
-                    description: '@inject_tag: json:"userId" form:"userId" desc:"用户ID"'
+                userIds:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"userIds" desc:"用户ID列表"'
                 roleId:
                     type: string
-                    description: '@inject_tag: json:"roleId" form:"roleId" desc:"角色ID"'
-            description: AddUserRoleRequest 添加用户角色关联请求
+                    description: '@inject_tag: json:"roleId" desc:"角色ID"'
         AddUserRoleResponse:
             type: object
-            properties:
-                code:
-                    type: integer
-                    description: '@inject_tag: json:"code" desc:"响应状态码"'
-                    format: int32
-                message:
-                    type: string
-                    description: '@inject_tag: json:"message" desc:"响应消息"'
-                userRole:
-                    allOf:
-                        - $ref: '#/components/schemas/UserRole'
-                    description: '@inject_tag: json:"data" desc:"新增的用户角色关联信息"'
-            description: AddUserRoleResponse 添加用户角色关联响应
+            properties: {}
         AvailableCasesResponse:
             type: object
             properties:
@@ -3364,9 +3403,9 @@ components:
                 username:
                     type: string
                     description: '@inject_tag: json:"username" desc:"用户名"'
-                fullName:
+                nickName:
                     type: string
-                    description: '@inject_tag: json:"fullName" desc:"用户全名"'
+                    description: '@inject_tag: json:"nickName" desc:"用户昵称"'
                 password:
                     type: string
                     description: '@inject_tag: json:"password" desc:"密码"'
@@ -4207,13 +4246,6 @@ components:
         ListDeptsResponse:
             type: object
             properties:
-                code:
-                    type: integer
-                    description: '@inject_tag: json:"code" desc:"响应码"'
-                    format: int32
-                message:
-                    type: string
-                    description: '@inject_tag: json:"message" desc:"响应消息"'
                 list:
                     type: array
                     items:
@@ -5012,6 +5044,20 @@ components:
                     type: boolean
                     description: '@inject_tag: json:"success" desc:"是否成功"'
             description: RemoveDockerVolumeResponse
+        RemoveUserRoleRequest:
+            type: object
+            properties:
+                userIds:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"userIds" desc:"用户ID列表"'
+                roleId:
+                    type: string
+                    description: '@inject_tag: json:"roleId" desc:"角色ID"'
+        RemoveUserRoleResponse:
+            type: object
+            properties: {}
         RestartRequest:
             type: object
             properties:
@@ -5274,6 +5320,9 @@ components:
                     items:
                         $ref: '#/components/schemas/SysDept'
                     description: '@inject_tag: json:"children,omitempty" desc:"子部门列表"'
+                hasChildren:
+                    type: boolean
+                    description: '@inject_tag: json:"hasChildren" desc:"是否有子部门"'
             description: SysDept 系统部门信息
         SysMenuTreeNode:
             type: object
@@ -5372,9 +5421,9 @@ components:
                 username:
                     type: string
                     description: '@inject_tag: json:"username" desc:"用户名"'
-                fullName:
+                nickName:
                     type: string
-                    description: '@inject_tag: json:"fullName" desc:"用户全名"'
+                    description: '@inject_tag: json:"nickName" desc:"用户昵称"'
                 password:
                     type: string
                     description: '@inject_tag: json:"password" desc:"密码"'
@@ -6057,9 +6106,9 @@ components:
                 id:
                     type: string
                     description: '@inject_tag: json:"id" desc:"用户ID"'
-                fullName:
+                nickName:
                     type: string
-                    description: '@inject_tag: json:"fullName" desc:"用户全名"'
+                    description: '@inject_tag: json:"nickName" desc:"用户昵称"'
                 email:
                     type: string
                     description: '@inject_tag: json:"email" desc:"电子邮箱"'

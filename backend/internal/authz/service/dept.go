@@ -259,13 +259,38 @@ func (s *DeptService) FindDepts(c *gin.Context) {
 		return
 	}
 
+	parentIDS := make([]uint, 0)
+	for _, dept := range depts {
+		parentIDS = append(parentIDS, dept.DeptID)
+	}
+	// Get sub departments
+	subDepts, err := mysql.SysDeptRepo.FindByParentID(c.Request.Context(), parentIDS)
+	if err != nil {
+		logger.Error("Failed to get sub departments", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get sub departments: %v", err))
+		return
+	}
+	var childs = map[uint][]*model.SysDept{}
+	for _, dept := range depts {
+		childs[dept.DeptID] = make([]*model.SysDept, 0)
+	}
+	for _, dept := range subDepts {
+		childs[*dept.PID] = append(childs[*dept.PID], dept)
+	}
+
 	// Convert models to response
 	var respDepts []*pb.SysDept
 	for _, dept := range depts {
-		respDepts = append(respDepts, s.convertModelToProto(dept))
+		result := s.convertModelToProto(dept)
+		if children, ok := childs[dept.DeptID]; ok {
+			result.HasChildren = len(children) > 0
+		}
+		respDepts = append(respDepts, result)
 	}
 
-	common.GinSuccess(c, respDepts)
+	common.GinSuccess(c, pb.ListDeptsResponse{
+		List: respDepts,
+	})
 }
 
 // convertModelToProto converts model.SysDept to pb.SysDept
@@ -314,7 +339,7 @@ func (s *DeptService) GetDeptTree(c *gin.Context) {
 	}
 
 	// Get departments with pagination
-	depts, _, err := mysql.SysDeptRepo.FindWithPagination(c.Request.Context(), 1, 99999, "", nil, int32(pb.DeptStatus_DeptStatusEnabled))
+	depts, _, err := mysql.SysDeptRepo.FindWithPagination(c.Request.Context(), 1, 99999, "", &[]uint{0}[0], int32(pb.DeptStatus_DeptStatusEnabled))
 	if err != nil {
 		logger.Error("Failed to get departments with pagination", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to get departments: %v", err))

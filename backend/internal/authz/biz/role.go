@@ -23,6 +23,16 @@ func NewRoleData(ctx context.Context) *RoleData {
 
 // BatchDeleteRoles deletes roles by IDs
 func (d *RoleData) BatchDeleteRoles(ctx context.Context, roleIDs []uint) error {
+	roles, err := mysql.SysRoleRepo.FindByIDs(ctx, roleIDs)
+	if err != nil {
+		return err
+	}
+	for _, role := range roles {
+		if role.Name == "admin" {
+			return fmt.Errorf("admin role cannot be deleted")
+		}
+	}
+
 	associations, err := mysql.SysUsersRolesRepo.BatchFindByRoleID(ctx, roleIDs)
 	if err != nil {
 		return err

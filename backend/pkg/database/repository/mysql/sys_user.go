@@ -92,7 +92,7 @@ func (r *SysUserRepository) FindByDeptID(ctx context.Context, deptID []uint) ([]
 }
 
 // FindWithPagination 分页查询用户（支持名称或邮箱的模糊查询，支持状态查询）
-func (r *SysUserRepository) FindWithPagination(ctx context.Context, page, pageSize int, keyword string, enabled *bool, depIDs []uint) ([]*model.SysUser, int64, error) {
+func (r *SysUserRepository) FindWithPagination(ctx context.Context, page, pageSize int, keyword string, enabled *bool, depIDs []uint, ids []uint) ([]*model.SysUser, int64, error) {
 	var users []*model.SysUser
 	var total int64
 
@@ -109,7 +109,11 @@ func (r *SysUserRepository) FindWithPagination(ctx context.Context, page, pageSi
 	}
 
 	if depIDs != nil {
-		query = query.Where("dep_id IN (?)", depIDs)
+		query = query.Where("dept_id IN (?)", depIDs)
+	}
+	// 用户ID查询
+	if ids != nil {
+		query = query.Where("user_id IN (?)", ids)
 	}
 
 	if err := query.Count(&total).Error; err != nil {

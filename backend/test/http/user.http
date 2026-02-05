@@ -5,9 +5,10 @@ Authorization: {{token}}
 
 
 ### 用户列表
-GET http://localhost:8082/authz/users/list-users
+GET http://localhost:8082/authz/users/list-users?deptIds=5&deptIds=6
 Content-Type: application/json
 Authorization: {{token}}
+X-Custom-User-Info: {{userInfo}}
 
 ### 创建用户
 POST http://localhost:8082/authz/users

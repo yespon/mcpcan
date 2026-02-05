@@ -58,5 +58,5 @@ Content-Type: application/json
 X-Custom-User-Info: {{userInfo}}
 
 {
-  "roleIDs": [1]
+  "roleIds": [1]
 }

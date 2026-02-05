@@ -454,7 +454,17 @@ func (uc *UserBiz) SetUserPassword(ctx context.Context, userModel *model.SysUser
 
 // BatchDeleteByUserID batch deletes user
 func (uc *UserBiz) BatchDeleteByUserID(ctx context.Context, userIds []uint) error {
-	err := uc.userRoleRepo.BatchDeleteByUserID(ctx, userIds)
+	users, err := uc.userRepo.FindByIds(ctx, userIds)
+	if err != nil {
+		return err
+	}
+	for _, user := range users {
+		if user.GetUsername() == "admin" {
+			return fmt.Errorf("admin user cannot be deleted")
+		}
+	}
+
+	err = uc.userRoleRepo.BatchDeleteByUserID(ctx, userIds)
 	if err != nil {
 		return err
 	}

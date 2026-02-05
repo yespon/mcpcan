@@ -43,23 +43,25 @@ func (r *SysUsersRolesRepository) BatchDeleteByRoleID(ctx context.Context, roleI
 	return r.getDB().WithContext(ctx).Where("role_id = ?", roleID).Delete(&model.SysUsersRoles{}).Error
 }
 
-// BatchDeleteByUserRoleIDs 批量删除指定用户角色对的关联
 func (r *SysUsersRolesRepository) BatchDeleteByUserRoleIDs(ctx context.Context, associations []*model.SysUsersRoles) error {
 	if len(associations) == 0 {
 		return fmt.Errorf("associations list cannot be empty")
 	}
 
-	// 提取所有用户角色对
-	var conditions []map[string]interface{}
-	for _, assoc := range associations {
-		conditions = append(conditions, map[string]interface{}{
-			"user_id": assoc.UserID,
-			"role_id": assoc.RoleID,
-		})
+	// Create slice of structs with only UserID and RoleID fields for deletion
+	userRolePairs := make([]struct {
+		UserID uint
+		RoleID uint
+	}, len(associations))
+
+	for i, assoc := range associations {
+		userRolePairs[i] = struct {
+			UserID uint
+			RoleID uint
+		}{UserID: assoc.UserID, RoleID: assoc.RoleID}
 	}
 
-	// 批量删除
-	return r.getDB().WithContext(ctx).Where(conditions).Delete(&model.SysUsersRoles{}).Error
+	return r.getDB().WithContext(ctx).Where(userRolePairs).Delete(&model.SysUsersRoles{}).Error
 }
 
 // BatchFindByUserID 批量查询指定用户的角色关联

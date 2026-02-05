@@ -92,7 +92,11 @@ func (r *SysDeptRepository) FindWithPagination(ctx context.Context, page, pageSi
 		query = query.Where("name LIKE ?", "%"+keyword+"%")
 	}
 	if pid != nil {
-		query = query.Where("pid = ?", pid)
+		if *pid > 0 {
+			query = query.Where("pid = ?", pid)
+		}
+	} else {
+		query = query.Where("pid IS NULL")
 	}
 
 	if enabled > 0 {

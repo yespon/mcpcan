@@ -88,7 +88,7 @@
   title: 文件管理
   engTitle: File-Manage
   path: /resource-manage
-  type: 0
+  type: 1
   sort: 60
   children:
       - permission: mcpcan_resource_manage:create_code_package

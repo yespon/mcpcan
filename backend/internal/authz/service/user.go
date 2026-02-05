@@ -58,28 +58,31 @@ func (s *UserService) CreateUser(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
+	if req.Password == "" {
+		req.Password = "123456"
+	}
 
 	// If password is provided, hash it
-	if req.Password != "" {
-		if err := s.userBiz.SetUserPassword(c.Request.Context(), userModel, req.Password); err != nil {
-			logger.Error("Failed to set user password", zap.Error(err))
-			common.GinError(c, i18nresp.CodeInternalError, "Failed to set user password")
-			return
-		}
+	if err := s.userBiz.SetUserPassword(c.Request.Context(), userModel, req.Password); err != nil {
+		logger.Error("Failed to set user password", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, "Failed to set user password")
+		return
 	}
 
-	// Create user roles associations
-	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
-	for _, roleID := range req.RoleIds {
-		associations = append(associations, &model.SysUsersRoles{
-			UserID: userModel.UserID,
-			RoleID: uint(roleID),
-		})
-	}
-	if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), associations); err != nil {
-		logger.Error("Failed to create user roles associations", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, err.Error())
-		return
+	if len(req.RoleIds) > 0 {
+		// Create user roles associations
+		associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
+		for _, roleID := range req.RoleIds {
+			associations = append(associations, &model.SysUsersRoles{
+				UserID: userModel.UserID,
+				RoleID: uint(roleID),
+			})
+		}
+		if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), associations); err != nil {
+			logger.Error("Failed to create user roles associations", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
 	}
 
 	// Return created user information
@@ -225,8 +228,24 @@ func (s *UserService) ListUsers(c *gin.Context) {
 		depIds = append(depIds, uint(depId))
 	}
 
+	// 根据角色查询
+	var userIds []uint
+	if req.RoleId > 0 {
+		userRoles, err := mysql.SysUsersRolesRepo.BatchFindByRoleID(c.Request.Context(), []uint{uint(req.RoleId)})
+		if err != nil {
+			logger.Error("Failed to get role users", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
+		// 如果传递了角色 id, 那么不管是否传递 userId 都设置
+		userIds = make([]uint, 0, len(userRoles))
+		for _, userRole := range userRoles {
+			userIds = append(userIds, userRole.UserID)
+		}
+	}
+
 	// Get user list
-	users, total, err := mysql.SysUserRepo.FindWithPagination(c.Request.Context(), int(req.Page), int(req.Size), req.Blurry, enable, depIds)
+	users, total, err := mysql.SysUserRepo.FindWithPagination(c.Request.Context(), int(req.Page), int(req.Size), req.Blurry, enable, depIds, userIds)
 	if err != nil {
 		logger.Error("Failed to get user list", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
@@ -258,7 +277,7 @@ func (s *UserService) ListUsers(c *gin.Context) {
 func (s *UserService) convertCreateRequestToModel(req *user.CreateUserRequest) *model.SysUser {
 	userModel := &model.SysUser{
 		Username: &req.Username,
-		NickName: &req.FullName,
+		NickName: &req.NickName,
 		Email:    &req.Email,
 		Phone:    &req.Phone,
 	}
@@ -284,8 +303,8 @@ func (s *UserService) convertCreateRequestToModel(req *user.CreateUserRequest) *
 
 // updateModelFromRequest updates model from update request
 func (s *UserService) updateModelFromRequest(userModel *model.SysUser, req *user.UpdateUserRequest) {
-	if req.FullName != "" {
-		userModel.NickName = &req.FullName
+	if req.NickName != "" {
+		userModel.NickName = &req.NickName
 	}
 	if req.Email != "" {
 		userModel.Email = &req.Email
@@ -469,7 +488,7 @@ func (s *UserService) convertModelToProto(userModel *model.SysUser) *user.SysUse
 	userProto := &user.SysUser{
 		Id:       int64(userModel.UserID),
 		Username: userModel.GetUsername(),
-		FullName: userModel.GetNickName(),
+		NickName: userModel.GetNickName(),
 		Email:    userModel.GetEmail(),
 		Phone:    userModel.GetPhone(),
 		Avatar:   userModel.GetAvatarPath(),
@@ -493,6 +512,88 @@ func (s *UserService) convertModelToProto(userModel *model.SysUser) *user.SysUse
 	}
 
 	return userProto
+}
+
+// AddUserRole adds user roles
+func (s *UserService) AddUserRole(c *gin.Context) {
+	var req user.AddUserRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	userIds := make([]uint, 0, len(req.UserIds))
+	for _, userId := range req.UserIds {
+		userIds = append(userIds, uint(userId))
+	}
+	// 检查用户是否存在
+	users, err := mysql.SysUserRepo.FindByIds(c.Request.Context(), userIds)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+	_, err = mysql.SysRoleRepo.FindByID(c.Request.Context(), uint(req.RoleId))
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	// 检查用户是否已经有这些角色
+	userRoles, err := mysql.SysUsersRolesRepo.BatchFindByRoleID(c.Request.Context(), []uint{uint(req.RoleId)})
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	var addUserRole = []*model.SysUsersRoles{}
+	// 检查用户是否已经有这些角色
+	userRoleIDs := make(map[uint]struct{})
+	for _, ur := range userRoles {
+		userRoleIDs[ur.UserID] = struct{}{}
+	}
+	// 检查用户是否已经有这些角色
+	for _, user := range users {
+		if _, ok := userRoleIDs[user.UserID]; ok {
+			continue
+		}
+		addUserRole = append(addUserRole, &model.SysUsersRoles{
+			UserID: user.UserID,
+			RoleID: uint(req.RoleId),
+		})
+	}
+
+	if len(addUserRole) > 0 {
+		if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), addUserRole); err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
+	}
+
+	common.GinSuccess(c, nil)
+}
+
+// RemoveUserRole removes user roles
+func (s *UserService) RemoveUserRole(c *gin.Context) {
+	var req user.RemoveUserRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	var associations []*model.SysUsersRoles
+	for _, ur := range req.UserIds {
+		associations = append(associations, &model.SysUsersRoles{
+			UserID: uint(ur),
+			RoleID: uint(req.RoleId),
+		})
+	}
+
+	if err := mysql.SysUsersRolesRepo.BatchDeleteByUserRoleIDs(c.Request.Context(), associations); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, nil)
 }
 
 func setUsersRoleAndDeptInfo(ctx context.Context, users []*user.SysUser) error {

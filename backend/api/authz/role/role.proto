@@ -200,7 +200,7 @@ service RoleService {
   // 保存角色菜单
   rpc SaveRoleMenus(SaveRoleMenusRequest) returns (SaveRoleMenusResponse) {
     option (google.api.http) = {
-      post: "/authz/roles/menus"
+      post: "/authz/roles/save-menus"
       body: "*"
     };
   }

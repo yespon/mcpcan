@@ -34,8 +34,8 @@ message SysUser {
   int64 id = 1;                
   // @inject_tag: json:"username" desc:"用户名"
   string username = 2;         
-  // @inject_tag: json:"fullName" desc:"用户全名"
-  string fullName = 3;         
+  // @inject_tag: json:"nickName" desc:"用户昵称"
+  string nickName = 3;
   // @inject_tag: json:"password" desc:"密码"
   string password = 4;         
   // @inject_tag: json:"email" desc:"电子邮箱"
@@ -138,8 +138,8 @@ message PermissionTreeNode {
 message CreateUserRequest {
   // @inject_tag: json:"username" desc:"用户名"
   string username = 1;         
-  // @inject_tag: json:"fullName" desc:"用户全名"
-  string fullName = 2;         
+  // @inject_tag: json:"nickName" desc:"用户昵称"
+  string nickName = 2;
   // @inject_tag: json:"password" desc:"密码"
   string password = 3;         
   // @inject_tag: json:"email" desc:"电子邮箱"
@@ -164,8 +164,8 @@ message CreateUserResponse {
 message UpdateUserRequest {
   // @inject_tag: json:"id" desc:"用户ID"
   int64 id = 1;                
-  // @inject_tag: json:"fullName" desc:"用户全名"
-  string fullName = 2;         
+  // @inject_tag: json:"nickName" desc:"用户昵称"
+  string nickName = 2;
   // @inject_tag: json:"email" desc:"电子邮箱"
   string email = 3;            
   // @inject_tag: json:"phone" desc:"手机号码"
@@ -215,7 +215,7 @@ message DeleteUserResponse {
 message ListUsersRequest {
   // @inject_tag: json:"blurry" desc:"模糊查询(用户名/邮箱)"
   string blurry = 1;
-  // @inject_tag: json:"deptId" desc:"部门Id"
+  // @inject_tag: json:"deptIds" desc:"部门Id"
   repeated int64 deptIds = 2;
   // @inject_tag: json:"status" desc:"用户状态"
   UserStatus status = 3;
@@ -279,6 +279,26 @@ message GetCurrentUserResponse {
   SysUser users = 1;
 }
 
+message AddUserRoleRequest {
+  // @inject_tag: json:"userIds" desc:"用户ID列表"
+  repeated int64 userIds = 1;
+  // @inject_tag: json:"roleId" desc:"角色ID"
+  int64 roleId = 2;
+}
+
+message AddUserRoleResponse {
+}
+
+message RemoveUserRoleRequest {
+  // @inject_tag: json:"userIds" desc:"用户ID列表"
+  repeated int64 userIds = 1;
+  // @inject_tag: json:"roleId" desc:"角色ID"
+  int64 roleId = 2;
+}
+
+message RemoveUserRoleResponse {
+}
+
 // 用户服务
 service UserService {
   // 创建用户
@@ -319,14 +339,6 @@ service UserService {
     };
   }
 
-//  // 获取当前登录用户详情
-//  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {
-//    option (google.api.http) = {
-//      get: "/authz/users/get-current-user"
-//    };
-//  }
-
-
   // 更新用户密码
   rpc UpdatePassword(UpdatePasswordRequest) returns (UpdatePasswordResponse) {
     option (google.api.http) = {
@@ -339,6 +351,22 @@ service UserService {
   rpc UpdateAvatar(UpdateAvatarRequest) returns (UpdateAvatarResponse) {
     option (google.api.http) = {
       put: "/authz/users/update-avatar"
+      body: "*"
+    };
+  }
+
+  // 给用户添加角色
+  rpc AddUserRole(AddUserRoleRequest) returns (AddUserRoleResponse) {
+    option (google.api.http) = {
+      post: "/authz/users/add-role"
+      body: "*"
+    };
+  }
+
+  // 移除用户角色
+  rpc RemoveUserRole(RemoveUserRoleRequest) returns (RemoveUserRoleResponse) {
+    option (google.api.http) = {
+      post: "/authz/users/remove-role"
       body: "*"
     };
   }
