@@ -21,7 +21,8 @@
         "name": "Please enter department name",
         "nameMaxLength": "Department name cannot exceed 20 characters",
         "deptSort": "Please enter department sort",
-        "pid": "Please select parent department"
+        "pid": "Please select parent department",
+        "status": "Please select status"
       },
       "formData": {
         "title": "Create Department",

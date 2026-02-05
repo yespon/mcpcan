@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import baseConfig from '@/config/base_config.ts'
-import { create } from 'lodash-es'
 
 export const RoleAPI = {
   list(data: TableData) {
@@ -9,42 +7,15 @@ export const RoleAPI = {
       method: 'GET',
       data,
     })
-    // return new Promise<any>((resolve) => {
-    //   resolve({
-    //     list: [
-    //       {
-    //         id: 1,
-    //         name: `测试角色`,
-    //         level: 1,
-    //         dataScope: '全部数据权限',
-    //         description: '拥有系统所有权限',
-    //         createTime: '2025-02-02 12:00:00',
-    //       },
-    //     ],
-    //     page: 1,
-    //     pageSize: 10,
-    //     total: 100,
-    //   })
-    // })
   },
   allList() {
-    // return request<any, List<any>>({
-    //   url: `/authz/roles/list-roles`,
-    //   method: 'GET',
-    // })
-    return new Promise<any>((resolve) => {
-      resolve({
-        data: [
-          {
-            id: 1,
-            name: `测试角色`,
-            level: 1,
-            dataScope: '全部数据权限',
-            description: '拥有系统所有权限',
-            createTime: '2025-02-02 12:00:00',
-          },
-        ],
-      })
+    return request<any, List<any>>({
+      url: `/authz/roles/list-roles`,
+      method: 'GET',
+      params: {
+        page: 1,
+        pageSize: 9999,
+      },
     })
   },
   create(form: any) {
@@ -67,22 +38,12 @@ export const RoleAPI = {
       method: 'DELETE',
     })
   },
-  removeUser(data: any) {
+  // 给角色授权菜单
+  saveRoleMenus(data: any) {
     return request<any, any>({
-      url: `/authz/roles/users/remove`,
+      url: `/authz/roles/save-menus`,
       method: 'POST',
       data,
-    })
-  },
-  // 给角色授权菜单
-  saveRoleMenus(roleId: string, menuIds: string[]) {
-    return request<any, any>({
-      url: `/authz/roles/menus`,
-      method: 'POST',
-      data: {
-        roleId,
-        menuIds,
-      },
     })
   },
   // 获取所有菜单列表
@@ -93,38 +54,21 @@ export const RoleAPI = {
     })
   },
   // 获取当前角色的菜单权限
-  getRoleMenus(roleIds: any[]) {
+  getRoleMenus(data: any) {
     return request<any, any>({
       url: `/authz/roles/find-menus`,
       method: 'POST',
-      data: {
-        roleIDs: roleIds,
-      },
+      data,
     })
   },
 }
 export const DeptAPI = {
   list(data: TableData) {
     return request<TableData, List<any>>({
-      url: `/authz/depts/page-depts`,
-      method: 'POST',
-      data,
+      url: `/authz/depts/list-depts`,
+      method: 'GET',
+      params: data,
     })
-    // return new Promise<any>((resolve) => {
-    //   resolve({
-    //     list: [
-    //       {
-    //         id: 1,
-    //         name: `测试部门`,
-    //         deptSort: 1,
-    //         createTime: '2025-02-02 12:00:00',
-    //       },
-    //     ],
-    //     page: 1,
-    //     pageSize: 10,
-    //     total: 10,
-    //   })
-    // })
   },
   create(data: any) {
     return request<any, any>({
@@ -147,63 +91,19 @@ export const DeptAPI = {
     })
   },
   deptTree() {
-    // return request<any, any>({
-    //   url: `/authz/depts/tree`,
-    //   method: 'GET',
-    // })
-    return new Promise<any>((resolve) => {
-      resolve({
-        data: [
-          {
-            id: 1,
-            name: `测试部门`,
-            children: [
-              {
-                id: 2,
-                name: `子部门`,
-              },
-            ],
-          },
-        ],
-      })
+    return request<any, any>({
+      url: `/authz/depts/tree`,
+      method: 'GET',
     })
   },
 }
 
 export const UserAPI = {
   list(data: TableData) {
-    // return request<TableData, List<any>>({
-    //   url: `/authz/users/list-users`,
-    //   method: 'POST',
-    //   data,
-    // })
-    return new Promise<any>((resolve) => {
-      resolve({
-        list: [
-          {
-            id: '123',
-            username: 'string',
-            fullName: 'string',
-            password: 'string',
-            email: 'string',
-            phone: 'string',
-            avatar: 'string',
-            status: 'UserStatusUnspecified',
-            source: 'UserSourceUnspecified',
-            deptId: 'string',
-            deptName: 'string',
-            roleIds: ['string'],
-            roleNames: ['string'],
-            createdAt: 'string',
-            updatedAt: 'string',
-            createdBy: 'string',
-            updatedBy: 'string',
-          },
-        ],
-        page: 1,
-        pageSize: 10,
-        total: 100,
-      })
+    return request<TableData, List<any>>({
+      url: `/authz/users/list-users`,
+      method: 'GET',
+      params: data,
     })
   },
   create(data: any) {
@@ -226,13 +126,29 @@ export const UserAPI = {
       method: 'DELETE',
     })
   },
+  // 给用户添加角色
+  addUserRoles(data: any) {
+    return request<any, any>({
+      url: `/authz/users/add-role`,
+      method: 'POST',
+      data,
+    })
+  },
+  // 移除用户角色
+  removeUserRoles(data: any) {
+    return request<any, any>({
+      url: `/authz/users/remove-role`,
+      method: 'POST',
+      data,
+    })
+  },
 }
 // 列表请求
 export interface TableData {
   /** 页码 */
-  page: string | number
+  page?: string | number
   /** 每页显示数量 */
-  pageSize: string | number
+  pageSize?: string | number
   /** 允许传入其他任意类型的参数 */
   [key: string]: any
 }

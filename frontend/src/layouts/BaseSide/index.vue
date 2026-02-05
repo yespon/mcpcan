@@ -3,7 +3,7 @@
     <el-menu
       router
       :default-active="currentRoutePath"
-      class="el-menu-vertical-demo"
+      class="el-menu-vertical-demo overflow-y-auto h-full relative"
       :collapse="isCollapse"
     >
       <el-menu-item>
@@ -54,7 +54,55 @@
           <span v-else>{{ t('sideMenu.add') }}</span>
         </template>
       </el-menu-item>
-      <el-menu-item v-for="menu in menuList" :key="menu.index" :index="menu.index">
+      <template v-for="menu in currentMenuAuths">
+        <el-sub-menu
+          v-if="menu.children && menu.children.length > 0"
+          :key="menu.path"
+          :index="menu.path"
+        >
+          <template #title>
+            <div class="customize-menu">
+              <el-icon>
+                <i class="icon iconfont" :class="menuMap[menu.permission].icon"></i>
+              </el-icon>
+              <template v-if="!isCollapse">
+                {{ menuMap[menu.permission]?.title || menu.title }}
+              </template>
+            </div>
+          </template>
+          <el-menu-item v-for="subMenu in menu.children" :key="subMenu.path" :index="subMenu.path">
+            <div v-if="isCollapse" class="is-collapse">
+              <el-icon>
+                <i class="icon iconfont" :class="menuMap[subMenu.permission].icon"></i>
+              </el-icon>
+            </div>
+            <template #title>
+              <div :class="!isCollapse ? 'customize-menu' : ''">
+                <el-icon v-if="!isCollapse">
+                  <i class="icon iconfont" :class="menuMap[subMenu.permission].icon"></i>
+                </el-icon>
+                {{ menuMap[subMenu.permission].title }}
+              </div>
+            </template>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-menu-item v-else :index="menu.path">
+          <div v-if="isCollapse" class="is-collapse">
+            <el-icon>
+              <i class="icon iconfont" :class="menuMap[menu.permission].icon"></i>
+            </el-icon>
+          </div>
+          <template #title>
+            <div class="customize-menu">
+              <el-icon v-if="!isCollapse"
+                ><i class="icon iconfont" :class="menuMap[menu.permission].icon"></i
+              ></el-icon>
+              {{ menuMap[menu.permission].title }}
+            </div>
+          </template>
+        </el-menu-item>
+      </template>
+      <el-menu-item v-if="false" v-for="menu in menuList" :key="menu.index" :index="menu.index">
         <div v-if="isCollapse" class="is-collapse">
           <el-icon>
             <i class="icon iconfont" :class="menu.icon"></i>
@@ -77,7 +125,7 @@
 
 <script lang="ts" setup>
 import { Expand, Fold } from '@element-plus/icons-vue'
-import { useSystemStoreHook } from '@/stores'
+import { useSystemStoreHook, useUserStore } from '@/stores'
 import Logo from './logo.vue'
 import AddDropdown from './add-dropdown.vue'
 import GlareHover from '@/components/Animation/GlareHover.vue'
@@ -88,8 +136,24 @@ const currentRoutePath = computed(() => route.path)
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
 const { isCollapse } = toRefs(useSystemStoreHook())
+const { currentMenuAuths } = storeToRefs(useUserStore())
 const handleChangeCollapse = () => {
   useSystemStoreHook().changeCollapse(isCollapse.value)
+}
+const menuMap: Record<string, { title: string; icon: string }> = {
+  mcpcan_home: { title: t('sideMenu.home'), icon: 'MCP-shouye1' },
+  mcpcan_instance: { title: t('sideMenu.instanceManage'), icon: 'MCP-MCPshili' },
+  mcpcan_market_manage: { title: t('sideMenu.marketManage'), icon: 'MCP-shichangcaidan' },
+  mcpcan_template: { title: t('sideMenu.templateManage'), icon: 'MCP-MCPmoban' },
+  mcpcan_working_environment: { title: t('sideMenu.runEnviroment'), icon: 'MCP-huanjingguanli' },
+  codeList: { title: t('sideMenu.codeList'), icon: 'MCP-daimaguanli' },
+  apiDocsList: { title: t('sideMenu.apiDocsList'), icon: 'MCP-wenjian' },
+  mcpcan_resource_manage: { title: t('sideMenu.resourceManage'), icon: 'MCP-wenjian' },
+  mcpcan_agent_manage: { title: t('sideMenu.agentManage'), icon: 'MCP-zhinengti' },
+  'mcpcan_rbac_manage:role': { title: t('sideMenu.roleManage'), icon: 'MCP-jiaose' },
+  'mcpcan_rbac_manage:user': { title: t('sideMenu.userManage'), icon: 'MCP-yonghu' },
+  'mcpcan_rbac_manage:dept': { title: t('sideMenu.departmentManage'), icon: 'MCP-zuzhibumen' },
+  mcpcan_rbac_manage: { title: t('sideMenu.rbacManage'), icon: 'MCP-qita' },
 }
 
 const menuList = shallowRef([
@@ -113,6 +177,9 @@ const handleToHome = () => {
     data: {},
   })
 }
+onMounted(() => {
+  console.log('currentMenuAuths', currentMenuAuths.value)
+})
 </script>
 
 <style lang="scss" scoped>

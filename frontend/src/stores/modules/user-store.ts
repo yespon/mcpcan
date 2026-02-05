@@ -17,28 +17,30 @@ export const useUserStore = defineStore('user', () => {
   const allAuths = useStorage('allAuths', {} as any)
   const currentBtnAuths = computed(() => {
     return allAuths.value?.menus
-      ?.filter((item: any) => item.type === 2 && item.permission)
+      ?.filter((item: any) => Number(item.type) === 2 && item.permission)
       .map((item: any) => item.permission)
   })
   const currentMenuAuths = computed(() => {
-    const menus: any[] = allAuths.value?.menus || []
     const permissions: string[] = allAuths.value?.permissions || []
-    if (!Array.isArray(menus) || !Array.isArray(permissions) || permissions.length === 0) return []
     const permissionSet = new Set<string>(permissions)
     const filterMenuTree = (list: any[]): any[] => {
       if (!Array.isArray(list) || list.length === 0) return []
       return list
         .filter((item) => {
-          return (item?.type === 0 || item?.type === 1) && permissionSet.has(item?.permission)
+          return (
+            (Number(item?.type) === 0 || Number(item?.type) === 1) &&
+            permissionSet.has(item?.permission)
+          )
         })
         .map((item) => {
           return {
             ...item,
-            children: filterMenuTree(item.children || []),
+            children: filterMenuTree(item.children),
           }
         })
     }
-    return filterMenuTree(menus)
+
+    return filterMenuTree(allMenus.value)
   })
 
   // PEM interchange ArrayBuffer
@@ -289,7 +291,7 @@ export const useUserStore = defineStore('user', () => {
    */
   function getRoleAuth() {
     return new Promise<any[]>((resolve, reject) => {
-      RoleAPI.getRoleMenus([...(userInfo.value.roleIds || [])])
+      RoleAPI.getRoleMenus({ roleIds: [...(userInfo.value.roleIds || [])] })
         .then((data) => {
           allAuths.value = data
           resolve(data)
@@ -306,24 +308,24 @@ export const useUserStore = defineStore('user', () => {
    */
   function handleMenuAuth() {
     return Promise.all([getMenus(), getRoleAuth()]).then(([allMenus, roleMenus]) => {
-      const menuMap = new Map<string, any>()
-      allMenus.forEach((menu) => {
-        menuMap.set(menu.id, { ...menu, children: [] })
-      })
-      roleMenus.forEach((menu: any) => {
-        if (menuMap.has(menu.id)) {
-          menuMap.get(menu.id).checked = true
-        }
-      })
-      const menuTree: any[] = []
-      menuMap.forEach((menu) => {
-        if (menu.parentId && menuMap.has(menu.parentId)) {
-          menuMap.get(menu.parentId).children.push(menu)
-        } else {
-          menuTree.push(menu)
-        }
-      })
-      return menuTree
+      // const menuMap = new Map<string, any>()
+      // allMenus.forEach((menu) => {
+      //   menuMap.set(menu.id, { ...menu, children: [] })
+      // })
+      // roleMenus.forEach((menu: any) => {
+      //   if (menuMap.has(menu.id)) {
+      //     menuMap.get(menu.id).checked = true
+      //   }
+      // })
+      // const menuTree: any[] = []
+      // menuMap.forEach((menu) => {
+      //   if (menu.parentId && menuMap.has(menu.parentId)) {
+      //     menuMap.get(menu.parentId).children.push(menu)
+      //   } else {
+      //     menuTree.push(menu)
+      //   }
+      // })
+      // return menuTree
     })
   }
 

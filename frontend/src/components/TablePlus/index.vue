@@ -86,6 +86,7 @@
     class="data-table__content"
     :row-key="rowKey"
     @selection-change="handleSelectionChange"
+    :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
   >
     <el-table-column
       type="selection"

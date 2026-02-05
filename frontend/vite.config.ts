@@ -22,9 +22,9 @@ export default defineConfig({
     port: 3000, // HTTPS 默认端口
     proxy: {
       '/api/authz': {
-        target: 'https://mcp-dev.itqm.com',
+        target: 'http://172.16.50.3:8082',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
+        rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/api': {
         target: 'https://mcp-dev.itqm.com',

@@ -65,6 +65,7 @@
     "marketManage": "市场管理",
     "resourceManage": " 文件管理",
     "package": "代码包",
+    "rbacManage": "权限管理",
     "roleManage": "角色管理",
     "userManage": "用户管理",
     "departmentManage": "部门管理"

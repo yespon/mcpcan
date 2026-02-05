@@ -21,7 +21,8 @@
         "name": "请输入部门名称",
         "nameMaxLength": "部门名称长度不能超过20个字符",
         "deptSort": "请输入部门排序",
-        "pid": "请选择上级部门"
+        "pid": "请选择上级部门",
+        "status": "是否启用"
       },
       "formData": {
         "title": "新建部门",
@@ -115,7 +116,7 @@
         "enabled": "启用",
         "disabled": "禁用",
         "loading": "加载中...",
-        "nomore": "没有更多数据了"
+        "noMore": "没有更多数据了"
       }
     }
   }

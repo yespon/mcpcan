@@ -65,6 +65,7 @@
     "marketManage": "Market",
     "resourceManage": "File-Manage",
     "package": "Code-Package",
+    "rbacManage": "RBAC Manage",
     "roleManage": "Role-Manage",
     "userManage": "User-Manage",
     "departmentManage": "Dept-Manage"
