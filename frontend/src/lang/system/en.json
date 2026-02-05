@@ -93,7 +93,8 @@
         "email": "Please enter email",
         "phone": "Please enter phone number",
         "department": "Please select department",
-        "roles": "Please select roles"
+        "roles": "Please select roles",
+        "blurry": "Username/Email"
       },
       "columns": {
         "username": "Username",
@@ -117,6 +118,11 @@
         "loading": "Loading...",
         "nomore": "No more data"
       }
+    },
+    "auth": {
+      "directory": "Directory",
+      "menu": "Menu",
+      "button": "Button"
     }
   }
 }

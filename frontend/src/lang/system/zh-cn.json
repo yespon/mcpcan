@@ -94,7 +94,8 @@
         "email": " 请输入邮箱",
         "phone": " 请输入手机号码",
         "department": "请选择部门",
-        "roles": "请选择角色"
+        "roles": "请选择角色",
+        "blurry": "用户名/邮箱"
       },
       "columns": {
         "username": "用户名",
@@ -118,6 +119,11 @@
         "loading": "加载中...",
         "noMore": "没有更多数据了"
       }
+    },
+    "auth": {
+      "directory": "目录",
+      "menu": "菜单",
+      "button": "按钮"
     }
   }
 }

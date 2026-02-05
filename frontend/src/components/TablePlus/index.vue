@@ -81,7 +81,7 @@
     v-loading="loading"
     :data="list"
     :header-cell-style="{
-      'background-color': 'var(--ep-bg-grey)',
+      'background-color': 'var(--ep-bg-color-deep)',
     }"
     class="data-table__content"
     :row-key="rowKey"
