@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
+	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/coze"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -25,7 +26,6 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/n8n"
 	"github.com/mark3labs/mcp-go/client"
-	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -812,17 +812,11 @@ func createDifyTools(domain string, insertInfo *model.InsertIntelligentInfo, mcp
 		gatewayHeader["Authorization"] = token
 	}
 
-	// 给该 mcp 实例创建对应的 http client
-	mcpClient, err := client.NewStreamableHttpClient(
-		mcpInstance.ContainerServiceURL,
-		transport.WithHTTPHeaders(listToolsHeaders),
-	)
+	var mcpClient *client.Client
+	var err error
+	mcpClient, err = biz.BuildMcpClient(mcpInstance, mcpInstance.ContainerServiceURL, listToolsHeaders)
 	if err != nil {
-		return fmt.Errorf("failed to call mcp failed: %s", err.Error())
-	}
-	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
-	if err != nil {
-		return fmt.Errorf("failed to call mcp failed, init mcp failed: %s", err.Error())
+		return fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
 	// 调用 mcp 服务的 list tools 接口
 	tools, err := mcpClient.ListTools(context.Background(), mcp.ListToolsRequest{})

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -1300,51 +1299,44 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 	if defaultTokens != nil {
 		listToolsHeader["Authorization"] = defaultTokens.Token
 	}
+
 	// 外部访问地址
-	var mcpServerUrl string
-	fmt.Fprintf(os.Stderr, "DEBUG: AccessType=%v, Config=%s\n", mcpInstance.AccessType, string(mcpInstance.SourceConfig))
-	if mcpInstance.AccessType == model.AccessTypeDirect {
-		validationResult, err := utils.ValidateMcpConfig(mcpInstance.SourceConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse source config: %s", err.Error())
-		}
-		if validationResult.Url == "" {
-			return nil, fmt.Errorf("direct access type requires url in source config")
-		}
-		mcpServerUrl = validationResult.Url
-		fmt.Fprintf(os.Stderr, "DEBUG: Validated URL=%s\n", mcpServerUrl)
-	} else {
-		mcpServerUrl = fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
-	}
+	mcpServerUrl := domain
 
 	// 给该 mcp 实例创建对应的 http client
 	var mcpClient *client.Client
+	mcpClient, err = BuildMcpClient(mcpInstance, mcpServerUrl, listToolsHeader)
+	if err != nil {
+		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
+	}
+	return mcpClient, nil
+}
+
+func BuildMcpClient(mcpInstance *model.McpInstance, mcpServerUrl string, headers map[string]string) (*client.Client, error) {
+	// 给该 mcp 实例创建对应的 http client
+	var mcpClient *client.Client
+	var err error
 	if mcpInstance.McpProtocol == model.McpProtocolSSE {
 		mcpClient, err = client.NewSSEMCPClient(
 			mcpServerUrl,
-			client.WithHeaders(listToolsHeader),
+			client.WithHeaders(headers),
 		)
 	} else {
 		mcpClient, err = client.NewStreamableHttpClient(
 			mcpServerUrl,
-			transport.WithHTTPHeaders(listToolsHeader),
+			transport.WithHTTPHeaders(headers),
 		)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
 
-	// Start the client
-	if err := mcpClient.Start(context.Background()); err != nil {
+	err = mcpClient.Start(context.Background())
+	if err != nil {
 		return nil, fmt.Errorf("start mcp client failed: %s", err.Error())
 	}
-
-	// Wait for SSE connection and endpoint event
-	time.Sleep(200 * time.Millisecond)
-
 	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
 	if err != nil {
-		mcpClient.Close()
 		return nil, fmt.Errorf("init mcp failed (DEBUG_TAG): %s", err.Error())
 	}
 	return mcpClient, nil

@@ -448,6 +448,7 @@ const config = computed(() => {
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
+                      "type": "streamable_http",
                       "headers": {
                             "Authorization": "${tokenList.value[dialogInfo.value.currentTokenIndex].token}"
                       }
