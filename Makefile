@@ -15,14 +15,17 @@ BUILD_TIME := $(shell date +%Y%m%d%H%M%S)
 IMAGE_REGISTRY ?= 77kymo
 
 # Go build environment
+GO ?= go
 GO_PROXY ?= https://goproxy.cn/
-GOARCH := $(shell go env GOARCH)
+GOARCH := $(shell $(GO) env GOARCH)
 GOOS := linux
 CGO_ENABLED ?= 0
 GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
-GO_VERSION := $(shell go version | awk '{print $$3}')
+GO_VERSION := $(shell $(GO) version | awk '{print $$3}')
 
 # Validate CodeMode
+# Strip CodeMode before validation
+CodeMode := $(strip $(CodeMode))
 ifeq ($(CodeMode),)
     $(error CodeMode is required. Usage: make <target> CodeMode=OpenCode|EnterpriseCode)
 endif
@@ -31,7 +34,6 @@ VALID_MODES := OpenCode EnterpriseCode
 ifeq ($(filter $(CodeMode),$(VALID_MODES)),)
     $(error Invalid CodeMode '$(CodeMode)'. Allowed values: $(VALID_MODES))
 endif
-CodeMode := $(strip $(CodeMode))
 
 # Build flags module github.com/kymo-mcp/mcpcan
 LDFLAGS := -X 'github.com/kymo-mcp/mcpcan/pkg/version.Version=${VERSION}' \
