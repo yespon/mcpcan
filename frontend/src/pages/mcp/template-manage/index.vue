@@ -7,7 +7,7 @@
         <span class="desc">{{ t('mcp.template.pageDesc.desc') }}</span>
       </div>
 
-      <mcp-button :icon="Plus" @click="handleAddTemplate">{{
+      <mcp-button v-auth="'mcpcan_template:create'" :icon="Plus" @click="handleAddTemplate">{{
         t('mcp.template.action.add')
       }}</mcp-button>
     </div>
@@ -54,13 +54,30 @@
         </div>
       </template>
       <template #operation="{ row }">
-        <el-button size="small" link @click="handleEditTemplate(row)" class="base-btn-link">
+        <el-button
+          v-auth="'mcpcan_template:update'"
+          size="small"
+          link
+          @click="handleEditTemplate(row)"
+          class="base-btn-link"
+        >
           {{ t('env.run.action.edit') }}
         </el-button>
-        <el-button size="small" link @click="handleCreatInstance(row)" class="base-btn-link">
+        <el-button
+          v-auth="'mcpcan_instance:create'"
+          size="small"
+          link
+          @click="handleCreatInstance(row)"
+          class="base-btn-link"
+        >
           {{ t('mcp.template.action.createInstance') }}
         </el-button>
-        <el-button type="danger" link @click="handleDeleteTemplate(row)">
+        <el-button
+          v-auth="'mcpcan_template:delete'"
+          type="danger"
+          link
+          @click="handleDeleteTemplate(row)"
+        >
           {{ t('mcp.instance.action.delete') }}
         </el-button>
       </template>

@@ -10,7 +10,7 @@
         </el-link>
         {{ t('code.detail') }} - {{ query.name }}
       </div>
-      <div>
+      <div v-auth="'mcpcan_resource_manage:download_code_package'">
         <GlareHover
           width="auto"
           height="auto"

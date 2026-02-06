@@ -9,7 +9,10 @@
         t('code.action.upload')
       }}</mcp-button>
     </div> -->
-    <div class="flex-sub center link-hover mb-2">
+    <div
+      v-auth="'mcpcan_resource_manage:create_code_package'"
+      class="flex-sub center link-hover mb-2"
+    >
       <el-upload
         class="upload-demo"
         drag
@@ -89,15 +92,34 @@
         </div>
       </template>
       <template #operation="{ row }">
-        <el-button type="text" size="small" link @click="handleViewCode(row)" class="base-btn-link">
+        <el-button
+          v-auth="'mcpcan_resource_manage:code_package_detail'"
+          type="text"
+          size="small"
+          link
+          @click="handleViewCode(row)"
+          class="base-btn-link"
+        >
           {{ t('common.view') }}
         </el-button>
-        <el-button type="text" size="small" link @click="handleDownload(row)" class="base-btn-link">
+        <el-button
+          v-auth="'mcpcan_resource_manage:download_code_package'"
+          type="text"
+          size="small"
+          link
+          @click="handleDownload(row)"
+          class="base-btn-link"
+        >
           {{ t('common.download') }}
         </el-button>
-        <el-button type="danger" size="small" link @click="handleDelete(row)">{{
-          t('common.delete')
-        }}</el-button>
+        <el-button
+          v-auth="'mcpcan_resource_manage:delete_code_package'"
+          type="danger"
+          size="small"
+          link
+          @click="handleDelete(row)"
+          >{{ t('common.delete') }}</el-button
+        >
 
         <!-- <el-dropdown
           trigger="click"

@@ -5,37 +5,42 @@
         {{ t('agent.pageDesc.title') }}
         <span class="desc">{{ t('agent.pageDesc.desc') }}</span>
       </div>
-      <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
-        <mcp-button :icon="Plus">{{ t('agent.action.create') }}</mcp-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="community" @click="handleNewAgent(AgentType.DIFY)">
-              <div class="flex align-center">
+      <div v-auth="'mcpcan_agent_manage:create'">
+        <el-dropdown trigger="click" class="ml-4" @click.stop :show-arrow="false">
+          <mcp-button :icon="Plus">{{ t('agent.action.create') }}</mcp-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="community" @click="handleNewAgent(AgentType.DIFY)">
+                <div class="flex align-center">
+                  <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
+                  {{ t('agent.action.community') }}
+                </div>
+              </el-dropdown-item>
+              <el-dropdown-item
+                command="business"
+                @click="handleNewAgent(AgentType.DIFY_ENTERPRISE)"
+              >
                 <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
-                {{ t('agent.action.community') }}
-              </div>
-            </el-dropdown-item>
-            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.DIFY_ENTERPRISE)">
-              <McpImage :src="dify" fit="contain" width="50" height="20" class="mr-1" />
-              {{ t('agent.action.enterprise') }}
-            </el-dropdown-item>
-            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.COZE)">
-              <McpImage
-                :src="coze"
-                fit="contain"
-                width="20"
-                height="20"
-                borderRadius="4"
-                style="background-color: #fff; margin-right: 10px"
-              />{{ t('agent.action.enterprise') }}
-            </el-dropdown-item>
-            <el-dropdown-item command="business" @click="handleNewAgent(AgentType.N8N)">
-              <McpImage :src="n8n" fit="contain" width="20" height="20" />
-              <span class="ml-2">{{ t('agent.action.n8n') }}</span>
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+                {{ t('agent.action.enterprise') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="business" @click="handleNewAgent(AgentType.COZE)">
+                <McpImage
+                  :src="coze"
+                  fit="contain"
+                  width="20"
+                  height="20"
+                  borderRadius="4"
+                  style="background-color: #fff; margin-right: 10px"
+                />{{ t('agent.action.enterprise') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="business" @click="handleNewAgent(AgentType.N8N)">
+                <McpImage :src="n8n" fit="contain" width="20" height="20" />
+                <span class="ml-2">{{ t('agent.action.n8n') }}</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
     <div v-loading="pageInfo.loading" :element-loading-text="pageInfo.loadingText">
       <TablePlus
@@ -78,10 +83,18 @@
         </template>
         <template #operation="{ row }">
           <div class="flex align-center justify-center">
-            <el-button type="text" size="small" link class="base-btn-link" @click="handleEdit(row)">
+            <el-button
+              v-auth="'mcpcan_agent_manage:update'"
+              type="text"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleEdit(row)"
+            >
               {{ t('common.edit') }}
             </el-button>
             <el-button
+              v-auth="'mcpcan_agent_manage:connect_test'"
               type="text"
               size="small"
               link
@@ -91,7 +104,13 @@
             >
               {{ t('common.connection') }}
             </el-button>
-            <el-button type="danger" size="small" link @click="handleDelete(row)">
+            <el-button
+              v-auth="'mcpcan_agent_manage:delete'"
+              type="danger"
+              size="small"
+              link
+              @click="handleDelete(row)"
+            >
               {{ t('common.delete') }}
             </el-button>
           </div>
@@ -126,39 +145,45 @@
                   }}
                 </div>
               </div>
-              <div>
-                <el-tooltip :content="t('common.edit')" placement="top">
-                  <el-icon
-                    :size="16"
-                    class="mx-2 cursor-pointer link-hover"
-                    @click="handleEdit(row)"
+              <div class="flex align-center">
+                <div v-auth="'mcpcan_agent_manage:update'">
+                  <el-tooltip :content="t('common.edit')" placement="top">
+                    <el-icon
+                      :size="16"
+                      class="mx-2 cursor-pointer link-hover"
+                      @click="handleEdit(row)"
+                    >
+                      <Edit />
+                    </el-icon>
+                  </el-tooltip>
+                </div>
+                <div v-auth="'mcpcan_agent_manage:connect_test'">
+                  <el-tooltip
+                    v-if="row.accessType !== AgentType.COZE"
+                    :content="t('common.connection')"
+                    placement="top"
                   >
-                    <Edit />
-                  </el-icon>
-                </el-tooltip>
-                <el-tooltip
-                  v-if="row.accessType !== AgentType.COZE"
-                  :content="t('common.connection')"
-                  placement="top"
-                >
-                  <el-icon
-                    :size="16"
-                    class="mx-2 cursor-pointer link-hover"
-                    @click="handleConnection(row)"
-                  >
-                    <Link />
-                  </el-icon>
-                </el-tooltip>
-                <el-tooltip :content="t('common.delete')" placement="top">
-                  <el-icon
-                    :size="16"
-                    class="mx-2 cursor-pointer link-hover"
-                    @click="handleDelete(row)"
-                    color="#F56C6C"
-                  >
-                    <Delete />
-                  </el-icon>
-                </el-tooltip>
+                    <el-icon
+                      :size="16"
+                      class="mx-2 cursor-pointer link-hover"
+                      @click="handleConnection(row)"
+                    >
+                      <Link />
+                    </el-icon>
+                  </el-tooltip>
+                </div>
+                <div v-auth="'mcpcan_agent_manage:delete'">
+                  <el-tooltip :content="t('common.delete')" placement="top">
+                    <el-icon
+                      :size="16"
+                      class="mx-2 cursor-pointer link-hover"
+                      @click="handleDelete(row)"
+                      color="#F56C6C"
+                    >
+                      <Delete />
+                    </el-icon>
+                  </el-tooltip>
+                </div>
               </div>
             </div>
           </el-card>
