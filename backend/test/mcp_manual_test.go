@@ -11,11 +11,10 @@ import (
 func TestMcpConnection(t *testing.T) {
 	configJSON := `{
   "mcpServers": {
-    "mcp-9469c672": {
-      "url": "http://localhost/mcp-gateway/9469c672-7070-4cc5-b4f8-604f916b4784/mcp",
+    "mcp-157b1866": {
+      "url": "https://mcp-dev.itqm.com/mcp-gateway/157b1866-dd5e-4870-8abe-004b74c9ee02/mcp",
       "headers": {
-        "Authorization": "Bearer ZDYzZDhkOTItMmFhNy00ODNiLWJjZTUtNmQ2ZTU5NWJkNTYzeyJleHBpcmVBdCI6MTc2ODg5MzM0MzYwOSwidXNlcklkIjoxLCJ1c2VybmFtZSI6ImFkbWluIn0=",
-        "Accept": "text/event-stream"
+        "Authorization": "Bearer NmRjOTg5M2ItZDEyYy00NjcwLWI5ZTAtOWZkNWU2OTY5NjJmeyJleHBpcmVBdCI6MTc3MDM0NTAzODI1NSwidXNlcklkIjoxLCJ1c2VybmFtZSI6ImFkbWluIn0="
       }
     }
   }

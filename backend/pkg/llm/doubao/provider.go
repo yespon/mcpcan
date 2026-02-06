@@ -74,6 +74,15 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 		return nil, fmt.Errorf("marshal request failed: %v", err)
 	}
 
+	// Debug Log
+	fmt.Printf("[Doubao Debug] Request URL: %s\n", url)
+	keyLen := len(p.config.APIKey)
+	if keyLen > 4 {
+		fmt.Printf("[Doubao Debug] API Key: %s... (%d chars)\n", p.config.APIKey[:4], keyLen)
+	} else {
+		fmt.Printf("[Doubao Debug] API Key: (too short) %s\n", p.config.APIKey)
+	}
+
 	// 3. Create HTTP Request
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {

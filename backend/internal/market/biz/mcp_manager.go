@@ -9,7 +9,9 @@ import (
 
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
+	"github.com/kymo-mcp/mcpcan/pkg/version"
 	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -91,13 +93,51 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 	var mcpClient *client.Client
 	var err error
 
-	if srv.URL != "" {
+	// Determine transport type
+	transportType := srv.Transport
+	if transportType == "" {
+		transportType = srv.Type
+	}
+	
+	// Auto-detect if not specified
+	if transportType == "" {
+		if srv.URL != "" {
+			if strings.HasSuffix(srv.URL, "/mcp") {
+				transportType = "steamable-http"
+			} else {
+				transportType = "sse"
+			}
+		} else if srv.Command != "" {
+			transportType = "stdio"
+		}
+	}
+
+	transportType = strings.ToLower(transportType)
+	transportType = strings.ReplaceAll(transportType, "_", "-") // Normalize snake_case to kebab-case if needed
+
+	switch transportType {
+	case "sse", "http": // Standard MCP over HTTP (SSE)
+		if srv.URL == "" {
+			return fmt.Errorf("transport is %s but url is empty", transportType)
+		}
 		// Using NewSSEMCPClient for remote connections
 		mcpClient, err = client.NewSSEMCPClient(
 			srv.URL,
 			client.WithHeaders(srv.Headers),
 		)
-	} else if srv.Command != "" {
+	case "steamable-http": // Streamable HTTP (NDJSON/etc)
+		if srv.URL == "" {
+			return fmt.Errorf("transport is %s but url is empty", transportType)
+		}
+		// Using NewStreamableHttpClient
+		mcpClient, err = client.NewStreamableHttpClient(
+			srv.URL,
+			transport.WithHTTPHeaders(srv.Headers),
+		)
+	case "stdio":
+		if srv.Command == "" {
+			return fmt.Errorf("transport is stdio but command is empty")
+		}
 		// Using NewStdioMCPClient for local command execution
 		var env []string
 		for k, v := range srv.Env {
@@ -108,8 +148,8 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 			env,
 			srv.Args...,
 		)
-	} else {
-		return fmt.Errorf("neither URL nor Command specified")
+	default:
+		return fmt.Errorf("unsupported transport: %s", transportType)
 	}
 
 	if err != nil {
@@ -126,7 +166,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 			ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
 			ClientInfo: mcp.Implementation{
 				Name:    "mcpcan-backend",
-				Version: "1.0.0",
+				Version: version.Version,
 			},
 			Capabilities: mcp.ClientCapabilities{},
 		},

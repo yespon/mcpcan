@@ -12,6 +12,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	_ "github.com/kymo-mcp/mcpcan/pkg/llm/doubao" // Register Doubao provider
 	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai"
 )
 
@@ -419,6 +420,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				Temperature: float32(session.Temperature),
 			}
 
+			fmt.Printf("[AiSessionBiz] Start StreamChat. ProviderType: %s, Model: %s\n", providerType, session.ModelName)
 			stream, err := provider.StreamChat(ctx, reqChat)
 			if err != nil {
 				outCh <- llm.StreamResponse{Error: err}
