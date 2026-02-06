@@ -127,11 +127,14 @@
                         <el-icon size="18"><Operation /></el-icon>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item @click="handleEditToken(index)">
-                              <el-button link>
-                                {{ t('env.run.action.edit') }}
-                              </el-button>
-                            </el-dropdown-item>
+                            <div v-auth="'mcpcan_instance:delete_token'">
+                              <el-dropdown-item @click="handleEditToken(index)">
+                                <el-button link>
+                                  {{ t('env.run.action.edit') }}
+                                </el-button>
+                              </el-dropdown-item>
+                            </div>
+
                             <el-dropdown-item @click="handleViewLog(index)">
                               <el-button link>
                                 {{ t('mcp.instance.action.accessLogs') }}
@@ -139,6 +142,7 @@
                             </el-dropdown-item>
                             <el-dropdown-item
                               v-if="showDeleteBtn(token)"
+                              v-auth="'mcpcan_instance:delete_token'"
                               @click="handleDeleteToken(index)"
                             >
                               <el-button type="danger" link>

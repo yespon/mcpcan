@@ -10,6 +10,7 @@ import '~/styles/index.scss'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import '~/assets/icon/iconfont.css'
 import countTo from './directives/numberScrollDirective.ts'
+import auth from './directives/auth.ts'
 import { store } from './stores'
 import { initAuthInfo } from '@/utils/system'
 import McpButton from '@/components/mcp-button/index.vue'
@@ -18,6 +19,7 @@ import McpImage from '@/components/mcp-image/index.vue'
 const app = createApp(App)
 // 全局指令注册
 app.directive('countTo', countTo)
+app.directive('auth', auth)
 // 全局组件注册
 app.component('McpButton', McpButton)
 app.component('McpImage', McpImage)

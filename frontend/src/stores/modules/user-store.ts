@@ -15,11 +15,13 @@ export const useUserStore = defineStore('user', () => {
   const loginFormData = useStorage('loginFormData', {} as string)
   const allMenus = useStorage('allMenus', [] as any[])
   const allAuths = useStorage('allAuths', {} as any)
+  // 按钮权限列表
   const currentBtnAuths = computed(() => {
     return allAuths.value?.menus
       ?.filter((item: any) => Number(item.type) === 2 && item.permission)
       .map((item: any) => item.permission)
   })
+  // 菜单权限列表
   const currentMenuAuths = computed(() => {
     const permissions: string[] = allAuths.value?.permissions || []
     const permissionSet = new Set<string>(permissions)
