@@ -118,7 +118,8 @@
     "upload": "Success",
     "delete": "Success",
     "copy": "Success",
-    "uploadFail": "Failed"
+    "uploadFail": "Failed",
+    "auth": "Success"
   },
   "desc": {
     "reason": "reason",

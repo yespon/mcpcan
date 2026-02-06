@@ -15,7 +15,7 @@
           </div>
         </template>
       </el-menu-item>
-      <el-menu-item disabled>
+      <el-menu-item disabled v-auth="'mcpcan_instance:create'">
         <AddDropdown v-if="isCollapse">
           <el-icon class="cursor-pointer"><i class="icon iconfont MCP-xinjianziyuan"></i></el-icon>
         </AddDropdown>
@@ -242,5 +242,8 @@ onMounted(() => {
 }
 :deep(.el-menu-item *) {
   vertical-align: top;
+}
+:deep(.el-sub-menu__title:hover) {
+  background-color: var(--el-color-primary-hover);
 }
 </style>

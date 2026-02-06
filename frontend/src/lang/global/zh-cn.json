@@ -118,7 +118,8 @@
     "upload": "上传成功",
     "delete": "删除成功",
     "copy": "复制成功",
-    "uploadFail": "上传失败"
+    "uploadFail": "上传失败",
+    "auth": "授权成功"
   },
   "desc": {
     "reason": "原因",
