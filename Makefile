@@ -22,6 +22,17 @@ CGO_ENABLED ?= 0
 GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
+# Validate CodeMode
+ifeq ($(CodeMode),)
+    $(error CodeMode is required. Usage: make <target> CodeMode=OpenCode|Official)
+endif
+
+VALID_MODES := OpenCode Official
+ifeq ($(filter $(CodeMode),$(VALID_MODES)),)
+    $(error Invalid CodeMode '$(CodeMode)'. Allowed values: $(VALID_MODES))
+endif
+CodeMode := $(strip $(CodeMode))
+
 # Build flags module github.com/kymo-mcp/mcpcan
 LDFLAGS := -X 'github.com/kymo-mcp/mcpcan/pkg/version.Version=${VERSION}' \
 		-X 'github.com/kymo-mcp/mcpcan/pkg/version.BuildTime=${BUILD_TIME}' \
@@ -68,6 +79,7 @@ print:
 	@echo "COMMIT: $(COMMIT)"
 	@echo "BUILD_TIME: $(BUILD_TIME)"
 	@echo "GO_VERSION: $(GO_VERSION)"
+	@echo "CodeMode: $(CodeMode)"
 	@echo "IMAGE_REGISTRY: $(IMAGE_REGISTRY)"
 	@echo "GO_BUILD_ENV: $(GO_BUILD_ENV)"
 	@echo "-------------------------------------------"
