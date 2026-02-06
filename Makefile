@@ -15,14 +15,12 @@ BUILD_TIME := $(shell date +%Y%m%d%H%M%S)
 IMAGE_REGISTRY ?= 77kymo
 
 # Go build environment
-GO ?= go
 GO_PROXY ?= https://goproxy.cn/
-GOARCH := $(shell $(GO) env GOARCH)
+GOARCH := $(shell go env GOARCH)
 GOOS := linux
 CGO_ENABLED ?= 0
 GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
-GO_VERSION := $(shell $(GO) version | awk '{print $$3}')
-
+GO_VERSION := $(shell go version | awk '{print $$3}')
 # Validate CodeMode
 # Strip CodeMode before validation
 CodeMode := $(strip $(CodeMode))
