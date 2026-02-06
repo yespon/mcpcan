@@ -1301,19 +1301,7 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 	}
 
 	// 外部访问地址
-	var mcpServerUrl string
-	if mcpInstance.AccessType == model.AccessTypeDirect {
-		validationResult, err := utils.ValidateMcpConfig(mcpInstance.SourceConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse source config: %s", err.Error())
-		}
-		if validationResult.Url == "" {
-			return nil, fmt.Errorf("direct access type requires url in source config")
-		}
-		mcpServerUrl = validationResult.Url
-	} else {
-		mcpServerUrl = domain
-	}
+	mcpServerUrl := domain
 
 	// 给该 mcp 实例创建对应的 http client
 	var mcpClient *client.Client
