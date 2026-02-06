@@ -1343,6 +1343,10 @@ func BuildMcpClient(mcpInstance *model.McpInstance, mcpServerUrl string, headers
 		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
 
+	err = mcpClient.Start(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("start mcp client failed: %s", err.Error())
+	}
 	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("init mcp failed (DEBUG_TAG): %s", err.Error())
