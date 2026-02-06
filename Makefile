@@ -24,10 +24,10 @@ GO_VERSION := $(shell go version | awk '{print $$3}')
 
 # Validate CodeMode
 ifeq ($(CodeMode),)
-    $(error CodeMode is required. Usage: make <target> CodeMode=OpenCode|Official)
+    $(error CodeMode is required. Usage: make <target> CodeMode=OpenCode|EnterpriseCode)
 endif
 
-VALID_MODES := OpenCode Official
+VALID_MODES := OpenCode EnterpriseCode
 ifeq ($(filter $(CodeMode),$(VALID_MODES)),)
     $(error Invalid CodeMode '$(CodeMode)'. Allowed values: $(VALID_MODES))
 endif
