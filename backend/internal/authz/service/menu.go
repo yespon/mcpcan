@@ -10,6 +10,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/menu"
+	"github.com/kymo-mcp/mcpcan/pkg/version"
 )
 
 // MenuService menu HTTP service
@@ -40,7 +41,7 @@ func (s *MenuService) GetMenuTree(c *gin.Context) {
 		}
 	}
 
-	menuTree := menu.GetMenus()
+	menuTree := menu.GetMenus(common.CodeMode(version.CodeMode))
 	filteredTree := filterMenuTree(menuTree, permissionKey)
 
 	common.GinSuccess(c, filteredTree)

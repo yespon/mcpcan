@@ -46,6 +46,9 @@
     - permission: mcpcan_instance:edit_token
       title: 编辑实例令牌
       type: 2
+    - permission: mcpcan_instance:add_token
+      title: 添加实例令牌
+      type: 2
     - permission: mcpcan_instance:delete_token
       title: 删除实例令牌
       type: 2
@@ -195,6 +198,12 @@
           type: 2
         - permission: mcpcan_rbac_manage:role:menus
           title: 角色菜单列表
+          type: 2
+        - permission: mcpcan_rbac_manage:role:add_user
+          title: 增加角色用户
+          type: 2
+        - permission: mcpcan_rbac_manage:role:remove_user
+          title: 移除角色用户
           type: 2
 
 

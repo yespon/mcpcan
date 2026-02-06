@@ -230,12 +230,12 @@ func (s *RoleService) convertModelToProto(role *model.SysRole) *pb.SysRole {
 
 	// Set created time if exists
 	if role.CreateTime != nil {
-		resp.CreatedAt = role.CreateTime.Unix()
+		resp.CreatedAt = role.CreateTime.UnixMilli()
 	}
 
 	// Set updated time if exists
 	if role.UpdateTime != nil {
-		resp.UpdatedAt = role.UpdateTime.Unix()
+		resp.UpdatedAt = role.UpdateTime.UnixMilli()
 	}
 
 	// Set created by if exists
@@ -265,19 +265,21 @@ func (s *RoleService) SaveRoleMenus(c *gin.Context) {
 		return
 	}
 
-	associations := []*model.SysRolesMenus{}
-	for _, menuID := range req.MenuIds {
-		associations = append(associations, &model.SysRolesMenus{
-			RoleID: req.RoleId,
-			MenuID: menuID,
-		})
-	}
+	if len(req.MenuIds) > 0 {
+		associations := []*model.SysRolesMenus{}
+		for _, menuID := range req.MenuIds {
+			associations = append(associations, &model.SysRolesMenus{
+				RoleID: req.RoleId,
+				MenuID: menuID,
+			})
+		}
 
-	err = mysql.SysRolesMenusRepo.BatchCreate(c.Request.Context(), associations)
-	if err != nil {
-		logger.Error("Failed to batch create role menus", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch create role menus: %v", err))
-		return
+		err = mysql.SysRolesMenusRepo.BatchCreate(c.Request.Context(), associations)
+		if err != nil {
+			logger.Error("Failed to batch create role menus", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to batch create role menus: %v", err))
+			return
+		}
 	}
 
 	common.GinSuccess(c, nil)

@@ -505,10 +505,10 @@ func (s *UserService) convertModelToProto(userModel *model.SysUser) *user.SysUse
 	}
 
 	if userModel.CreateTime != nil {
-		userProto.CreatedAt = userModel.CreateTime.Unix()
+		userProto.CreatedAt = userModel.CreateTime.UnixMilli()
 	}
 	if userModel.UpdateTime != nil {
-		userProto.UpdatedAt = userModel.UpdateTime.Unix()
+		userProto.UpdatedAt = userModel.UpdateTime.UnixMilli()
 	}
 
 	return userProto

@@ -2,7 +2,9 @@ package menu
 
 import (
 	_ "embed"
+	"strings"
 
+	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"gopkg.in/yaml.v3"
 )
 
@@ -11,7 +13,17 @@ var menuFile string
 
 var menus []*Menu
 
-func GetMenus() []*Menu {
+func GetMenus(codeModel common.CodeMode) []*Menu {
+	var openCodeMenus []*Menu
+	if codeModel != common.EnterpriseCodeCodeMode {
+		for _, menu := range menus {
+			if strings.Contains(menu.Permission, "mcpcan_rbac_manage") {
+				continue
+			}
+			openCodeMenus = append(openCodeMenus, menu)
+		}
+		return openCodeMenus
+	}
 	return menus
 }
 

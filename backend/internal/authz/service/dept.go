@@ -313,11 +313,11 @@ func (s *DeptService) convertModelToProto(dept *model.SysDept) *pb.SysDept {
 	}
 
 	if dept.CreateTime != nil {
-		resp.CreatedAt = dept.CreateTime.Unix()
+		resp.CreatedAt = dept.CreateTime.UnixMilli()
 	}
 
 	if dept.UpdateTime != nil {
-		resp.UpdatedAt = dept.UpdateTime.Unix()
+		resp.UpdatedAt = dept.UpdateTime.UnixMilli()
 	}
 
 	if dept.CreateBy != nil {
