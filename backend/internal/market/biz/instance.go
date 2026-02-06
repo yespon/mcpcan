@@ -1248,6 +1248,7 @@ func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
+	defer mcpClient.Close()
 
 	// 调用 mcp 服务的 list tools 接口
 	tools, err := mcpClient.ListTools(context.Background(), mcp.ListToolsRequest{})
@@ -1263,6 +1264,7 @@ func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolNam
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
+	defer mcpClient.Close()
 
 	// 调用 mcp 服务的 call tool 接口
 	resp, err := mcpClient.CallTool(context.Background(), mcp.CallToolRequest{
@@ -1297,20 +1299,45 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 	if defaultTokens != nil {
 		listToolsHeader["Authorization"] = defaultTokens.Token
 	}
+
 	// 外部访问地址
-	mcpServerUrl := fmt.Sprintf("%s%s", domain, mcpInstance.PublicProxyPath)
+	mcpServerUrl := domain
 
 	// 给该 mcp 实例创建对应的 http client
-	mcpClient, err := client.NewStreamableHttpClient(
-		mcpServerUrl,
-		transport.WithHTTPHeaders(listToolsHeader),
-	)
+	var mcpClient *client.Client
+	mcpClient, err = BuildMcpClient(mcpInstance, mcpServerUrl, listToolsHeader)
 	if err != nil {
 		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
+	return mcpClient, nil
+}
+
+func BuildMcpClient(mcpInstance *model.McpInstance, mcpServerUrl string, headers map[string]string) (*client.Client, error) {
+	// 给该 mcp 实例创建对应的 http client
+	var mcpClient *client.Client
+	var err error
+	if mcpInstance.McpProtocol == model.McpProtocolSSE {
+		mcpClient, err = client.NewSSEMCPClient(
+			mcpServerUrl,
+			client.WithHeaders(headers),
+		)
+	} else {
+		mcpClient, err = client.NewStreamableHttpClient(
+			mcpServerUrl,
+			transport.WithHTTPHeaders(headers),
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
+	}
+
+	err = mcpClient.Start(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("start mcp client failed: %s", err.Error())
+	}
 	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
 	if err != nil {
-		return nil, fmt.Errorf("init mcp failed: %s", err.Error())
+		return nil, fmt.Errorf("init mcp failed (DEBUG_TAG): %s", err.Error())
 	}
 	return mcpClient, nil
 }

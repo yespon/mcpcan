@@ -69,11 +69,11 @@ const dialogInfo = ref<any>({
   instanceInfo: {
     instanceId: '',
   },
-  pathType: 'steamable_http',
+  pathType: 'streamable_http',
 })
 const pathTypeOptions = [
   { label: 'SSE', value: 'sse' },
-  { label: 'STREAMABLE_HTTP', value: 'steamable_http' },
+  { label: 'STREAMABLE_HTTP', value: 'streamable_http' },
 ]
 // token list
 const tokenList = ref<Array<any>>([])
@@ -119,6 +119,7 @@ const config = computed(() => {
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
+                      "type": "${dialogInfo.value.pathType}",
                       "headers": {
                             "Authorization": "${tokenList.value[0]?.token}"
                       }
