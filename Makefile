@@ -51,8 +51,8 @@ endef
 # Docker build targets
 define build_docker_image
 	@echo "---------- Start Docker build $(1) ----------"
-	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
-	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
+	@echo "cd $(ROOT_PATH) && docker build --build-arg CodeMode=$(CodeMode) -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
+	@cd $(ROOT_PATH) && docker build --build-arg CodeMode=$(CodeMode) -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
 	@echo "---------- End Docker build $(1) ----------"
 endef
 
@@ -171,27 +171,7 @@ go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz
 .PHONY: build-all
 build-all: go-build-all pnpm-build
 
-# Builder image specific build and push with latest tag
-.PHONY: docker-build-builder
-docker-build-builder:
-	@echo "---------- Start Docker build builder ----------"
-	@echo "cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v2 -f $(DOCKERFILES_PATH)/Dockerfile.builder ."
-	@cd $(ROOT_PATH) && docker build -t $(IMAGE_REGISTRY)/builder:v2 -f $(DOCKERFILES_PATH)/Dockerfile.builder .
-	@echo "---------- End Docker build builder ----------"
 
-.PHONY: docker-push-builder
-docker-push-builder:
-	@echo "---------- Start Docker push builder ----------"
-	@echo "docker push $(IMAGE_REGISTRY)/builder:v2"
-	@docker push $(IMAGE_REGISTRY)/builder:v2
-	@echo "docker tag $(IMAGE_REGISTRY)/builder:v2 $(IMAGE_REGISTRY)/builder:latest"
-	@docker tag $(IMAGE_REGISTRY)/builder:v2 $(IMAGE_REGISTRY)/builder:latest
-	@echo "docker push $(IMAGE_REGISTRY)/builder:latest"
-	@docker push $(IMAGE_REGISTRY)/builder:latest
-	@echo "---------- End Docker push builder ----------"
-
-.PHONY: docker-build-push-builder
-docker-build-push-builder: docker-build-builder docker-push-builder
 
 .PHONY: docker-build-init
 docker-build-init:
@@ -329,11 +309,6 @@ help:
 	@echo "  go-build-all          - Build all backend services [Go]"
 	@echo "  pnpm-build             - Build frontend application [Node]"
 	@echo "  build-all                  - Build all services and frontend [Go+Node]"
-	@echo ""
-	@echo "Docker targets: Builder"
-	@echo "  docker-build-builder       - Build builder Docker image"
-	@echo "  docker-push-builder        - Push builder Docker image"
-	@echo "  docker-build-push-builder  - Build and push builder Docker image with latest tag"
 	@echo ""
 	@echo "Docker targets: Services"
 	@echo "  docker-build-init          - Build init Docker image"
