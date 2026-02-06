@@ -56,6 +56,9 @@ func (p *Provider) StreamChat(ctx context.Context, req llm.ChatRequest) (<-chan 
 		"messages":    req.Messages,
 		"stream":      true,
 		"temperature": req.Temperature,
+		"stream_options": map[string]interface{}{
+			"include_usage": true,
+		},
 	}
     // Map messages specifically if needed, but struct should json marshal generally ok
     // Actually req.Messages has custom structs, better to manual map if they differ
