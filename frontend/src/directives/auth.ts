@@ -12,7 +12,7 @@ const applyAuth = (el: HTMLElement, value?: string) => {
 
   // 这里以后要从 store 中取出用户的权限 进行判断
   const hasPermission = permissions.some((permission: string) => {
-    return currentBtnAuths.value.includes(permission)
+    return currentBtnAuths.value?.includes(permission)
   })
 
   if (!hasPermission) {

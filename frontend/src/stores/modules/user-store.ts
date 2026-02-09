@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', () => {
       ?.filter((item: any) => Number(item.type) === 2 && item.permission)
       .map((item: any) => item.permission)
   })
-  // 菜单权限列表
+  // 菜单权限列表（tree）
   const currentMenuAuths = computed(() => {
     const permissions: string[] = allAuths.value?.permissions || []
     const permissionSet = new Set<string>(permissions)
@@ -41,8 +41,23 @@ export const useUserStore = defineStore('user', () => {
           }
         })
     }
+    return filterMenuTree(allMenus.value) || []
+  })
+  // 授权菜单列表(array list)
+  const allAuthMenuList = computed(() => {
+    const list: string[] = []
+    const walk = (nodes: any[]) => {
+      if (!Array.isArray(nodes) || nodes.length === 0) return
+      for (const n of nodes) {
+        // 仅收集菜单/目录(当前 currentMenuAuths 已过滤 type 0/1)
+        const path = n?.path || n?.url
+        if (path) list.push(String(path))
+        if (n?.children?.length) walk(n.children)
+      }
+    }
 
-    return filterMenuTree(allMenus.value)
+    walk(currentMenuAuths.value as any[])
+    return list
   })
 
   // PEM interchange ArrayBuffer
@@ -339,6 +354,7 @@ export const useUserStore = defineStore('user', () => {
     handleMenuAuth,
     currentBtnAuths,
     currentMenuAuths,
+    allAuthMenuList,
     login,
     logout,
     // resetAllState,

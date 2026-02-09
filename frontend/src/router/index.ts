@@ -248,6 +248,11 @@ const router = createRouter({
       name: '404',
       component: () => import('../pages/error/404.vue'),
     },
+    {
+      path: '/403',
+      name: '403',
+      component: () => import('../pages/error/403.vue'),
+    },
   ],
 })
 
@@ -281,6 +286,20 @@ router.beforeEach(async (to, from, next) => {
     if (to.matched.length === 0) {
       next('/404')
       return
+    }
+
+    // 菜单路由访问鉴权：仅判断菜单路径是否在 allAuthMenuList 中
+    // 说明：这里不做按钮/接口鉴权，只做“菜单可见即允许访问”的粗粒度控制
+    if (to.meta?.isMenu) {
+      await useUserStore().handleMenuAuth()
+      const { allAuthMenuList, currentMenuAuths } = storeToRefs(useUserStore())
+      const allowList = allAuthMenuList.value || []
+      // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
+      const targetPath = to.path
+      if (!allowList.includes(targetPath)) {
+        next('/403')
+        return
+      }
     }
 
     // Handle set page title
