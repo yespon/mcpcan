@@ -282,6 +282,28 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
+    // 处理根路径与默认首页：如果 /home 无权限，则跳转到第一个有权限的菜单
+    if (to.path === '/' || to.path === '/home') {
+      await useUserStore()
+        .handleMenuAuth()
+        .catch(() => {
+          next('/403')
+        })
+      const { allAuthMenuList } = storeToRefs(useUserStore())
+      const allowList = allAuthMenuList.value || []
+      if (allowList.length) {
+        const preferred = allowList.includes('/home') ? '/home' : allowList[0]
+        // 避免死循环：只有在目标不是 preferred 时才跳转
+        if (to.path !== preferred) {
+          next(preferred)
+          return
+        }
+      } else {
+        next('/403')
+        return
+      }
+    }
+
     // don't have the path
     if (to.matched.length === 0) {
       next('/404')
@@ -296,7 +318,7 @@ router.beforeEach(async (to, from, next) => {
         .catch(() => {
           next('/403')
         })
-      const { allAuthMenuList, currentMenuAuths } = storeToRefs(useUserStore())
+      const { allAuthMenuList } = storeToRefs(useUserStore())
       const allowList = allAuthMenuList.value || []
       // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
       const targetPath = to.path
