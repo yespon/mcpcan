@@ -323,10 +323,6 @@
       method: POST
       permission:
         - mcpcan_rbac_manage:role:save_menus
-    - path: /authz/roles/find-menus
-      method: POST
-      permission:
-        - mcpcan_rbac_manage:role
 
 - name: UserService
   auths:
