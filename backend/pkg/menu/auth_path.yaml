@@ -1,0 +1,368 @@
+- name: InstanceService
+  auths:
+    - path: /market/instance/create
+      method: POST
+      permission:
+        - mcpcan_instance:create
+    - path: /market/instance/:instanceId
+      method: GET
+      permission:
+        - mcpcan_instance
+    - path: /market/instance/edit
+      method: PUT
+      permission:
+        - mcpcan_instance:update
+    - path: /market/instance/list
+      method: POST
+      permission:
+        - mcpcan_instance
+    - path: /market/instance/disabled
+      method: PUT
+      permission:
+        - mcpcan_instance:enable
+    - path: /market/instance/restart
+      method: PUT
+      permission:
+        - mcpcan_instance:enable
+    - path: /market/instance/:instanceId
+      method: DELETE
+      permission:
+        - mcpcan_instance:delete
+    - path: /market/instance/status/:instanceId
+      method: GET
+      permission:
+        - mcpcan_instance
+    - path: /market/instance/logs
+      method: POST
+      permission:
+        - mcpcan_instance:logs
+    - path: /market/instance/token/control
+      method: PUT
+      permission:
+        - mcpcan_instance:enable_token
+    - path: /market/instance/token/list
+      method: POST
+      permission:
+        - mcpcan_instance:config
+    - path: /market/instance/token/edit
+      method: PUT
+      permission:
+        - mcpcan_instance:edit_token
+    - path: /market/instance/token/delete
+      method: POST
+      permission:
+        - mcpcan_instance:delete_token
+    - path: /market/instance/openapi/create
+      method: POST
+      permission:
+        - mcpcan_instance:create
+    - path: /market/instance/openapi/edit
+      method: PUT
+      permission:
+        - mcpcan_instance:update
+    - path: /market/instance/list-tools
+      method: POST
+      permission:
+        - mcpcan_instance:debug
+    - path: /market/instance/call-tools
+      method: POST
+      permission:
+        - mcpcan_instance:debug
+
+- name: ResourceService
+  auths:
+    - path: /market/resources/pvcs
+      method: GET
+      permission:
+        - mcpcan_working_environment
+    - path: /market/resources/pvcs
+      method: POST
+      permission:
+        - mcpcan_working_environment:pvc_create
+    - path: /market/resources/nodes
+      method: GET
+      permission:
+        - mcpcan_working_environment
+
+- name: EnvironmentService
+  auths:
+    - path: /market/environments
+      method: GET
+      permission:
+        - mcpcan_working_environment
+    - path: /market/environments/namespaces
+      method: POST
+      permission:
+        - mcpcan_working_environment
+    - path: /market/environments/:id/test
+      method: POST
+      permission:
+        - mcpcan_working_environment:connect_test
+
+- name: CodeService
+  auths:
+    - path: /market/code/upload
+      method: POST
+      permission:
+        - mcpcan_resource_manage:create_code_package
+    - path: /market/code/tree
+      method: GET
+      permission:
+        - mcpcan_resource_manage
+    - path: /market/code/get
+      method: GET
+      permission:
+        - mcpcan_resource_manage
+    - path: /market/code/edit
+      method: POST
+      permission:
+        - mcpcan_resource_manage:create_code_package
+    - path: /market/code/download/:packageId
+      method: GET
+      permission:
+        - mcpcan_resource_manage:download_code_package
+    - path: /market/code/packages
+      method: GET
+      permission:
+        - mcpcan_resource_manage
+    - path: /market/code/packages/:packageId
+      method: DELETE
+      permission:
+        - mcpcan_resource_manage:delete_code_package
+
+- name: OpenapiService
+  auths:
+    - path: /market/openapi/upload
+      method: POST
+      permission:
+        - mcpcan_resource_manage:create_openapi
+    - path: /market/openapi/content
+      method: GET
+      permission:
+        - mcpcan_resource_manage:openapi_detail
+        - mcpcan_resource_manage
+    - path: /market/openapi/edit
+      method: POST
+      permission:
+        - mcpcan_resource_manage:create_openapi
+    - path: /market/openapi/download/:openapiFileId
+      method: GET
+      permission:
+        - mcpcan_resource_manage:download_openapi
+    - path: /market/openapi/files
+      method: GET
+      permission:
+        - mcpcan_resource_manage
+    - path: /market/openapi/files/:openapiFileId
+      method: DELETE
+      permission:
+        - mcpcan_resource_manage:delete_openapi
+
+- name: TemplateService
+  auths:
+    - path: /market/template/create
+      method: POST
+      permission:
+        - mcpcan_template:create
+    - path: /market/template/:templateId
+      method: GET
+      permission:
+        - mcpcan_template
+    - path: /market/template/edit
+      method: PUT
+      permission:
+        - mcpcan_template:update
+    - path: /market/template/list
+      method: POST
+      permission:
+        - mcpcan_template
+    - path: /market/template/list/pagination
+      method: GET
+      permission:
+        - mcpcan_template
+    - path: /market/template/:templateId
+      method: DELETE
+      permission:
+        - mcpcan_template:delete
+
+- name: MarketService
+  auths:
+    - path: /market/market/list
+      method: POST
+      permission:
+        - mcpcan_market_manage
+    - path: /market/market/detail
+      method: GET
+      permission:
+        - mcpcan_market_manage
+    - path: /market/market/category
+      method: GET
+      permission:
+        - mcpcan_market_manage
+    - path: /market/market/config
+      method: GET
+      permission:
+        - mcpcan_market_manage
+
+- name: PlatformMarketService
+  auths:
+    - path: /market/platform/list
+      method: GET
+      permission:
+        - mcpcan_market_manage
+
+- name: IntelligentAccessService
+  auths:
+    - path: /market/intelligent_access
+      method: POST
+      permission:
+        - mcpcan_agent_manage:create
+    - path: /market/intelligent_access/list
+      method: GET
+      permission:
+        - mcpcan_agent_manage
+    - path: /market/intelligent_access/delete
+      method: DELETE
+      permission:
+        - mcpcan_agent_manage:delete
+    - path: /market/intelligent_access/edit
+      method: PUT
+      permission:
+        - mcpcan_agent_manage:update
+    - path: /market/intelligent_access/test-connection
+      method: POST
+      permission:
+        - mcpcan_agent_manage:connect_test
+    - path: /market/intelligent_access/list-user-space
+      method: POST
+      permission:
+        - mcpcan_agent_manage
+    - path: /market/intelligent_access/install-n8n-plugin
+      method: POST
+      permission:
+        - mcpcan_agent_manage:create
+    - path: /market/intelligent_access/check-n8n
+      method: POST
+      permission:
+        - mcpcan_agent_manage:create
+
+- name: McpToIntelligentTaskService
+  auths:
+    - path: /market/mcp_to_intelligent_task
+      method: POST
+      permission:
+        - mcpcan_instance:agent_platform_sync
+    - path: /market/mcp_to_intelligent_task/:id
+      method: GET
+      permission:
+        - mcpcan_instance:agent_platform_sync
+    - path: /market/mcp_to_intelligent_task/list
+      method: GET
+      permission:
+        - mcpcan_instance:agent_platform_sync
+    - path: /market/mcp_to_intelligent_task/:id/cancel
+      method: POST
+      permission:
+        - mcpcan_instance:agent_platform_sync
+
+
+- name: DeptService
+  auths:
+    - path: /authz/depts
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:dept:create
+    - path: /authz/depts
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:dept:update
+    - path: /authz/depts/:id
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:dept:delete
+    - path: /authz/depts/batch-delete
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:dept:delete
+    - path: /authz/depts/:id/status
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:dept:update
+    - path: /authz/depts/list-depts
+      method: GET
+      permission:
+        - mcpcan_rbac_manage:dept
+    - path: /authz/depts/tree
+      method: GET
+      permission:
+        - mcpcan_rbac_manage:dept
+
+- name: RoleService
+  auths:
+    - path: /authz/roles
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:role:create
+    - path: /authz/roles
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:role:update
+    - path: /authz/roles/:id
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:role:delete
+    - path: /authz/roles/batch-delete
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:role:delete
+    - path: /authz/roles/list-roles
+      method: GET
+      permission:
+        - mcpcan_rbac_manage:role
+    - path: /authz/roles/save-menus
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:role:save_menus
+    - path: /authz/roles/find-menus
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:role
+
+- name: UserService
+  auths:
+    - path: /authz/users
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:user:create
+    - path: /authz/users/:id
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:user:update
+    - path: /authz/users/:id
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:user:delete
+    - path: /authz/users/batch-delete
+      method: DELETE
+      permission:
+        - mcpcan_rbac_manage:user:delete
+    - path: /authz/users/list-users
+      method: GET
+      permission:
+        - mcpcan_rbac_manage:user
+    - path: /authz/users/update-password
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:user:update
+    - path: /authz/users/update-avatar
+      method: PUT
+      permission:
+        - mcpcan_rbac_manage:user:update
+    - path: /authz/users/add-role
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:role:add_user
+    - path: /authz/users/remove-role
+      method: POST
+      permission:
+        - mcpcan_rbac_manage:role:remove_user
