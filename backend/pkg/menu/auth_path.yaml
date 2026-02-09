@@ -346,14 +346,6 @@
       method: GET
       permission:
         - mcpcan_rbac_manage:user
-    - path: /authz/users/update-password
-      method: PUT
-      permission:
-        - mcpcan_rbac_manage:user:update
-    - path: /authz/users/update-avatar
-      method: PUT
-      permission:
-        - mcpcan_rbac_manage:user:update
     - path: /authz/users/add-role
       method: POST
       permission:
