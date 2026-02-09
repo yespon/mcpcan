@@ -19,17 +19,20 @@ func RBACAuthPathMiddleware() gin.HandlerFunc {
 		userInfo, err := utils.GetCurrentUser(c)
 		if err != nil {
 			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			c.Abort()
 			return
 		}
 
 		// 获取用户角色的菜单权限
 		if len(userInfo.RoleIds) == 0 {
 			common.GinError(c, i18nresp.CodeInternalError, "no permission")
+			c.Abort()
 			return
 		}
 		roleMenus, err := mysql.SysRolesMenusRepo.BatchFindByRoleID(c.Request.Context(), userInfo.RoleIds)
 		if err != nil {
 			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to find role menus: %v", err))
+			c.Abort()
 			return
 		}
 		menuIds := []int64{}
@@ -38,11 +41,13 @@ func RBACAuthPathMiddleware() gin.HandlerFunc {
 		}
 		if len(menuIds) == 0 {
 			common.GinError(c, i18nresp.CodeInternalError, "no permission")
+			c.Abort()
 			return
 		}
 		menus, err := mysql.SysMenuRepo.FindByIDs(c.Request.Context(), menuIds)
 		if err != nil {
 			common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("Failed to find role menus: %v", err))
+			c.Abort()
 			return
 		}
 		var permissions = map[string]*model.SysMenu{}
@@ -73,6 +78,7 @@ func RBACAuthPathMiddleware() gin.HandlerFunc {
 
 			// 都没有权限，返回错误
 			common.GinError(c, i18nresp.CodeInternalError, "no permission")
+			c.Abort()
 			return
 		}
 	}
