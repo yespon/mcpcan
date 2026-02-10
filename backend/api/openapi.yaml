@@ -40,8 +40,8 @@ paths:
                   schema:
                     enum:
                         - DeptStatusUnspecified
-                        - DeptStatusDisabled
                         - DeptStatusEnabled
+                        - DeptStatusDisabled
                     type: string
                     format: enum
                 - name: imageURL
@@ -95,8 +95,8 @@ paths:
                   schema:
                     enum:
                         - DeptStatusUnspecified
-                        - DeptStatusDisabled
                         - DeptStatusEnabled
+                        - DeptStatusDisabled
                     type: string
                     format: enum
                 - name: imageURL
@@ -5298,8 +5298,8 @@ components:
                 status:
                     enum:
                         - DeptStatusUnspecified
-                        - DeptStatusDisabled
                         - DeptStatusEnabled
+                        - DeptStatusDisabled
                     type: string
                     description: '@inject_tag: json:"status" desc:"状态"'
                     format: enum
