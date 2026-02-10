@@ -97,6 +97,7 @@ type Message struct {
 	MultiContent []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
 	ToolCalls    []ToolCall           `json:"tool_calls,omitempty"`
 	ToolCallID   string               `json:"tool_call_id,omitempty"`
+	ToolCallName string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
 }
 
 // ToolCall represents a tool call request from LLM

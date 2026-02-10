@@ -17,6 +17,7 @@
 *.trae
 *openspec
 *AGENTS.md
+*opencode.json
 
 # Test binary, built with `go test -c`
 *.test

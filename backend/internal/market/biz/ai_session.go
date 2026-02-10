@@ -14,6 +14,32 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
 )
 
+// normalizeToolsConfig 标准化 MCP 配置 JSON
+// 兼容以下输入：空字符串、合法 JSON 对象、被 double-encode 的 JSON 字符串
+func normalizeToolsConfig(raw string) json.RawMessage {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "null" {
+		return json.RawMessage("{}")
+	}
+
+	// 尝试直接解析为 JSON
+	if json.Valid([]byte(raw)) {
+		return json.RawMessage(raw)
+	}
+
+	// 可能是被 double-encode 的字符串（如 "\"{ ... }\"" ）
+	var unquoted string
+	if err := json.Unmarshal([]byte(raw), &unquoted); err == nil {
+		if json.Valid([]byte(unquoted)) {
+			return json.RawMessage(unquoted)
+		}
+	}
+
+	// 无法解析，返回空对象
+	log.Printf("[normalizeToolsConfig] invalid JSON, fallback to {}: %s", raw)
+	return json.RawMessage("{}")
+}
+
 type AiSessionBiz struct {
 	ctx context.Context
 }
@@ -37,6 +63,9 @@ func (b *AiSessionBiz) Create(ctx context.Context, req *pb.CreateSessionRequest,
 		return nil, fmt.Errorf("invalid model access id %d: %w", req.ModelAccessID, err)
 	}
 
+	// 校验并标准化 ToolsConfig JSON
+	toolsConfig := normalizeToolsConfig(req.ToolsConfig)
+
 	session := &model.AiSession{
 		UserID:        userID,
 		Name:          req.Name,
@@ -45,7 +74,7 @@ func (b *AiSessionBiz) Create(ctx context.Context, req *pb.CreateSessionRequest,
 		Temperature:   float64(req.Temperature),
 		SystemPrompt:  req.SystemPrompt,
 		MaxContext:    int(req.MaxContext),
-		ToolsConfig:   json.RawMessage(req.ToolsConfig),
+		ToolsConfig:   toolsConfig,
 	}
 
 	if err := mysql.AiSessionRepo.Create(ctx, session); err != nil {
@@ -71,7 +100,7 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 		session.ModelAccessID = req.ModelAccessID
 	}
 	if req.ToolsConfig != "" {
-		session.ToolsConfig = json.RawMessage(req.ToolsConfig)
+		session.ToolsConfig = normalizeToolsConfig(req.ToolsConfig)
 	}
 	if req.MaxContext != 0 {
 		session.MaxContext = int(req.MaxContext)
@@ -227,6 +256,21 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		})
 	}
 
+	// 构建 ToolCallID -> FunctionName 映射（用于历史 tool 消息恢复函数名）
+	toolCallNameMap := make(map[string]string)
+	for _, msg := range historyMessages {
+		if msg.ToolCalls != "" && msg.ToolCalls != "[]" && msg.ToolCalls != "null" {
+			var toolCalls []llm.ToolCall
+			if err := json.Unmarshal([]byte(msg.ToolCalls), &toolCalls); err == nil {
+				for _, tc := range toolCalls {
+					if tc.ID != "" && tc.Function.Name != "" {
+						toolCallNameMap[tc.ID] = tc.Function.Name
+					}
+				}
+			}
+		}
+	}
+
 	for _, msg := range historyMessages {
 		m := llm.Message{
 			Role:    msg.Role,
@@ -240,9 +284,16 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		}
 		if msg.ToolCallID != "" {
 			m.ToolCallID = msg.ToolCallID
+			// 从映射中恢复函数名（Google FunctionResponse 需要）
+			if name, ok := toolCallNameMap[msg.ToolCallID]; ok {
+				m.ToolCallName = name
+			}
 		}
 		messages = append(messages, m)
 	}
+
+	// 清洗历史消息：去掉开头孤立的 tool 消息、合并连续同 role 消息
+	messages = sanitizeMessages(messages)
 
 	// Add Current User Message
 	userMessage := llm.Message{
@@ -557,9 +608,10 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 
 				// Append Tool Message
 				currentMessages = append(currentMessages, llm.Message{
-					Role:       "tool",
-					Content:    resultStr,
-					ToolCallID: tc.ID,
+					Role:         "tool",
+					Content:      resultStr,
+					ToolCallID:   tc.ID,
+					ToolCallName: tc.Function.Name,
 				})
 
 				dbToolMsg := &model.AiMessage{
@@ -624,4 +676,87 @@ func (b *AiSessionBiz) GetSessionUsage(ctx context.Context, sessionID int64) (*S
 	}
 
 	return usage, nil
+}
+
+// sanitizeMessages 清洗消息列表，修复截断和格式问题
+// 1. 去掉开头孤立的 tool 消息（没有前置 assistant+ToolCalls）
+// 2. 去掉孤立的 assistant+ToolCalls（没有后续 tool response）
+// 3. 合并连续同 role 消息（Google API 要求 user/model 交替）
+func sanitizeMessages(messages []llm.Message) []llm.Message {
+	if len(messages) == 0 {
+		return messages
+	}
+
+	// Step 1: 收集所有有效的 tool call ID（来自 assistant 消息的 ToolCalls）
+	// 和所有 tool response 的 ToolCallID
+	assistantToolCallIDs := make(map[string]bool)
+	toolResponseIDs := make(map[string]bool)
+	for _, m := range messages {
+		if m.Role == "assistant" && len(m.ToolCalls) > 0 {
+			for _, tc := range m.ToolCalls {
+				assistantToolCallIDs[tc.ID] = true
+			}
+		}
+		if m.Role == "tool" && m.ToolCallID != "" {
+			toolResponseIDs[m.ToolCallID] = true
+		}
+	}
+
+	// Step 2: 过滤掉孤立消息
+	var cleaned []llm.Message
+	for _, m := range messages {
+		switch m.Role {
+		case "tool":
+			// 只保留有对应 assistant+ToolCalls 的 tool response
+			if m.ToolCallID != "" && assistantToolCallIDs[m.ToolCallID] {
+				cleaned = append(cleaned, m)
+			} else {
+				log.Printf("[sanitizeMessages] dropping orphaned tool message: ToolCallID=%s", m.ToolCallID)
+			}
+		case "assistant":
+			if len(m.ToolCalls) > 0 {
+				// 检查是否所有 tool call 都有对应的 response
+				hasAllResponses := true
+				for _, tc := range m.ToolCalls {
+					if !toolResponseIDs[tc.ID] {
+						hasAllResponses = false
+						break
+					}
+				}
+				if hasAllResponses {
+					cleaned = append(cleaned, m)
+				} else {
+					// 去掉 ToolCalls 保留纯文本内容
+					if m.Content != "" {
+						cleaned = append(cleaned, llm.Message{
+							Role:    m.Role,
+							Content: m.Content,
+						})
+					} else {
+						log.Printf("[sanitizeMessages] dropping assistant+ToolCalls without all responses")
+					}
+				}
+			} else {
+				cleaned = append(cleaned, m)
+			}
+		default:
+			cleaned = append(cleaned, m)
+		}
+	}
+
+	// Step 3: 合并连续同 role 消息（Google 要求 user/model 交替）
+	var merged []llm.Message
+	for _, m := range cleaned {
+		if len(merged) > 0 {
+			last := &merged[len(merged)-1]
+			// 合并连续的 user/human 消息
+			if last.Role == m.Role && (m.Role == "user" || m.Role == "system") {
+				last.Content += "\n" + m.Content
+				continue
+			}
+		}
+		merged = append(merged, m)
+	}
+
+	return merged
 }

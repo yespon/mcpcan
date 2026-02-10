@@ -181,6 +181,12 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 	return nil
 }
 
+// sanitizeServerName 将 mcp server name 的短横线替换为下划线，以符合 Google Tool Name 要求
+// Google Tool Name 只能包含 letters, numbers, and underscores
+func sanitizeServerName(name string) string {
+	return strings.ReplaceAll(name, "-", "_")
+}
+
 func (m *McpManager) GetTools(ctx context.Context) ([]llm.Tool, error) {
 	var allTools []llm.Tool
 	for name, c := range m.clients {
@@ -189,18 +195,38 @@ func (m *McpManager) GetTools(ctx context.Context) ([]llm.Tool, error) {
 			return nil, fmt.Errorf("failed to list tools for %s: %v", name, err)
 		}
 
-		// Check ListToolsResult structure. Assuming it has Tools field.
-		// The doc says NewListToolsResult(tools []Tool, ...). So Result struct has Tools.
-		// resp is *mcp.ListToolsResult
+		safeName := sanitizeServerName(name)
+
 		for _, t := range resp.Tools {
-			toolName := fmt.Sprintf("%s__%s", name, t.Name)
-			// t.InputSchema is ToolInputSchema which is ToolArgumentsSchema
-			// We need to marshal it to json.RawMessage if it isn't already, or pass as is.
-			// llm.Tool.Function.Parameters is json.RawMessage (from previous context).
-			// mcp.Tool.InputSchema is ToolInputSchema.
-			// Let's assume we can marshal it or it's compatible.
-			// ToolInputSchema is likely a struct.
+			toolName := fmt.Sprintf("%s__%s", safeName, t.Name)
+			// 将 MCP ToolInputSchema 转为 map，确保包含 properties 字段
+			// Google genai SDK 要求 type=object 的顶层 schema 必须包含 properties
 			schemaBytes, _ := json.Marshal(t.InputSchema)
+			var schemaMap map[string]interface{}
+			if err := json.Unmarshal(schemaBytes, &schemaMap); err == nil {
+				// 确保 properties 字段存在（Google 模型要求）
+				props, hasProps := schemaMap["properties"].(map[string]interface{})
+				if !hasProps {
+					props = make(map[string]interface{})
+					schemaMap["properties"] = props
+				}
+				
+				// 如果 properties 为空，Google API 可能会拒绝（Error 400）。
+				// Hack: 添加一个 _ignore 字段以满足 "properties map cannot be empty"
+				if len(props) == 0 {
+					props["_ignore"] = map[string]interface{}{
+						"type": "string",
+						"description": "Ignored field to satisfy API requirements for empty parameters.",
+					}
+					schemaMap["properties"] = props // 更新回去
+				}
+
+				// 确保 type 字段存在
+				if _, ok := schemaMap["type"]; !ok {
+					schemaMap["type"] = "object"
+				}
+				schemaBytes, _ = json.Marshal(schemaMap)
+			}
 			
 			llmTool := llm.Tool{
 				Type: "function",
@@ -221,17 +247,40 @@ func (m *McpManager) CallTool(ctx context.Context, name string, args string) (*m
 	if len(parts) != 2 {
 		return nil, fmt.Errorf("invalid tool name format: %s", name)
 	}
-	serverName := parts[0]
+	sanitizedServerName := parts[0]
 	toolName := parts[1]
 
-	c, ok := m.clients[serverName]
-	if !ok {
-		return nil, fmt.Errorf("server not found: %s", serverName)
+	// 查找匹配的 client
+	var c *client.Client
+
+	m.mu.RLock()
+	if client, ok := m.clients[sanitizedServerName]; ok {
+		// 1. 如果正好名字没变（本来就没横线），直接命中
+		c = client
+	} else {
+		// 2. 如果没直接命中，遍历查找哪个 original name 对应当前的 sanitized name
+		for k, v := range m.clients {
+			if sanitizeServerName(k) == sanitizedServerName {
+				c = v
+				break
+			}
+		}
+	}
+	m.mu.RUnlock()
+
+	if c == nil {
+		return nil, fmt.Errorf("server not found for sanitized name: %s", sanitizedServerName)
 	}
 
+	// 解析参数
 	var argsMap map[string]interface{}
 	if err := json.Unmarshal([]byte(args), &argsMap); err != nil {
 		return nil, fmt.Errorf("invalid arguments json: %v", err)
+	}
+
+	// 如果有 _ignore 字段，移除它
+	if _, ok := argsMap["_ignore"]; ok {
+		delete(argsMap, "_ignore")
 	}
 
 	return c.CallTool(ctx, mcp.CallToolRequest{
@@ -241,3 +290,4 @@ func (m *McpManager) CallTool(ctx context.Context, name string, args string) (*m
 		},
 	})
 }
+
