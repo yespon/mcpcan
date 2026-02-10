@@ -154,7 +154,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import codeLogo from '@/assets/logo/code.png'
 import zipLogo from '@/assets/logo/zip.png'
-import McpButton from '@/components/mcp-button/index.vue'
 
 const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo, action, headers } =
   useCodeTableHooks()
