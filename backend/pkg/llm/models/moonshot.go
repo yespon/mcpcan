@@ -8,10 +8,42 @@ var MoonshotProvider = ProviderInfo{
 	RegisterURL: "https://platform.moonshot.cn/console/api-keys",
 	DocsURL:     "https://platform.moonshot.cn/docs",
 	Models: []ModelInfo{
+		// Kimi k2.5 Series
+		{
+			ID:              "kimi-k2.5",
+			Name:            "Kimi k2.5",
+			Description:     "Kimi k2.5 Multimodal (Jan 2026)",
+			ContextLength:   262144,
+			Modality:        "text+image+video->text",
+			Provider:        "moonshot",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		// Kimi k2 Series
+		{
+			ID:              "kimi-k2-thinking",
+			Name:            "Kimi k2 Thinking",
+			Description:     "Kimi k2 Reasoning Model",
+			ContextLength:   262144,
+			Modality:        "text->text",
+			Provider:        "moonshot",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:            "kimi-k2-instruct",
+			Name:            "Kimi k2 Instruct",
+			Description:     "Kimi k2 Instruct",
+			ContextLength:   262144,
+			Modality:        "text->text",
+			Provider:        "moonshot",
+			SupportTools:    true,
+		},
+		// Legacy / Stable (Moonshot V1)
 		{
 			ID:            "moonshot-v1-128k",
 			Name:          "Moonshot V1 128K",
-			Description:   "Kimi 大窗口模型,128K 上下文",
+			Description:   "Kimi Classic 128K",
 			ContextLength: 128000,
 			Modality:      "text->text",
 			Provider:      "moonshot",
@@ -19,7 +51,7 @@ var MoonshotProvider = ProviderInfo{
 		{
 			ID:            "moonshot-v1-32k",
 			Name:          "Moonshot V1 32K",
-			Description:   "Kimi 标准模型,32K 上下文",
+			Description:   "Kimi Classic 32K",
 			ContextLength: 32000,
 			Modality:      "text->text",
 			Provider:      "moonshot",
@@ -27,7 +59,7 @@ var MoonshotProvider = ProviderInfo{
 		{
 			ID:            "moonshot-v1-8k",
 			Name:          "Moonshot V1 8K",
-			Description:   "Kimi 快速模型,8K 上下文",
+			Description:   "Kimi Classic 8K",
 			ContextLength: 8000,
 			Modality:      "text->text",
 			Provider:      "moonshot",

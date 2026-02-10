@@ -12,8 +12,6 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
-	_ "github.com/kymo-mcp/mcpcan/pkg/llm/doubao" // Register Doubao provider
-	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai"
 )
 
 type AiSessionBiz struct {

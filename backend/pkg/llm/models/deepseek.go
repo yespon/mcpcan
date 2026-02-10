@@ -8,21 +8,22 @@ var DeepSeekProvider = ProviderInfo{
 	RegisterURL: "https://platform.deepseek.com/api_keys",
 	DocsURL:     "https://api-docs.deepseek.com",
 	Models: []ModelInfo{
-		// DeepSeek 主力模型 (支持 Function Calling)
+		// DeepSeek V3 (Chat)
 		{
 			ID:              "deepseek-chat",
-			Name:            "DeepSeek Chat",
-			Description:     "DeepSeek V3 对话模型,综合能力强,支持工具调用",
+			Name:            "DeepSeek V3",
+			Description:     "DeepSeek V3 旗舰对话模型,综合能力强",
 			ContextLength:   65536,
 			Modality:        "text->text",
 			Provider:        "deepseek",
 			SupportThinking: false,
 			SupportTools:    true,
 		},
+		// DeepSeek R1 (Reasoning)
 		{
 			ID:              "deepseek-reasoner",
-			Name:            "DeepSeek Reasoner",
-			Description:     "DeepSeek R1 推理模型,深度思考能力,支持工具调用",
+			Name:            "DeepSeek R1",
+			Description:     "DeepSeek R1 推理模型,深度思考能力",
 			ContextLength:   65536,
 			Modality:        "text->text",
 			Provider:        "deepseek",

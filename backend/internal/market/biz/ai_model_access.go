@@ -9,8 +9,6 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
-	_ "github.com/kymo-mcp/mcpcan/pkg/llm/doubao"
-	_ "github.com/kymo-mcp/mcpcan/pkg/llm/openai"
 )
 
 type AiModelAccessBiz struct {
@@ -209,7 +207,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	if lastErr != nil {
 		return &TestConnectionResponse{
 			Success:   false,
-			Message:   fmt.Sprintf("Connection error during stream: %v", lastErr),
+			Message:   fmt.Sprintf("Connection error during stream: %v. (Hint: If using a custom model, ensure it is supported by the configured Base URL/Provider endpoint)", lastErr),
 			LatencyMs: latency,
 		}, nil
 	}

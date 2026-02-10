@@ -8,7 +8,46 @@ var GoogleProvider = ProviderInfo{
 	RegisterURL: "https://aistudio.google.com/app/apikey",
 	DocsURL:     "https://ai.google.dev/docs",
 	Models: []ModelInfo{
-		// Gemini 2.0 系列
+
+		// Gemini 3.0 Series (Preview)
+		{
+			ID:            "gemini-3-pro-preview",
+			Name:          "Gemini 3 Pro Preview",
+			Description:   "Gemini 3 Next Gen Preview",
+			ContextLength: 1000000,
+			Modality:      "text+image+video->text",
+			Provider:      "google",
+			SupportTools:  true,
+		},
+		{
+			ID:            "gemini-3-flash-preview",
+			Name:          "Gemini 3 Flash Preview",
+			Description:   "Gemini 3 Fast Preview",
+			ContextLength: 1048576,
+			Modality:      "text+image+video->text",
+			Provider:      "google",
+			SupportTools:  true,
+		},
+		// Gemini 2.5 Series
+		{
+			ID:            "gemini-2.5-pro",
+			Name:          "Gemini 2.5 Pro",
+			Description:   "Gemini 2.5 Pro High Intelligence",
+			ContextLength: 1048576,
+			Modality:      "text+image+video->text",
+			Provider:      "google",
+			SupportTools:  true,
+		},
+		{
+			ID:            "gemini-2.5-flash",
+			Name:          "Gemini 2.5 Flash",
+			Description:   "Gemini 2.5 Flash High Speed",
+			ContextLength: 1048576,
+			Modality:      "text+image+video->text",
+			Provider:      "google",
+			SupportTools:  true,
+		},
+		// Gemini 2.0 Series
 		{
 			ID:              "gemini-2.0-flash-exp",
 			Name:            "Gemini 2.0 Flash Exp",
@@ -27,9 +66,9 @@ var GoogleProvider = ProviderInfo{
 			Modality:        "text+image->text",
 			Provider:        "google",
 			SupportThinking: true,
-			SupportTools:    false, // Experimental thinking often limited
+			SupportTools:    false,
 		},
-		// Gemini 1.5 系列 (Latest 002)
+		// Gemini 1.5 Series (Latest 002)
 		{
 			ID:              "gemini-1.5-pro-002",
 			Name:            "Gemini 1.5 Pro-002",

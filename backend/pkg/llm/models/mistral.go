@@ -9,12 +9,22 @@ var MistralProvider = ProviderInfo{
 	DocsURL:     "https://docs.mistral.ai/",
 	Models: []ModelInfo{
 		{
-			ID:            "mistral-large-latest",
-			Name:          "Mistral Large",
-			Description:   "Mistral 旗舰模型,强大工具调用能力",
+			ID:            "mistral-large-2512",
+			Name:          "Mistral Large (Dec 2025)",
+			Description:   "Mistral Large 2512 Flagship",
 			ContextLength: 128000,
-			Modality:      "text->text",
+			Modality:      "text+image->text",
 			Provider:      "mistral",
+			SupportTools:  true,
+		},
+		{
+			ID:            "ministral-3-latest",
+			Name:          "Ministral 3",
+			Description:   "Mistral Edge Model",
+			ContextLength: 128000,
+			Modality:      "text+image->text",
+			Provider:      "mistral",
+			SupportTools:  true,
 		},
 		{
 			ID:            "mistral-medium-latest",

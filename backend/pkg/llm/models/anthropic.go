@@ -8,20 +8,36 @@ var AnthropicProvider = ProviderInfo{
 	RegisterURL: "https://console.anthropic.com/account/keys",
 	DocsURL:     "https://docs.anthropic.com/",
 	Models: []ModelInfo{
-		// Claude 4 系列
+		// Claude 4.5 Series (2025)
 		{
-			ID:            "claude-sonnet-4-20250514",
-			Name:          "Claude Sonnet 4",
-			Description:   "Anthropic 最新旗舰模型,顶级智能与工具能力",
+			ID:            "claude-opus-4-5",
+			Name:          "Claude Opus 4.5",
+			Description:   "Claude 4.5 Opus (Late 2025)",
 			ContextLength: 200000,
 			Modality:      "text+image->text",
 			Provider:      "anthropic",
 		},
-		// Claude 3.5 系列
+		{
+			ID:            "claude-sonnet-4-5",
+			Name:          "Claude Sonnet 4.5",
+			Description:   "Claude 4.5 Sonnet (Sep 2025)",
+			ContextLength: 200000,
+			Modality:      "text+image->text",
+			Provider:      "anthropic",
+		},
+		{
+			ID:            "claude-haiku-4-5",
+			Name:          "Claude Haiku 4.5",
+			Description:   "Claude 4.5 Haiku (Oct 2025)",
+			ContextLength: 200000,
+			Modality:      "text+image->text",
+			Provider:      "anthropic",
+		},
+		// Claude 3.5 Series
 		{
 			ID:            "claude-3-5-sonnet-20241022",
 			Name:          "Claude 3.5 Sonnet",
-			Description:   "Claude 3.5 Sonnet,平衡智能与速度",
+			Description:   "Claude 3.5 Sonnet (New)",
 			ContextLength: 200000,
 			Modality:      "text+image->text",
 			Provider:      "anthropic",
@@ -29,16 +45,16 @@ var AnthropicProvider = ProviderInfo{
 		{
 			ID:            "claude-3-5-haiku-20241022",
 			Name:          "Claude 3.5 Haiku",
-			Description:   "Claude 3.5 Haiku,快速响应低成本",
+			Description:   "Claude 3.5 Haiku",
 			ContextLength: 200000,
 			Modality:      "text+image->text",
 			Provider:      "anthropic",
 		},
-		// Claude 3 系列
+		// Claude 3 Series
 		{
 			ID:            "claude-3-opus-20240229",
 			Name:          "Claude 3 Opus",
-			Description:   "Claude 3 旗舰模型,强大推理能力",
+			Description:   "Claude 3 Opus",
 			ContextLength: 200000,
 			Modality:      "text+image->text",
 			Provider:      "anthropic",
