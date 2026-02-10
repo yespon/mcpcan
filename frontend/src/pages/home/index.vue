@@ -139,8 +139,10 @@ import Global from '@/components/Animation/global.vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import OpenAPIDialog from '../mcp/instance-manage/modules/open-api-dialog.vue'
 import { SourceType } from '@/types'
+import { useUserStore } from '@/stores/modules/user-store.ts'
 
 const { jumpToPage } = useRouterHooks()
+const { currentBtnAuths } = storeToRefs(useUserStore())
 const { t } = useI18n()
 const loading = ref(false)
 const openAPIDialog = ref<any>(null)
@@ -212,6 +214,10 @@ const handleToTemplate = () => {
  * jump to create instance page
  */
 const handleToTemplateForm = (itemCase: any) => {
+  // no create auth
+  if (!currentBtnAuths.value?.includes('mcpcan_instance:create')) {
+    return
+  }
   if (itemCase.sourceType === SourceType.OPENAPI) {
     // openAPI
     openAPIDialog.value.init(itemCase.templateId, 'template')

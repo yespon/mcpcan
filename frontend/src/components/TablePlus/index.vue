@@ -342,7 +342,10 @@ const isRowSelectable = (row: any) => {
 //Init search data
 const initSearchQuery = () => {
   if (props.queryFormatter) {
-    props.queryFormatter(formData.value)
+    const params = props.queryFormatter(formData.value)
+    if (params && typeof params === 'object') {
+      formData.value = Object.assign({ ...formData.value }, params)
+    }
   }
 }
 

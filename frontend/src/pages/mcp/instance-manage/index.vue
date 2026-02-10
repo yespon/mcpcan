@@ -601,7 +601,6 @@ watch(
 /**
  * Handle create a instance by template list
  */
-
 const handleAddByTemplate = async () => {
   try {
     selectVisible.value = true
