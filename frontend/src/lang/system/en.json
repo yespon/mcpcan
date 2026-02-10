@@ -74,7 +74,8 @@
         "clear": "Clear",
         "remove": "Are you sure you want to remove this user?",
         "delete": "Are you sure you want to delete this user?",
-        "topDept": "Top Department"
+        "topDept": "Top Department",
+        "initPassword": "Initial password for new accounts: 123456"
       },
       "operation": {
         "add": "Add",

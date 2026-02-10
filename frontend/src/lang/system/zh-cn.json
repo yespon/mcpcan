@@ -75,7 +75,8 @@
         "clear": "清除",
         "remove": "确定用户移除",
         "delete": "你确定要删除该用户吗？",
-        "topDept": "顶级部门"
+        "topDept": "顶级部门",
+        "initPassword": "新建账号初始密码：123456"
       },
       "operation": {
         "add": "添加用户",
