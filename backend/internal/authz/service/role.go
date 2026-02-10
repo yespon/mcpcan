@@ -292,6 +292,13 @@ func (s *RoleService) FindRoleMenus(c *gin.Context) {
 		return
 	}
 
+	if req.RoleIds == nil || len(req.RoleIds) == 0 {
+		userInfo, err := utils.GetCurrentUser(c)
+		if err == nil && len(req.RoleIds) > 0 {
+			req.RoleIds = append(req.RoleIds, userInfo.RoleIds...)
+		}
+	}
+
 	roleMenus, err := mysql.SysRolesMenusRepo.BatchFindByRoleID(c.Request.Context(), req.RoleIds)
 	if err != nil {
 		logger.Error("Failed to find role menus", zap.Error(err))

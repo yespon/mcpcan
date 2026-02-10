@@ -52,6 +52,9 @@ func (r *SysMenuRepository) BatchDelete(ctx context.Context, menuIDs []int64) er
 
 // BatchFindByID 批量查询菜单
 func (r *SysMenuRepository) FindByIDs(ctx context.Context, menuIDs []int64) ([]*model.SysMenu, error) {
+	if len(menuIDs) == 0 {
+		return []*model.SysMenu{}, nil
+	}
 	var menus []*model.SysMenu
 	err := r.getDB().WithContext(ctx).Where("menu_id IN ?", menuIDs).Find(&menus).Error
 	if err != nil {

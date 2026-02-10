@@ -64,6 +64,10 @@ func (r *SysRolesMenusRepository) BatchDeleteByRoleMenuIDs(ctx context.Context, 
 
 // BatchFindByRoleID 批量查询指定角色的菜单关联
 func (r *SysRolesMenusRepository) BatchFindByRoleID(ctx context.Context, roleIDs []int64) ([]*model.SysRolesMenus, error) {
+	if len(roleIDs) == 0 {
+		return []*model.SysRolesMenus{}, nil
+	}
+
 	var associations []*model.SysRolesMenus
 	err := r.getDB().WithContext(ctx).Where("role_id IN ?", roleIDs).Find(&associations).Error
 	if err != nil {
