@@ -54,7 +54,7 @@ export const RoleAPI = {
     })
   },
   // 获取当前角色的菜单权限
-  getRoleMenus(data: any) {
+  getRoleMenus(data?: any) {
     return request<any, any>({
       url: `/authz/roles/find-menus`,
       method: 'POST',

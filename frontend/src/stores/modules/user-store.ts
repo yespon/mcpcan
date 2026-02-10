@@ -308,7 +308,9 @@ export const useUserStore = defineStore('user', () => {
    */
   function getRoleAuth() {
     return new Promise<any[]>((resolve, reject) => {
-      RoleAPI.getRoleMenus({ roleIds: [...(userInfo.value.roleIds || [])] })
+      // 不传参数获取当前用户的菜单权限，传参用户id获取指定用户的菜单权限
+      // RoleAPI.getRoleMenus({ roleIds: [...(userInfo.value.roleIds || [])] })
+      RoleAPI.getRoleMenus()
         .then((data) => {
           allAuths.value = data
           resolve(data)
