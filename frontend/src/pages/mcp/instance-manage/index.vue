@@ -519,7 +519,7 @@
     <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
     <!-- select agent with nameSpace  -->
     <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
-    <TaskList ref="taskList"></TaskList>
+    <TaskList ref="taskList" v-auth="'mcpcan_instance:agent_platform_sync'"></TaskList>
     <LogDialog ref="logDialog"></LogDialog>
   </div>
 </template>
