@@ -63,6 +63,13 @@ func (s *RoleService) CreateRole(c *gin.Context) {
 		UpdateBy:    &userInfo.Username,
 	}
 
+	// Check if role name already exists
+	existRole, _ := mysql.SysRoleRepo.FindByName(c.Request.Context(), roleModel.Name)
+	if existRole != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "Role name already exists")
+		return
+	}
+
 	// Create role
 	if err := mysql.SysRoleRepo.Create(c.Request.Context(), roleModel); err != nil {
 		logger.Error("Failed to create role", zap.Error(err))
@@ -111,6 +118,13 @@ func (s *RoleService) UpdateRole(c *gin.Context) {
 	roleModel.Level = &level
 	roleModel.DataScope = &req.DataScope
 	roleModel.UpdateBy = &userInfo.Username
+
+	// Check if role name already exists
+	existRole, _ := mysql.SysRoleRepo.FindByName(c.Request.Context(), roleModel.Name)
+	if existRole != nil && existRole.RoleID != roleModel.RoleID {
+		common.GinError(c, i18nresp.CodeInternalError, "Role name already exists")
+		return
+	}
 
 	// Update role
 	if err := mysql.SysRoleRepo.Update(c.Request.Context(), roleModel); err != nil {

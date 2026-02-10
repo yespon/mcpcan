@@ -71,6 +71,16 @@ func (r *SysDeptRepository) FindByID(ctx context.Context, deptID uint) (*model.S
 	return &dept, nil
 }
 
+// FindByName 根据部门名称查找部门
+func (r *SysDeptRepository) FindByName(ctx context.Context, name string) (*model.SysDept, error) {
+	var dept model.SysDept
+	err := r.getDB().WithContext(ctx).Where("name = ?", name).First(&dept).Error
+	if err != nil {
+		return nil, err
+	}
+	return &dept, nil
+}
+
 // FindByParentID 根据父部门ID查找子部门
 func (r *SysDeptRepository) FindByParentID(ctx context.Context, parentIDs []uint) ([]*model.SysDept, error) {
 	var depts []*model.SysDept

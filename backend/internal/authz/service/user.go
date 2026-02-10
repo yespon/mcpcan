@@ -52,6 +52,13 @@ func (s *UserService) CreateUser(c *gin.Context) {
 	userModel.CreateBy = &userInfo.Username
 	userModel.UpdateBy = &userInfo.Username
 
+	// Check if username already exists
+	existUser, _ := mysql.SysUserRepo.FindByUsername(c.Request.Context(), userModel.GetUsername())
+	if existUser != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "Username already exists")
+		return
+	}
+
 	// Create user
 	if err := mysql.SysUserRepo.Create(c.Request.Context(), userModel); err != nil {
 		logger.Error("Failed to create user", zap.Error(err))
@@ -121,14 +128,11 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 	s.updateModelFromRequest(existingUser, &req)
 	existingUser.UpdateBy = &userInfo.Username
 
-	//// If password is provided, hash it
-	//if req.Password != "" {
-	//	if err := s.userBiz.SetUserPassword(c.Request.Context(), existingUser, req.Password); err != nil {
-	//		logger.Error("Failed to set user password", zap.Error(err))
-	//		common.GinError(c, i18nresp.CodeInternalError, "Failed to set user password")
-	//		return
-	//	}
-	//}
+	existNameUser, err := mysql.SysUserRepo.FindByUsername(c.Request.Context(), userInfo.Username)
+	if err == nil && existNameUser.UserID != existingUser.UserID {
+		common.GinError(c, i18nresp.CodeInternalError, "Username already exists")
+		return
+	}
 
 	// Update user
 	if err := mysql.SysUserRepo.Update(c.Request.Context(), existingUser); err != nil {

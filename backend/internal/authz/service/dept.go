@@ -71,6 +71,13 @@ func (s *DeptService) CreateDept(c *gin.Context) {
 		deptModel.ImageURL = &imageURL
 	}
 
+	// Check if department name already exists
+	existDept, _ := mysql.SysDeptRepo.FindByName(c.Request.Context(), deptModel.Name)
+	if existDept != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "Department name already exists")
+		return
+	}
+
 	// Set parent department ID if provided
 	var parentDept *model.SysDept
 	if req.ParentId > 0 {
@@ -148,6 +155,13 @@ func (s *DeptService) UpdateDept(c *gin.Context) {
 		deptModel.PID = &parentID
 	} else {
 		deptModel.PID = nil
+	}
+
+	// Check if department name already exists
+	existDept, _ := mysql.SysDeptRepo.FindByName(c.Request.Context(), deptModel.Name)
+	if existDept != nil && existDept.DeptID != deptModel.DeptID {
+		common.GinError(c, i18nresp.CodeInternalError, "Department name already exists")
+		return
 	}
 
 	// Update department
