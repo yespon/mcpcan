@@ -121,8 +121,8 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 						ID:   tc.ID,
 						Type: tc.Type,
 						Function: ToolCallFunction{
-							Name:      tc.Function.Name,
-							Arguments: tc.Function.Arguments,
+							Name:      tc.FunctionCall.Name,
+							Arguments: tc.FunctionCall.Arguments,
 						},
 					}
 					toolCalls = append(toolCalls, toolCall)

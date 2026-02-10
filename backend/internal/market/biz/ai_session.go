@@ -33,7 +33,8 @@ func NewAiSessionBiz(ctx context.Context) *AiSessionBiz {
 func (b *AiSessionBiz) Create(ctx context.Context, req *pb.CreateSessionRequest, userID int64) (*model.AiSession, error) {
 	// Validate ModelAccessID exists
 	if _, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ModelAccessID); err != nil {
-		return nil, fmt.Errorf("invalid model access id")
+		log.Printf("Invalid model access id %d provided when creating session: %v", req.ModelAccessID, err)
+		return nil, fmt.Errorf("invalid model access id %d: %w", req.ModelAccessID, err)
 	}
 
 	session := &model.AiSession{
@@ -64,7 +65,8 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 	}
 	if req.ModelAccessID != 0 {
 		if _, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ModelAccessID); err != nil {
-			return nil, fmt.Errorf("invalid model access id")
+			log.Printf("Invalid model access id %d provided when updating session %d: %v", req.ModelAccessID, req.Id, err)
+			return nil, fmt.Errorf("invalid model access id %d: %w", req.ModelAccessID, err)
 		}
 		session.ModelAccessID = req.ModelAccessID
 	}
@@ -78,13 +80,13 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 		session.ModelName = req.ModelName
 	}
 	// Temperature handling (since float default is 0, we need careful check or allow 0)
-	// Proto3 zero value is 0. But 0 temperature is valid. 
+	// Proto3 zero value is 0. But 0 temperature is valid.
 	// However, usually update requests carry what changed.
 	// For simplicity in this generated proto, we assume if it's there we update it.
 	// But actually, proto3 doesn't distinguish between unset and 0.
 	// We might need a wrapper or assume front-end sends current value.
 	session.Temperature = float64(req.Temperature)
-	
+
 	if req.SystemPrompt != "" {
 		session.SystemPrompt = req.SystemPrompt
 	}
@@ -100,7 +102,7 @@ func (b *AiSessionBiz) Delete(ctx context.Context, id int64) error {
 	// Note: using a large limit to get all messages, or better, use FindBySessionID without limit if available
 	messages, err := mysql.AiMessageRepo.FindBySessionID(ctx, id, 10000)
 	if err != nil {
-		// Log error but proceed with deletion? Or fail? 
+		// Log error but proceed with deletion? Or fail?
 		// For now, fail safe
 		return fmt.Errorf("failed to get messages for cleanup: %v", err)
 	}
@@ -185,7 +187,9 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	// 2. Load Model Access
 	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, session.ModelAccessID)
 	if err != nil {
-		return nil, fmt.Errorf("model access config not found")
+		// Log the specific ID that was not found for debugging
+		log.Printf("Model access config not found for ID: %d, Session ID: %d", session.ModelAccessID, sessionID)
+		return nil, fmt.Errorf("model access config not found for ID %d: %w", session.ModelAccessID, err)
 	}
 
 	// 3. Load History
@@ -249,11 +253,11 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	// Handle Attachments (Multimodal)
 	if len(req.Attachments) > 0 {
 		var parts []llm.MessageContentPart
-		
+
 		// Text part first
 		if req.Content != "" {
 			parts = append(parts, llm.MessageContentPart{
-				Type: "text", 
+				Type: "text",
 				Text: req.Content,
 			})
 		}
@@ -287,15 +291,17 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	userMsg := &model.AiMessage{
 		SessionID:  sessionID,
 		Role:       "user",
-		Content:    dbContent, 
+		Content:    dbContent,
 		CreateTime: time.Now(),
 	}
 	// Estimate tokens (improved estimation welcome)
 	estimatedTokens := len(req.Content) / 4
-	if estimatedTokens < 1 { estimatedTokens = 1 }
+	if estimatedTokens < 1 {
+		estimatedTokens = 1
+	}
 	userMsg.PromptTokens = estimatedTokens
 	userMsg.TotalTokens = estimatedTokens
-	
+
 	if err := mysql.AiMessageRepo.Create(ctx, userMsg); err != nil {
 		return nil, fmt.Errorf("failed to save user message: %s", err.Error())
 	}
@@ -303,7 +309,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	// 7. Init MCP Tools & Debug Logic
 	var tools []llm.Tool
 	mcpManager := NewMcpManager()
-	
+
 	// Determine config to use
 	var configToUse string
 	var requestedTools []string
@@ -345,7 +351,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 			mcpManager.Close()
 			return nil, fmt.Errorf("failed to init mcp tools: %v", err)
 		}
-		
+
 		allTools, err := mcpManager.GetTools(ctx)
 		if err != nil {
 			mcpManager.Close()

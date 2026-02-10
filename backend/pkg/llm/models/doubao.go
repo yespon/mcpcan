@@ -9,48 +9,27 @@ var DoubaoProvider = ProviderInfo{
 	DocsURL:     "https://www.volcengine.com/docs/82379",
 	Models: []ModelInfo{
 
+		// 通用豆包模型
+		//doubao-seed-1-6-251015
+		//doubao-seed-1-6-thinking-250715
+		//doubao-seed-1-6-flash-250828
+		//doubao-seed-1-6-lite-251015
+		//doubao-1-5-pro-32k-250115
+		//doubao-1-5-pro-256k-250115
+		// doubao-1-5-lite-32k-250115
+		// doubao-seed-code-preview-251028
+		// doubao-1-5-thinking-pro-250415
+		// kimi-k2-thinking-251104
+		// glm-4-7-251222
+		// deepseek-v3-1-terminus
+		// deepseek-r1-250528
 		{
-			ID:            "doubao-pro-32k",
-			Name:          "Doubao Pro 32K",
-			Description:   "基础效果 - 必须替换为 Endpoint ID",
-			ContextLength: 32768,
-			Modality:      "text->text",
-			Provider:      "doubao",
-			SupportTools:  true,
-		},
-		{
-			ID:            "doubao-pro-128k",
-			Name:          "Doubao Pro 128K",
-			Description:   "长文本效果 - 必须替换为 Endpoint ID",
-			ContextLength: 131072,
-			Modality:      "text->text",
-			Provider:      "doubao",
-			SupportTools:  true,
-		},
-		{
-			ID:            "doubao-lite-32k",
-			Name:          "Doubao Lite 32K",
-			Description:   "低成本效果 - 必须替换为 Endpoint ID",
-			ContextLength: 32768,
-			Modality:      "text->text",
-			Provider:      "doubao",
-			SupportTools:  true,
-		},
-		{
-			ID:            "doubao-vision-pro-32k",
-			Name:          "Doubao Vision Pro",
-			Description:   "视觉理解效果 - 必须替换为 Endpoint ID",
-			ContextLength: 32768,
+
+			ID:            "glm-4-7-251222",
+			Name:          "Doubao-OpenAI-glm-4-7",
+			Description:   "豆包开源多模型",
+			ContextLength: 200000,
 			Modality:      "text+image->text",
-			Provider:      "doubao",
-			SupportTools:  true,
-		},
-		{
-			ID:            "doubao-character-pro-32k",
-			Name:          "Doubao Character",
-			Description:   "角色扮演效果 - 必须替换为 Endpoint ID",
-			ContextLength: 32768,
-			Modality:      "text->text",
 			Provider:      "doubao",
 			SupportTools:  true,
 		},
