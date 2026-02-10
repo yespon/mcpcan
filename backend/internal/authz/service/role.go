@@ -294,7 +294,7 @@ func (s *RoleService) FindRoleMenus(c *gin.Context) {
 
 	if req.RoleIds == nil || len(req.RoleIds) == 0 {
 		userInfo, err := utils.GetCurrentUser(c)
-		if err == nil && len(req.RoleIds) > 0 {
+		if err == nil && len(userInfo.RoleIds) > 0 {
 			req.RoleIds = append(req.RoleIds, userInfo.RoleIds...)
 		}
 	}
