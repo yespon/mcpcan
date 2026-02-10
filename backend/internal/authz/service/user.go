@@ -128,12 +128,6 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 	s.updateModelFromRequest(existingUser, &req)
 	existingUser.UpdateBy = &userInfo.Username
 
-	existNameUser, err := mysql.SysUserRepo.FindByUsername(c.Request.Context(), userInfo.Username)
-	if err == nil && existNameUser.UserID != existingUser.UserID {
-		common.GinError(c, i18nresp.CodeInternalError, "Username already exists")
-		return
-	}
-
 	// Update user
 	if err := mysql.SysUserRepo.Update(c.Request.Context(), existingUser); err != nil {
 		logger.Error("Failed to update user", zap.Error(err))
