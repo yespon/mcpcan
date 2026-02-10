@@ -45,9 +45,6 @@ request.interceptors.request.use(
     // 添加国际化
     config.headers['accept-language'] = lang[Storage.get('language') as keyof typeof lang]
 
-    config.headers['X-Custom-User-Info'] =
-      'eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJuaWNrbmFtZSI6ImFkbWluIiwiZW1haWwiOiIiLCJwaG9uZSI6IiIsImF2YXRhciI6IiIsImRlcHRJZCI6MCwiZGVwdE5hbWUiOiIiLCJyb2xlSWRzIjpbMV0sInJvbGVOYW1lcyI6WyJhZG1pbiJdfQ=='
-
     // 允许请求配置覆盖默认 timeout
     if (config.timeout) {
       config.timeout = config.timeout
