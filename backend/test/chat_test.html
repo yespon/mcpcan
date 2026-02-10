@@ -655,6 +655,14 @@
               <span class="text-xs w-6">{{ editingSession.temperature }}</span>
             </div>
           </el-form-item>
+          <el-form-item label="MCP Config (JSON)">
+            <el-input
+              v-model="editingSession.toolsConfig"
+              type="textarea"
+              :rows="3"
+              placeholder="{ mcpServers: ... }"
+            ></el-input>
+          </el-form-item>
         </el-form>
         <template #footer>
           <el-button @click="editSessionDialogVisible = false">Cancel</el-button>
@@ -772,7 +780,8 @@
             modelAccessID: null,
             modelName: "",
             systemPrompt: "",
-            temperature: 0.7
+            temperature: 0.7,
+            toolsConfig: ""
           });
 
           const editingSessionProviderModels = computed(() => {
@@ -795,6 +804,7 @@
             editingSession.modelName = session.modelName || "";
             editingSession.systemPrompt = session.systemPrompt || "";
             editingSession.temperature = session.temperature || 0.7;
+            editingSession.toolsConfig = session.toolsConfig || "{}";
             editSessionDialogVisible.value = true;
           };
 
@@ -807,7 +817,8 @@
                 modelAccessID: editingSession.modelAccessID,
                 modelName: editingSession.modelName,
                 systemPrompt: editingSession.systemPrompt,
-                temperature: editingSession.temperature
+                temperature: editingSession.temperature,
+                toolsConfig: editingSession.toolsConfig
               });
               ElementPlus.ElMessage.success('Session updated');
               editSessionDialogVisible.value = false;

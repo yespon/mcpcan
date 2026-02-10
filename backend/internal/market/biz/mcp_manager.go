@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"github.com/kymo-mcp/mcpcan/pkg/version"
@@ -103,12 +104,12 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 	if transportType == "" {
 		if srv.URL != "" {
 			if strings.HasSuffix(srv.URL, "/mcp") {
-				transportType = "steamable-http"
+				transportType = model.McpProtocolStreamableHttp.String()
 			} else {
-				transportType = "sse"
+				transportType = model.McpProtocolSSE.String()
 			}
 		} else if srv.Command != "" {
-			transportType = "stdio"
+			transportType = model.McpProtocolStdio.String()
 		}
 	}
 
@@ -116,7 +117,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 	transportType = strings.ReplaceAll(transportType, "_", "-") // Normalize snake_case to kebab-case if needed
 
 	switch transportType {
-	case "sse", "http": // Standard MCP over HTTP (SSE)
+	case model.McpProtocolSSE.String(), "http": // Standard MCP over HTTP (SSE)
 		if srv.URL == "" {
 			return fmt.Errorf("transport is %s but url is empty", transportType)
 		}
@@ -125,7 +126,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 			srv.URL,
 			client.WithHeaders(srv.Headers),
 		)
-	case "steamable-http": // Streamable HTTP (NDJSON/etc)
+	case model.McpProtocolStreamableHttp.String(): // Streamable HTTP (NDJSON/etc)
 		if srv.URL == "" {
 			return fmt.Errorf("transport is %s but url is empty", transportType)
 		}
@@ -134,7 +135,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 			srv.URL,
 			transport.WithHTTPHeaders(srv.Headers),
 		)
-	case "stdio":
+	case model.McpProtocolStdio.String():
 		if srv.Command == "" {
 			return fmt.Errorf("transport is stdio but command is empty")
 		}
