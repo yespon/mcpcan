@@ -25,6 +25,7 @@ func init() {
 	llm.RegisterProvider(llm.ProviderOpenRouter, factory)
 	llm.RegisterProvider(llm.ProviderLiteLLM, factory)
 	llm.RegisterProvider(llm.ProviderAzureOpenAI, factory)
+	llm.RegisterProvider(llm.ProviderGoogle, factory) // Add Google Gemini support
 }
 
 type Provider struct {

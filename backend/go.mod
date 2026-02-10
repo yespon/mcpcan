@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/lib/pq v1.10.9
-	github.com/mark3labs/mcp-go v0.43.1
+	github.com/mark3labs/mcp-go v0.44.0-beta.3
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sashabaranov/go-openai v1.41.2

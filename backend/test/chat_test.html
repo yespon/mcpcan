@@ -97,14 +97,113 @@
             class="h-full flex flex-col"
           >
             <div class="flex flex-1 gap-4 overflow-hidden h-full">
-              <!-- Sidebar: Session List -->
-              <div class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
-                <div class="p-2 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center bg-white">
-                   <span>History</span>
-                   <div>
-                      <el-button link size="small" :icon="Refresh" @click="refreshSessions"></el-button>
-                      <el-button link size="small" type="primary" @click="createNewConfig">New</el-button>
-                   </div>
+              <!-- Sidebar: Session Creator + History -->
+              <div class="w-72 bg-gray-50 border-r border-gray-200 flex flex-col h-full">
+                <!-- New Session Section (Collapsible) -->
+                <el-collapse v-model="newSessionExpanded" class="border-0">
+                  <el-collapse-item name="new" class="new-session-collapse">
+                    <template #title>
+                      <span class="text-sm font-bold text-gray-700">📝 New Session</span>
+                    </template>
+                    <div class="p-3 bg-white">
+                      <el-form size="small" label-position="top">
+                        <el-form-item label="Session Name" class="mb-2">
+                          <el-input
+                            v-model="newSessionName"
+                            placeholder="e.g. DeepSeek Test"
+                            size="small"
+                          ></el-input>
+                        </el-form-item>
+                        <el-form-item label="Model Access" class="mb-2">
+                          <el-select
+                            v-model="selectedModelId"
+                            placeholder="Select Model"
+                            class="w-full"
+                            size="small"
+                            @focus="refreshModels"
+                          >
+                            <el-option
+                              v-for="m in models"
+                              :key="m.id"
+                              :label="m.name"
+                              :value="m.id"
+                            >
+                              <span class="float-left">{{ m.name }}</span>
+                              <span class="float-right text-gray-400 text-xs ml-2">{{ m.provider }}</span>
+                            </el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="Target Model" class="mb-2">
+                          <el-select
+                            v-model="config.modelName"
+                            placeholder="e.g. deepseek-chat"
+                            class="w-full"
+                            size="small"
+                            filterable
+                            allow-create
+                            default-first-option
+                          >
+                            <el-option
+                              v-for="m in selectedModelProviderModels"
+                              :key="m"
+                              :label="m"
+                              :value="m"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-collapse class="mb-2">
+                          <el-collapse-item title="⚙️ Advanced Settings" name="1">
+                            <el-form-item label="System Prompt" class="mb-2">
+                              <el-input
+                                v-model="config.systemPrompt"
+                                type="textarea"
+                                :rows="2"
+                                placeholder="You are a helpful assistant..."
+                                size="small"
+                              ></el-input>
+                            </el-form-item>
+                            <el-form-item label="Temperature" class="mb-2">
+                              <div class="flex items-center gap-2">
+                                <el-slider
+                                  v-model="config.temperature"
+                                  :min="0"
+                                  :max="2"
+                                  :step="0.1"
+                                  class="flex-1"
+                                ></el-slider>
+                                <span class="text-xs w-6">{{ config.temperature }}</span>
+                              </div>
+                            </el-form-item>
+                            <el-form-item label="MCP Config (JSON)" class="mb-0">
+                              <el-input
+                                v-model="config.mcpConfig"
+                                type="textarea"
+                                :rows="3"
+                                placeholder="{ mcpServers: ... }"
+                                size="small"
+                              ></el-input>
+                            </el-form-item>
+                          </el-collapse-item>
+                        </el-collapse>
+                        <el-button
+                          type="primary"
+                          size="small"
+                          class="w-full"
+                          @click="createSession"
+                          :loading="creatingSession"
+                          :disabled="!selectedModelId || !config.modelName"
+                        >
+                          Create & Start
+                        </el-button>
+                      </el-form>
+                    </div>
+                  </el-collapse-item>
+                </el-collapse>
+
+                <!-- History Section -->
+                <div class="p-2 border-b border-gray-200 font-bold text-gray-700 flex justify-between items-center bg-gray-100">
+                   <span class="text-sm">📜 History</span>
+                   <el-button link size="small" :icon="Refresh" @click="refreshSessions"></el-button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-2">
                    <div 
@@ -114,133 +213,52 @@
                       :class="{'bg-blue-100 text-blue-700 font-bold border-blue-300': sessionID === s.id}"
                       @click="loadSession(s.id)"
                    >
-                      <div class="truncate pr-4">{{ s.name }}</div>
+                      <div class="truncate pr-12">{{ s.name }}</div>
                       <div class="text-gray-400 scale-90 origin-left mt-1">{{ new Date(s.createTime * 1000).toLocaleString() }}</div>
                       
-                      <!-- Delete Button (visible on hover) -->
-                      <div class="absolute right-1 top-1 hidden group-hover:block">
+                      <!-- Edit & Delete Buttons (visible on hover) -->
+                      <div class="absolute right-2 top-2 hidden group-hover:flex gap-2">
+                        <el-tooltip content="Edit" placement="top">
+                          <el-icon :size="16" @click.stop="openEditSessionDialog(s)" class="text-gray-500 hover:text-blue-600 cursor-pointer font-bold"><Setting /></el-icon>
+                        </el-tooltip>
                         <el-popconfirm title="Delete?" @confirm="deleteSession(s.id)" width="160">
                           <template #reference>
-                            <el-icon @click.stop class="text-gray-400 hover:text-red-500"><Close /></el-icon>
+                            <el-icon :size="16" @click.stop class="text-gray-500 hover:text-red-600 cursor-pointer font-bold"><Close /></el-icon>
                           </template>
                         </el-popconfirm>
                       </div>
                    </div>
-                   <div v-if="sessionList.length === 0" class="text-gray-400 text-center mt-4">No sessions</div>
+                   <div v-if="sessionList.length === 0" class="text-gray-400 text-center mt-4 text-xs">No sessions</div>
                 </div>
               </div>
 
               <!-- Main Chat Area -->
               <div class="flex-1 flex flex-col overflow-hidden">
-                <!-- Session Toolbar -->
+                <!-- Session Status Bar -->
                 <div
-                  class="p-2 border-b flex gap-2 items-center bg-gray-50 flex-wrap"
+                  class="p-2 border-b flex justify-between items-center bg-gray-50"
+                  v-if="sessionID"
                 >
-                  <span class="font-bold text-gray-600">Model:</span>
-                  <el-select
-                    v-model="selectedModelId"
-                    placeholder="Select Model"
-                    style="width: 200px"
-                    size="small"
-                    @focus="refreshModels"
-                  >
-                    <el-option
-                      v-for="m in models"
-                      :key="m.id"
-                      :label="m.name"
-                      :value="m.id"
-                    >
-                      <span class="float-left">{{ m.name }}</span>
-                      <span class="float-right text-gray-400 text-xs ml-2"
-                        >{{ m.modelName }}</span
-                      >
-                    </el-option>
-                  </el-select>
-
-                  <el-popover
-                    placement="bottom"
-                    title="Session Settings"
-                    :width="400"
-                    trigger="click"
-                  >
-                    <template #reference>
-                      <el-button size="small" :icon="Setting"
-                        >Settings</el-button
-                      >
-                    </template>
-                    <el-form label-position="top" size="small">
-                      <el-form-item label="Target Model">
-                        <el-select
-                          v-model="config.modelName"
-                          placeholder="Select Model (e.g. gpt-4)"
-                          class="w-full"
-                          filterable
-                          allow-create
-                          default-first-option
-                        >
-                          <el-option
-                            v-for="m in selectedModelProviderModels"
-                            :key="m"
-                            :label="m"
-                            :value="m"
-                          ></el-option>
-                        </el-select>
-                        <div class="text-xs text-gray-400 mt-1" v-if="!selectedModelId">
-                          Please select a Model Access first.
-                        </div>
-                      </el-form-item>
-                      <el-form-item label="System Prompt">
-                        <el-input
-                          v-model="config.systemPrompt"
-                          type="textarea"
-                          :rows="3"
-                          placeholder="You are a helpful assistant..."
-                        ></el-input>
-                      </el-form-item>
-                      <el-form-item label="Temperature">
-                        <div class="flex items-center gap-2">
-                          <el-slider
-                            v-model="config.temperature"
-                            :min="0"
-                            :max="2"
-                            :step="0.1"
-                            class="flex-1"
-                          ></el-slider>
-                          <span class="text-xs w-8">{{ config.temperature }}</span>
-                        </div>
-                      </el-form-item>
-                      <el-form-item label="MCP Config (JSON)">
-                        <el-input
-                          v-model="config.mcpConfig"
-                          type="textarea"
-                          :rows="5"
-                          placeholder="{ mcpServers: ... }"
-                        ></el-input>
-                      </el-form-item>
-                    </el-form>
-                  </el-popover>
-
-                  <div class="w-px h-4 bg-gray-300 mx-2"></div>
-
-                  <el-button
-                    type="primary"
-                    size="small"
-                    @click="createSession"
-                    :loading="creatingSession"
-                    :disabled="!selectedModelId"
-                    v-if="!sessionID" 
-                  >
-                    Start Chat
-                  </el-button>
-                  <span
-                    v-if="sessionID"
-                    class="text-green-600 font-bold ml-2 text-xs flex items-center gap-1"
-                    >
-                    <el-icon><ChatDotRound /></el-icon>
-                    Session #{{ sessionID }}
-                    </span
-                  >
+                  <div class="flex items-center gap-2">
+                    <el-icon class="text-green-500"><ChatDotRound /></el-icon>
+                    <span class="font-bold text-gray-700">Session #{{ sessionID }}</span>
+                    <el-tag size="small" type="info">{{ currentSessionModelName || 'Unknown' }}</el-tag>
+                  </div>
+                  <div class="flex items-center gap-3 text-xs text-gray-500">
+                    <span v-if="sessionTokenUsage.total > 0">
+                      📊 Tokens: <strong>{{ sessionTokenUsage.total }}</strong>
+                      (P: {{ sessionTokenUsage.prompt }} / C: {{ sessionTokenUsage.completion }})
+                    </span>
+                  </div>
                 </div>
+                <div
+                  class="p-2 border-b flex justify-center items-center bg-gray-50 text-gray-400"
+                  v-else
+                >
+                  <el-icon class="mr-1"><ChatDotRound /></el-icon>
+                  Create a session to start chatting
+                </div>
+
 
                 <!-- Chat Messages -->
                 <div
@@ -581,6 +599,68 @@
           </span>
         </template>
       </el-dialog>
+
+      <!-- Edit Session Dialog -->
+      <el-dialog
+        v-model="editSessionDialogVisible"
+        title="Edit Session"
+        width="450px"
+      >
+        <el-form size="small" label-position="top">
+          <el-form-item label="Session Name">
+            <el-input v-model="editingSession.name" placeholder="Session Name"></el-input>
+          </el-form-item>
+          <el-form-item label="Model Access">
+            <el-select
+              v-model="editingSession.modelAccessID"
+              placeholder="Select Model Access"
+              class="w-full"
+              @focus="refreshModels"
+              @change="onEditModelAccessChange"
+            >
+              <el-option
+                v-for="m in models"
+                :key="m.id"
+                :label="m.name"
+                :value="m.id"
+              >
+                <span class="float-left">{{ m.name }}</span>
+                <span class="float-right text-gray-400 text-xs ml-2">{{ m.provider }}</span>
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Target Model">
+            <el-select
+              v-model="editingSession.modelName"
+              placeholder="Select Model"
+              class="w-full"
+              filterable
+              allow-create
+              default-first-option
+            >
+              <el-option
+                v-for="m in editingSessionProviderModels"
+                :key="m"
+                :label="m"
+                :value="m"
+              ></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="System Prompt">
+            <el-input v-model="editingSession.systemPrompt" type="textarea" :rows="3" placeholder="System Prompt"></el-input>
+          </el-form-item>
+          <el-form-item label="Temperature">
+            <div class="flex items-center gap-2">
+              <el-slider v-model="editingSession.temperature" :min="0" :max="2" :step="0.1" class="flex-1"></el-slider>
+              <span class="text-xs w-6">{{ editingSession.temperature }}</span>
+            </div>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="editSessionDialogVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="updateSession" :loading="updatingSession">Save</el-button>
+        </template>
+      </el-dialog>
     </div>
 
     <script>
@@ -591,9 +671,10 @@
 
       const app = createApp({
         setup() {
-          const activeTab = ref("models"); // Start on Models tab to guide user flow
+          const activeTab = ref("chat"); // Default to Chat Session tab
+          const newSessionExpanded = ref([]); // New Session section collapsed by default (empty array)
           const config = reactive({
-            baseUrl: "http://localhost:8080",
+            baseUrl: "http://127.0.0.1:8088",
             token: "",
             mcpConfig: "{}",
             temperature: 0.7,
@@ -611,6 +692,13 @@
           const selectedFile = ref(null);
           const mcpLogs = ref([]);
           const sessionList = ref([]);
+          const newSessionName = ref("");
+          const currentSessionModelName = ref("");
+          const sessionTokenUsage = reactive({
+            total: 0,
+            prompt: 0,
+            completion: 0
+          });
 
           const refreshSessions = async () => {
              try {
@@ -622,15 +710,34 @@
           const loadSession = async (id) => {
              sessionID.value = id;
              messages.value = [];
+             // Reset token usage
+             sessionTokenUsage.total = 0;
+             sessionTokenUsage.prompt = 0;
+             sessionTokenUsage.completion = 0;
+             
              try {
+                // Get session details first
+                const sessionInfo = sessionList.value.find(s => s.id === id);
+                if (sessionInfo) {
+                  currentSessionModelName.value = sessionInfo.modelName || 'Unknown';
+                }
+                
                 const res = await api(`/market/ai/sessions/${id}/messages?page=1&pageSize=50`);
                 if (res.list) {
-                    messages.value = res.list.map(m => ({
-                        role: m.role,
-                        content: m.content,
-                        tools: m.toolCalls && m.toolCalls !== "[]" ? JSON.parse(m.toolCalls) : [],
-                        usage: { totalTokens: m.totalTokens || 0 }
-                    })).reverse(); 
+                    let totalTokens = 0;
+                    messages.value = res.list.map(m => {
+                        const tokens = m.totalTokens || 0;
+                        totalTokens += tokens;
+                        return {
+                            role: m.role,
+                            content: m.content,
+                            tools: m.toolCalls && m.toolCalls !== "[]" ? JSON.parse(m.toolCalls) : [],
+                            usage: { totalTokens: tokens }
+                        };
+                    }).reverse();
+                    
+                    // Update session token usage
+                    sessionTokenUsage.total = totalTokens;
                 }
              } catch(e) { ElementPlus.ElMessage.error(e.message); }
           };
@@ -654,6 +761,66 @@
           const createNewConfig = () => {
             sessionID.value = null;
             messages.value = [];
+          };
+
+          // Edit Session State & Functions
+          const editSessionDialogVisible = ref(false);
+          const updatingSession = ref(false);
+          const editingSession = reactive({
+            id: null,
+            name: "",
+            modelAccessID: null,
+            modelName: "",
+            systemPrompt: "",
+            temperature: 0.7
+          });
+
+          const editingSessionProviderModels = computed(() => {
+            if (!editingSession.modelAccessID) return [];
+            const model = models.value.find(m => m.id === editingSession.modelAccessID);
+            if (!model) return [];
+            const provider = supportedProviders.value.find(p => p.id === model.provider);
+            return provider ? provider.models || [] : [];
+          });
+
+          const onEditModelAccessChange = () => {
+            // Reset model name when changing model access
+            editingSession.modelName = "";
+          };
+
+          const openEditSessionDialog = (session) => {
+            editingSession.id = session.id;
+            editingSession.name = session.name || "";
+            editingSession.modelAccessID = session.modelAccessID || null;
+            editingSession.modelName = session.modelName || "";
+            editingSession.systemPrompt = session.systemPrompt || "";
+            editingSession.temperature = session.temperature || 0.7;
+            editSessionDialogVisible.value = true;
+          };
+
+          const updateSession = async () => {
+            updatingSession.value = true;
+            try {
+              await api('/market/ai/sessions', 'PUT', {
+                id: editingSession.id,
+                name: editingSession.name,
+                modelAccessID: editingSession.modelAccessID,
+                modelName: editingSession.modelName,
+                systemPrompt: editingSession.systemPrompt,
+                temperature: editingSession.temperature
+              });
+              ElementPlus.ElMessage.success('Session updated');
+              editSessionDialogVisible.value = false;
+              await refreshSessions();
+              // If current session was updated, reload it
+              if (sessionID.value === editingSession.id) {
+                currentSessionModelName.value = editingSession.modelName;
+              }
+            } catch (e) {
+              ElementPlus.ElMessage.error('Update failed: ' + e.message);
+            } finally {
+              updatingSession.value = false;
+            }
           };
 
           // Model Manager State
@@ -888,10 +1055,14 @@
                 throw new Error("Please select a model first");
               
               if (!config.modelName)
-                throw new Error("Please select a Target Model in Settings.");
+                throw new Error("Please select a Target Model.");
+
+              // Use custom session name or auto-generate
+              const sessionName = newSessionName.value.trim() || 
+                `Session ${new Date().toLocaleTimeString()}`;
 
               const req = {
-                name: `Session ${new Date().toLocaleTimeString()}`,
+                name: sessionName,
                 modelAccessID: selectedModelId.value,
                 modelName: config.modelName,
                 maxContext: 10,
@@ -903,13 +1074,26 @@
 
               const data = await api("/market/ai/sessions", "POST", req);
               sessionID.value = data.session ? data.session.id : data.id;
+              currentSessionModelName.value = config.modelName;
+              
+              // Reset token usage for new session
+              sessionTokenUsage.total = 0;
+              sessionTokenUsage.prompt = 0;
+              sessionTokenUsage.completion = 0;
+
               messages.value = [
                 {
                   role: "assistant",
-                  content: `Session ${sessionID.value} created using ${selectedModel.name}.`,
+                  content: `Session "${sessionName}" created using ${selectedModel.name} (${config.modelName}).`,
                   tools: [],
                 },
               ];
+
+              // Auto-refresh history list and reset form
+              await refreshSessions();
+              newSessionName.value = "";
+              
+              ElementPlus.ElMessage.success(`Session created: ${sessionName}`);
             } catch (e) {
               ElementPlus.ElMessage.error(e.message);
             } finally {
@@ -1003,7 +1187,19 @@
                       } else if (ev.type === "error") {
                           ElementPlus.ElMessage.error(ev.content);
                           aiMsg.content += `\n[System Error: ${ev.content}]`;
-                      } else if (ev.usage) aiMsg.usage = ev.usage;
+                      } else if (ev.usage) {
+                        aiMsg.usage = ev.usage;
+                        // Accumulate token usage
+                        if (ev.usage.totalTokens) {
+                          sessionTokenUsage.total += ev.usage.totalTokens;
+                        }
+                        if (ev.usage.promptTokens) {
+                          sessionTokenUsage.prompt += ev.usage.promptTokens;
+                        }
+                        if (ev.usage.completionTokens) {
+                          sessionTokenUsage.completion += ev.usage.completionTokens;
+                        }
+                      }
                     } catch (e) {}
                   }
                 });
@@ -1052,6 +1248,18 @@
             loadSession,
             deleteSession,
             createNewConfig,
+            newSessionName,
+            currentSessionModelName,
+            sessionTokenUsage,
+            newSessionExpanded,
+            // Edit Session
+            editSessionDialogVisible,
+            updatingSession,
+            editingSession,
+            editingSessionProviderModels,
+            onEditModelAccessChange,
+            openEditSessionDialog,
+            updateSession,
             // Models
             models,
             modelsLoading,
