@@ -64,7 +64,7 @@ message DeptQueryDTO {
     //    int32 size = 2;
     // @inject_tag: json:"name,omitempty" desc:"部门名称"
     string name = 3;
-    // @inject_tag: json:"status,omitempty" desc:"状态：1-禁用，2-启用"
+    // @inject_tag: json:"status,omitempty" desc:"状态：1-启用，2-禁用"
     int32 status = 5;
     // @inject_tag: json:"parentId,omitempty" desc:"父部门ID"
     int64 parentId = 6;
@@ -177,7 +177,7 @@ message ListDeptsResponse {
 message ListDeptsRequest {
     // @inject_tag: json:"name,omitempty" desc:"部门名称"
     string name = 1;
-    // @inject_tag: json:"status,omitempty" desc:"状态：1-禁用，2-启用"
+    // @inject_tag: json:"status,omitempty" desc:"状态：1-启用，2-禁用"
     int32 status = 2;
     // @inject_tag: json:"parentId,omitempty" desc:"父部门ID"
     int64 parentId = 3;
@@ -198,7 +198,7 @@ message BatchDeleteDeptResponse {
 message UpdateDeptStatusRequest {
     // @inject_tag: json:"id" uri:"id" binding:"required" desc:"部门ID"
     int64 id = 1;
-    // @inject_tag: json:"status" binding:"required" desc:"状态：1-禁用，2-启用"
+    // @inject_tag: json:"status" binding:"required" desc:"状态：1-启用，2-禁用"
     int32 status = 2;
 }
 
