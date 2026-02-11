@@ -117,10 +117,6 @@
       method: POST
       permission:
         - mcpcan_resource_manage:create_code_package
-    - path: /market/code/download/:packageId
-      method: GET
-      permission:
-        - mcpcan_resource_manage:download_code_package
     - path: /market/code/packages
       method: GET
       permission:
@@ -145,10 +141,6 @@
       method: POST
       permission:
         - mcpcan_resource_manage:create_openapi
-    - path: /market/openapi/download/:openapiFileId
-      method: GET
-      permission:
-        - mcpcan_resource_manage:download_openapi
     - path: /market/openapi/files
       method: GET
       permission:
@@ -264,7 +256,6 @@
       method: POST
       permission:
         - mcpcan_instance:agent_platform_sync
-
 
 - name: DeptService
   auths:
