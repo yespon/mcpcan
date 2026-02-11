@@ -96,7 +96,8 @@
         "phone": " 请输入手机号码",
         "department": "请选择部门",
         "roles": "请选择角色",
-        "blurry": "用户名/邮箱"
+        "blurry": "用户名/邮箱",
+        "usernameRule": "用户名仅支持英文字母"
       },
       "columns": {
         "username": "用户名",

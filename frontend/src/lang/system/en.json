@@ -95,7 +95,8 @@
         "phone": "Please enter phone number",
         "department": "Please select department",
         "roles": "Please select roles",
-        "blurry": "Username/Email"
+        "blurry": "Username/Email",
+        "usernameRule": "Username can only contain English letters"
       },
       "columns": {
         "username": "Username",
