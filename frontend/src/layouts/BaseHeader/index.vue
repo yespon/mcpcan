@@ -81,12 +81,14 @@
                   <div class="user-info">
                     <div class="name">{{ userInfo.nickname || 'XXX' }}</div>
                     <div class="role">
-                      {{ userInfo.roleNames[0] || '暂无角色' }}
+                      <template v-if="userInfo.roleNames?.length === 1">
+                        {{ userInfo.roleNames[0] || '暂无角色' }}
+                      </template>
                       <el-tooltip
                         effect="dark"
                         :content="userInfo.roleNames?.join(',')"
                         placement="top-start"
-                        v-if="userInfo.roleNames?.length > 1"
+                        v-else
                       >
                         {{ userInfo.roleNames[0] }}
                       </el-tooltip>
