@@ -123,6 +123,10 @@ func (s *DeptService) UpdateDept(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeInternalError, "Department sort is required")
 		return
 	}
+	if req.ParentId == req.Id {
+		common.GinError(c, i18nresp.CodeInternalError, "Parent cannot be the same as the current department")
+		return
+	}
 
 	userInfo, err := utils.GetCurrentUser(c)
 	if err != nil {
