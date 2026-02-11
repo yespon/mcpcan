@@ -66,6 +66,24 @@ func (a *App) createAdminRoleMenus(adminUser *model.SysUser) error {
 		}
 	}
 
+	for _, m := range menuChildToList(menus) {
+		dbMenu, err := mysql.SysMenuRepo.FindByPermission(context.Background(), m.Permission)
+		if err != nil {
+			continue
+		}
+		if dbMenu.GetPath() != m.Path || dbMenu.GetEngTitle() != m.EngTitle ||
+			dbMenu.GetTitle() != m.Title || dbMenu.GetMenuSort() != int64(m.Sort) {
+			dbMenu.Title = &m.Title
+			dbMenu.EngTitle = &m.EngTitle
+			dbMenu.MenuSort = &m.Sort
+			dbMenu.Path = &m.Path
+			err := mysql.SysMenuRepo.Update(context.Background(), dbMenu)
+			if err != nil {
+				return fmt.Errorf("failed to update menu: %w", err)
+			}
+		}
+	}
+
 	return nil
 }
 

@@ -73,6 +73,16 @@ func (r *SysMenuRepository) FindByID(ctx context.Context, menuID int64) (*model.
 	return &menu, nil
 }
 
+// FindByPermission 根据权限查找菜单
+func (r *SysMenuRepository) FindByPermission(ctx context.Context, permission string) (*model.SysMenu, error) {
+	var menu model.SysMenu
+	err := r.getDB().WithContext(ctx).Where("permission = ?", permission).First(&menu).Error
+	if err != nil {
+		return nil, err
+	}
+	return &menu, nil
+}
+
 // FindWithPagination 分页查询菜单（支持菜单名称模糊查询）
 func (r *SysMenuRepository) FindWithPagination(ctx context.Context, page, pageSize int, keyword string) ([]*model.SysMenu, int64, error) {
 	var menus []*model.SysMenu

@@ -33,7 +33,7 @@ type Menu struct {
 	Type       int     `json:"type"`
 	Sort       int     `json:"sort"`
 	Path       string  `json:"path"`
-	EngTitle   string  `json:"engTitle"`
+	EngTitle   string  `json:"engTitle" yaml:"engTitle"`
 	Children   []*Menu `json:"children"`
 }
 
