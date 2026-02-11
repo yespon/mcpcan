@@ -2,9 +2,11 @@ package biz
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -1313,20 +1315,32 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 }
 
 func BuildMcpClient(mcpInstance *model.McpInstance, mcpServerUrl string, headers map[string]string) (*client.Client, error) {
-	// 给该 mcp 实例创建对应的 http client
+	// 1. 创建一个跳过 verify 的自定义 HTTP Client
+	insecureHttpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // 关键：跳过证书校验
+			},
+		},
+	}
+
 	var mcpClient *client.Client
 	var err error
+
 	if mcpInstance.McpProtocol == model.McpProtocolSSE {
 		mcpClient, err = client.NewSSEMCPClient(
 			mcpServerUrl,
 			client.WithHeaders(headers),
+			client.WithHTTPClient(insecureHttpClient),
 		)
 	} else {
 		mcpClient, err = client.NewStreamableHttpClient(
 			mcpServerUrl,
 			transport.WithHTTPHeaders(headers),
+			transport.WithHTTPBasicClient(insecureHttpClient),
 		)
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("create mcp client failed: %s", err.Error())
 	}
@@ -1335,6 +1349,7 @@ func BuildMcpClient(mcpInstance *model.McpInstance, mcpServerUrl string, headers
 	if err != nil {
 		return nil, fmt.Errorf("start mcp client failed: %s", err.Error())
 	}
+
 	_, err = mcpClient.Initialize(context.Background(), mcp.InitializeRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("init mcp failed (DEBUG_TAG): %s", err.Error())
