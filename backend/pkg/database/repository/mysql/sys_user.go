@@ -100,7 +100,7 @@ func (r *SysUserRepository) FindWithPagination(ctx context.Context, page, pageSi
 
 	// 名称或邮箱的模糊查询
 	if keyword != "" {
-		query = query.Where("nick_name LIKE ? OR email LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+		query = query.Where("nick_name LIKE ? OR email LIKE ? or username LIKE ?", "%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 	}
 
 	// 状态查询
