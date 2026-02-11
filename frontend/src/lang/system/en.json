@@ -110,6 +110,9 @@
         "roles": "Roles",
         "createTime": "Create Time"
       },
+      "search": {
+        "name": "Name/Email"
+      },
       "gender": {
         "male": "Male",
         "female": "Female"

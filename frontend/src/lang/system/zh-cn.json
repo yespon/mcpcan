@@ -111,6 +111,9 @@
         "roles": "角色",
         "createTime": "创建时间"
       },
+      "search": {
+        "name": "名称/邮箱"
+      },
       "gender": {
         "male": "男",
         "female": "女"
