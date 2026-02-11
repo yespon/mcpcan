@@ -2,10 +2,13 @@ package biz
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/llm"
@@ -116,6 +119,14 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 	transportType = strings.ToLower(transportType)
 	transportType = strings.ReplaceAll(transportType, "_", "-") // Normalize snake_case to kebab-case if needed
 
+	// 创建一个跳过证书验证的 HTTP Client 用于调试
+	insecureClient := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
 	switch transportType {
 	case model.McpProtocolSSE.String(), "http": // Standard MCP over HTTP (SSE)
 		if srv.URL == "" {
@@ -125,6 +136,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 		mcpClient, err = client.NewSSEMCPClient(
 			srv.URL,
 			client.WithHeaders(srv.Headers),
+			client.WithHTTPClient(insecureClient),
 		)
 	case model.McpProtocolStreamableHttp.String(): // Streamable HTTP (NDJSON/etc)
 		if srv.URL == "" {
@@ -134,6 +146,7 @@ func (m *McpManager) initializeClient(ctx context.Context, name string, srv util
 		mcpClient, err = client.NewStreamableHttpClient(
 			srv.URL,
 			transport.WithHTTPHeaders(srv.Headers),
+			transport.WithHTTPBasicClient(insecureClient),
 		)
 	case model.McpProtocolStdio.String():
 		if srv.Command == "" {
