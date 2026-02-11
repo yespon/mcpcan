@@ -269,6 +269,11 @@ func (s *DeptService) FindDepts(c *gin.Context) {
 		pid = &[]uint{uint(req.ParentId)}[0]
 	}
 
+	// 如果需要通过名称模糊查询，则将 pid 设置为0，为0的时候代表全量查询
+	if req.Name != "" {
+		pid = &[]uint{uint(0)}[0]
+	}
+
 	// Get departments with pagination
 	depts, _, err := mysql.SysDeptRepo.FindWithPagination(c.Request.Context(), 1, 99999, req.Name, pid, req.Status)
 	if err != nil {

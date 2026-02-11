@@ -101,11 +101,15 @@ func (r *SysDeptRepository) FindWithPagination(ctx context.Context, page, pageSi
 	if keyword != "" {
 		query = query.Where("name LIKE ?", "%"+keyword+"%")
 	}
+
+	// pid 不为0时，查询子部门
 	if pid != nil {
 		if *pid > 0 {
 			query = query.Where("pid = ?", pid)
 		}
+		// pid 为0时，查询所有部门
 	} else {
+		// pid 为空的时候查询顶级
 		query = query.Where("pid IS NULL")
 	}
 
