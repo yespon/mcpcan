@@ -26,10 +26,10 @@
       },
       "formData": {
         "title": "Create Department",
-        "name": "Department Name",
+        "name": "Name",
         "imageUrl": "Icon",
         "deptSort": "Sort",
-        "pid": "Parent Department",
+        "pid": "Top Department",
         "status": "Status"
       }
     },
