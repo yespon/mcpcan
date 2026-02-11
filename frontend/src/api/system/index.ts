@@ -5,7 +5,7 @@ export const RoleAPI = {
     return request<TableData, List<any>>({
       url: `/authz/roles/list-roles`,
       method: 'GET',
-      data,
+      params: data,
     })
   },
   allList() {
