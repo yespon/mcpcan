@@ -239,8 +239,9 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	}
 
 	provider, err := llm.NewProvider(providerType, llm.ProviderConfig{
-		BaseURL: modelAccess.BaseUrl,
-		APIKey:  modelAccess.ApiKey,
+		BaseURL:  modelAccess.BaseUrl,
+		APIKey:   modelAccess.ApiKey,
+		ProxyURL: llm.GlobalProxyURL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to init provider: %s", err.Error())

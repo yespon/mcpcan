@@ -70,6 +70,10 @@ var DefaultBaseURLs = map[ProviderType]string{
 	ProviderMCP:         "",
 }
 
+// GlobalProxyURL defines the global proxy URL
+// If set, it will be used by default for all LLM requests (except local ones)
+const GlobalProxyURL = "http://127.0.0.1:7897"
+
 // GetSupportedProviderList returns list of all supported provider IDs
 func GetSupportedProviderList() []string {
 	return []string{
@@ -98,8 +102,9 @@ func IsValidProvider(provider string) bool {
 
 // ProviderConfig holds configuration for LLM provider
 type ProviderConfig struct {
-	BaseURL string
-	APIKey  string
+	BaseURL  string
+	APIKey   string
+	ProxyURL string
 }
 
 // MessageContentPart represents a part of the message content (text or image)

@@ -92,8 +92,9 @@ func IsValidProvider(provider string) bool {
 
 // ProviderConfig holds configuration for LLM provider
 type ProviderConfig struct {
-	BaseURL string
-	APIKey  string
+	BaseURL  string
+	APIKey   string
+	ProxyURL string
 }
 
 // MessageContentPart represents a part of the message content (text or image)

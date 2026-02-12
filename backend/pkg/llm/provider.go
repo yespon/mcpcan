@@ -77,9 +77,10 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 			}
 
 			// Google Gemini API 要求并行 Function Calling 的结果必须在一条 user 消息中返回
-			// 即：model -> user(part1, part2...) -> model
-			// 而不能是：model -> user(part1) -> user(part2)...
-			// 因此，如果当前是 Tool 消息，且上一条也是 Tool 消息，则合并 Parts
+			// 但 langchaingo 库的 googleai 实现可能严格校验了 Tool 消息只能包含一个 Part
+			// 报错：[System Error: expected exactly one part for role tool, got 2]
+			// 因此暂时禁用合并逻辑，让 langchaingo 自行处理（或 API 支持多条 Tool 消息）
+			/*
 			if role == llms.ChatMessageTypeTool && len(content) > 0 {
 				lastIdx := len(content) - 1
 				if content[lastIdx].Role == llms.ChatMessageTypeTool {
@@ -87,6 +88,7 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 					continue
 				}
 			}
+			*/
 
 			content = append(content, llms.MessageContent{
 				Role:  role,

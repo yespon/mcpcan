@@ -163,8 +163,9 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	}
 
 	config := llm.ProviderConfig{
-		BaseURL: baseUrl,
-		APIKey:  apiKey,
+		BaseURL:  baseUrl,
+		APIKey:   apiKey,
+		ProxyURL: llm.GlobalProxyURL,
 	}
 
 	provider, err := llm.NewProvider(providerType, config)
