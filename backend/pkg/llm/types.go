@@ -111,12 +111,13 @@ type MessageImageURL struct {
 
 // Message represents a chat message
 type Message struct {
-	Role         string               `json:"role"`
-	Content      string               `json:"content"` // For backwards compatibility and simple text
-	MultiContent []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
-	ToolCalls    []ToolCall           `json:"tool_calls,omitempty"`
-	ToolCallID   string               `json:"tool_call_id,omitempty"`
-	ToolCallName string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
+	Role             string               `json:"role"`
+	Content          string               `json:"content"` // For backwards compatibility and simple text
+	MultiContent     []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
+	ToolCalls        []ToolCall           `json:"tool_calls,omitempty"`
+	ToolCallID       string               `json:"tool_call_id,omitempty"`
+	ToolCallName     string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
+	ReasoningContent string               `json:"reasoning_content,omitempty"` // 思考过程 (DeepSeek/Kimi)
 }
 
 // ToolCall represents a tool call request from LLM
@@ -165,11 +166,12 @@ type ToolOutput struct {
 
 // StreamResponse represents a chunk of response from streaming API
 type StreamResponse struct {
-	Content     string
-	ToolCalls   []ToolCall
-	ToolOutputs []ToolOutput // Added for notifying execution results
-	Usage       *Usage
-	Error       error
+	Content          string
+	ReasoningContent string       // Added for DeepSeek/Kimi thinking
+	ToolCalls        []ToolCall
+	ToolOutputs      []ToolOutput // Added for notifying execution results
+	Usage            *Usage
+	Error            error
 }
 
 // Usage represents token usage statistics

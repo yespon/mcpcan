@@ -235,7 +235,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	// 4. Init LLM Provider
 	providerType := llm.ProviderOpenAI
 	if modelAccess.Provider != "" {
-		providerType = llm.ProviderType(modelAccess.Provider)
+		providerType = llm.ProviderType(strings.ToLower(modelAccess.Provider))
 	}
 
 	provider, err := llm.NewProvider(providerType, llm.ProviderConfig{
@@ -291,6 +291,9 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				m.ToolCallName = name
 			}
 		}
+		// 只透传数据库中实际存储的 reasoning_content
+		// omitempty 保证空值不序列化，避免不支持的模型（如 Mistral）报 422
+		m.ReasoningContent = msg.ReasoningContent
 		messages = append(messages, m)
 	}
 
@@ -469,36 +472,52 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		maxTurns := 10 // Safety limit for tool loops
 
 		for turn := 0; turn < maxTurns; turn++ {
+			// Kimi (Moonshot) 模型有温度限制，通常只支持 1.0 (或默认值)
+			// 用户反馈报错: [System Error: API returned unexpected status code: 400: invalid temperature: only 1 is allowed for this model]
+			temperature := float32(session.Temperature)
+			if providerType == llm.ProviderMoonshot {
+				temperature = 1.0
+			}
+
 			reqChat := llm.ChatRequest{
 				Model:       session.ModelName,
 				Messages:    currentMessages,
 				Stream:      true,
 				Tools:       tools,
-				Temperature: float32(session.Temperature),
+				Temperature: temperature,
 			}
 
 			fmt.Printf("[AiSessionBiz] Start StreamChat. ProviderType: %s, Model: %s\n", providerType, session.ModelName)
+
 			stream, err := provider.StreamChat(ctx, reqChat)
 			if err != nil {
+				fmt.Printf("[AiSessionBiz] StreamChat failed: %v\n", err)
 				outCh <- llm.StreamResponse{Error: err}
 				return
 			}
 
 			var accumulatedContent string
+			var accumulatedReasoning string
+			// accumulatedToolCalls 键是 index, 值是 *ToolCall
 			accumulatedToolCalls := make(map[int]*llm.ToolCall)
-			var finalUsage *llm.Usage // 累积 Token 统计信息
-
+			var finalUsage *llm.Usage
+			
+			// Stream Loop
 			for resp := range stream {
 				if resp.Error != nil {
 					// If we have accumulated content, save it before returning error
-					if accumulatedContent != "" {
+					if accumulatedContent != "" || accumulatedReasoning != "" {
 						asstMsg := &model.AiMessage{
-							SessionID:  sessionID,
-							Role:       "assistant",
-							Content:    accumulatedContent,
-							CreateTime: time.Now(),
+							SessionID:        sessionID,
+							Role:             "assistant",
+							Content:          accumulatedContent,
+							ReasoningContent: accumulatedReasoning,
+							CreateTime:       time.Now(),
 						}
 						if finalUsage != nil {
+							asstMsg.PromptTokens = finalUsage.PromptTokens
+							asstMsg.CompletionTokens = finalUsage.CompletionTokens
+							asstMsg.TotalTokens = finalUsage.TotalTokens
 							asstMsg.PromptTokens = finalUsage.PromptTokens
 							asstMsg.CompletionTokens = finalUsage.CompletionTokens
 							asstMsg.TotalTokens = finalUsage.TotalTokens
@@ -517,6 +536,11 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				if resp.Content != "" {
 					accumulatedContent += resp.Content
 					outCh <- llm.StreamResponse{Content: resp.Content}
+				}
+				
+				if resp.ReasoningContent != "" {
+					accumulatedReasoning += resp.ReasoningContent
+					outCh <- llm.StreamResponse{ReasoningContent: resp.ReasoningContent}
 				}
 
 				if len(resp.ToolCalls) > 0 {
@@ -554,10 +578,11 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 			if len(accumulatedToolCalls) == 0 {
 				// No tools called, save assistant message and exit
 				asstMsg := &model.AiMessage{
-					SessionID:  sessionID,
-					Role:       "assistant",
-					Content:    accumulatedContent,
-					CreateTime: time.Now(),
+					SessionID:        sessionID,
+					Role:             "assistant",
+					Content:          accumulatedContent,
+					ReasoningContent: accumulatedReasoning,
+					CreateTime:       time.Now(),
 				}
 				// 添加 Token 统计
 				if finalUsage != nil {
@@ -583,20 +608,23 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				}
 			}
 
-			// Append Assistant Message
+			// Append Assistant message to context
 			currentMessages = append(currentMessages, llm.Message{
-				Role:      "assistant",
-				Content:   accumulatedContent,
-				ToolCalls: toolCalls,
+				Role:             "assistant",
+				Content:          accumulatedContent,
+				ReasoningContent: accumulatedReasoning,
+				ToolCalls:        toolCalls,
 			})
 
-			toolCallsJSON, _ := json.Marshal(toolCalls)
+			toolCallsJson, _ := json.Marshal(toolCalls)
+			// Save Assistant Message (with Tool Calls)
 			dbAsstMsg := &model.AiMessage{
-				SessionID:  sessionID,
-				Role:       "assistant",
-				Content:    accumulatedContent,
-				ToolCalls:  string(toolCallsJSON),
-				CreateTime: time.Now(),
+				SessionID:        sessionID,
+				Role:             "assistant",
+				Content:          accumulatedContent,
+				ReasoningContent: accumulatedReasoning,
+				ToolCalls:        string(toolCallsJson),
+				CreateTime:       time.Now(),
 			}
 			// 添加 Token 统计
 			if finalUsage != nil {

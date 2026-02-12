@@ -15,7 +15,6 @@ import (
 	"github.com/tmc/langchaingo/llms/anthropic"
 	"github.com/tmc/langchaingo/llms/googleai"
 	"github.com/tmc/langchaingo/llms/ollama"
-	"github.com/tmc/langchaingo/llms/openai"
 )
 
 // NewProvider creates a new LLM provider instance based on the type and config
@@ -62,43 +61,32 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 
 	switch typ {
 	case ProviderOpenAI, ProviderDeepSeek, ProviderMoonshot, ProviderQwen, ProviderDoubao, ProviderZhipu, ProviderXAI, ProviderMistral, ProviderOpenRouter, ProviderLiteLLM, ProviderAzureOpenAI:
-// ... (omitted switch cases) implementation details below
-		// All these providers use OpenAI-compatible API
-		opts := []openai.Option{
-			openai.WithToken(config.APIKey),
-		}
-		
+		// 所有 OpenAI 兼容 Provider 统一使用自定义 HTTP 实现
+		// 支持 reasoning_content 等标准扩展字段，不依赖 langchaingo
 		baseURL := config.BaseURL
-		// Set default BaseURL if not provided
 		if baseURL == "" {
 			if defaultURL, ok := DefaultBaseURLs[typ]; ok && defaultURL != "" {
 				baseURL = defaultURL
 			}
 		}
 
-		if baseURL != "" {
-			opts = append(opts, openai.WithBaseURL(baseURL))
-		}
-
-		// Configure HTTP Client
 		httpClient := &http.Client{
 			Transport: baseTransport,
 		}
 
+		var extraHeaders map[string]string
 		if typ == ProviderOpenRouter {
-			// Add OpenRouter specific headers wraps the base transport
-			httpClient.Transport = &headerTransport{
-				transport: baseTransport,
-				headers: map[string]string{
-					"HTTP-Referer": "https://github.com/kymo-mcp/mcpcan", // Optional. Site URL for rankings on openrouter.ai.
-					"X-Title":      "MCPCan",                             // Optional. Site title for rankings on openrouter.ai.
-				},
+			extraHeaders = map[string]string{
+				"HTTP-Referer": "https://github.com/kymo-mcp/mcpcan",
+				"X-Title":      "MCPCan",
 			}
 		}
-		
-		opts = append(opts, openai.WithHTTPClient(httpClient))
-		
-		model, err = openai.New(opts...)
+
+		// Kimi/DeepSeek 需要 reasoning_content 支持
+		supportsReasoning := (typ == ProviderMoonshot || typ == ProviderDeepSeek)
+
+		log.Printf("[Factory] Creating OpenAICompatProvider for %s, base URL: %s, reasoning=%v", typ, baseURL, supportsReasoning)
+		return NewOpenAICompatProvider(baseURL, config.APIKey, httpClient, extraHeaders, supportsReasoning), nil
 
 	case ProviderGoogle:
 		// Google Gemini

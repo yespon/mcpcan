@@ -2,6 +2,7 @@ package llm_adapter
 
 import (
 	"context"
+	"os"
 )
 
 // ProviderType defines the type of LLM provider
@@ -72,7 +73,15 @@ var DefaultBaseURLs = map[ProviderType]string{
 
 // GlobalProxyURL defines the global proxy URL
 // If set, it will be used by default for all LLM requests (except local ones)
-const GlobalProxyURL = "http://127.0.0.1:7897"
+var GlobalProxyURL string
+
+func init(){
+	// init global proxy
+	if os.Getenv("HTTP_PROXY") != "" {
+		GlobalProxyURL = os.Getenv("HTTP_PROXY")
+	}
+}
+
 
 // GetSupportedProviderList returns list of all supported provider IDs
 func GetSupportedProviderList() []string {
@@ -121,12 +130,13 @@ type MessageImageURL struct {
 
 // Message represents a chat message
 type Message struct {
-	Role         string               `json:"role"`
-	Content      string               `json:"content"` // For backwards compatibility and simple text
-	MultiContent []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
-	ToolCalls    []ToolCall           `json:"tool_calls,omitempty"`
-	ToolCallID   string               `json:"tool_call_id,omitempty"`
-	ToolCallName string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
+	Role             string               `json:"role"`
+	Content          string               `json:"content"` // For backwards compatibility and simple text
+	MultiContent     []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
+	ToolCalls        []ToolCall           `json:"tool_calls,omitempty"`
+	ToolCallID       string               `json:"tool_call_id,omitempty"`
+	ToolCallName     string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
+	ReasoningContent string               `json:"reasoning_content,omitempty"` // 思考过程 (DeepSeek/Kimi)
 }
 
 // ToolCall represents a tool call request from LLM
@@ -175,11 +185,12 @@ type ToolOutput struct {
 
 // StreamResponse represents a chunk of response from streaming API
 type StreamResponse struct {
-	Content     string
-	ToolCalls   []ToolCall
-	ToolOutputs []ToolOutput // Added for notifying execution results
-	Usage       *Usage
-	Error       error
+	Content          string
+	ReasoningContent string       // Added for DeepSeek/Kimi thinking
+	ToolCalls        []ToolCall
+	ToolOutputs      []ToolOutput // Added for notifying execution results
+	Usage            *Usage
+	Error            error
 }
 
 // Usage represents token usage statistics

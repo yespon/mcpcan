@@ -13,6 +13,7 @@ type AiMessage struct {
 	PromptTokens     int       `gorm:"default:0;column:prompt_tokens;comment:Prompt Token数"`
 	CompletionTokens int       `gorm:"default:0;column:completion_tokens;comment:Completion Token数"`
 	TotalTokens      int       `gorm:"default:0;column:total_tokens;comment:总Token数"`
+	ReasoningContent string    `gorm:"type:text;column:reasoning_content;comment:思考过程"`
 	CreateTime       time.Time `gorm:"autoCreateTime;column:create_time;comment:创建时间"`
 }
 

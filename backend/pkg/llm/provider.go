@@ -148,6 +148,11 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 				})
 			}
 			opts = append(opts, llms.WithTools(llmTools))
+			
+			// Debug: Log converted tools
+			if toolsJson, err := json.MarshalIndent(llmTools, "", "  "); err == nil {
+				log.Printf("[Provider Debug] Converted Tools for LLM:\n%s", string(toolsJson))
+			}
 		}
 
 		// Debug: 打印发送给 LLM 的消息结构
@@ -167,6 +172,13 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 
 		// Call LangChainGo GenerateContent
 		result, err := p.model.GenerateContent(ctx, content, opts...)
+		
+		// Debug: Log full response
+		if err == nil {
+			if respJson, err := json.MarshalIndent(result, "", "  "); err == nil {
+				log.Printf("[Provider Debug] Full GenerateContent Response:\n%s", string(respJson))
+			}
+		}
 		if err != nil {
 			log.Printf("[Provider Error] GenerateContent failed (full): %+v", err)
 			log.Printf("[Provider Error] GenerateContent failed (string): %s", err.Error())
@@ -257,7 +269,7 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 								CompletionTokens: completionTok,
 								TotalTokens:      promptTok + completionTok,
 							}
-
+							
 							select {
 							case responseChan <- StreamResponse{
 								Usage: usage,
@@ -265,6 +277,24 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 							case <-ctx.Done():
 							}
 						}
+					}
+				}
+				
+				// Extract Reasoning Content (DeepSeek/Kimi)
+				// Check for "reasoning_content" or "reasoning" in GenerationInfo
+				var reasoning string
+				if r, ok := choice.GenerationInfo["reasoning_content"].(string); ok {
+					reasoning = r
+				} else if r, ok := choice.GenerationInfo["reasoning"].(string); ok {
+					reasoning = r
+				}
+				
+				if reasoning != "" {
+					select {
+					case responseChan <- StreamResponse{
+						ReasoningContent: reasoning,
+					}:
+					case <-ctx.Done():
 					}
 				}
 			}
