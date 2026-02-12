@@ -1,8 +1,13 @@
 package llm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strings"
 
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/anthropic"
@@ -33,24 +38,27 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 		baseURL := config.BaseURL
 		// Set default BaseURL if not provided
 		if baseURL == "" {
-			switch typ {
-			case ProviderDeepSeek:
-				baseURL = "https://api.deepseek.com" // langchaingo/openai will append /v1 if not using WithAPIType? No, usually expect full base or v1. OpenAI default is v1.
-				// OpenAI SDK expects base URL. If it ends with /v1, it uses it.
-				// Let's use the explicit /v1 to be safe as per docs.
-				baseURL = "https://api.deepseek.com/v1"
-			case ProviderQwen:
-				baseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-			case ProviderDoubao:
-				// Doubao/Volcengine OpenAI compatible endpoint
-				baseURL = "https://ark.cn-beijing.volces.com/api/v3"
-			case ProviderMoonshot:
-				baseURL = "https://api.moonshot.cn/v1"
+			if defaultURL, ok := DefaultBaseURLs[typ]; ok && defaultURL != "" {
+				baseURL = defaultURL
 			}
 		}
 
 		if baseURL != "" {
 			opts = append(opts, openai.WithBaseURL(baseURL))
+		}
+
+		if typ == ProviderOpenRouter {
+			// Add OpenRouter specific headers
+			client := &http.Client{
+				Transport: &headerTransport{
+					transport: http.DefaultTransport,
+					headers: map[string]string{
+						"HTTP-Referer": "https://github.com/kymo-mcp/mcpcan", // Optional. Site URL for rankings on openrouter.ai.
+						"X-Title":      "MCPCan",                             // Optional. Site title for rankings on openrouter.ai.
+					},
+				},
+			}
+			opts = append(opts, openai.WithHTTPClient(client))
 		}
 		
 		model, err = openai.New(opts...)
@@ -70,8 +78,13 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 	case ProviderOllama:
 		// Ollama Local
 		opts := []ollama.Option{}
-		if config.BaseURL != "" {
-			opts = append(opts, ollama.WithServerURL(config.BaseURL))
+		baseURL := config.BaseURL
+		if baseURL != "" {
+			// LangChainGo 的 Ollama provider 使用 /api/chat 原生 API
+			// 如果用户填写了 /v1 (OpenAI 兼容路径)，需要去掉，否则会变成 /v1/api/chat -> 404
+			baseURL = strings.TrimSuffix(baseURL, "/v1")
+			baseURL = strings.TrimSuffix(baseURL, "/v1/")
+			opts = append(opts, ollama.WithServerURL(baseURL))
 		}
 		// Ollama client usually needs a model specified if it's not per-request, 
 		// but LangChainGo ollama implementation allows per-request model most of the time.
@@ -88,4 +101,44 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 	}
 
 	return &LangChainAdapter{model: model}, nil
+}
+
+// headerTransport is a custom http.RoundTripper that adds headers to requests
+type headerTransport struct {
+	transport http.RoundTripper
+	headers   map[string]string
+}
+
+func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for k, v := range t.headers {
+		req.Header.Set(k, v)
+	}
+	
+	// Debug logging
+	// Avoid logging API Key
+	logHeaders := make(http.Header)
+	for k, v := range req.Header {
+		if k == "Authorization" {
+			logHeaders.Set(k, "Bearer ****")
+		} else {
+			logHeaders[k] = v
+		}
+	}
+	log.Printf("[OpenRouter Debug] Request: %s %s, Headers: %v", req.Method, req.URL, logHeaders)
+
+	resp, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		// Read body for debugging
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		// Restore body
+		resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		
+		log.Printf("[OpenRouter Error] Status: %d, Body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return resp, nil
 }

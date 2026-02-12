@@ -263,6 +263,12 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 				s.sendSSE(c, "tool_result", string(b))
 			}
 		}
+
+		if len(resp.ToolCalls) > 0 {
+			if b, err := json.Marshal(resp.ToolCalls); err == nil {
+				s.sendSSE(c, "tool_calls", string(b))
+			}
+		}
 	}
 	s.sendSSE(c, "done", "")
 }

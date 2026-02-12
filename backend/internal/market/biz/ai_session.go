@@ -11,7 +11,8 @@ import (
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	llm "github.com/kymo-mcp/mcpcan/pkg/llm_adapter"
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // normalizeToolsConfig 标准化 MCP 配置 JSON
@@ -292,9 +293,6 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		messages = append(messages, m)
 	}
 
-	// 清洗历史消息：去掉开头孤立的 tool 消息、合并连续同 role 消息
-	messages = sanitizeMessages(messages)
-
 	// Add Current User Message
 	userMessage := llm.Message{
 		Role:    "user",
@@ -328,6 +326,9 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		userMessage.MultiContent = parts
 	}
 	messages = append(messages, userMessage)
+
+	// 清洗历史消息：去掉开头孤立的 tool 消息、合并连续同 role 消息
+	messages = sanitizeMessages(messages)
 
 	// 6. Save User Message
 	// Append image markdown to content so it can be retrieved for deletion (and history)
@@ -488,6 +489,21 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 
 			for resp := range stream {
 				if resp.Error != nil {
+					// If we have accumulated content, save it before returning error
+					if accumulatedContent != "" {
+						asstMsg := &model.AiMessage{
+							SessionID:  sessionID,
+							Role:       "assistant",
+							Content:    accumulatedContent,
+							CreateTime: time.Now(),
+						}
+						if finalUsage != nil {
+							asstMsg.PromptTokens = finalUsage.PromptTokens
+							asstMsg.CompletionTokens = finalUsage.CompletionTokens
+							asstMsg.TotalTokens = finalUsage.TotalTokens
+						}
+						mysql.AiMessageRepo.Create(ctx, asstMsg)
+					}
 					outCh <- resp
 					return
 				}
@@ -503,6 +519,11 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				}
 
 				if len(resp.ToolCalls) > 0 {
+					// Forward tool calls to frontend
+					outCh <- llm.StreamResponse{
+						ToolCalls: resp.ToolCalls,
+					}
+
 					for _, tc := range resp.ToolCalls {
 						if _, exists := accumulatedToolCalls[tc.Index]; !exists {
 							accumulatedToolCalls[tc.Index] = &llm.ToolCall{
@@ -593,11 +614,22 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				} else {
 					var texts []string
 					for _, c := range mcpResult.Content {
-						// Marshal content to JSON string to avoid field access issues
-						if b, err := json.Marshal(c); err == nil {
-							texts = append(texts, string(b))
-						} else {
-							texts = append(texts, fmt.Sprintf("%v", c))
+						switch v := c.(type) {
+						case mcp.TextContent:
+							texts = append(texts, v.Text)
+						case mcp.ImageContent:
+							texts = append(texts, fmt.Sprintf("[Image: %s, Data: %s]", v.MIMEType, v.Data))
+						case *mcp.TextContent:
+							texts = append(texts, v.Text)
+						case *mcp.ImageContent:
+							texts = append(texts, fmt.Sprintf("[Image: %s, Data: %s]", v.MIMEType, v.Data))
+						default:
+							// For other types (e.g. EmbeddedResource), usage default JSON marshaling
+							if b, err := json.Marshal(c); err == nil {
+								texts = append(texts, string(b))
+							} else {
+								texts = append(texts, fmt.Sprintf("%v", c))
+							}
 						}
 					}
 					resultStr = strings.Join(texts, "\n")
@@ -688,13 +720,16 @@ func sanitizeMessages(messages []llm.Message) []llm.Message {
 	}
 
 	// Step 1: 收集所有有效的 tool call ID（来自 assistant 消息的 ToolCalls）
-	// 和所有 tool response 的 ToolCallID
+	// 和所有 tool response 的 ToolCallID，以及 ToolCallID -> Name 映射
 	assistantToolCallIDs := make(map[string]bool)
 	toolResponseIDs := make(map[string]bool)
+	toolCallNames := make(map[string]string) // ID -> Name
+
 	for _, m := range messages {
 		if m.Role == "assistant" && len(m.ToolCalls) > 0 {
 			for _, tc := range m.ToolCalls {
 				assistantToolCallIDs[tc.ID] = true
+				toolCallNames[tc.ID] = tc.Function.Name
 			}
 		}
 		if m.Role == "tool" && m.ToolCallID != "" {
@@ -702,13 +737,18 @@ func sanitizeMessages(messages []llm.Message) []llm.Message {
 		}
 	}
 
-	// Step 2: 过滤掉孤立消息
+	// Step 2: 过滤掉孤立消息并恢复 ToolCallName
 	var cleaned []llm.Message
 	for _, m := range messages {
 		switch m.Role {
 		case "tool":
 			// 只保留有对应 assistant+ToolCalls 的 tool response
 			if m.ToolCallID != "" && assistantToolCallIDs[m.ToolCallID] {
+				// 关键修复：从 assistant 的 ToolCall 中恢复 Name
+				// 因为数据库可能没存 ToolCallName，导致 Google API 报错
+				if name, ok := toolCallNames[m.ToolCallID]; ok && m.ToolCallName == "" {
+					m.ToolCallName = name
+				}
 				cleaned = append(cleaned, m)
 			} else {
 				log.Printf("[sanitizeMessages] dropping orphaned tool message: ToolCallID=%s", m.ToolCallID)
@@ -727,7 +767,7 @@ func sanitizeMessages(messages []llm.Message) []llm.Message {
 					cleaned = append(cleaned, m)
 				} else {
 					// 去掉 ToolCalls 保留纯文本内容
-					if m.Content != "" {
+					if strings.TrimSpace(m.Content) != "" {
 						cleaned = append(cleaned, llm.Message{
 							Role:    m.Role,
 							Content: m.Content,
@@ -737,26 +777,70 @@ func sanitizeMessages(messages []llm.Message) []llm.Message {
 					}
 				}
 			} else {
-				cleaned = append(cleaned, m)
+				// 只有当 Content 非空时才保留，否则会导致 API 400
+				if strings.TrimSpace(m.Content) != "" {
+					cleaned = append(cleaned, m)
+				} else {
+					log.Printf("[sanitizeMessages] dropping empty assistant message")
+				}
 			}
 		default:
 			cleaned = append(cleaned, m)
 		}
 	}
 
-	// Step 3: 合并连续同 role 消息（Google 要求 user/model 交替）
+	// Step 3: 合并连续同 role 消息（Google/GLM 要求 user/model 交替）
 	var merged []llm.Message
 	for _, m := range cleaned {
 		if len(merged) > 0 {
 			last := &merged[len(merged)-1]
-			// 合并连续的 user/human 消息
-			if last.Role == m.Role && (m.Role == "user" || m.Role == "system") {
-				last.Content += "\n" + m.Content
-				continue
+			// 合并连续的同角色的消息
+			if last.Role == m.Role {
+				// Tool/Function 消息不合并，因为它们有各自的 ID
+				if m.Role == "user" || m.Role == "system" || m.Role == "assistant" {
+					// 如果 assistant 这一条或上一条含有 ToolCalls，则不合并（保持结构完整性）
+					if m.Role == "assistant" && (len(m.ToolCalls) > 0 || len(last.ToolCalls) > 0) {
+						merged = append(merged, m)
+						continue
+					}
+					last.Content += "\n" + m.Content
+					continue
+				}
 			}
 		}
 		merged = append(merged, m)
 	}
 
-	return merged
+	// Step 4: 最终校验与修复 (Final Validation)
+	// 确保开头是 User/System，且严格交替
+	var final []llm.Message
+	if len(merged) > 0 {
+		// 1. 确保第一条非 System 消息是 User
+		firstNonSystemIdx := 0
+		for i, m := range merged {
+			if m.Role != "system" {
+				firstNonSystemIdx = i
+				break
+			}
+		}
+
+		// 如果第一条有效消息是 Assistant，补一个 User
+		if firstNonSystemIdx < len(merged) && merged[firstNonSystemIdx].Role == "assistant" {
+			// 在 System 消息之后插入 User
+			prefix := merged[:firstNonSystemIdx]
+			suffix := merged[firstNonSystemIdx:]
+			final = append(final, prefix...)
+			final = append(final, llm.Message{
+				Role:    "user",
+				Content: "...", // Placeholder to satisfy API requirements
+			})
+			final = append(final, suffix...)
+		} else {
+			final = merged
+		}
+	} else {
+		final = merged
+	}
+
+	return final
 }

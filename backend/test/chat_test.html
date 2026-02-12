@@ -262,6 +262,7 @@
 
                 <!-- Chat Messages -->
                 <div
+                  id="chat-messages"
                   class="flex-1 overflow-y-auto p-4 bg-white"
                   ref="messageList"
                 >
@@ -371,7 +372,7 @@
                     <el-button
                       type="primary"
                       :loading="loading"
-                      @click="sendMessage"
+                      @click.prevent="sendMessage"
                       :disabled="!sessionID"
                       style="height: auto"
                       >Send</el-button
@@ -715,6 +716,13 @@
              } catch(e) { console.error(e); }
           };
 
+          const scrollToBottom = () => {
+             nextTick(() => {
+                const el = document.getElementById("chat-messages");
+                if (el) el.scrollTop = el.scrollHeight;
+             });
+          };
+
           const loadSession = async (id) => {
              sessionID.value = id;
              messages.value = [];
@@ -730,22 +738,26 @@
                   currentSessionModelName.value = sessionInfo.modelName || 'Unknown';
                 }
                 
+                // Fetch messages
+                // API to fetch messages
                 const res = await api(`/market/ai/sessions/${id}/messages?page=1&pageSize=50`);
                 if (res.list) {
                     let totalTokens = 0;
-                    messages.value = res.list.map(m => {
+                    messages.value = await Promise.all(res.list.map(async m => {
                         const tokens = m.totalTokens || 0;
                         totalTokens += tokens;
                         return {
                             role: m.role,
                             content: m.content,
+                            toolCalls: m.toolCalls, 
+                            usage: { totalTokens: tokens },
                             tools: m.toolCalls && m.toolCalls !== "[]" ? JSON.parse(m.toolCalls) : [],
-                            usage: { totalTokens: tokens }
                         };
-                    }).reverse();
+                    })).then(list => list.reverse());
                     
                     // Update session token usage
                     sessionTokenUsage.total = totalTokens;
+                    scrollToBottom();
                 }
              } catch(e) { ElementPlus.ElMessage.error(e.message); }
           };
@@ -1215,16 +1227,15 @@
                   }
                 });
                 // Scroll
-                nextTick(() => {
-                  const el = document.querySelector(".overflow-y-auto");
-                  if (el) el.scrollTop = el.scrollHeight;
-                });
+                scrollToBottom();
               }
             } catch (e) {
               addLog("ERR", e.message);
               messages.value[aiMsgIdx].content += ` [Error: ${e.message}]`;
+              scrollToBottom();
             } finally {
               loading.value = false;
+              scrollToBottom();
             }
           };
 

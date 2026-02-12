@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
-	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	llm "github.com/kymo-mcp/mcpcan/pkg/llm_adapter"
 	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"github.com/kymo-mcp/mcpcan/pkg/version"
 	"github.com/mark3labs/mcp-go/client"

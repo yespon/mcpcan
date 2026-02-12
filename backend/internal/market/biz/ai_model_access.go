@@ -8,7 +8,7 @@ import (
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
-	"github.com/kymo-mcp/mcpcan/pkg/llm"
+	llm "github.com/kymo-mcp/mcpcan/pkg/llm_adapter"
 )
 
 type AiModelAccessBiz struct {

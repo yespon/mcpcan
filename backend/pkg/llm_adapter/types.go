@@ -1,4 +1,4 @@
-package llm
+package llm_adapter
 
 import (
 	"context"
@@ -23,10 +23,13 @@ const (
 	ProviderOllama     ProviderType = "ollama"
 
 	// Chinese Providers
-	ProviderQwen    ProviderType = "qwen"    // Aliyun Tongyi Qwen
-	ProviderDoubao  ProviderType = "doubao"  // Volcengine Doubao
-	ProviderZhipu   ProviderType = "zhipu"   // Zhipu GLM
+	ProviderQwen     ProviderType = "qwen"     // Aliyun Tongyi Qwen
+	ProviderDoubao   ProviderType = "doubao"   // Volcengine Doubao
+	ProviderZhipu    ProviderType = "zhipu"    // Zhipu GLM
 	ProviderMoonshot ProviderType = "moonshot" // Moonshot Kimi
+
+	// MCP Special Provider
+	ProviderMCP ProviderType = "mcp"
 )
 
 // SupportedProviders contains all valid provider types
@@ -45,6 +48,7 @@ var SupportedProviders = map[ProviderType]bool{
 	ProviderDoubao:      true,
 	ProviderZhipu:       true,
 	ProviderMoonshot:    true,
+	ProviderMCP:         true,
 }
 
 // DefaultBaseURLs contains default API endpoints for providers
@@ -58,11 +62,12 @@ var DefaultBaseURLs = map[ProviderType]string{
 	ProviderXAI:         "https://api.x.ai/v1",
 	ProviderOpenRouter:  "https://openrouter.ai/api/v1",
 	ProviderLiteLLM:     "http://localhost:4000",
-	ProviderOllama:      "http://localhost:11434/api", // LangChainGo ollama uses /api by default
+	ProviderOllama:      "http://localhost:11434/api",
 	ProviderQwen:        "https://dashscope.aliyuncs.com/compatible-mode/v1",
-	ProviderDoubao:      "https://ark.cn-beijing.volces.com/api/v3", // Volcengine
+	ProviderDoubao:      "https://ark.cn-beijing.volces.com/api/v3",
 	ProviderZhipu:       "https://open.bigmodel.cn/api/paas/v4",
 	ProviderMoonshot:    "https://api.moonshot.cn/v1",
+	ProviderMCP:         "",
 }
 
 // GetSupportedProviderList returns list of all supported provider IDs
@@ -82,6 +87,7 @@ func GetSupportedProviderList() []string {
 		string(ProviderDoubao),
 		string(ProviderZhipu),
 		string(ProviderMoonshot),
+		string(ProviderMCP),
 	}
 }
 

@@ -149,6 +149,12 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 		}
 
 		// Debug: 打印发送给 LLM 的消息结构
+		if contentJson, err := json.MarshalIndent(content, "", "  "); err == nil {
+			log.Printf("[Provider Debug] Full Content Payload:\n%s", string(contentJson))
+		} else {
+			log.Printf("[Provider Error] Failed to marshal content: %v", err)
+		}
+
 		for i, mc := range content {
 			partTypes := make([]string, 0, len(mc.Parts))
 			for _, p := range mc.Parts {
