@@ -25,7 +25,7 @@ const back = () => router.push('/')
 <style lang="scss" scoped>
 .wh-full {
   width: 100%;
-  height: 100%;
+  height: 100vh;
 }
 @mixin slide-up-animation($delay: 0s) {
   opacity: 0;

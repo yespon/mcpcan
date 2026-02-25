@@ -64,7 +64,11 @@
     "agentManage": "Agent Platform",
     "marketManage": "Market",
     "resourceManage": "File-Manage",
-    "package": "Code-Package"
+    "package": "Code-Package",
+    "rbacManage": "RBAC Manage",
+    "roleManage": "Role-Manage",
+    "userManage": "User-Manage",
+    "departmentManage": "Dept-Manage"
   },
   "common": {
     "edit": "Edit",
@@ -114,7 +118,8 @@
     "upload": "Success",
     "delete": "Success",
     "copy": "Success",
-    "uploadFail": "Failed"
+    "uploadFail": "Failed",
+    "auth": "Success"
   },
   "desc": {
     "reason": "reason",

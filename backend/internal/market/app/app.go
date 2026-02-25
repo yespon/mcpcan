@@ -463,8 +463,11 @@ func (a *App) setupMiddleware() {
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
-	// Add AppendUserMiddleware middleware
+	// set user info to context
 	a.ginEngine.Use(middleware.AppendUserMiddleware())
+
+	// Add RBAC middleware
+	a.ginEngine.Use(middleware.RBACAuthPathMiddleware())
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

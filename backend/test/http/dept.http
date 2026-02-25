@@ -1,0 +1,79 @@
+### 部门列表
+GET http://localhost:8082/authz/depts/list-depts
+Content-Type: application/json
+Authorization: {{token}}
+
+### 创建部门
+POST http://localhost:8082/authz/depts
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "dept": {
+    "name": "第一个部门",
+    "sort": 1,
+    "status": 2,
+    "imageURL": "https://example.com/image.jpg"
+  }
+}
+
+
+### 创建子部门
+POST http://localhost:8082/authz/depts
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "dept": {
+    "name": "第二个部门",
+    "sort": 1,
+    "status": 2,
+    "parentID": 4,
+    "imageURL": "https://example.com/image.jpg"
+  }
+}
+
+
+### 更新部门
+PUT http://localhost:8082/authz/depts
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "dept": {
+    "id": 1,
+    "name": "更新后的部门",
+    "sort": 2,
+    "status": 1,
+    "imageURL": "https://example.com/updated-image.jpg"
+  }
+}
+
+### 获取树结构
+GET http://localhost:8082/authz/depts/tree
+Content-Type: application/json
+Authorization: {{token}}
+
+
+### 变更状态
+PUT http://localhost:8082/authz/depts/1/status
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "status": 1
+}
+
+### 删除
+DELETE http://localhost:8082/authz/depts/3
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+### 批量删除
+DELETE http://localhost:8082/authz/depts/batch-delete
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "ids": [1]
+}

@@ -135,16 +135,8 @@ func (a *App) loadMysql() error {
 				return (&model.SysDept{}).TableName(), repo.InitTable()
 			},
 			func() (string, error) {
-				repo := mysql.NewSysEncryptionKeyRepository(mysql.GetDB())
-				return (&model.SysEncryptionKey{}).TableName(), repo.InitTable()
-			},
-			func() (string, error) {
 				repo := mysql.NewSysRoleRepository()
 				return (&model.SysRole{}).TableName(), repo.InitTable()
-			},
-			func() (string, error) {
-				repo := mysql.NewSysRolesDeptsRepository()
-				return (&model.SysRolesDepts{}).TableName(), repo.InitTable()
 			},
 			func() (string, error) {
 				repo := mysql.NewSysUserRepository()
@@ -153,6 +145,14 @@ func (a *App) loadMysql() error {
 			func() (string, error) {
 				repo := mysql.NewSysUsersRolesRepository()
 				return (&model.SysUsersRoles{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysMenuRepository()
+				return (&model.SysMenu{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRolesMenusRepository()
+				return (&model.SysRolesMenus{}).TableName(), repo.InitTable()
 			},
 		)
 	}
@@ -169,9 +169,15 @@ func (a *App) Run() error {
 
 	if a.config.RunMode != common.RunModeKymo {
 		// 创建管理员用户
-		_, err := a.createAdminUser()
+		adminUser, err := a.createAdminUser()
 		if err != nil {
 			return fmt.Errorf("failed to create admin user: %w", err)
+		}
+
+		// 创建管理员菜单
+		err = a.createAdminRoleMenus(adminUser)
+		if err != nil {
+			return fmt.Errorf("failed to create admin role and menus: %w", err)
 		}
 	}
 

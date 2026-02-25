@@ -9,7 +9,7 @@
           {{ t('common.back') }} </el-link
         >{{ t('api.pageDesc.detail') }} - {{ query.name }}
       </div>
-      <div>
+      <div v-auth="'mcpcan_resource_manage:download_openapi'">
         <GlareHover
           width="auto"
           height="auto"

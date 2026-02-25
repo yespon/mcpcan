@@ -13,7 +13,11 @@
         <span class="desc">{{ t('env.run.pageDesc.pvcDesc') }}</span>
       </div>
 
-      <mcp-button :icon="Plus" @click="handleAddPvc">
+      <mcp-button
+        v-auth="'mcpcan_working_environment:pvc_create'"
+        :icon="Plus"
+        @click="handleAddPvc"
+      >
         {{ t('env.pvc.action.add') }}
       </mcp-button>
     </div>

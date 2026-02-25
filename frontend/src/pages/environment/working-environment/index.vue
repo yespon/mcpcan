@@ -52,6 +52,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_working_environment:connect_test'"
               @click="handleConnection(row)"
             >
               {{ t('env.run.action.connection') }}
@@ -62,6 +63,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_working_environment:connect_test'"
               @click="handleJumpToPvc(row)"
             >
               {{ t('env.run.action.pvc') }}

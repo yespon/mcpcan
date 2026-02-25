@@ -1,5 +1,5 @@
 <template>
-  <div class="center">
+  <div class="flex justify-center">
     <div class="user-setting">
       <div>{{ t('login.userSetting') }}</div>
       <el-divider />
