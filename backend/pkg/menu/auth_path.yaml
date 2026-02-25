@@ -257,6 +257,86 @@
       permission:
         - mcpcan_instance:agent_platform_sync
 
+- name: AiSessionService
+  auths:
+    - path: /market/ai/sessions
+      method: POST
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions
+      method: PUT
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions/:id
+      method: DELETE
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions/:id
+      method: GET
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions
+      method: GET
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions/:id/messages
+      method: GET
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions/:id/usage
+      method: GET
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/sessions/:id/chat
+      method: POST
+      permission:
+        - mcpcan_ai_chat
+    - path: /market/ai/files/upload
+      method: POST
+      permission:
+        - mcpcan_ai_chat
+
+- name: AiModelAccessService
+  auths:
+    - path: /market/ai/models
+      method: POST
+      permission:
+        - mcpcan_model_manage:create
+    - path: /market/ai/models
+      method: PUT
+      permission:
+        - mcpcan_model_manage:update
+    - path: /market/ai/models/:id
+      method: DELETE
+      permission:
+        - mcpcan_model_manage:delete
+    - path: /market/ai/models/:id
+      method: GET
+      permission:
+        - mcpcan_model_manage
+    - path: /market/ai/models
+      method: GET
+      permission:
+        - mcpcan_model_manage
+    - path: /market/ai/models/available
+      method: GET
+      permission:
+        - mcpcan_model_manage
+        - mcpcan_ai_chat
+    - path: /market/ai/models/supported
+      method: GET
+      permission:
+        - mcpcan_model_manage
+        - mcpcan_ai_chat
+    - path: /market/ai/models/test
+      method: POST
+      permission:
+        - mcpcan_model_manage:connect_test
+    - path: /market/ai/models/:id/test
+      method: POST
+      permission:
+        - mcpcan_model_manage:connect_test
+
 - name: DeptService
   auths:
     - path: /authz/depts
