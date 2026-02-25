@@ -10,7 +10,7 @@
 *.trae
 *.idea
 *.DS_Store
-*.agent/*
+
 *.vscode/docs/*
 *.vscode/docs
 *.opencode
@@ -62,7 +62,8 @@ cmd/**/logs/
 # backend test
 backend/test/go-test/*
 # .agent
-.agent/
+.agent/dev-docs/
+.agent/dev-docs
+/*.agent/*
 
-# openapi
 one-api
