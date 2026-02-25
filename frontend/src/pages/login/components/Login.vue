@@ -116,6 +116,7 @@ async function handleLoginSubmit() {
     if (!valid) return
 
     loading.value = true
+    console.log(11111, loginFormData.value)
 
     // 2. 执行登录
     await userStore.login(loginFormData.value)

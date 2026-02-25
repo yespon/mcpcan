@@ -1,6 +1,8 @@
 # Runtime stage
 # Builder stage
 FROM 77kymo/builder:latest AS builder
+ARG CodeMode
+ENV CodeMode=${CodeMode}
 
 # Work in /app and copy project sources (parent of dockerfiles/)
 WORKDIR /app

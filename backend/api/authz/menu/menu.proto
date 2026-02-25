@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package menu;
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/authz/menu";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+message SysMenuTreeNode {
+  // @inject_tag: json:"id" desc:"菜单ID"
+  int64 id = 1;
+  // @inject_tag: json:"title" desc:"菜单标题"
+  string title = 2;
+  // @inject_tag: json:"type" desc:"菜单类型"
+  int64 type = 3;
+  // @inject_tag: json:"sort" desc:"排序"
+  int32 sort = 4;
+  // @inject_tag: json:"path" desc:"路径"
+  string path = 6;
+  // @inject_tag: json:"engTitle" desc:"英文标题"
+  string engTitle = 7;
+  // @inject_tag: json:"children" desc:"子菜单"
+  repeated SysMenuTreeNode children = 5;
+  // @inject_tag: json:"permission" desc:"权限"
+  string permission = 8;
+}
+
+
+message GetMenuTreeRequest {
+}
+
+message GetMenuTreeResponse {
+  // @inject_tag: json:"code" desc:"响应码"
+  int32 code = 1;
+  // @inject_tag: json:"message" desc:"响应消息"
+  string message = 2;
+  // @inject_tag: json:"list" desc:"菜单数据"
+  repeated SysMenuTreeNode list = 3;
+}
+
+// MenuService 菜单管理服务
+service MenuService {
+  // 获取菜单树结构
+  rpc GetMenuTree(GetMenuTreeRequest) returns (GetMenuTreeResponse) {
+    option (google.api.http) = {
+      get: "/authz/menus/tree"
+    };
+  }
+}

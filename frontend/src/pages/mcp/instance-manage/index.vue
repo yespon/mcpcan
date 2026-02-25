@@ -9,6 +9,7 @@
       <el-dropdown
         trigger="click"
         class="ml-4"
+        v-auth="'mcpcan_instance:create'"
         @click.stop
         :show-arrow="false"
         @command="(cmd: string) => handleCommand(cmd, {} as InstanceResult)"
@@ -94,10 +95,14 @@
           <div class="flex justify-between mb-4">
             <div class="center">
               <el-image :src="instanceLogo" style="width: 20px; height: 20px"></el-image>
-              <span class="desc"
-                >{{ t('mcp.instance.pageDesc.total') }}：{{ pageConfig.total }}</span
+              <span class="desc">
+                {{ t('mcp.instance.pageDesc.total') }}：{{ pageConfig.total }}
+              </span>
+              <span
+                v-auth="'mcpcan_instance:agent_platform_sync'"
+                class="ml-4 cursor-pointer base-btn-link font-bold center"
+                @click="handleSync"
               >
-              <span class="ml-4 cursor-pointer base-btn-link font-bold center" @click="handleSync">
                 <el-icon class="mr-1"><Share /></el-icon>
                 {{ t('agent.pageDesc.platFormSync') }}
 
@@ -184,6 +189,7 @@
             type="success"
             class="base-btn-link"
             :underline="false"
+            v-auth="'mcpcan_instance:config'"
             @click="handleViewConfig(row)"
           >
             {{ t('mcp.instance.viewConfig') }}
@@ -196,6 +202,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:update'"
               @click="handleEditInstance(row)"
             >
               {{ t('env.run.action.edit') }}
@@ -205,6 +212,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:logs'"
               @click="handleViewAllLog(row)"
               v-if="row.accessType !== AccessType.DIRECT"
             >
@@ -215,6 +223,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:debug'"
               @click="handleDebugTools(row)"
             >
               {{ t('mcp.instance.action.debugTool') }}
@@ -225,6 +234,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:enable'"
               @click="
                 row.status === InstanceStatus.INACTIVE
                   ? handleRestartInstance(row.instanceId)
@@ -243,6 +253,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:enable'"
               @click="handleRestartInstance(row.instanceId)"
             >
               {{ t('mcp.instance.action.reStart') }}
@@ -253,6 +264,7 @@
               size="small"
               link
               class="base-btn-link"
+              v-auth="'mcpcan_instance:probe'"
               @click="handleViewStatus(row)"
             >
               {{ t('mcp.instance.action.probe') }}
@@ -261,6 +273,7 @@
               size="small"
               type="danger"
               link
+              v-auth="'mcpcan_instance:delete'"
               @click="handleDeleteInstance(row.instanceId)"
             >
               {{ t('mcp.instance.action.delete') }}
@@ -368,78 +381,94 @@
               </div>
               <div class="flex justify-between mt-2">
                 <div class="flex items-center">
-                  <div class="ml-2">
-                    <el-tooltip :content="t('mcp.instance.action.logs')" placement="top">
-                      <el-icon
-                        :size="16"
-                        class="mx-2 cursor-pointer link-hover"
-                        @click="handleViewAllLog(row)"
-                      >
-                        <Document />
-                      </el-icon>
-                    </el-tooltip>
-                    <el-tooltip :content="t('mcp.instance.action.probe')" placement="top">
-                      <el-icon
-                        :size="16"
-                        class="mx-2 cursor-pointer link-hover"
-                        @click="handleViewStatus(row)"
-                      >
-                        <i class="icon iconfont MCP-tancerenwu"></i>
-                      </el-icon>
-                    </el-tooltip>
-                    <el-tooltip :content="t('mcp.instance.action.debugTool')" placement="top">
-                      <el-icon
-                        :size="16"
-                        class="mx-2 cursor-pointer link-hover"
-                        @click="handleDebugTools(row)"
-                      >
-                        <i class="icon iconfont MCP-tool"></i>
-                      </el-icon>
-                    </el-tooltip>
-                    <el-tooltip :content="t('env.run.action.edit')" placement="top">
-                      <el-icon
-                        :size="16"
-                        class="mx-2 cursor-pointer link-hover"
-                        @click="handleEditInstance(row)"
-                      >
-                        <Edit />
-                      </el-icon>
-                    </el-tooltip>
-                    <el-tooltip :content="t('mcp.instance.action.delete')" placement="top">
-                      <el-icon
-                        :size="16"
-                        class="mx-2 cursor-pointer link-hover"
-                        @click="handleDeleteInstance(row.instanceId)"
-                        color="#F56C6C"
-                      >
-                        <Delete />
-                      </el-icon>
-                    </el-tooltip>
+                  <div class="ml-2 flex">
+                    <div v-auth="'mcpcan_instance:logs'">
+                      <el-tooltip :content="t('mcp.instance.action.logs')" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleViewAllLog(row)"
+                        >
+                          <Document />
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div v-auth="'mcpcan_instance:probe'">
+                      <el-tooltip :content="t('mcp.instance.action.probe')" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleViewStatus(row)"
+                        >
+                          <i class="icon iconfont MCP-tancerenwu"></i>
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div v-auth="'mcpcan_instance:debug'">
+                      <el-tooltip :content="t('mcp.instance.action.debugTool')" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleDebugTools(row)"
+                        >
+                          <i class="icon iconfont MCP-tool"></i>
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div v-auth="'mcpcan_instance:update'">
+                      <el-tooltip :content="t('env.run.action.edit')" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleEditInstance(row)"
+                        >
+                          <Edit />
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div v-auth="'mcpcan_instance:delete'">
+                      <el-tooltip :content="t('mcp.instance.action.delete')" placement="top">
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleDeleteInstance(row.instanceId)"
+                          color="#F56C6C"
+                        >
+                          <Delete />
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
                   </div>
                 </div>
                 <div class="flex">
-                  <el-tooltip
-                    :content="t('mcp.instance.card.containerControl')"
-                    placement="top"
-                    trigger="click"
+                  <div v-auth="'mcpcan_instance:enable'">
+                    <el-tooltip
+                      :content="t('mcp.instance.card.containerControl')"
+                      placement="top"
+                      trigger="click"
+                    >
+                      <el-switch
+                        v-if="row.accessType !== AccessType.DIRECT"
+                        v-model="row.status"
+                        style="--el-switch-on-color: #13ce66"
+                        inline-prompt
+                        size="small"
+                        :active-text="t('mcp.instance.card.start')"
+                        :inactive-text="t('mcp.instance.card.stop')"
+                        :active-value="InstanceStatus.ACTIVE"
+                        :inactive-value="InstanceStatus.INACTIVE"
+                        :loading="row.loading"
+                        @click="handleSwitchInstance(row)"
+                      ></el-switch>
+                    </el-tooltip>
+                  </div>
+                  <mcp-button
+                    v-auth="'mcpcan_instance:config'"
+                    size="small"
+                    class="ml-2"
+                    @click="handleViewConfig(row)"
+                    >{{ t('mcp.instance.card.configUrl') }}</mcp-button
                   >
-                    <el-switch
-                      v-if="row.accessType !== AccessType.DIRECT"
-                      v-model="row.status"
-                      style="--el-switch-on-color: #13ce66"
-                      inline-prompt
-                      size="small"
-                      :active-text="t('mcp.instance.card.start')"
-                      :inactive-text="t('mcp.instance.card.stop')"
-                      :active-value="InstanceStatus.ACTIVE"
-                      :inactive-value="InstanceStatus.INACTIVE"
-                      :loading="row.loading"
-                      @click="handleSwitchInstance(row)"
-                    ></el-switch>
-                  </el-tooltip>
-                  <mcp-button size="small" class="ml-2" @click="handleViewConfig(row)">{{
-                    t('mcp.instance.card.configUrl')
-                  }}</mcp-button>
                 </div>
               </div>
             </div>
@@ -490,7 +519,7 @@
     <OpenAPIDialog ref="openAPIDialog" @on-refresh="init"></OpenAPIDialog>
     <!-- select agent with nameSpace  -->
     <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
-    <TaskList ref="taskList"></TaskList>
+    <TaskList ref="taskList" v-auth="'mcpcan_instance:agent_platform_sync'"></TaskList>
     <LogDialog ref="logDialog"></LogDialog>
   </div>
 </template>
@@ -572,7 +601,6 @@ watch(
 /**
  * Handle create a instance by template list
  */
-
 const handleAddByTemplate = async () => {
   try {
     selectVisible.value = true

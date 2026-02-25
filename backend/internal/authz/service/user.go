@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"go.uber.org/zap"
 
 	"github.com/kymo-mcp/mcpcan/api/authz/user"
@@ -39,24 +41,55 @@ func (s *UserService) CreateUser(c *gin.Context) {
 	if err := common.BindAndValidate(c, &req); err != nil {
 		return
 	}
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
 
 	// Convert request to model
 	userModel := s.convertCreateRequestToModel(&req)
+	userModel.CreateBy = &userInfo.Username
+	userModel.UpdateBy = &userInfo.Username
 
-	// If password is provided, hash it
-	if req.Password != "" {
-		if err := s.userBiz.SetUserPassword(c.Request.Context(), userModel, req.Password); err != nil {
-			logger.Error("Failed to set user password", zap.Error(err))
-			common.GinError(c, i18nresp.CodeInternalError, "Failed to set user password")
-			return
-		}
+	// Check if username already exists
+	existUser, _ := mysql.SysUserRepo.FindByUsername(c.Request.Context(), userModel.GetUsername())
+	if existUser != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "Username already exists")
+		return
 	}
 
 	// Create user
-	if err := s.userBiz.CreateUser(c.Request.Context(), userModel); err != nil {
+	if err := mysql.SysUserRepo.Create(c.Request.Context(), userModel); err != nil {
 		logger.Error("Failed to create user", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
+	}
+	if req.Password == "" {
+		req.Password = "123456"
+	}
+
+	// If password is provided, hash it
+	if err := s.userBiz.SetUserPassword(c.Request.Context(), userModel, req.Password); err != nil {
+		logger.Error("Failed to set user password", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, "Failed to set user password")
+		return
+	}
+
+	if len(req.RoleIds) > 0 {
+		// Create user roles associations
+		associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
+		for _, roleID := range req.RoleIds {
+			associations = append(associations, &model.SysUsersRoles{
+				UserID: userModel.UserID,
+				RoleID: uint(roleID),
+			})
+		}
+		if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), associations); err != nil {
+			logger.Error("Failed to create user roles associations", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
 	}
 
 	// Return created user information
@@ -72,6 +105,11 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeInternalError, "Invalid user ID")
 		return
 	}
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
 
 	var req user.UpdateUserRequest
 	if err := common.BindAndValidate(c, &req); err != nil {
@@ -79,7 +117,7 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 	}
 
 	// Get existing user
-	existingUser, err := s.userBiz.GetUserById(c.Request.Context(), uint(id))
+	existingUser, err := mysql.SysUserRepo.FindByID(c.Request.Context(), uint(id))
 	if err != nil {
 		logger.Error("Failed to get user", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
@@ -88,36 +126,36 @@ func (s *UserService) UpdateUser(c *gin.Context) {
 
 	// Update model
 	s.updateModelFromRequest(existingUser, &req)
+	existingUser.UpdateBy = &userInfo.Username
 
 	// Update user
-	if err := s.userBiz.UpdateUser(c.Request.Context(), existingUser); err != nil {
+	if err := mysql.SysUserRepo.Update(c.Request.Context(), existingUser); err != nil {
 		logger.Error("Failed to update user", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+	// delete role associations
+	if err := mysql.SysUsersRolesRepo.BatchDeleteByUserID(c.Request.Context(), []uint{existingUser.UserID}); err != nil {
+		logger.Error("Failed to delete user roles associations", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+	// Create user roles associations
+	associations := make([]*model.SysUsersRoles, 0, len(req.RoleIds))
+	for _, roleID := range req.RoleIds {
+		associations = append(associations, &model.SysUsersRoles{
+			UserID: existingUser.UserID,
+			RoleID: uint(roleID),
+		})
+	}
+	if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), associations); err != nil {
+		logger.Error("Failed to create user roles associations", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
 
 	// Return updated user information
 	userProto := s.convertModelToProto(existingUser)
-	common.GinSuccess(c, userProto)
-}
-
-// GetUserById gets user by ID
-func (s *UserService) GetUserById(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "Invalid user ID")
-		return
-	}
-
-	userModel, err := s.userBiz.GetUserById(c.Request.Context(), uint(id))
-	if err != nil {
-		logger.Error("Failed to get user", zap.Error(err))
-		common.GinError(c, i18nresp.CodeInternalError, err.Error())
-		return
-	}
-
-	userProto := s.convertModelToProto(userModel)
 	common.GinSuccess(c, userProto)
 }
 
@@ -130,13 +168,33 @@ func (s *UserService) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	if err := s.userBiz.DeleteUser(c.Request.Context(), uint(id)); err != nil {
+	if err := s.userBiz.BatchDeleteByUserID(c.Request.Context(), []uint{uint(id)}); err != nil {
 		logger.Error("Failed to delete user", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
 
-	common.GinSuccess(c, gin.H{"message": "User deleted successfully"})
+	common.GinSuccess(c, nil)
+}
+
+func (s *UserService) BatchDelete(c *gin.Context) {
+	var req user.BatchDeleteUserRequest
+	if err := common.BindAndValidate(c, &req); err != nil {
+		return
+	}
+
+	var deleteUserId []uint
+	for _, userId := range req.UserIds {
+		deleteUserId = append(deleteUserId, uint(userId))
+	}
+
+	if err := s.userBiz.BatchDeleteByUserID(c.Request.Context(), deleteUserId); err != nil {
+		logger.Error("Failed to delete user", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, nil)
 }
 
 // ListUsers gets user list
@@ -147,36 +205,45 @@ func (s *UserService) ListUsers(c *gin.Context) {
 	}
 
 	// Set default pagination parameters
-	if req.PageInfo.Page <= 0 {
-		req.PageInfo.Page = 1
+	if req.Page <= 0 {
+		req.Page = 1
 	}
-	if req.PageInfo.Size <= 0 {
-		req.PageInfo.Size = 10
+	if req.Size <= 0 {
+		req.Size = 10
 	}
-	if req.PageInfo.Size > 100 {
-		req.PageInfo.Size = 100
-	}
-
-	// Build query parameters
-	params := &biz.ListUsersParams{
-		Page:     int(req.PageInfo.Page),
-		PageSize: int(req.PageInfo.Size),
-		Keyword:  req.Query.Blurry,
-		DeptId:   uint(req.Query.DeptId),
+	if req.Size > 100 {
+		req.Size = 100
 	}
 
-	// Handle status parameter
-	switch req.Query.Status {
-	case user.UserStatus_UserStatusEnabled:
-		enabled := true
-		params.Enabled = &enabled
-	case user.UserStatus_UserStatusDisabled:
-		enabled := false
-		params.Enabled = &enabled
+	var enable *bool
+	if req.Status == user.UserStatus_UserStatusEnabled {
+		enable = &[]bool{true}[0]
+	} else if req.Status == user.UserStatus_UserStatusDisabled {
+		enable = &[]bool{false}[0]
+	}
+	var depIds []uint
+	for _, depId := range req.DeptIds {
+		depIds = append(depIds, uint(depId))
+	}
+
+	// 根据角色查询
+	var userIds []uint
+	if req.RoleId > 0 {
+		userRoles, err := mysql.SysUsersRolesRepo.BatchFindByRoleID(c.Request.Context(), []uint{uint(req.RoleId)})
+		if err != nil {
+			logger.Error("Failed to get role users", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
+		// 如果传递了角色 id, 那么不管是否传递 userId 都设置
+		userIds = make([]uint, 0, len(userRoles))
+		for _, userRole := range userRoles {
+			userIds = append(userIds, userRole.UserID)
+		}
 	}
 
 	// Get user list
-	users, total, err := s.userBiz.ListUsers(c.Request.Context(), params)
+	users, total, err := mysql.SysUserRepo.FindWithPagination(c.Request.Context(), int(req.Page), int(req.Size), req.Blurry, enable, depIds, userIds)
 	if err != nil {
 		logger.Error("Failed to get user list", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
@@ -189,43 +256,44 @@ func (s *UserService) ListUsers(c *gin.Context) {
 		userProtos[i] = s.convertModelToProto(u)
 	}
 
-	response := &user.ListUsersResponse{
-		Data: &user.PageSysUser{
-			Users: userProtos,
-			PageInfo: &user.PageInfo{
-				Page:  req.PageInfo.Page,
-				Size:  req.PageInfo.Size,
-				Total: total,
-			},
-		},
+	// Set user role and department info
+	err = setUsersRoleAndDeptInfo(c.Request.Context(), userProtos)
+	if err != nil {
+		logger.Error("Failed to set user role and dept info", zap.Error(err))
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
 	}
 
+	response := &user.ListUsersResponse{
+		List:  userProtos,
+		Total: total,
+	}
 	common.GinSuccess(c, response)
 }
 
 // convertCreateRequestToModel converts create request to model
 func (s *UserService) convertCreateRequestToModel(req *user.CreateUserRequest) *model.SysUser {
-	userModel := &model.SysUser{}
-	userModel.SetUsername(req.Username)
-	userModel.SetNickName(req.FullName)
-	userModel.SetEmail(req.Email)
-	userModel.SetPhone(req.Phone)
+	userModel := &model.SysUser{
+		Username: &req.Username,
+		NickName: &req.NickName,
+		Email:    &req.Email,
+		Phone:    &req.Phone,
+	}
 
 	if req.DeptId > 0 {
-		deptId := uint(req.DeptId)
-		userModel.DeptID = &deptId
+		deptID := uint(req.DeptId)
+		userModel.DeptID = &deptID
 	}
 
 	if req.Status == user.UserStatus_UserStatusEnabled {
-		userModel.SetEnabled(true)
+		userModel.Enabled = &[]bool{true}[0]
 	} else {
-		userModel.SetEnabled(false)
+		userModel.Enabled = &[]bool{false}[0]
 	}
 
 	// Handle password
 	if req.Password != "" {
-		// This should call password encryption logic
-		userModel.SetPassword(req.Password) // Temporary direct setting, should be encrypted in practice
+		userModel.Password = &req.Password
 	}
 
 	return userModel
@@ -233,50 +301,25 @@ func (s *UserService) convertCreateRequestToModel(req *user.CreateUserRequest) *
 
 // updateModelFromRequest updates model from update request
 func (s *UserService) updateModelFromRequest(userModel *model.SysUser, req *user.UpdateUserRequest) {
-	if req.FullName != "" {
-		userModel.SetNickName(req.FullName)
+	if req.NickName != "" {
+		userModel.NickName = &req.NickName
 	}
 	if req.Email != "" {
-		userModel.SetEmail(req.Email)
+		userModel.Email = &req.Email
 	}
 	if req.Phone != "" {
-		userModel.SetPhone(req.Phone)
+		userModel.Phone = &req.Phone
 	}
 	if req.DeptId > 0 {
-		deptId := uint(req.DeptId)
-		userModel.DeptID = &deptId
+		deptID := uint(req.DeptId)
+		userModel.DeptID = &deptID
 	}
 	switch req.Status {
 	case user.UserStatus_UserStatusEnabled:
-		userModel.SetEnabled(true)
+		userModel.Enabled = &[]bool{true}[0]
 	case user.UserStatus_UserStatusDisabled:
-		userModel.SetEnabled(false)
+		userModel.Enabled = &[]bool{false}[0]
 	}
-}
-
-// GetCurrentUser gets current user information
-func (s *UserService) GetCurrentUser(c *gin.Context) {
-	// TODO: Get user ID from JWT token
-	// This temporarily returns an error, need to implement JWT middleware to get current user
-	common.GinError(c, i18nresp.CodeInternalError, "Get current user feature not implemented yet")
-}
-
-// GetUserPermissions gets user permissions
-func (s *UserService) GetUserPermissions(c *gin.Context) {
-	var req user.GetUserPermissionsRequest
-	if err := common.BindAndValidate(c, &req); err != nil {
-		return
-	}
-
-	// TODO: Implement get user permissions logic
-	_ = req.UserId
-	permissions := []*user.PermissionTreeNode{}
-
-	response := &user.GetUserPermissionsResponse{
-		Permissions: permissions,
-	}
-
-	common.GinSuccess(c, response)
 }
 
 // UpdatePassword updates user password
@@ -341,8 +384,7 @@ func (s *UserService) UpdatePassword(c *gin.Context) {
 		return
 	}
 
-	response := &user.UpdatePasswordResponse{}
-	common.GinSuccess(c, response)
+	common.GinSuccess(c, nil)
 }
 
 // UpdateAvatar updates user avatar
@@ -393,7 +435,7 @@ func (s *UserService) UpdateAvatar(c *gin.Context) {
 	}
 
 	// Get user information
-	userModel, err := s.userBiz.GetUserById(c.Request.Context(), uint(userId))
+	userModel, err := mysql.SysUserRepo.FindByID(c.Request.Context(), uint(userId))
 	if err != nil {
 		logger.Error("Failed to get user", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
@@ -425,7 +467,7 @@ func (s *UserService) UpdateAvatar(c *gin.Context) {
 	imagePath := filepath.Join(common.StaticPrefix, common.AvatarPath, fileName)
 	userModel.AvatarPath = &imagePath
 
-	if err := s.userBiz.UpdateUser(c.Request.Context(), userModel); err != nil {
+	if err := mysql.SysUserRepo.Update(c.Request.Context(), userModel); err != nil {
 		logger.Error("Failed to update avatar", zap.Error(err))
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
@@ -444,27 +486,170 @@ func (s *UserService) convertModelToProto(userModel *model.SysUser) *user.SysUse
 	userProto := &user.SysUser{
 		Id:       int64(userModel.UserID),
 		Username: userModel.GetUsername(),
-		FullName: userModel.GetNickName(),
+		NickName: userModel.GetNickName(),
 		Email:    userModel.GetEmail(),
 		Phone:    userModel.GetPhone(),
+		Avatar:   userModel.GetAvatarPath(),
 	}
 
 	if userModel.DeptID != nil {
 		userProto.DeptId = int64(*userModel.DeptID)
 	}
 
-	if userModel.IsEnabled() {
+	if *userModel.Enabled {
 		userProto.Status = user.UserStatus_UserStatusEnabled
 	} else {
 		userProto.Status = user.UserStatus_UserStatusDisabled
 	}
 
 	if userModel.CreateTime != nil {
-		userProto.CreatedAt = userModel.CreateTime.Unix()
+		userProto.CreatedAt = userModel.CreateTime.UnixMilli()
 	}
 	if userModel.UpdateTime != nil {
-		userProto.UpdatedAt = userModel.UpdateTime.Unix()
+		userProto.UpdatedAt = userModel.UpdateTime.UnixMilli()
 	}
 
 	return userProto
+}
+
+// AddUserRole adds user roles
+func (s *UserService) AddUserRole(c *gin.Context) {
+	var req user.AddUserRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	userIds := make([]uint, 0, len(req.UserIds))
+	for _, userId := range req.UserIds {
+		userIds = append(userIds, uint(userId))
+	}
+	// 检查用户是否存在
+	users, err := mysql.SysUserRepo.FindByIds(c.Request.Context(), userIds)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+	_, err = mysql.SysRoleRepo.FindByID(c.Request.Context(), uint(req.RoleId))
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	// 检查用户是否已经有这些角色
+	userRoles, err := mysql.SysUsersRolesRepo.BatchFindByRoleID(c.Request.Context(), []uint{uint(req.RoleId)})
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	var addUserRole = []*model.SysUsersRoles{}
+	// 检查用户是否已经有这些角色
+	userRoleIDs := make(map[uint]struct{})
+	for _, ur := range userRoles {
+		userRoleIDs[ur.UserID] = struct{}{}
+	}
+	// 检查用户是否已经有这些角色
+	for _, user := range users {
+		if _, ok := userRoleIDs[user.UserID]; ok {
+			continue
+		}
+		addUserRole = append(addUserRole, &model.SysUsersRoles{
+			UserID: user.UserID,
+			RoleID: uint(req.RoleId),
+		})
+	}
+
+	if len(addUserRole) > 0 {
+		if err := mysql.SysUsersRolesRepo.BatchCreate(c.Request.Context(), addUserRole); err != nil {
+			common.GinError(c, i18nresp.CodeInternalError, err.Error())
+			return
+		}
+	}
+
+	common.GinSuccess(c, nil)
+}
+
+// RemoveUserRole removes user roles
+func (s *UserService) RemoveUserRole(c *gin.Context) {
+	var req user.RemoveUserRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	var associations []*model.SysUsersRoles
+	for _, ur := range req.UserIds {
+		associations = append(associations, &model.SysUsersRoles{
+			UserID: uint(ur),
+			RoleID: uint(req.RoleId),
+		})
+	}
+
+	if err := mysql.SysUsersRolesRepo.BatchDeleteByUserRoleIDs(c.Request.Context(), associations); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
+	common.GinSuccess(c, nil)
+}
+
+func setUsersRoleAndDeptInfo(ctx context.Context, users []*user.SysUser) error {
+	var deptIDs []uint
+	var userIDs []uint
+	var userMap = map[uint]*user.SysUser{}
+	for _, u := range users {
+		userMap[uint(u.Id)] = u
+		userIDs = append(userIDs, uint(u.Id))
+		if u.DeptId > 0 {
+			deptIDs = append(deptIDs, uint(u.DeptId))
+		}
+	}
+
+	// 设置用户角色
+	userRoles, err := mysql.SysUsersRolesRepo.BatchFindByUserID(ctx, userIDs)
+	if err != nil {
+		return fmt.Errorf("failed to query user roles: %v", err)
+	}
+	var roleIDs []uint
+	for _, ur := range userRoles {
+		roleIDs = append(roleIDs, ur.RoleID)
+		u := userMap[ur.UserID]
+		if u != nil {
+			u.RoleIds = append(u.RoleIds, int64(ur.RoleID))
+		}
+	}
+	roles, err := mysql.SysRoleRepo.FindByIDs(ctx, roleIDs)
+	if err != nil {
+		return fmt.Errorf("failed to query roles: %v", err)
+	}
+	var roleMap = make(map[uint]*model.SysRole)
+	for _, role := range roles {
+		roleMap[role.RoleID] = role
+	}
+
+	// 设置部门名称
+	depts, err := mysql.SysDeptRepo.FindByIDs(ctx, deptIDs)
+	if err != nil {
+		return fmt.Errorf("failed to query departments: %v", err)
+	}
+	var deptMap = make(map[uint]*model.SysDept)
+	for _, dept := range depts {
+		deptMap[dept.DeptID] = dept
+	}
+
+	// 设置部门名称，和角色信息
+	for _, u := range users {
+		dept := deptMap[uint(u.DeptId)]
+		if dept != nil {
+			u.DeptName = dept.Name
+		}
+		for _, roleID := range u.RoleIds {
+			role := roleMap[uint(roleID)]
+			if role != nil {
+				u.RoleNames = append(u.RoleNames, role.Name)
+			}
+		}
+	}
+	return nil
 }

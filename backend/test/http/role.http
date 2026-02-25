@@ -1,0 +1,62 @@
+### 角色列表
+GET http://localhost:8082/authz/roles/list-roles
+Content-Type: application/json
+Authorization: {{token}}
+
+### 创建角色
+POST http://localhost:8082/authz/roles
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "name": "root",
+  "level": 2,
+  "description": "root角色",
+  "dataScope": "all"
+}
+
+### 更新角色
+PUT http://localhost:8082/authz/roles
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "id": 5,
+  "name": "root新名称",
+  "level": 3,
+  "description": "root新名称",
+  "dataScope": "all"
+}
+
+### 删除角色
+DELETE http://localhost:8082/authz/roles/5
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+### 批量删除角色
+DELETE http://localhost:8082/authz/roles/batch-delete
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "ids": [6]
+}
+
+### 保存菜单到角色
+POST http://localhost:8082/authz/roles/save-menus
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "roleID": 7,
+  "menuIDs": [1, 2, 3]
+}
+
+### 获取角色菜单
+POST http://localhost:8082/authz/roles/find-menus
+Content-Type: application/json
+X-Custom-User-Info: {{userInfo}}
+
+{
+  "roleIds": [1]
+}

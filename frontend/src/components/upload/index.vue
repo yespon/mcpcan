@@ -29,6 +29,7 @@ import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
 import { CircleCloseFilled } from '@element-plus/icons-vue'
 import McpImage from '../mcp-image/index.vue'
+import { ElMessage } from 'element-plus'
 
 const action = ref(
   baseConfig.SERVER_BASE_URL + (window as any).__APP_CONFIG__?.API_BASE + '/market/storage/image',
@@ -59,10 +60,11 @@ const emit = defineEmits<{
 imageUrl.value = props.modelValue || ''
 
 const handleAvatarSuccess = (
-  response: { code: number; data: { path: string } },
+  response: { code: number; data: { path: string }; message: string },
   uploadFile: { raw: Blob | MediaSource },
 ) => {
   if (response.code !== 0) {
+    ElMessage.warning(response.message)
     return
   }
   imageUrl.value = URL.createObjectURL(uploadFile.raw!)

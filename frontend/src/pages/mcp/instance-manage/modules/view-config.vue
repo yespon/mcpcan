@@ -6,6 +6,7 @@
     <div
       class="mb-2 flex items-center"
       v-if="dialogInfo.instanceInfo.accessType !== AccessType.DIRECT"
+      v-auth="'mcpcan_instance:config'"
     >
       <el-switch
         v-model="dialogInfo.instanceInfo.enabledToken"
@@ -69,17 +70,21 @@
                       </el-button>
                       <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item command="handleAddInstance" @click="handleAddToken">
-                            <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
-                            {{ t('mcp.instance.formData.addToken') }}
-                          </el-dropdown-item>
-                          <el-dropdown-item
-                            command="handleAddInstance"
-                            @click="handleBatchChangeHeader"
-                          >
-                            <el-icon><Edit /></el-icon>
-                            {{ t('mcp.instance.formData.batchChangeHeader') }}
-                          </el-dropdown-item>
+                          <div v-auth="'mcpcan_instance:add_token'">
+                            <el-dropdown-item command="handleAddInstance" @click="handleAddToken">
+                              <el-icon><i class="icon iconfont MCP-a-1"></i></el-icon>
+                              {{ t('mcp.instance.formData.addToken') }}
+                            </el-dropdown-item>
+                          </div>
+                          <div v-auth="'mcpcan_instance:edit_token'">
+                            <el-dropdown-item
+                              command="handleAddInstance"
+                              @click="handleBatchChangeHeader"
+                            >
+                              <el-icon><Edit /></el-icon>
+                              {{ t('mcp.instance.formData.batchChangeHeader') }}
+                            </el-dropdown-item>
+                          </div>
                         </el-dropdown-menu>
                       </template>
                     </el-dropdown>
@@ -127,24 +132,30 @@
                         <el-icon size="18"><Operation /></el-icon>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item @click="handleEditToken(index)">
-                              <el-button link>
-                                {{ t('env.run.action.edit') }}
-                              </el-button>
-                            </el-dropdown-item>
-                            <el-dropdown-item @click="handleViewLog(index)">
-                              <el-button link>
-                                {{ t('mcp.instance.action.accessLogs') }}
-                              </el-button>
-                            </el-dropdown-item>
-                            <el-dropdown-item
-                              v-if="showDeleteBtn(token)"
-                              @click="handleDeleteToken(index)"
-                            >
-                              <el-button type="danger" link>
-                                {{ t('mcp.instance.action.delete') }}
-                              </el-button>
-                            </el-dropdown-item>
+                            <div v-auth="'mcpcan_instance:edit_token'">
+                              <el-dropdown-item @click="handleEditToken(index)">
+                                <el-button link>
+                                  {{ t('env.run.action.edit') }}
+                                </el-button>
+                              </el-dropdown-item>
+                            </div>
+                            <div v-auth="'mcpcan_instance:logs'">
+                              <el-dropdown-item @click="handleViewLog(index)">
+                                <el-button link>
+                                  {{ t('mcp.instance.action.accessLogs') }}
+                                </el-button>
+                              </el-dropdown-item>
+                            </div>
+                            <div v-auth="'mcpcan_instance:delete_token'">
+                              <el-dropdown-item
+                                v-if="showDeleteBtn(token)"
+                                @click="handleDeleteToken(index)"
+                              >
+                                <el-button type="danger" link>
+                                  {{ t('mcp.instance.action.delete') }}
+                                </el-button>
+                              </el-dropdown-item>
+                            </div>
                           </el-dropdown-menu>
                         </template>
                       </el-dropdown>

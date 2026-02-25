@@ -61,6 +61,10 @@ const (
 	GatewayRoutePrefix  = "/mcp-gateway"
 
 	EnvironmentDefaultName = "Default-Kubernetes-Env"
+
+	UserInfoHeaderKey  = "X-Custom-User-Info"
+	UserIdHeaderKey    = "X-Consum-User-Id"
+	UserInfoContextKey = "userInfo"
 )
 
 // Global query range constraints

@@ -99,7 +99,7 @@ func (uc *AuthUseBiz) Login(
 	}
 
 	// Check user status
-	if !user.IsEnabled() {
+	if user.Enabled == nil || !*user.Enabled {
 		uc.logger.Warn("User is disabled", zap.String("username", username))
 		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeUserDisabledError))
 	}
@@ -172,21 +172,11 @@ func (uc *AuthUseBiz) Login(
 			uc.logger.Warn("Failed to query department name", zap.Uint("deptId", deptID), zap.Error(derr))
 		}
 	}
-	roleIDs := []uint{}
-	roleNames := []string{}
-	if mysql.SysUsersRolesRepo != nil {
-		if ids, rerr := mysql.SysUsersRolesRepo.FindRoleIDsByUserID(ctx, user.UserID); rerr == nil {
-			roleIDs = ids
-			for _, rid := range ids {
-				if role, ferr := mysql.SysRoleRepo.FindByID(ctx, rid); ferr == nil && role != nil {
-					roleNames = append(roleNames, role.Name)
-				} else if ferr != nil {
-					uc.logger.Warn("Failed to query role", zap.Uint("roleId", rid), zap.Error(ferr))
-				}
-			}
-		} else {
-			uc.logger.Warn("Failed to query user role IDs", zap.Uint("userId", user.UserID), zap.Error(rerr))
-		}
+
+	roleIDs, roleNames, err := uc.getUserRoleAndRoleNames(ctx, user.UserID)
+	if err != nil {
+		uc.logger.Error("Failed to query user roles", zap.Uint("userId", user.UserID), zap.Error(err))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeLoginFailure))
 	}
 
 	userInfo := &UserInfo{
@@ -343,7 +333,7 @@ func (uc *AuthUseBiz) ValidateToken(ctx context.Context, token string) (*Validat
 	}
 
 	// Check user status
-	if !user.IsEnabled() {
+	if user.Enabled == nil || !*user.Enabled {
 		uc.logger.Warn("User is disabled", zap.Uint("userId", user.UserID))
 		return &ValidateResult{Valid: false}, nil
 	}
@@ -362,21 +352,11 @@ func (uc *AuthUseBiz) ValidateToken(ctx context.Context, token string) (*Validat
 			uc.logger.Warn("Failed to query department name", zap.Uint("deptId", deptID), zap.Error(derr))
 		}
 	}
-	roleIDs := []uint{}
-	roleNames := []string{}
-	if mysql.SysUsersRolesRepo != nil {
-		if ids, rerr := mysql.SysUsersRolesRepo.FindRoleIDsByUserID(ctx, user.UserID); rerr == nil {
-			roleIDs = ids
-			for _, rid := range ids {
-				if role, ferr := mysql.SysRoleRepo.FindByID(ctx, rid); ferr == nil && role != nil {
-					roleNames = append(roleNames, role.Name)
-				} else if ferr != nil {
-					uc.logger.Warn("Failed to query role", zap.Uint("roleId", rid), zap.Error(ferr))
-				}
-			}
-		} else {
-			uc.logger.Warn("Failed to query user role IDs", zap.Uint("userId", user.UserID), zap.Error(rerr))
-		}
+
+	roleIDs, roleNames, err := uc.getUserRoleAndRoleNames(ctx, user.UserID)
+	if err != nil {
+		uc.logger.Error("Failed to query user roles", zap.Uint("userId", user.UserID), zap.Error(err))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeLoginFailure))
 	}
 
 	userInfo := &UserInfo{
@@ -451,21 +431,11 @@ func (uc *AuthUseBiz) GetUserInfo(ctx context.Context, userID uint) (*UserInfo, 
 			uc.logger.Warn("Failed to query department name", zap.Uint("deptId", deptID), zap.Error(derr))
 		}
 	}
-	roleIDs := []uint{}
-	roleNames := []string{}
-	if mysql.SysUsersRolesRepo != nil {
-		if ids, rerr := mysql.SysUsersRolesRepo.FindRoleIDsByUserID(ctx, user.UserID); rerr == nil {
-			roleIDs = ids
-			for _, rid := range ids {
-				if role, ferr := mysql.SysRoleRepo.FindByID(ctx, rid); ferr == nil && role != nil {
-					roleNames = append(roleNames, role.Name)
-				} else if ferr != nil {
-					uc.logger.Warn("Failed to query role", zap.Uint("roleId", rid), zap.Error(ferr))
-				}
-			}
-		} else {
-			uc.logger.Warn("Failed to query user role IDs", zap.Uint("userId", user.UserID), zap.Error(rerr))
-		}
+
+	roleIDs, roleNames, err := uc.getUserRoleAndRoleNames(ctx, userID)
+	if err != nil {
+		uc.logger.Error("Failed to query user roles", zap.Uint("userId", userID), zap.Error(err))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeLoginFailure))
 	}
 
 	userInfo := &UserInfo{
@@ -482,4 +452,29 @@ func (uc *AuthUseBiz) GetUserInfo(ctx context.Context, userID uint) (*UserInfo, 
 	}
 
 	return userInfo, nil
+}
+
+func (uc *AuthUseBiz) getUserRoleAndRoleNames(ctx context.Context, userId uint) ([]uint, []string, error) {
+	roleIDs := []uint{}
+	roleNames := []string{}
+	if mysql.SysUsersRolesRepo != nil {
+		userRoles, err := mysql.SysUsersRolesRepo.BatchFindByUserID(ctx, []uint{userId})
+		if err != nil {
+			uc.logger.Warn("Failed to query user roles", zap.Uint("userId", userId), zap.Error(err))
+			return nil, nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeLoginFailure))
+		}
+
+		for _, userRole := range userRoles {
+			roleIDs = append(roleIDs, userRole.RoleID)
+		}
+		roles, _, err := mysql.SysRoleRepo.FindWithPagination(context.Background(), 1, len(roleIDs), "", roleIDs)
+		if err != nil {
+			uc.logger.Warn("Failed to query roles", zap.Error(err))
+			return nil, nil, err
+		}
+		for _, role := range roles {
+			roleNames = append(roleNames, role.Name)
+		}
+	}
+	return roleIDs, roleNames, nil
 }

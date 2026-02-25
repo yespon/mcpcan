@@ -199,6 +199,38 @@ const router = createRouter({
           name: 'userCenter',
           component: () => import('../pages/login/user-center.vue'),
         },
+        {
+          path: '/user-manage',
+          name: 'userManage',
+          meta: {
+            title: 'userManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/user-manage/index.vue'),
+        },
+        {
+          path: '/department-manage',
+          name: 'departmentManage',
+          meta: {
+            title: 'departmentManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/department-manage/index.vue'),
+        },
+        {
+          path: '/role-manage',
+          name: 'roleManage',
+          meta: {
+            title: 'roleManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/system-manage/role-manage/index.vue'),
+        },
+        {
+          path: '/user-with-role',
+          name: 'userWithRole',
+          component: () => import('../pages/system-manage/user-manage/user-with-role.vue'),
+        },
       ],
     },
     {
@@ -215,6 +247,11 @@ const router = createRouter({
       path: '/404',
       name: '404',
       component: () => import('../pages/error/404.vue'),
+    },
+    {
+      path: '/403',
+      name: '403',
+      component: () => import('../pages/error/403.vue'),
     },
   ],
 })
@@ -245,10 +282,52 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
+    // 处理根路径与默认首页：如果 /home 无权限，则跳转到第一个有权限的菜单
+    if (to.path === '/' || to.path === '/home') {
+      await useUserStore()
+        .handleMenuAuth()
+        .catch(() => {
+          next('/403')
+        })
+      const { allAuthMenuList } = storeToRefs(useUserStore())
+      const allowList = allAuthMenuList.value || []
+      if (allowList.length) {
+        const preferred = allowList.includes('/home') ? '/home' : allowList[0]
+        // 避免死循环：只有在目标不是 preferred 时才跳转
+        if (to.path !== preferred) {
+          next(preferred)
+          return
+        }
+      } else {
+        next('/403')
+        return
+      }
+    }
+
     // don't have the path
     if (to.matched.length === 0) {
       next('/404')
       return
+    }
+
+    // 菜单路由访问鉴权：仅判断菜单路径是否在 allAuthMenuList 中
+    // 说明：这里不做按钮/接口鉴权，只做“菜单可见即允许访问”的粗粒度控制
+    if (to.meta?.isMenu) {
+      if (useUserStore().allAuthMenuList.length === 0) {
+        await useUserStore()
+          .handleMenuAuth()
+          .catch(() => {
+            next('/403')
+          })
+      }
+      const { allAuthMenuList } = storeToRefs(useUserStore())
+      const allowList = allAuthMenuList.value || []
+      // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
+      const targetPath = to.path
+      if (!allowList.includes(targetPath)) {
+        next('/403')
+        return
+      }
     }
 
     // Handle set page title

@@ -20,7 +20,7 @@
         <el-main :class="route.path === '/home' ? 'p-0' : ''" class="hide-scrollbar">
           <!-- when change language then refresh page -->
           <el-config-provider :locale="elLocale">
-            <RouterView></RouterView>
+            <RouterView class="h-full"></RouterView>
           </el-config-provider>
         </el-main>
       </el-container>
@@ -51,11 +51,17 @@ import { useSystemStoreHook } from '@/stores'
 // import SplashCursor from '@/components/Animation/SplashCursor.vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
+import { useUserStore } from '@/stores'
 
 const { locale } = useI18n()
 const route = useRoute()
 const { isCollapse, language } = toRefs(useSystemStoreHook())
 const elLocale = computed(() => (language.value === 'zh-cn' ? zhCn : en))
+const { handleMenuAuth } = useUserStore()
+const init = () => {
+  handleMenuAuth()
+}
+onMounted(init)
 </script>
 <style lang="scss" scoped>
 .empty-layout {

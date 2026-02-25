@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -172,6 +173,7 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		Valid: validateResult.Valid,
 	}
 
+	var userInfoJsonBase64 = ""
 	if validateResult.Valid && validateResult.UserInfo != nil {
 		response.UserInfo = &user_auth.UserInfo{
 			UserId:    validateResult.UserInfo.UserID,
@@ -185,6 +187,14 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 			RoleIds:   s.convertUintToInt64Slice(validateResult.UserInfo.RoleIDs),
 			RoleNames: validateResult.UserInfo.RoleNames,
 		}
+
+		userInfoJson, err := json.Marshal(response.UserInfo)
+		if err != nil {
+			logger.Error("marshal user info failed", zap.Error(err))
+			common.GinError(c, i18nresp.CodeInternalError, "marshal user info failed: "+err.Error())
+			return
+		}
+		userInfoJsonBase64 = base64.StdEncoding.EncodeToString(userInfoJson)
 	}
 
 	if validateResult.Valid && validateResult.LoginInfo != nil {
@@ -196,33 +206,18 @@ func (s *UserAuthService) ValidateToken(c *gin.Context) {
 		}
 	}
 
+	// response add X-Custom-User-Info header
+	c.Writer.Header().Set(common.UserInfoHeaderKey, userInfoJsonBase64)
 	// response add X-Consum-User-Id header
-	c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", validateResult.UserInfo.UserID))
-
+	c.Writer.Header().Set(common.UserIdHeaderKey, fmt.Sprintf("%v", response.UserInfo.UserId))
 	common.GinSuccess(c, response)
 }
 
 // GetUserInfo get user information
 func (s *UserAuthService) GetUserInfo(c *gin.Context) {
-	userId, exists := c.Get("userId")
-	if !exists {
-		common.GinError(c, i18nresp.CodeInternalError, "failed to get user ID")
-		return
-	}
-	userIdInt, ok := userId.(int64)
-	if !ok {
-		common.GinError(c, i18nresp.CodeInternalError, "user ID type error")
-		return
-	}
-	// Get user information
-	userInfo, err := s.authUseBiz.GetUserInfo(c.Request.Context(), uint(userIdInt))
+	userInfo, err := utils.GetCurrentUser(c)
 	if err != nil {
-		logger.Error("get user information failed", zap.Error(err), zap.Int64("userId", int64(userIdInt)))
-		common.GinError(c, i18nresp.CodeInternalError, "get user information failed")
-		return
-	}
-	if userInfo == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "failed to get user information")
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
 
@@ -235,18 +230,7 @@ func (s *UserAuthService) GetUserInfo(c *gin.Context) {
 		PageSize:           common.DefaultPageSize,
 		EnableNotification: common.EnableNotification,
 		AutoLogout:         common.AutoLogoutTime,
-		UserInfo: &user_auth.UserInfo{
-			UserId:    userInfo.UserID,
-			Username:  userInfo.Username,
-			Nickname:  userInfo.Nickname,
-			Email:     userInfo.Email,
-			Phone:     userInfo.Phone,
-			Avatar:    userInfo.Avatar,
-			DeptId:    userInfo.DeptID,
-			DeptName:  userInfo.DeptName,
-			RoleIds:   s.convertUintToInt64Slice(userInfo.RoleIDs),
-			RoleNames: userInfo.RoleNames,
-		},
+		UserInfo:           userInfo,
 	}
 
 	common.GinSuccess(c, response)
@@ -351,6 +335,8 @@ func (s *UserAuthService) KymoValidateToken(c *gin.Context) {
 		common.GinUnauthorized(c, fmt.Sprintf("from kymo system token is invalid status: %d", status))
 		return
 	}
+
+	var userInfoJsonBase64 string
 	resp := &user_auth.ValidateTokenResponse{
 		Valid: true,
 		UserInfo: &user_auth.UserInfo{
@@ -366,6 +352,16 @@ func (s *UserAuthService) KymoValidateToken(c *gin.Context) {
 			RoleNames: result.UserInfo.RoleNames,
 		},
 	}
-	c.Writer.Header().Set("X-Consum-User-Id", fmt.Sprintf("%d", result.UserInfo.UserID))
+	// encode user info to base64
+	userInfoJson, err := json.Marshal(resp.UserInfo)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "marshal user info failed")
+		return
+	}
+	userInfoJsonBase64 = base64.StdEncoding.EncodeToString(userInfoJson)
+
+	// response add X-Custom-User-Info header
+	c.Writer.Header().Set(common.UserInfoHeaderKey, userInfoJsonBase64)
+	c.Writer.Header().Set(common.UserIdHeaderKey, fmt.Sprintf("%v", result.UserInfo.UserID))
 	common.GinSuccess(c, resp)
 }

@@ -1,0 +1,250 @@
+# type = 0 目录，type 1 = 菜单，type 2 = 按钮, type 3 = iFrame 要转化为 1
+# showParent = true 显示父目录，false 不显示
+- permission: mcpcan_home
+  title: 首页
+  engTitle: Home
+  path: /home
+  type: 1
+  sort: 10
+- permission: mcpcan_instance
+  title: MCP实例
+  engTitle: Mcp Instance
+  path: /instance-manage
+  type: 1
+  sort: 20
+  children:
+    - permission: mcpcan_instance:create
+      title: 创建实例
+      engTitle: Create Instance
+      type: 2
+    - permission: mcpcan_instance:agent_platform_sync
+      title: 智能体平台同步
+      engTitle: Agent Platform Sync
+      type: 2
+    - permission: mcpcan_instance:delete
+      title: 删除实例
+      engTitle: Delete Instance
+      type: 2
+    - permission: mcpcan_instance:enable
+      title: 开关实例
+      engTitle: Enable Instance
+      type: 2
+    - permission: mcpcan_instance:update
+      title: 更新实例
+      engTitle: Update Instance
+      type: 2
+    - permission: mcpcan_instance:debug
+      title: 调试实例
+      engTitle: Debug Instance
+      type: 2
+    - permission: mcpcan_instance:probe
+      title: 实例探测
+      engTitle: Probe Instance
+      type: 2
+    - permission: mcpcan_instance:logs
+      title: 实例日志
+      engTitle: Instance Logs
+      type: 2
+    - permission: mcpcan_instance:config
+      title: 实例访问配置
+      engTitle: Instance Access Config
+      type: 2
+    - permission: mcpcan_instance:enable_token
+      title: 实例令牌配置
+      engTitle: Instance Token Config
+      type: 2
+    - permission: mcpcan_instance:edit_token
+      title: 编辑实例令牌
+      engTitle: Edit Instance Token
+      type: 2
+    - permission: mcpcan_instance:add_token
+      title: 添加实例令牌
+      engTitle: Add Instance Token
+      type: 2
+    - permission: mcpcan_instance:delete_token
+      title: 删除实例令牌
+      engTitle: Delete Instance Token
+      type: 2
+- permission: mcpcan_market_manage
+  title: 市场管理
+  engTitle: Market
+  path: /market-manage
+  type: 1
+  sort: 30
+- permission: mcpcan_template
+  title: 部署模版
+  engTitle: Template
+  path: /template-manage
+  type: 1
+  sort: 40
+  children:
+    - permission: mcpcan_template:create
+      title: 创建模版
+      engTitle: Create Template
+      type: 2
+    - permission: mcpcan_template:update
+      title: 更新模版
+      engTitle: Update Template
+      type: 2
+    - permission: mcpcan_template:delete
+      title: 删除模版
+      engTitle: Delete Template
+      type: 2
+- permission: mcpcan_working_environment
+  title: 运行环境
+  engTitle: Run-Env
+  path: /working-environment
+  type: 1
+  sort: 50
+  children:
+    - permission: mcpcan_working_environment:pvc_create
+      title: 创建运行环境PVC
+      engTitle: Create Run-Env PVC
+      type: 2
+    - permission: mcpcan_working_environment:connect_test
+      title: 连接性测试
+      engTitle: Connection Test
+      type: 2
+- permission: mcpcan_resource_manage
+  title: 文件管理
+  engTitle: File-Manage
+  path: /resource-manage
+  type: 1
+  sort: 60
+  children:
+    - permission: mcpcan_resource_manage:create_code_package
+      title: 创建代码包
+      engTitle: Create Code Package
+      type: 2
+    - permission: mcpcan_resource_manage:download_code_package
+      title: 下载代码包
+      engTitle: Download Code Package
+      type: 2
+    - permission: mcpcan_resource_manage:delete_code_package
+      title: 删除代码包
+      engTitle: Delete Code Package
+      type: 2
+    - permission: mcpcan_resource_manage:code_package_detail
+      title: 代码包详情
+      engTitle: Code Package Detail
+      type: 2
+    - permission: mcpcan_resource_manage:create_openapi
+      title: 创建OpenAPI
+      engTitle: Create OpenAPI
+      type: 2
+    - permission: mcpcan_resource_manage:openapi_detail
+      title: OpenAPI详情
+      engTitle: OpenAPI Detail
+      type: 2
+    - permission: mcpcan_resource_manage:delete_openapi
+      title: 删除OpenAPI
+      engTitle: Delete OpenAPI
+      type: 2
+    - permission: mcpcan_resource_manage:download_openapi
+      title: 下载OpenAPI
+      engTitle: Download OpenAPI
+      type: 2
+- permission: mcpcan_agent_manage
+  title: 智能体平台管理
+  engTitle: Agent Platform
+  path: /agent-manage
+  type: 1
+  sort: 70
+  children:
+    - permission: mcpcan_agent_manage:create
+      title: 创建智能体平台
+      engTitle: Create Agent Platform
+      type: 2
+    - permission: mcpcan_agent_manage:delete
+      title: 删除智能体平台
+      engTitle: Delete Agent Platform
+      type: 2
+    - permission: mcpcan_agent_manage:update
+      title: 更新智能体平台
+      engTitle: Update Agent Platform
+      type: 2
+    - permission: mcpcan_agent_manage:connect_test
+      title: 智能体平台连接测试
+      engTitle: Agent Platform Connection Test
+      type: 2
+
+- permission: mcpcan_rbac_manage
+  title: 权限管理
+  engTitle: RBAC Manage
+  path: /auth-manage
+  type: 0
+  sort: 80
+  children:
+    - permission: mcpcan_rbac_manage:user
+      title: 用户管理
+      engTitle: User Manage
+      path: /user-manage
+      type: 1
+      sort: 10
+      children:
+          - permission: mcpcan_rbac_manage:user:create
+            title: 创建用户
+            engTitle: Create User
+            type: 2
+          - permission: mcpcan_rbac_manage:user:update
+            title: 更新用户
+            engTitle: Update User
+            type: 2
+          - permission: mcpcan_rbac_manage:user:delete
+            title: 删除用户
+            engTitle: Delete User
+            type: 2
+    - permission: mcpcan_rbac_manage:dept
+      title: 部门管理
+      engTitle: Dept Manage
+      path: /department-manage
+      type: 1
+      sort: 20
+      children:
+        - permission: mcpcan_rbac_manage:dept:create
+          title: 创建部门
+          engTitle: Create Department
+          type: 2
+        - permission: mcpcan_rbac_manage:dept:update
+          title: 更新部门
+          engTitle: Update Department
+          type: 2
+        - permission: mcpcan_rbac_manage:dept:delete
+          title: 删除部门
+          engTitle: Delete Department
+          type: 2
+    - permission: mcpcan_rbac_manage:role
+      title: 角色管理
+      engTitle: Role Manage
+      path: /role-manage
+      type: 1
+      sort: 30
+      children:
+        - permission: mcpcan_rbac_manage:role:create
+          title: 创建角色
+          engTitle: Create Role
+          type: 2
+        - permission: mcpcan_rbac_manage:role:update
+          title: 更新角色
+          engTitle: Update Role
+          type: 2
+        - permission: mcpcan_rbac_manage:role:delete
+          title: 删除角色
+          engTitle: Delete Role
+          type: 2
+        - permission: mcpcan_rbac_manage:role:save_menus
+          title: 增加角色菜单
+          engTitle: Add Role Menu
+          type: 2
+        - permission: mcpcan_rbac_manage:role:menus
+          title: 角色菜单列表
+          engTitle: Role Menu List
+          type: 2
+        - permission: mcpcan_rbac_manage:role:add_user
+          title: 增加角色用户
+          engTitle: Add Role User
+          type: 2
+        - permission: mcpcan_rbac_manage:role:remove_user
+          title: 移除角色用户
+          engTitle: Remove Role User
+          type: 2

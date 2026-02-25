@@ -64,7 +64,11 @@
     "agentManage": "智能体平台",
     "marketManage": "市场管理",
     "resourceManage": " 文件管理",
-    "package": "代码包"
+    "package": "代码包",
+    "rbacManage": "权限管理",
+    "roleManage": "角色管理",
+    "userManage": "用户管理",
+    "departmentManage": "部门管理"
   },
   "common": {
     "edit": "编辑",
@@ -114,7 +118,8 @@
     "upload": "上传成功",
     "delete": "删除成功",
     "copy": "复制成功",
-    "uploadFail": "上传失败"
+    "uploadFail": "上传失败",
+    "auth": "授权成功"
   },
   "desc": {
     "reason": "原因",

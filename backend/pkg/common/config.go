@@ -8,6 +8,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+type CodeMode string
+
+const (
+	OpenCodeCodeMode       CodeMode = "OpenCode"
+	EnterpriseCodeCodeMode CodeMode = "EnterpriseCode"
+)
+
 // ServerConfig server configuration
 type ServerConfig struct {
 	GrpcPort int `mapstructure:"grpcPort"` // gRPC port

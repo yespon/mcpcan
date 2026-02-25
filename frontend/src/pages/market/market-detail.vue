@@ -111,9 +111,13 @@
         </el-card>
 
         <!-- Action Button -->
-        <mcp-button @click="handleCreate" size="large" class="w-full">{{
-          t('market.quickCreate')
-        }}</mcp-button>
+        <mcp-button
+          v-auth="'mcpcan_instance:create'"
+          @click="handleCreate"
+          size="large"
+          class="w-full"
+          >{{ t('market.quickCreate') }}</mcp-button
+        >
       </div>
     </div>
   </div>
