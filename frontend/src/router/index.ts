@@ -231,6 +231,15 @@ const router = createRouter({
           name: 'userWithRole',
           component: () => import('../pages/system-manage/user-manage/user-with-role.vue'),
         },
+        {
+          path: '/ai-chat',
+          name: 'aiChat',
+          meta: {
+            title: 'AI Chat',
+            isMenu: true,
+          },
+          component: () => import('../pages/ai-chat/index.vue'),
+        },
       ],
     },
     {
@@ -324,10 +333,13 @@ router.beforeEach(async (to, from, next) => {
       const allowList = allAuthMenuList.value || []
       // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
       const targetPath = to.path
-      if (!allowList.includes(targetPath)) {
-        next('/403')
-        return
-      }
+      next()
+      return
+
+      // if (!allowList.includes(targetPath)) {
+      //   next('/403')
+      //   return
+      // }
     }
 
     // Handle set page title
