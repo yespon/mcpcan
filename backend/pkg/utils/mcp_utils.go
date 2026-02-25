@@ -11,11 +11,13 @@ import (
 
 // McpServerConfig MCP service configuration structure
 type McpServerConfig struct {
-	Args      []string `json:"args,omitempty"`
-	Command   string   `json:"command,omitempty"`
-	Type      string   `json:"type,omitempty"`
-	Transport string   `json:"transport,omitempty"`
-	URL       string   `json:"url,omitempty"`
+	Args      []string          `json:"args,omitempty"`
+	Command   string            `json:"command,omitempty"`
+	Type      string            `json:"type,omitempty"`
+	Transport string            `json:"transport,omitempty"`
+	URL       string            `json:"url,omitempty"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
 }
 
 // McpServersConfig MCP server configuration root structure

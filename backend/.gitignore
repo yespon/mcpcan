@@ -40,10 +40,13 @@ cmd/**/data/
 cmd/**/init-data/
 cmd/**/logs/
 
+# test
+.env
+test/go-test/config.json
+
 .idea
 .DS_Store
 .vscode
 __debug_bin*
-
 
 

@@ -170,6 +170,18 @@ func (a *App) loadMysql() error {
 			return (&model.McpToken{}).TableName(), nil
 		},
 		func() (string, error) {
+			mysql.NewAiSessionRepository()
+			return (&model.AiSession{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewAiMessageRepository()
+			return (&model.AiMessage{}).TableName(), nil
+		},
+		func() (string, error) {
+			mysql.NewAiModelAccessRepository()
+			return (&model.AiModelAccess{}).TableName(), nil
+		},
+		func() (string, error) {
 			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
 			// Not Kymo environment, initialize the table structure
 			if a.config.RunMode == common.RunModeKymo {
@@ -402,6 +414,32 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/mcp_to_intelligent_task/list", routerPrefix), mcpToIntelligentTaskService.ListHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/mcp_to_intelligent_task/:id/cancel", routerPrefix), mcpToIntelligentTaskService.CancelHandler)
 
+	// Register AI session management interface
+	aiSessionService := service.NewAiSessionService(context.Background())
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.CreateHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.UpdateHandler)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/ai/sessions/:id", routerPrefix), aiSessionService.DeleteHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id", routerPrefix), aiSessionService.GetHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions", routerPrefix), aiSessionService.ListHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/messages", routerPrefix), aiSessionService.GetSessionMessagesHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/usage", routerPrefix), aiSessionService.GetSessionUsageHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions/:id/chat", routerPrefix), aiSessionService.ChatHandler)
+
+	// Register AI model access management interface
+	aiModelAccessService := service.NewAiModelAccessService(context.Background())
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.CreateHandler)
+	a.ginEngine.PUT(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.UpdateHandler)
+	a.ginEngine.DELETE(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.DeleteHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/:id", routerPrefix), aiModelAccessService.GetHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models", routerPrefix), aiModelAccessService.ListHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/available", routerPrefix), aiModelAccessService.GetAvailableModelsHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/supported", routerPrefix), aiModelAccessService.GetSupportedModelsHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/test", routerPrefix), aiModelAccessService.TestConnectionHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/:id/test", routerPrefix), aiModelAccessService.TestConnectionWithIdHandler)
+
+	// Register file upload interface
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
+
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {
 		i18n.SuccessResponse(c, gin.H{"status": "ok"})
@@ -412,6 +450,9 @@ func (a *App) setupHttpServer() {
 func (a *App) setupMiddleware() {
 	// Add panic recovery middleware
 	a.ginEngine.Use(middleware.PanicRecovery())
+
+	// Add CORS middleware (must be early to handle OPTIONS)
+	a.ginEngine.Use(middleware.CORSMiddleware())
 
 	// Add request response logging middleware
 	a.ginEngine.Use(middleware.RequestResponseLoggingMiddleware())

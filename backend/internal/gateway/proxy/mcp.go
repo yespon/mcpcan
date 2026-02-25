@@ -162,12 +162,18 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	}
 
 	// validate request Authorization header for instance
-	reqAuth, err := validateMcpTokenForInstance(req, instanceId)
-	if err != nil {
-		WriteMCPLog(xTraceID, instanceId, reqAuth.Token,
-			golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
-			fmt.Sprintf("failed to valid token: %v for instance: %s", err.Error(), instanceId))
-		return fmt.Errorf("failed to valid token: %v", err.Error())
+	var reqAuth *RequestAuth
+	if instanceInfo.EnabledToken {
+		var authErr error
+		reqAuth, authErr = validateMcpTokenForInstance(req, instanceId)
+		if authErr != nil {
+			WriteMCPLog(xTraceID, instanceId, reqAuth.Token,
+				golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
+				fmt.Sprintf("failed to valid token: %v for instance: %s", authErr.Error(), instanceId))
+			return fmt.Errorf("failed to valid token: %v", authErr.Error())
+		}
+	} else {
+		reqAuth = &RequestAuth{}
 	}
 
 	// Store instanceId in context

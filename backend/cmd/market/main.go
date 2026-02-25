@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/kymo-mcp/mcpcan/internal/market/app"
+	"github.com/kymo-mcp/mcpcan/pkg/llm/models"
 )
 
 func main() {
@@ -20,6 +21,9 @@ func main() {
 		fmt.Printf("Failed to initialize application: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Log supported models info
+	fmt.Printf("Supported LLM Providers: %d, Models: %d\n", len(models.AllProviders), len(models.GetAllModels()))
 
 	// Run application
 	if err := appInstance.Run(); err != nil {

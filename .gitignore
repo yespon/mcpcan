@@ -6,17 +6,29 @@
 *.dylib
 
 # IDEA
-.trae
-.idea
-.DS_Store
-.agent/*
-.vscode/docs/*
+*.claude/*
+*.trae
+*.idea
+*.DS_Store
+*.agent/*
+*.vscode/docs/*
+*.vscode/docs
+*.opencode
+*.amazonq
+*.trae
+*openspec
+*AGENTS.md
+*opencode.json
 
 # Test binary, built with `go test -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# backup
+*bak
+*backup
 
 # Dependency directories (remove the comment below to include it)
 vendor/
@@ -49,3 +61,8 @@ cmd/**/logs/
 
 # backend test
 backend/test/go-test/*
+# .agent
+.agent/
+
+# openapi
+one-api

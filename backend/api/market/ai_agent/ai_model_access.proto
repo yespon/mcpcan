@@ -1,0 +1,216 @@
+syntax = "proto3";
+
+package ai_agent;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/ai_agent";
+
+message AiModelAccess {
+    // @inject_tag: json:"id" desc:"ID"
+    int64 id = 1;
+    // @inject_tag: json:"name" desc:"Name"
+    string name = 2;
+    // @inject_tag: json:"provider" desc:"Provider"
+    string provider = 3;
+    // @inject_tag: json:"apiKey" desc:"API Key"
+    string apiKey = 4;
+    // @inject_tag: json:"baseUrl" desc:"Base URL"
+    string baseUrl = 5;
+    // @inject_tag: json:"modelName" desc:"Model Name"
+    string modelName = 6;
+    // @inject_tag: json:"createTime" desc:"Create Time"
+    int64 createTime = 7;
+    // @inject_tag: json:"updateTime" desc:"Update Time"
+    int64 updateTime = 8;
+}
+
+message CreateModelAccessRequest {
+    // @inject_tag: json:"name" form:"name" desc:"Name"
+    string name = 1;
+    // @inject_tag: json:"provider" form:"provider" desc:"Provider"
+    string provider = 2;
+    // @inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"
+    string apiKey = 3;
+    // @inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"
+    string baseUrl = 4;
+    // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
+    string modelName = 5;
+}
+
+message CreateModelAccessResponse {
+    // @inject_tag: json:"access" desc:"Access"
+    AiModelAccess access = 1;
+}
+
+message UpdateModelAccessRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
+    int64 id = 1;
+    // @inject_tag: json:"name" form:"name" desc:"Name"
+    string name = 2;
+    // @inject_tag: json:"provider" form:"provider" desc:"Provider"
+    string provider = 3;
+    // @inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"
+    string apiKey = 4;
+    // @inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"
+    string baseUrl = 5;
+    // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
+    string modelName = 6;
+}
+
+message UpdateModelAccessResponse {
+    // @inject_tag: json:"access" desc:"Access"
+    AiModelAccess access = 1;
+}
+
+message DeleteModelAccessRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
+    int64 id = 1;
+}
+
+message DeleteModelAccessResponse {
+    // @inject_tag: json:"success" desc:"Success"
+    bool success = 1;
+}
+
+message GetModelAccessRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
+    int64 id = 1;
+}
+
+message GetModelAccessResponse {
+    // @inject_tag: json:"access" desc:"Access"
+    AiModelAccess access = 1;
+}
+
+message ListModelAccessRequest {
+    // @inject_tag: json:"page" form:"page" desc:"Page number"
+    int32 page = 1;
+    // @inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"
+    int32 pageSize = 2;
+}
+
+message ListModelAccessResponse {
+    // @inject_tag: json:"list" desc:"List"
+    repeated AiModelAccess list = 1;
+    // @inject_tag: json:"total" desc:"Total"
+    int64 total = 2;
+}
+
+message ModelInfo {
+    // @inject_tag: json:"id" desc:"Model ID"
+    string id = 1;
+    // @inject_tag: json:"name" desc:"Display Name"
+    string name = 2;
+    // @inject_tag: json:"description" desc:"Description"
+    string description = 3;
+    // @inject_tag: json:"contextLength" desc:"Context Length"
+    int32 contextLength = 4;
+    // @inject_tag: json:"modality" desc:"Modality"
+    string modality = 5;
+}
+
+message ModelProvider {
+    // @inject_tag: json:"id" desc:"Provider ID"
+    string id = 1;
+    // @inject_tag: json:"name" desc:"Provider Name"
+    string name = 2;
+    // @inject_tag: json:"models" desc:"Model ID List (deprecated)"
+    repeated string models = 3;
+    // @inject_tag: json:"registerUrl" desc:"API Key Register URL"
+    string registerUrl = 4;
+    // @inject_tag: json:"docsUrl" desc:"Documentation URL"
+    string docsUrl = 5;
+    // @inject_tag: json:"baseUrl" desc:"API Base URL"
+    string baseUrl = 6;
+    // @inject_tag: json:"modelInfos" desc:"Model Details"
+    repeated ModelInfo modelInfos = 7;
+}
+
+message GetSupportedModelsRequest {}
+
+message GetSupportedModelsResponse {
+    // @inject_tag: json:"providers" desc:"Providers"
+    repeated ModelProvider providers = 1;
+}
+
+
+message GetAvailableModelsRequest {}
+
+message GetAvailableModelsResponse {
+    // @inject_tag: json:"list" desc:"List"
+    repeated AiModelAccess list = 1;
+}
+
+message TestConnectionRequest {
+    // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
+    int64 id = 1;
+    // @inject_tag: json:"provider" form:"provider" desc:"Provider"
+    string provider = 2;
+    // @inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"
+    string apiKey = 3;
+    // @inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"
+    string baseUrl = 4;
+    // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
+    string modelName = 5;
+}
+
+message TestConnectionResponse {
+    // @inject_tag: json:"success" desc:"Success"
+    bool success = 1;
+    // @inject_tag: json:"message" desc:"Message"
+    string message = 2;
+    // @inject_tag: json:"latencyMs" desc:"Latency (ms)"
+    int64 latencyMs = 3;
+}
+
+service AiModelAccessService {
+    rpc Create(CreateModelAccessRequest) returns (CreateModelAccessResponse) {
+        option (google.api.http) = {
+            post: "/ai/models"
+            body: "*"
+        };
+    }
+    rpc Update(UpdateModelAccessRequest) returns (UpdateModelAccessResponse) {
+        option (google.api.http) = {
+            put: "/ai/models"
+            body: "*"
+        };
+    }
+    rpc Delete(DeleteModelAccessRequest) returns (DeleteModelAccessResponse) {
+        option (google.api.http) = {
+            delete: "/ai/models/{id}"
+        };
+    }
+    rpc Get(GetModelAccessRequest) returns (GetModelAccessResponse) {
+        option (google.api.http) = {
+            get: "/ai/models/{id}"
+        };
+    }
+    rpc List(ListModelAccessRequest) returns (ListModelAccessResponse) {
+        option (google.api.http) = {
+            get: "/ai/models"
+        };
+    }
+    rpc GetSupportedModels(GetSupportedModelsRequest) returns (GetSupportedModelsResponse) {
+        option (google.api.http) = {
+            get: "/ai/models/supported"
+        };
+    }
+    rpc GetAvailableModels(GetAvailableModelsRequest) returns (GetAvailableModelsResponse) {
+        option (google.api.http) = {
+            get: "/ai/models/available"
+        };
+    }
+    rpc TestConnectionById(TestConnectionRequest) returns (TestConnectionResponse) {
+        option (google.api.http) = {
+            post: "/ai/models/{id}/test"
+        };
+    }
+    rpc TestConnectionNew(TestConnectionRequest) returns (TestConnectionResponse) {
+        option (google.api.http) = {
+                post: "/ai/models/test"
+                body: "*"
+        };
+    }
+}
