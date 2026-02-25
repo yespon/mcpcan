@@ -6,6 +6,7 @@
 *.dylib
 
 # IDEA
+*.claude/*
 *.trae
 *.idea
 *.DS_Store
