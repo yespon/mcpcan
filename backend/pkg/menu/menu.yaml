@@ -167,7 +167,18 @@
       title: 智能体平台连接测试
       engTitle: Agent Platform Connection Test
       type: 2
-
+- permission: mcpcan_model_manage
+  title: 模型管理
+  engTitle: Model Manage
+  path: /model-manage
+  type: 1
+  sort: 75
+- permission: mcpcan_ai_chat
+  title: 对话
+  engTitle: AI Chat
+  path: /ai-chat
+  type: 1
+  sort: 76
 - permission: mcpcan_rbac_manage
   title: 权限管理
   engTitle: RBAC Manage
@@ -182,18 +193,18 @@
       type: 1
       sort: 10
       children:
-          - permission: mcpcan_rbac_manage:user:create
-            title: 创建用户
-            engTitle: Create User
-            type: 2
-          - permission: mcpcan_rbac_manage:user:update
-            title: 更新用户
-            engTitle: Update User
-            type: 2
-          - permission: mcpcan_rbac_manage:user:delete
-            title: 删除用户
-            engTitle: Delete User
-            type: 2
+        - permission: mcpcan_rbac_manage:user:create
+          title: 创建用户
+          engTitle: Create User
+          type: 2
+        - permission: mcpcan_rbac_manage:user:update
+          title: 更新用户
+          engTitle: Update User
+          type: 2
+        - permission: mcpcan_rbac_manage:user:delete
+          title: 删除用户
+          engTitle: Delete User
+          type: 2
     - permission: mcpcan_rbac_manage:dept
       title: 部门管理
       engTitle: Dept Manage
