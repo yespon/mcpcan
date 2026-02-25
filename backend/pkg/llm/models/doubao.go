@@ -1,6 +1,7 @@
 package models
 
 // DoubaoProvider 火山引擎豆包提供商信息
+// 数据来源：https://www.volcengine.com/docs/82379
 var DoubaoProvider = ProviderInfo{
 	ID:          "doubao",
 	Name:        "火山引擎豆包 (Doubao)",
@@ -8,30 +9,147 @@ var DoubaoProvider = ProviderInfo{
 	RegisterURL: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
 	DocsURL:     "https://www.volcengine.com/docs/82379",
 	Models: []ModelInfo{
-
-		// 通用豆包模型
-		//doubao-seed-1-6-251015
-		//doubao-seed-1-6-thinking-250715
-		//doubao-seed-1-6-flash-250828
-		//doubao-seed-1-6-lite-251015
-		//doubao-1-5-pro-32k-250115
-		//doubao-1-5-pro-256k-250115
-		// doubao-1-5-lite-32k-250115
-		// doubao-seed-code-preview-251028
-		// doubao-1-5-thinking-pro-250415
-		// kimi-k2-thinking-251104
-		// glm-4-7-251222
-		// deepseek-v3-1-terminus
-		// deepseek-r1-250528
+		// Doubao Seed 2.0 Series (2026-02 最新，260215)
 		{
-
-			ID:            "glm-4-7-251222",
-			Name:          "Doubao-OpenAI-glm-4-7",
-			Description:   "豆包开源多模型",
-			ContextLength: 200000,
-			Modality:      "text+image->text",
-			Provider:      "doubao",
-			SupportTools:  true,
+			ID:              "doubao-seed-2-0-pro-260215",
+			Name:            "Doubao Seed 2.0 Pro",
+			Description:     "豆包旗舰推理模型，深度思考+多模态理解+工具调用 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:              "doubao-seed-2-0-lite-260215",
+			Name:            "Doubao Seed 2.0 Lite",
+			Description:     "豆包 2.0 轻量版，深度思考+工具调用 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:              "doubao-seed-2-0-mini-260215",
+			Name:            "Doubao Seed 2.0 Mini",
+			Description:     "豆包 2.0 迷你版，深度思考+工具调用 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:              "doubao-seed-2-0-code-preview-260215",
+			Name:            "Doubao Seed 2.0 Code Preview",
+			Description:     "豆包 2.0 编程专项版（Preview），深度思考+多模态+工具调用 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		// Doubao Seed 1.8 Series (2025-12)
+		{
+			ID:              "doubao-seed-1-8-251228",
+			Name:            "Doubao Seed 1.8",
+			Description:     "豆包 1.8，深度思考+工具调用+结构化输出 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		// GLM-4-7 (via Doubao/Ark)
+		{
+			ID:              "glm-4-7-251222",
+			Name:            "GLM-4-7",
+			Description:     "GLM-4-7 深度思考+工具调用 | 200k 上下文 (via Ark 平台)",
+			ContextLength:   204800,
+			Modality:        "text->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		// Doubao Seed 1.6 Series (2025-10)
+		{
+			ID:              "doubao-seed-code-preview-251028",
+			Name:            "Doubao Seed Code Preview",
+			Description:     "豆包编程场景增强，深度思考+多模态 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:           "doubao-seed-1-6-lite-251015",
+			Name:         "Doubao Seed 1.6 Lite",
+			Description:  "豆包 1.6 轻量版，深度思考+工具调用 | 256k 上下文",
+			ContextLength: 262144,
+			Modality:     "text->text",
+			Provider:     "doubao",
+			SupportThinking: true,
+			SupportTools: true,
+		},
+		{
+			ID:              "doubao-seed-1-6-flash-250828",
+			Name:            "Doubao Seed 1.6 Flash",
+			Description:     "豆包 1.6 Flash，视觉定位+深度思考+结构化输出 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		{
+			ID:              "doubao-seed-1-6-vision-250815",
+			Name:            "Doubao Seed 1.6 Vision",
+			Description:     "豆包 1.6 视觉版，GUI 任务+深度思考+结构化输出 | 256k 上下文",
+			ContextLength:   262144,
+			Modality:        "text+image->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
+		},
+		// Doubao 1.5 Series (2025-01)
+		{
+			ID:           "doubao-1-5-pro-32k-250115",
+			Name:         "Doubao 1.5 Pro 32K",
+			Description:  "豆包 1.5 Pro 通用旗舰，工具调用 | 32k 上下文",
+			ContextLength: 32768,
+			Modality:     "text->text",
+			Provider:     "doubao",
+			SupportTools: true,
+		},
+		{
+			ID:           "doubao-1-5-pro-256k-250115",
+			Name:         "Doubao 1.5 Pro 256K",
+			Description:  "豆包 1.5 Pro 超长上下文，工具调用 | 256k 上下文",
+			ContextLength: 262144,
+			Modality:     "text->text",
+			Provider:     "doubao",
+			SupportTools: true,
+		},
+		{
+			ID:           "doubao-1-5-lite-32k-250115",
+			Name:         "Doubao 1.5 Lite 32K",
+			Description:  "豆包 1.5 Lite 低成本方案，工具调用 | 32k 上下文",
+			ContextLength: 32768,
+			Modality:     "text->text",
+			Provider:     "doubao",
+			SupportTools: true,
+		},
+		{
+			ID:              "doubao-1-5-thinking-pro-250415",
+			Name:            "Doubao 1.5 Thinking Pro",
+			Description:     "豆包 1.5 深度推理版，深度思考+工具调用 | 128k 上下文",
+			ContextLength:   131072,
+			Modality:        "text->text",
+			Provider:        "doubao",
+			SupportThinking: true,
+			SupportTools:    true,
 		},
 	},
 }

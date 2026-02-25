@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	llm "github.com/kymo-mcp/mcpcan/pkg/llm_adapter"
@@ -42,7 +41,26 @@ type TestConnectionResponse struct {
 	LatencyMs int64  `json:"latencyMs"`
 }
 
-func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
+// CreateModelAccessRequest 创建模型接入配置请求（自定义，支持 AllowedModels）
+type CreateModelAccessRequest struct {
+	Name          string `json:"name"`
+	Provider      string `json:"provider"`
+	ApiKey        string `json:"apiKey"`
+	BaseUrl       string `json:"baseUrl"`
+	AllowedModels string `json:"allowedModels"` // JSON 数组字符串，为空表示不限制
+}
+
+// UpdateModelAccessRequest 更新模型接入配置请求（自定义，支持 AllowedModels）
+type UpdateModelAccessRequest struct {
+	Id            int64  `json:"id"`
+	Name          string `json:"name"`
+	Provider      string `json:"provider"`
+	ApiKey        string `json:"apiKey"`
+	BaseUrl       string `json:"baseUrl"`
+	AllowedModels string `json:"allowedModels"` // JSON 数组字符串，为空表示不限制
+}
+
+func (b *AiModelAccessBiz) Create(ctx context.Context, req *CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
 	// Validate provider
 	if req.Provider == "" {
 		return nil, fmt.Errorf("provider is required")
@@ -52,11 +70,12 @@ func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccess
 	}
 
 	modelAccess := &model.AiModelAccess{
-		UserID:   userID,
-		Name:     req.Name,
-		Provider: req.Provider,
-		ApiKey:   req.ApiKey,
-		BaseUrl:  req.BaseUrl,
+		UserID:        userID,
+		Name:          req.Name,
+		Provider:      req.Provider,
+		ApiKey:        req.ApiKey,
+		BaseUrl:       req.BaseUrl,
+		AllowedModels: req.AllowedModels,
 	}
 
 	if err := mysql.AiModelAccessRepo.Create(ctx, modelAccess); err != nil {
@@ -65,7 +84,7 @@ func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccess
 	return modelAccess, nil
 }
 
-func (b *AiModelAccessBiz) Update(ctx context.Context, req *pb.UpdateModelAccessRequest) (*model.AiModelAccess, error) {
+func (b *AiModelAccessBiz) Update(ctx context.Context, req *UpdateModelAccessRequest) (*model.AiModelAccess, error) {
 	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.Id)
 	if err != nil {
 		return nil, fmt.Errorf("model access not found")
@@ -87,6 +106,8 @@ func (b *AiModelAccessBiz) Update(ctx context.Context, req *pb.UpdateModelAccess
 	if req.BaseUrl != "" {
 		modelAccess.BaseUrl = req.BaseUrl
 	}
+	// AllowedModels 允许显式清空（传空字符串 "[]" 或 "" 时更新），所以直接赋值
+	modelAccess.AllowedModels = req.AllowedModels
 
 	if err := mysql.AiModelAccessRepo.Update(ctx, modelAccess); err != nil {
 		return nil, err

@@ -547,6 +547,27 @@
               >
             </div>
           </el-form-item>
+          <el-form-item label="Allowed Models"
+            v-if="editingModel.provider"
+          >
+            <el-select
+              v-model="editingModel.allowedModels"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              placeholder="Leave empty = allow all"
+              class="w-full"
+            >
+              <el-option
+                v-for="m in selectedProviderModels"
+                :key="m"
+                :label="m"
+                :value="m"
+              ></el-option>
+            </el-select>
+            <div class="text-xs text-gray-400 mt-1">限制该 Access 可使用的模型，为空则不限制</div>
+          </el-form-item>
         </el-form>
         <template #footer>
           <span class="dialog-footer">
@@ -800,6 +821,10 @@
             if (!editingSession.modelAccessID) return [];
             const model = models.value.find(m => m.id === editingSession.modelAccessID);
             if (!model) return [];
+            // 优先使用 allowedModels 限定可选模型
+            if (model.allowedModels && model.allowedModels.length > 0) {
+              return model.allowedModels;
+            }
             const provider = supportedProviders.value.find(p => p.id === model.provider);
             return provider ? provider.models || [] : [];
           });
@@ -995,6 +1020,8 @@
               provider: row.provider || "",
               apiKey: row.apiKey || "", // Usually masked
               baseUrl: row.baseUrl || "",
+              // allowedModels: 后端返回的是 string[] 数组，直接用
+              allowedModels: row.allowedModels || [],
             });
             modelDialogVisible.value = true;
           };
@@ -1012,18 +1039,26 @@
             return p ? p.baseUrl : "";
           };
 
-          // Computed: models for the selected ModelAccess's provider (for session creation)
+          // Computed: models for the selected ModelAccess (for session creation)
+          // 优先使用 allowedModels 字段限制可选模型，无限制时回退到 provider 全量模型
           const selectedModelProviderModels = computed(() => {
             if (!selectedModelId.value) return [];
             const selectedModel = models.value.find(
               (m) => m.id === selectedModelId.value,
             );
-            if (!selectedModel || !selectedModel.provider) return [];
+            if (!selectedModel) return [];
+            // 若 allowedModels 不为空，直接使用限定列表
+            if (selectedModel.allowedModels && selectedModel.allowedModels.length > 0) {
+              return selectedModel.allowedModels;
+            }
+            // 否则回退到 provider 的全量模型列表
+            if (!selectedModel.provider) return [];
             const p = supportedProviders.value.find(
               (x) => x.id === selectedModel.provider,
             );
             return p ? p.models : [];
           });
+
 
           const saveModel = async () => {
             savingModel.value = true;
@@ -1037,6 +1072,9 @@
               if (method === "PUT" && payload.apiKey && payload.apiKey.includes("****")) {
                   delete payload.apiKey;
               }
+
+              // allowedModels: 转为 JSON 字符串传给后端
+              payload.allowedModels = JSON.stringify(payload.allowedModels || []);
 
               await api("/market/ai/models", method, payload);
               ElementPlus.ElMessage.success("Saved");
@@ -1210,18 +1248,16 @@
                       } else if (ev.type === "error") {
                           ElementPlus.ElMessage.error(ev.content);
                           aiMsg.content += `\n[System Error: ${ev.content}]`;
-                      } else if (ev.usage) {
-                        aiMsg.usage = ev.usage;
-                        // Accumulate token usage
-                        if (ev.usage.totalTokens) {
-                          sessionTokenUsage.total += ev.usage.totalTokens;
-                        }
-                        if (ev.usage.promptTokens) {
-                          sessionTokenUsage.prompt += ev.usage.promptTokens;
-                        }
-                        if (ev.usage.completionTokens) {
-                          sessionTokenUsage.completion += ev.usage.completionTokens;
-                        }
+                      } else if (ev.type === "usage") {
+                        // 后端格式: { type: "usage", content: "{...}" }
+                        try {
+                          const usage = typeof ev.content === 'string' ? JSON.parse(ev.content) : ev.content;
+                          aiMsg.usage = usage;
+                          // 累计 token 消耗
+                          if (usage.totalTokens) sessionTokenUsage.total += usage.totalTokens;
+                          if (usage.promptTokens) sessionTokenUsage.prompt += usage.promptTokens;
+                          if (usage.completionTokens) sessionTokenUsage.completion += usage.completionTokens;
+                        } catch(e) {}
                       }
                     } catch (e) {}
                   }
@@ -1244,8 +1280,7 @@
           onMounted(async () => {
             // Try to init
             await api("/market/ai/models/supported").catch(() => {}); // Just to trigger config load
-            fetchSupportedProviders();
-            fetchSupportedProviders();
+            await fetchSupportedProviders(); // 只调用一次
             refreshModels();
             refreshSessions();
           });

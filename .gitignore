@@ -61,9 +61,6 @@ cmd/**/logs/
 
 # backend test
 backend/test/go-test/*
-# .agent
-.agent/dev-docs/
-.agent/dev-docs
-/*.agent/*
+backend/test/e2e/*
 
-one-api
+.agent/*
