@@ -2,7 +2,6 @@ package llm
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/anthropic"
-	"github.com/tmc/langchaingo/llms/googleai"
 	"github.com/tmc/langchaingo/llms/ollama"
 )
 
@@ -21,7 +19,8 @@ import (
 func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 	var model llms.Model
 	var err error
-	ctx := context.Background()
+	// ctx := context.Background()
+
 
 	// Create shared HTTP Client with Proxy if configured
 	var baseTransport http.RoundTripper = http.DefaultTransport
@@ -82,29 +81,27 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 			}
 		}
 
-		// Kimi/DeepSeek 需要 reasoning_content 支持
-		supportsReasoning := (typ == ProviderMoonshot || typ == ProviderDeepSeek)
+		// reasoning_content 支持：基于 provider type 或 BaseURL 启用
+		supportsReasoning := (typ == ProviderMoonshot || typ == ProviderDeepSeek ||
+			strings.Contains(baseURL, "moonshot.cn") || strings.Contains(baseURL, "deepseek.com"))
 
 		log.Printf("[Factory] Creating OpenAICompatProvider for %s, base URL: %s, reasoning=%v", typ, baseURL, supportsReasoning)
 		return NewOpenAICompatProvider(baseURL, config.APIKey, httpClient, extraHeaders, supportsReasoning), nil
 
-	case ProviderGoogle:
-		// Google Gemini
-		// googleai.WithHTTPClient is not directly available in some versions, check options.
-		// Usually googleai.New takes options.
-		// If googleai doesn't support WithHTTPClient directly, we might need another way or it might use default.
-		// Accessing langchaingo/llms/googleai source code knowledge:
-		// It uses `google.golang.org/api/option` which has `WithHTTPClient`.
-		// But langchaingo might not expose it directly in its `googleai.New`.
-		// Let's assume for now we can't easily change Google without verify.
-		// Wait, `googleai.New` takes `googleai.Option`.
-		// Let's check imports.
-		model, err = googleai.New(ctx,
-			googleai.WithAPIKey(config.APIKey),
-		)
-		// NOTE: Google AI client creation is complex with options. 
-		// For now, only OpenAI-compatible paths get proxy. 
-		// Adding TODO for Google/Anthropic if they don't share the same mechanism.
+	// case ProviderGoogle:
+	// 	// Google Gemini - Use OpenAI Compatibility Mode
+	// 	// Docs: https://ai.google.dev/gemini-api/docs/openai
+	// 	baseURL := config.BaseURL
+	// 	if baseURL == "" {
+	// 		baseURL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+	// 	}
+		
+	// 	httpClient := &http.Client{
+	// 		Transport: baseTransport,
+	// 	}
+
+	// 	log.Printf("[Factory] Creating Google Provider (OpenAI Compat). BaseURL: %s", baseURL)
+	// 	return NewOpenAICompatProvider(baseURL, config.APIKey, httpClient, nil, false), nil
 
 	case ProviderAnthropic:
 		// Anthropic Claude
@@ -176,3 +173,5 @@ func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	return resp, nil
 }
+
+

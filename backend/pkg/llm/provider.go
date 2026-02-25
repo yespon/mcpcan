@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/tmc/langchaingo/llms"
+	// "google.golang.org/api/googleapi"
 )
 
 // LangChainAdapter wraps a LangChainGo model to implement the internal Provider interface
@@ -64,6 +64,7 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 
 			// Assistant 消息如果包含 ToolCalls，需要附加 ToolCall parts
 			if msg.Role == "assistant" && len(msg.ToolCalls) > 0 {
+				log.Printf("[Provider Debug] Assistant Message with ToolCalls. Content: %q", msg.Content)
 				for _, tc := range msg.ToolCalls {
 					parts = append(parts, llms.ToolCall{
 						ID:   tc.ID,
@@ -172,6 +173,13 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 
 		// Call LangChainGo GenerateContent
 		result, err := p.model.GenerateContent(ctx, content, opts...)
+
+		if err == nil && len(result.Choices) > 0 {
+			choice := result.Choices[0]
+			if len(choice.ToolCalls) > 0 {
+				fmt.Printf("\n!!! DEBUG !!! Generated ToolCalls. Content: %q\n", choice.Content)
+			}
+		}
 		
 		// Debug: Log full response
 		if err == nil {
@@ -182,6 +190,7 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 		if err != nil {
 			log.Printf("[Provider Error] GenerateContent failed (full): %+v", err)
 			log.Printf("[Provider Error] GenerateContent failed (string): %s", err.Error())
+
 			select {
 			case responseChan <- StreamResponse{Error: err}:
 			case <-ctx.Done():
@@ -197,13 +206,7 @@ func (p *LangChainAdapter) StreamChat(ctx context.Context, req ChatRequest) (<-c
 			if len(choice.ToolCalls) > 0 {
 				var toolCalls []ToolCall
 				for i, tc := range choice.ToolCalls {
-					// Google provider 不返回 ToolCall ID，我们需要生成一个或者依赖 Index
-					// 这里的关键是必须设置 Index，否则 ai_session 会把所有 tool call 堆积到 Index 0
 					toolID := tc.ID
-					if toolID == "" {
-						toolID = fmt.Sprintf("call_%d_%d", time.Now().UnixNano(), i)
-					}
-
 					toolCall := ToolCall{
 						Index: i,
 						ID:    toolID,

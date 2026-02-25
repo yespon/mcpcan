@@ -50,9 +50,10 @@ type oaiMessage struct {
 }
 
 type oaiToolCall struct {
-	ID       string          `json:"id"`
-	Type     string          `json:"type"`
-	Function oaiFunctionCall `json:"function"`
+	ID           string          `json:"id"`
+	Type         string          `json:"type"`
+	Function     oaiFunctionCall `json:"function"`
+	ExtraContent json.RawMessage `json:"extra_content,omitempty"` // Google thought_signature 等
 }
 
 type oaiFunctionCall struct {
@@ -129,8 +130,8 @@ func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) 
 			rc := m.ReasoningContent
 			msg.ReasoningContent = &rc
 		} else if p.SupportsReasoning && m.Role == "assistant" && len(m.ToolCalls) > 0 {
-			empty := ""
-			msg.ReasoningContent = &empty
+			placeholder := " "
+			msg.ReasoningContent = &placeholder
 		}
 		// 其他情况 msg.ReasoningContent 为 nil，omitempty 不序列化
 
@@ -143,6 +144,7 @@ func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) 
 						Name:      tc.Function.Name,
 						Arguments: tc.Function.Arguments,
 					},
+					ExtraContent: tc.ExtraContent, // 透传 Google thought_signature
 				})
 			}
 		}
@@ -276,12 +278,13 @@ func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) 
 				if len(choice.Delta.ToolCalls) > 0 {
 					for _, tc := range choice.Delta.ToolCalls {
 						sr.ToolCalls = append(sr.ToolCalls, ToolCall{
-							ID:   tc.ID,
-							Type: tc.Type,
+							ID:           tc.ID,
+							Type:         tc.Type,
 							Function: ToolCallFunction{
 								Name:      tc.Function.Name,
 								Arguments: tc.Function.Arguments,
 							},
+							ExtraContent: tc.ExtraContent, // 捕获 Google thought_signature
 						})
 					}
 					hasContent = true

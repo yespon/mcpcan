@@ -2,6 +2,7 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 )
 
 // ProviderType defines the type of LLM provider
@@ -13,7 +14,7 @@ const (
 	ProviderAzureOpenAI ProviderType = "azure_openai"
 	ProviderDeepSeek    ProviderType = "deepseek"
 	ProviderAnthropic   ProviderType = "anthropic"
-	ProviderGoogle      ProviderType = "google"
+	// ProviderGoogle      ProviderType = "google"
 	ProviderMistral     ProviderType = "mistral"
 	ProviderXAI         ProviderType = "xai"
 
@@ -35,7 +36,7 @@ var SupportedProviders = map[ProviderType]bool{
 	ProviderAzureOpenAI: true,
 	ProviderDeepSeek:    true,
 	ProviderAnthropic:   true,
-	ProviderGoogle:      true,
+	// ProviderGoogle:      true,
 	ProviderMistral:     true,
 	ProviderXAI:         true,
 	ProviderOpenRouter:  true,
@@ -53,7 +54,7 @@ var DefaultBaseURLs = map[ProviderType]string{
 	ProviderAzureOpenAI: "", // Azure requires specific resource name in URL
 	ProviderDeepSeek:    "https://api.deepseek.com/v1",
 	ProviderAnthropic:   "https://api.anthropic.com/v1",
-	ProviderGoogle:      "https://generativelanguage.googleapis.com/v1beta",
+	// ProviderGoogle:      "https://generativelanguage.googleapis.com/v1beta",
 	ProviderMistral:     "https://api.mistral.ai/v1",
 	ProviderXAI:         "https://api.x.ai/v1",
 	ProviderOpenRouter:  "https://openrouter.ai/api/v1",
@@ -72,7 +73,7 @@ func GetSupportedProviderList() []string {
 		string(ProviderAzureOpenAI),
 		string(ProviderAnthropic),
 		string(ProviderDeepSeek),
-		string(ProviderGoogle),
+		// string(ProviderGoogle),
 		string(ProviderMistral),
 		string(ProviderXAI),
 		string(ProviderOpenRouter),
@@ -122,10 +123,11 @@ type Message struct {
 
 // ToolCall represents a tool call request from LLM
 type ToolCall struct {
-	Index    int              `json:"index,omitempty"` // Added for streaming aggregation
-	ID       string           `json:"id"`
-	Type     string           `json:"type"`
-	Function ToolCallFunction `json:"function"`
+	Index        int              `json:"index,omitempty"` // Added for streaming aggregation
+	ID           string           `json:"id"`
+	Type         string           `json:"type"`
+	Function     ToolCallFunction `json:"function"`
+	ExtraContent json.RawMessage  `json:"extra_content,omitempty"` // 透传 Provider 扩展字段（如 Google thought_signature）
 }
 
 // ToolCallFunction represents the function call details in a tool call (arguments are string JSON)
