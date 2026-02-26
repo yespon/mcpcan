@@ -9,6 +9,34 @@ var OpenAIProvider = ProviderInfo{
 	RegisterURL: "https://platform.openai.com/api-keys",
 	DocsURL:     "https://platform.openai.com/docs",
 	Models: []ModelInfo{
+		// GPT-5.2 Series (2026 最新旗舰)
+		{
+			ID:            "gpt-5.2",
+			Name:          "GPT-5.2",
+			Description:   "GPT-5.2 旗舰多模态大模型，复杂任务与深度推理首选 | 128k 上下文",
+			ContextLength: 128000,
+			Modality:      "text+image->text",
+			Provider:      "openai",
+			SupportTools:  true,
+		},
+		{
+			ID:            "gpt-5.2-pro",
+			Name:          "GPT-5.2 Pro",
+			Description:   "GPT-5.2 Pro 增强版，支持超长上下文与极端复杂推理 | 400k 上下文",
+			ContextLength: 400000,
+			Modality:      "text+image->text",
+			Provider:      "openai",
+			SupportTools:  true,
+		},
+		{
+			ID:            "gpt-5.2-codex",
+			Name:          "GPT-5.2 Codex",
+			Description:   "GPT-5.2 Codex 专为长代码项目与 Agent 优化的编程模型",
+			ContextLength: 128000,
+			Modality:      "text->text",
+			Provider:      "openai",
+			SupportTools:  true,
+		},
 		// GPT-4.1 Series (2025-04 正式发布，API 持续可用)
 		{
 			ID:            "gpt-4.1",
