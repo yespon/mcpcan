@@ -100,6 +100,138 @@ export const AgentAPI = {
   },
 }
 
+export const ChatAPI = {
+  // === Session Management ===
+  createSession(data: CreateSessionRequest) {
+    return request<any, any>({
+      url: `/market/ai/sessions`,
+      method: 'POST',
+      data,
+    })
+  },
+  updateSession(data: UpdateSessionRequest) {
+    return request<any, any>({
+      url: `/market/ai/sessions`,
+      method: 'PUT',
+      data,
+    })
+  },
+  deleteSession(id: number) {
+    return request<any, any>({
+      url: `/market/ai/sessions/${id}`,
+      method: 'DELETE',
+    })
+  },
+  getSession(id: number) {
+    return request<any, any>({
+      url: `/market/ai/sessions/${id}`,
+      method: 'GET',
+    })
+  },
+  listSessions(params: { page: number; pageSize: number }) {
+    return request<any, any>({
+      url: `/market/ai/sessions`,
+      method: 'GET',
+      params,
+    })
+  },
+  getSessionMessages(sessionID: number, params: { page: number; pageSize: number }) {
+    return request<any, any>({
+      url: `/market/ai/sessions/${sessionID}/messages`,
+      method: 'GET',
+      params,
+    })
+  },
+  getSessionUsage(sessionID: number) {
+    return request<any, any>({
+      url: `/market/ai/sessions/${sessionID}/usage`,
+      method: 'GET',
+    })
+  },
+  // Chat stream is usually handled differently, but here's a basic post request if needed for non-stream or setup
+  // For SSE/streaming, you might use fetch or specific logic in the component
+  chat(sessionID: number, data: ChatRequest) {
+    return request<any, any>({
+      url: `/market/ai/sessions/${sessionID}/chat`,
+      method: 'POST',
+      data,
+      responseType: 'stream', // Indicate stream response if axios supports it, mostly for handling
+    })
+  },
+  uploadFile(data: FormData) {
+    return request<any, any>({
+      url: `/market/ai/files/upload`,
+      method: 'POST',
+      data,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  // === Model Access Management ===
+  createModelAccess(data: CreateModelAccessRequest) {
+    return request<any, any>({
+      url: `/market/ai/models`,
+      method: 'POST',
+      data,
+    })
+  },
+  updateModelAccess(data: UpdateModelAccessRequest) {
+    return request<any, any>({
+      url: `/market/ai/models`,
+      method: 'PUT',
+      data,
+    })
+  },
+  deleteModelAccess(id: number) {
+    return request<any, any>({
+      url: `/market/ai/models/${id}`,
+      method: 'DELETE',
+    })
+  },
+  getModelAccess(id: number) {
+    return request<any, any>({
+      url: `/market/ai/models/${id}`,
+      method: 'GET',
+    })
+  },
+  listModelAccess(params: { page: number; pageSize: number }) {
+    return request<any, any>({
+      url: `/market/ai/models`,
+      method: 'GET',
+      params,
+    })
+  },
+  getSupportedModels() {
+    return request<any, any>({
+      url: `/market/ai/models/supported`,
+      method: 'GET',
+    })
+  },
+  getAvailableModels() {
+    return request<any, any>({
+      url: `/market/ai/models/available`,
+      method: 'GET',
+    })
+  },
+  testConnectionById(id: number) {
+    return request<any, any>({
+      url: `/market/ai/models/${id}/test`,
+      method: 'POST',
+    })
+  },
+  testConnectionNew(data: TestConnectionRequest) {
+    return request<any, any>({
+      url: `/market/ai/models/test`,
+      method: 'POST',
+      data,
+    })
+  },
+}
+
+// === Type Definitions ===
+
 export interface CreateAgentRequest {
   accessID?: string
   accessName?: string
@@ -119,4 +251,81 @@ export interface TableData {
   page: number
   pageSize: number
   [key: string]: any
+}
+
+export interface CreateSessionRequest {
+  name: string
+  modelAccessID: number
+  toolsConfig?: string
+  maxContext?: number
+  modelName: string
+  temperature?: number
+  systemPrompt?: string
+}
+
+export interface UpdateSessionRequest {
+  id: number
+  name?: string
+  toolsConfig?: string
+  maxContext?: number
+  modelAccessID?: number
+  modelName?: string
+  temperature?: number
+  systemPrompt?: string
+}
+
+export interface ChatAttachment {
+  type: string
+  url: string
+  id?: string
+  name?: string
+}
+
+export interface McpProfile {
+  instanceId: string
+  includeTools?: string[]
+  enableAll?: boolean
+}
+
+export interface ChatRequest {
+  sessionID: number
+  content: string
+  tools?: string
+  mcpProfile?: McpProfile
+  attachments?: ChatAttachment[]
+}
+
+export interface SessionUsage {
+  sessionId: number
+  totalMessages: number
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+}
+
+export interface CreateModelAccessRequest {
+  name: string
+  provider: string
+  apiKey: string
+  baseUrl?: string
+  modelName: string
+  allowedModels?: string
+}
+
+export interface UpdateModelAccessRequest {
+  id: number
+  name?: string
+  provider?: string
+  apiKey?: string
+  baseUrl?: string
+  modelName?: string
+  allowedModels?: string
+}
+
+export interface TestConnectionRequest {
+  id?: number
+  provider: string
+  apiKey: string
+  baseUrl?: string
+  modelName: string
 }
