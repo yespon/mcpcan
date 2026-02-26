@@ -56,7 +56,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Search, Delete, Expand, Document } from '@element-plus/icons-vue'
 
 const searchQuery = ref('')

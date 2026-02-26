@@ -175,7 +175,6 @@ import ChatInput from './components/ChatInput.vue'
 import SessionList from './components/SessionList.vue'
 import { useChat } from './composables/useChat'
 import { Fold, Expand, ChatDotRound, Plus } from '@element-plus/icons-vue'
-import { ref, watch, nextTick, onMounted, computed, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const {
@@ -204,23 +203,7 @@ onMounted(() => {
 })
 
 const handleSend = async (content: string, file?: File) => {
-  const attachments = []
-  if (file) {
-    try {
-      const res = await uploadFile(file)
-      if (res && res.url) {
-        attachments.push({
-          type: 'image', // Assuming image for now as per test file
-          name: file.name,
-          url: res.url,
-        })
-      }
-    } catch (error) {
-      ElMessage.error('File upload failed')
-      return
-    }
-  }
-  addMessage(content, 'user', attachments)
+  addMessage(content, 'user', [], undefined, undefined, file)
 }
 
 // Auto-scroll to bottom when messages change

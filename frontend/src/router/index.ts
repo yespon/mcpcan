@@ -333,13 +333,13 @@ router.beforeEach(async (to, from, next) => {
       const allowList = allAuthMenuList.value || []
       // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
       const targetPath = to.path
-      next()
-      return
+      // next()
+      // return
 
-      // if (!allowList.includes(targetPath)) {
-      //   next('/403')
-      //   return
-      // }
+      if (!allowList.includes(targetPath)) {
+        next('/403')
+        return
+      }
     }
 
     // Handle set page title

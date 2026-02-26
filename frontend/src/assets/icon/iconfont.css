@@ -1,9 +1,9 @@
 @font-face {
   font-family: "iconfont"; /* Project id 5029591 */
-  src: url('iconfont.woff2?t=1769739391752') format('woff2'),
-       url('iconfont.woff?t=1769739391752') format('woff'),
-       url('iconfont.ttf?t=1769739391752') format('truetype'),
-       url('iconfont.svg?t=1769739391752#iconfont') format('svg');
+  src: url('iconfont.woff2?t=1772090126929') format('woff2'),
+       url('iconfont.woff?t=1772090126929') format('woff'),
+       url('iconfont.ttf?t=1772090126929') format('truetype'),
+       url('iconfont.svg?t=1772090126929#iconfont') format('svg');
 }
 
 .iconfont {
@@ -12,6 +12,62 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.MCP-damoxing:before {
+  content: "\e6e0";
+}
+
+.MCP-AIduihua:before {
+  content: "\e61b";
+}
+
+.MCP-lianjie:before {
+  content: "\e760";
+}
+
+.MCP-a-wendang1:before {
+  content: "\e85f";
+}
+
+.MCP-piliangcaozuo:before {
+  content: "\eb22";
+}
+
+.MCP-liebiao:before {
+  content: "\eaa9";
+}
+
+.MCP-zhagebuju:before {
+  content: "\eaeb";
+}
+
+.MCP-daili1:before {
+  content: "\e609";
+}
+
+.MCP-tongbu:before {
+  content: "\ea81";
+}
+
+.MCP-shanchu1:before {
+  content: "\e94a";
+}
+
+.MCP-bianji1:before {
+  content: "\e613";
+}
+
+.MCP-gongdanliebiao1:before {
+  content: "\ea0e";
+}
+
+.MCP-tuoguanziyuan:before {
+  content: "\e6cf";
+}
+
+.MCP-shichangguanli:before {
+  content: "\e70b";
 }
 
 .MCP-zuzhibumen:before {

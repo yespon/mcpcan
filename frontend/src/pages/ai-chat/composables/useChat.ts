@@ -1,4 +1,3 @@
-import { ref, onMounted, computed } from 'vue'
 import {
   ChatAPI,
   type CreateSessionRequest,
@@ -97,6 +96,7 @@ export function useChat() {
                 : undefined,
               // Parse tools if needed
               toolCalls: m.toolCalls ? JSON.parse(m.toolCalls) : undefined,
+              tools: m.toolCalls && m.toolCalls !== '[]' ? JSON.parse(m.toolCalls) : [],
             }))
             .reverse() // Backend might return latest first? Check sorting. Assuming list is chrono or reverse chrono.
           // Usually chat messages are stored chrono. If backend returns reverse chrono (latest first), we need to reverse.
@@ -199,21 +199,25 @@ export function useChat() {
     attachments: ChatAttachment[] = [],
     tools?: string,
     mcpProfile?: McpProfile,
+    file?: File,
   ) => {
-    if (!content.trim() && (!attachments || attachments.length === 0)) return
+    if (!content.trim() && (!attachments || attachments.length === 0) && !file) return
 
     // Add user message immediately
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content,
+      content:
+        content +
+        (file ? `\n[File: ${file.name}]` : '') +
+        (attachments.length > 0 && !file ? `\n[File: ${attachments[0].name}]` : ''),
       timestamp: Date.now(),
       attachments,
     }
     messages.value.push(userMsg)
 
     if (role === 'user') {
-      await sendMessageToBackend(content, attachments, tools, mcpProfile)
+      await sendMessageToBackend(content, attachments, tools, mcpProfile, file)
     }
   }
 
@@ -222,6 +226,7 @@ export function useChat() {
     attachments: ChatAttachment[] = [],
     tools?: string,
     mcpProfile?: McpProfile,
+    file?: File,
   ) => {
     if (!currentSession.value) {
       await initSession()
@@ -240,6 +245,7 @@ export function useChat() {
       content: '',
       timestamp: Date.now(),
       isStreaming: true,
+      tools: [], // Initialize tools array
     }
     messages.value.push(assistantMsg)
 
@@ -247,6 +253,23 @@ export function useChat() {
     const reactiveMsg = messages.value.find((m) => m.id === assistantMsgId) || assistantMsg
 
     try {
+      // Upload file if exists
+      if (file) {
+        try {
+          const res = await uploadFile(file)
+          if (res && res.url) {
+            attachments.push({
+              type: 'image',
+              name: file.name,
+              url: res.url,
+            })
+          }
+        } catch (e) {
+          console.error(e)
+          throw new Error('File upload failed')
+        }
+      }
+
       // Use fetch for streaming response validation
       // Construct URL manually as axios wrapper might handle response differently
       // Need to check backend streaming format (NDJSON or similar)
@@ -345,27 +368,27 @@ export function useChat() {
                 try {
                   console.log('Stream chunk:', jsonStr) // Add log
                   const json = JSON.parse(jsonStr)
-                  // Handle different message types
-                  if (json.type === 'text' && json.content) {
+                  // Handle different message types match chat_test.html logic
+                  if (json.type === 'text') {
                     msgRef.content += json.content
-                  } else if (json.type === 'tool_calls') {
-                    // Optional: Visualize tool calls
-                    console.log('Tool Calls:', json.content)
+                  } else if (json.type === 'tool_start') {
+                    // console.log(`Starting ${json.content}`)
                   } else if (json.type === 'tool_result') {
-                    // Optional: Visualize tool results
-                    console.log('Tool Result:', json.content)
+                    if (!msgRef.tools) msgRef.tools = []
+                    msgRef.tools.push({
+                      name: 'Tool',
+                      args: '?',
+                      result: json.content,
+                    })
                   } else if (json.type === 'error') {
-                    console.error('Stream error:', json.content)
-                    throw new Error(json.content)
+                    ElMessage.error(json.content)
+                    msgRef.content += `\n[System Error: ${json.content}]`
                   } else if (json.type === 'usage') {
-                    // Optional: Handle usage stats
-                    console.log('Usage:', json.content)
-                  } else if (json.type === 'done') {
-                    // Stream finished
-                  }
-                  // Fallback for simple content property
-                  else if (json.content && !json.type) {
-                    msgRef.content += json.content
+                    try {
+                      const usage =
+                        typeof json.content === 'string' ? JSON.parse(json.content) : json.content
+                      msgRef.usage = usage
+                    } catch (e) {}
                   }
                 } catch (e) {
                   console.error('JSON parse error:', e, jsonStr)

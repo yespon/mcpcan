@@ -7,6 +7,17 @@ export interface ChatMessage {
   timestamp: number
   isStreaming?: boolean
   attachments?: ChatAttachment[]
+  usage?: {
+    totalTokens: number
+    promptTokens?: number
+    completionTokens?: number
+  }
+  toolCalls?: any
+  tools?: {
+    name: string
+    args: string
+    result: string
+  }[]
 }
 
 export interface AIModel {

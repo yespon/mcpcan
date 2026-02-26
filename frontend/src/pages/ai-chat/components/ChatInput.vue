@@ -114,83 +114,81 @@
         </el-button>
       </div>
     </div>
-
-    <!-- Add Custom Model Dialog -->
-    <el-dialog v-model="dialogVisible" title="Add Custom Model" width="500px">
-      <el-form :model="customModelForm" label-width="120px">
-        <el-form-item label="Display Name" required>
-          <el-input v-model="customModelForm.name" placeholder="e.g. My Custom Model" />
-        </el-form-item>
-        <el-form-item label="Provider" required>
-          <el-select
-            v-model="customModelForm.provider"
-            placeholder="Select provider"
-            filterable
-            class="w-full"
-            @change="handleProviderChange"
-          >
-            <el-option v-for="p in supportedProviders" :key="p.id" :label="p.name" :value="p.id">
-              <span class="float-left">{{ p.name }}</span>
-              <span class="float-right text-gray-400 text-xs ml-2">{{ p.id }}</span>
-            </el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="API Key" required>
-          <el-input
-            v-model="customModelForm.apiKey"
-            type="password"
-            show-password
-            placeholder="sk-..."
-          />
-        </el-form-item>
-        <el-form-item label="Base URL">
-          <el-input v-model="customModelForm.baseUrl" placeholder="https://api.openai.com/v1" />
-          <div
-            class="text-xs text-[var(--ep-text-color-secondary)] mt-1"
-            v-if="customModelForm.provider && getProviderBaseUrl(customModelForm.provider)"
-          >
-            Default: {{ getProviderBaseUrl(customModelForm.provider) }}
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="customModelForm.baseUrl = getProviderBaseUrl(customModelForm.provider)"
-            >
-              Use
-            </el-button>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="Allowed Models">
-          <el-select
-            v-model="customModelForm.allowedModels"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            placeholder="Leave empty = allow all"
-            class="w-full"
-          >
-            <el-option v-for="m in selectedProviderModels" :key="m" :label="m" :value="m" />
-          </el-select>
-          <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-            Restrict available models. Leave empty to allow all.
-          </div>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="submitCustomModel" :loading="loading">Save</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
+  <!-- Add Custom Model Dialog -->
+  <el-dialog v-model="dialogVisible" title="Add Custom Model" width="500px">
+    <el-form :model="customModelForm" label-width="120px">
+      <el-form-item label="Display Name" required>
+        <el-input v-model="customModelForm.name" placeholder="e.g. My Custom Model" />
+      </el-form-item>
+      <el-form-item label="Provider" required>
+        <el-select
+          v-model="customModelForm.provider"
+          placeholder="Select provider"
+          filterable
+          class="w-full"
+          @change="handleProviderChange"
+        >
+          <el-option v-for="p in supportedProviders" :key="p.id" :label="p.name" :value="p.id">
+            <span class="float-left">{{ p.name }}</span>
+            <span class="float-right text-gray-400 text-xs ml-2">{{ p.id }}</span>
+          </el-option>
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="API Key" required>
+        <el-input
+          v-model="customModelForm.apiKey"
+          type="password"
+          show-password
+          placeholder="sk-..."
+        />
+      </el-form-item>
+      <el-form-item label="Base URL">
+        <el-input v-model="customModelForm.baseUrl" placeholder="https://api.openai.com/v1" />
+        <div
+          class="text-xs text-[var(--ep-text-color-secondary)] mt-1"
+          v-if="customModelForm.provider && getProviderBaseUrl(customModelForm.provider)"
+        >
+          Default: {{ getProviderBaseUrl(customModelForm.provider) }}
+          <el-button
+            type="primary"
+            link
+            size="small"
+            @click="customModelForm.baseUrl = getProviderBaseUrl(customModelForm.provider)"
+          >
+            Use
+          </el-button>
+        </div>
+      </el-form-item>
+
+      <el-form-item label="Allowed Models">
+        <el-select
+          v-model="customModelForm.allowedModels"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          placeholder="Leave empty = allow all"
+          class="w-full"
+        >
+          <el-option v-for="m in selectedProviderModels" :key="m" :label="m" :value="m" />
+        </el-select>
+        <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
+          Restrict available models. Leave empty to allow all.
+        </div>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="submitCustomModel" :loading="loading">Save</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { Paperclip, Cpu, ArrowDown, Top, Plus, Close } from '@element-plus/icons-vue'
 import { ElMessage, type UploadFile } from 'element-plus'
 import type { AIModel, SupportedProvider } from '../types'
