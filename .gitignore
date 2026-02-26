@@ -62,5 +62,6 @@ cmd/**/logs/
 # backend test
 backend/test/go-test/*
 backend/test/e2e/*
+backend/test/config.json
 
 .agent/*
