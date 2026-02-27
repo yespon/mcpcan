@@ -10,6 +10,7 @@ replace (
 	github.com/distribution/reference => github.com/distribution/reference v0.5.0
 	github.com/docker/docker => github.com/moby/moby v27.1.1+incompatible
 	github.com/kymo-mcp/mcpcan => ./
+	nhooyr.io/websocket => github.com/coder/websocket v1.8.7
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/tmc/langchaingo v0.1.14
 	go.uber.org/zap v1.27.0
-	google.golang.org/api v0.218.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217
 	google.golang.org/grpc v1.77.0
 	gorm.io/driver/mysql v1.6.0
