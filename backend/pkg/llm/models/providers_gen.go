@@ -204,7 +204,7 @@ var QwenProvider = ProviderInfo{
 }
 
 // DoubaoProvider 字节跳动豆包
-// 官方图片限制：10MB/张，1张/次，格式：jpeg/png/webp/gif/bmp
+// 官方图片限制：10MB/张，1张/次，格式：jpeg/png/webp/bmp/gif
 // 官方文档限制：20MB/份，1个/次(会话最多3个)，格式：pdf/txt/csv/doc/docx/xls/xlsx/ppt/pptx/md
 // MCP限制（更保守）：5MB，1个，仅 jpeg/png/pdf/txt
 var DoubaoProvider = ProviderInfo{
@@ -215,13 +215,19 @@ var DoubaoProvider = ProviderInfo{
 	RegisterURL: "https://console.volcengine.com/ark",
 	DocsURL:     "https://www.volcengine.com/docs/82379",
 	Models: []ModelInfo{
-		{ID: "doubao-pro-256k", Name: "豆包 Pro 256K", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
-		{ID: "doubao-pro-128k", Name: "豆包 Pro 128K", ContextLength: 128000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
-		{ID: "doubao-pro-32k", Name: "豆包 Pro 32K", ContextLength: 32000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
-		{ID: "doubao-lite-128k", Name: "豆包 Lite 128K", ContextLength: 128000, SupportTools: false, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
-		{ID: "doubao-lite-32k", Name: "豆包 Lite 32K", ContextLength: 32000, SupportTools: false, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
+		// Doubao Seed 2.0 系列（2026 旗舰，256K 上下文）
+		{ID: "doubao-seed-2-0-pro-260215", Name: "豆包 Seed 2.0 Pro", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: false, SupportThinking: true, SupportsVision: true, ImageMimeTypes: DoubaoImageTypes, MaxImageSize: MCPMaxImageSize, MaxImageCount: MCPMaxImageCount, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
+		{ID: "doubao-seed-2-0-lite", Name: "豆包 Seed 2.0 Lite", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
+		{ID: "doubao-seed-2-0-code-preview", Name: "豆包 Seed 2.0 Code", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
+		// Doubao Seed 1.8 系列（2025-12 旗舰）
+		{ID: "doubao-seed-1-8-251228", Name: "豆包 Seed 1.8", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
+		// Doubao 1.5 系列（2025-01）
 		{ID: "doubao-1-5-pro-256k", Name: "豆包 1.5 Pro 256K", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
-		{ID: "doubao-thinking-pro-32k", Name: "豆包 Thinking Pro 32K", ContextLength: 32000, SupportTools: true, SupportSystemPrompt: false, SupportTemperature: false, SupportThinking: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
+		{ID: "doubao-1-5-pro-32k", Name: "豆包 1.5 Pro 32K", ContextLength: 32000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
+		{ID: "doubao-1-5-lite-32k", Name: "豆包 1.5 Lite 32K", ContextLength: 32000, SupportTools: false, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
+		{ID: "doubao-1-5-vision-pro-32k", Name: "豆包 1.5 Vision Pro 32K", ContextLength: 32000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsVision: true, ImageMimeTypes: DoubaoImageTypes, MaxImageSize: MCPMaxImageSize, MaxImageCount: MCPMaxImageCount, Provider: "doubao"},
+		// Doubao 推理/思考模型
+		{ID: "doubao-thinking-pro-250415", Name: "豆包 Thinking Pro", ContextLength: 32000, SupportTools: true, SupportSystemPrompt: false, SupportTemperature: false, SupportThinking: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
 	},
 }
 

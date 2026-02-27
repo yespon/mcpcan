@@ -372,15 +372,15 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /ai/sessions/{sessionID}/chat:
+    /ai/sessions/{sessionId}/chat:
         post:
             tags:
                 - AiSessionService
             operationId: AiSessionService_Chat
             parameters:
-                - name: sessionID
+                - name: sessionId
                   in: path
-                  description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                  description: '@inject_tag: json:"sessionId" form:"sessionId" uri:"sessionId" desc:"Session ID"'
                   required: true
                   schema:
                     type: string
@@ -403,15 +403,15 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /ai/sessions/{sessionID}/messages:
+    /ai/sessions/{sessionId}/messages:
         get:
             tags:
                 - AiSessionService
             operationId: AiSessionService_GetMessages
             parameters:
-                - name: sessionID
+                - name: sessionId
                   in: path
-                  description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                  description: '@inject_tag: json:"sessionId" form:"sessionId" uri:"sessionId" desc:"Session ID"'
                   required: true
                   schema:
                     type: string
@@ -3351,9 +3351,9 @@ components:
                 id:
                     type: string
                     description: '@inject_tag: json:"id" desc:"ID"'
-                sessionID:
+                sessionId:
                     type: string
-                    description: '@inject_tag: json:"sessionID" desc:"Session ID"'
+                    description: '@inject_tag: json:"sessionId" desc:"Session ID"'
                 role:
                     type: string
                     description: '@inject_tag: json:"role" desc:"Role"'
@@ -3634,9 +3634,9 @@ components:
         ChatRequest:
             type: object
             properties:
-                sessionID:
+                sessionId:
                     type: string
-                    description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                    description: '@inject_tag: json:"sessionId" form:"sessionId" uri:"sessionId" desc:"Session ID"'
                 content:
                     type: string
                     description: '@inject_tag: json:"content" form:"content" desc:"Content"'

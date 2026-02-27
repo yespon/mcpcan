@@ -33,12 +33,12 @@ func (r *AiMessageRepository) Create(ctx context.Context, message *model.AiMessa
 // GetLastN 获取最近 N 条消息 (用于构建 Context)
 // 返回按时间正序排列的消息 (旧 -> 新)
 func (r *AiMessageRepository) GetLastN(ctx context.Context, sessionID int64, n int) ([]*model.AiMessage, error) {
-	return r.FindBySessionID(ctx, sessionID, n)
+	return r.FindBySessionId(ctx, sessionID, n)
 }
 
-// FindBySessionID 获取会话的消息列表
+// FindBySessionId 获取会话的消息列表
 // 返回按时间正序排列的消息 (旧 -> 新)
-func (r *AiMessageRepository) FindBySessionID(ctx context.Context, sessionID int64, limit int) ([]*model.AiMessage, error) {
+func (r *AiMessageRepository) FindBySessionId(ctx context.Context, sessionID int64, limit int) ([]*model.AiMessage, error) {
 	var messages []*model.AiMessage
 	// 先按倒序取最近N条
 	err := r.getDB().WithContext(ctx).
@@ -59,9 +59,9 @@ func (r *AiMessageRepository) FindBySessionID(ctx context.Context, sessionID int
 	return messages, nil
 }
 
-// FindBySessionIDPaged 分页获取会话消息
+// FindBySessionIdPaged 分页获取会话消息
 // 返回按 id desc 排序的消息 (新 -> 旧)，前端可按需反转
-func (r *AiMessageRepository) FindBySessionIDPaged(ctx context.Context, sessionID int64, page, pageSize int) ([]*model.AiMessage, int64, error) {
+func (r *AiMessageRepository) FindBySessionIdPaged(ctx context.Context, sessionID int64, page, pageSize int) ([]*model.AiMessage, int64, error) {
 	var messages []*model.AiMessage
 	var total int64
 

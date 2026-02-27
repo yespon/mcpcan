@@ -129,8 +129,8 @@ func (b *AiSessionBiz) Update(ctx context.Context, req *pb.UpdateSessionRequest)
 
 func (b *AiSessionBiz) Delete(ctx context.Context, id int64) error {
 	// 1. Get all messages for the session to find files
-	// Note: using a large limit to get all messages, or better, use FindBySessionID without limit if available
-	messages, err := mysql.AiMessageRepo.FindBySessionID(ctx, id, 10000)
+	// Note: using a large limit to get all messages, or better, use FindBySessionId without limit if available
+	messages, err := mysql.AiMessageRepo.FindBySessionId(ctx, id, 10000)
 	if err != nil {
 		// Log error but proceed with deletion? Or fail?
 		// For now, fail safe
@@ -202,12 +202,12 @@ func (b *AiSessionBiz) GetMessages(ctx context.Context, sessionID int64, page, p
 	if pageSize <= 0 {
 		pageSize = 20
 	}
-	return mysql.AiMessageRepo.FindBySessionIDPaged(ctx, sessionID, page, pageSize)
+	return mysql.AiMessageRepo.FindBySessionIdPaged(ctx, sessionID, page, pageSize)
 }
 
 // Chat prepares the chat stream and saves the user message
 func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan llm.StreamResponse, error) {
-	sessionID := req.SessionID
+	sessionID := req.SessionId
 	// 1. Load Session
 	session, err := mysql.AiSessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
@@ -345,7 +345,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	}
 
 	userMsg := &model.AiMessage{
-		SessionID:  sessionID,
+		SessionId:  sessionID,
 		Role:       "user",
 		Content:    dbContent,
 		CreateTime: time.Now(),
@@ -508,7 +508,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 					// If we have accumulated content, save it before returning error
 					if accumulatedContent != "" || accumulatedReasoning != "" {
 						asstMsg := &model.AiMessage{
-							SessionID:        sessionID,
+							SessionId:        sessionID,
 							Role:             "assistant",
 							Content:          accumulatedContent,
 							ReasoningContent: accumulatedReasoning,
@@ -578,7 +578,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 			if len(accumulatedToolCalls) == 0 {
 				// No tools called, save assistant message and exit
 				asstMsg := &model.AiMessage{
-					SessionID:        sessionID,
+					SessionId:        sessionID,
 					Role:             "assistant",
 					Content:          accumulatedContent,
 					ReasoningContent: accumulatedReasoning,
@@ -619,7 +619,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 			toolCallsJson, _ := json.Marshal(toolCalls)
 			// Save Assistant Message (with Tool Calls)
 			dbAsstMsg := &model.AiMessage{
-				SessionID:        sessionID,
+				SessionId:        sessionID,
 				Role:             "assistant",
 				Content:          accumulatedContent,
 				ReasoningContent: accumulatedReasoning,
@@ -676,7 +676,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 				})
 
 				dbToolMsg := &model.AiMessage{
-					SessionID:  sessionID,
+					SessionId:  sessionID,
 					Role:       "tool",
 					Content:    resultStr,
 					ToolCallID: tc.ID,
@@ -709,7 +709,7 @@ func (b *AiSessionBiz) SaveMessage(ctx context.Context, msg *model.AiMessage) er
 
 // SessionUsage 会话的 Token 使用统计
 type SessionUsage struct {
-	SessionID        int64 `json:"sessionId"`
+	SessionId        int64 `json:"sessionId"`
 	TotalMessages    int   `json:"totalMessages"`
 	PromptTokens     int   `json:"promptTokens"`
 	CompletionTokens int   `json:"completionTokens"`
@@ -719,13 +719,13 @@ type SessionUsage struct {
 // GetSessionUsage 获取会话的 Token 使用统计
 func (b *AiSessionBiz) GetSessionUsage(ctx context.Context, sessionID int64) (*SessionUsage, error) {
 	// 获取会话的所有消息
-	messages, err := mysql.AiMessageRepo.FindBySessionID(ctx, sessionID, 10000) // 使用大数字获取所有消息
+	messages, err := mysql.AiMessageRepo.FindBySessionId(ctx, sessionID, 10000) // 使用大数字获取所有消息
 	if err != nil {
 		return nil, fmt.Errorf("failed to get messages: %w", err)
 	}
 
 	usage := &SessionUsage{
-		SessionID: sessionID,
+		SessionId: sessionID,
 	}
 
 	// 累计统计

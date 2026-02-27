@@ -158,11 +158,11 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	if idStr != "" {
 		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
-			req.SessionID = id
+			req.SessionId = id
 		}
 	}
 
-	if req.SessionID == 0 {
+	if req.SessionId == 0 {
 		common.GinError(c, i18nresp.CodeBadRequest, "session id is required")
 		return
 	}
@@ -177,7 +177,7 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 		page = 1
 	}
 
-	messages, total, err := biz.GAiSessionBiz.GetMessages(c.Request.Context(), req.SessionID, page, pageSize)
+	messages, total, err := biz.GAiSessionBiz.GetMessages(c.Request.Context(), req.SessionId, page, pageSize)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get session messages: %s", err.Error()))
 		return
@@ -187,7 +187,7 @@ func (s *AiSessionService) GetSessionMessagesHandler(c *gin.Context) {
 	for _, msg := range messages {
 		pbMessages = append(pbMessages, &pb.AiMessage{
 			Id:               msg.ID,
-			SessionID:        msg.SessionID,
+			SessionId:        msg.SessionId,
 			Role:             msg.Role,
 			Content:          msg.Content,
 			ToolCalls:        msg.ToolCalls,
@@ -221,7 +221,7 @@ func (s *AiSessionService) ChatHandler(c *gin.Context) {
 		return
 	}
 	// Override sessionID if path param is present
-	req.SessionID = sessionID
+	req.SessionId = sessionID
 
 	if req.Content == "" {
 		common.GinError(c, i18nresp.CodeBadRequest, "content is required")

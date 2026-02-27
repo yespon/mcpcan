@@ -5,7 +5,7 @@ import "time"
 // AiMessage 消息记录与计费
 type AiMessage struct {
 	ID               int64     `gorm:"primaryKey;autoIncrement;column:id;comment:消息ID"`
-	SessionID        int64     `gorm:"index;column:session_id;comment:会话ID"`
+	SessionId        int64     `gorm:"column:session_id;type:bigint(20);not null" json:"sessionId"`
 	Role             string    `gorm:"type:varchar(50);column:role;comment:角色: system, user, assistant, tool"`
 	Content          string    `gorm:"type:text;column:content;comment:消息内容"`
 	ToolCalls        string    `gorm:"type:text;column:tool_calls;comment:工具调用参数(JSON)"`

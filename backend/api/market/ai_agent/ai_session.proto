@@ -32,8 +32,8 @@ message AiSession {
 message AiMessage {
     // @inject_tag: json:"id" desc:"ID"
     int64 id = 1;
-    // @inject_tag: json:"sessionID" desc:"Session ID"
-    int64 sessionID = 2;
+    // @inject_tag: json:"sessionId" desc:"Session ID"
+    int64 sessionId = 2;
     // @inject_tag: json:"role" desc:"Role"
     string role = 3;
     // @inject_tag: json:"content" desc:"Content"
@@ -133,8 +133,8 @@ message ListSessionsResponse {
 }
 
 message GetSessionMessagesRequest {
-    // @inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"
-    int64 sessionID = 1;
+    // @inject_tag: json:"sessionId" form:"sessionId" uri:"sessionId" desc:"Session ID"
+    int64 sessionId = 1;
     // @inject_tag: json:"page" form:"page" desc:"Page number"
     int32 page = 2;
     // @inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"
@@ -169,8 +169,8 @@ message ChatAttachment {
 }
 
 message ChatRequest {
-    // @inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"
-    int64 sessionID = 1;
+    // @inject_tag: json:"sessionId" form:"sessionId" uri:"sessionId" desc:"Session ID"
+    int64 sessionId = 1;
     // @inject_tag: json:"content" form:"content" desc:"Content"
     string content = 2;
     // @inject_tag: json:"tools" desc:"Tools Config (legacy JSON string)"
@@ -229,12 +229,12 @@ service AiSessionService {
     }
     rpc GetMessages(GetSessionMessagesRequest) returns (GetSessionMessagesResponse) {
         option (google.api.http) = {
-            get: "/ai/sessions/{sessionID}/messages"
+            get: "/ai/sessions/{sessionId}/messages"
         };
     }
     rpc Chat(ChatRequest) returns (stream ChatResponse) {
         option (google.api.http) = {
-            post: "/ai/sessions/{sessionID}/chat"
+            post: "/ai/sessions/{sessionId}/chat"
             body: "*"
         };
     }
