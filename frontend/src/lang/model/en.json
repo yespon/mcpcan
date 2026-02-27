@@ -1,0 +1,32 @@
+{
+  "model": {
+    "name": "Access Name",
+    "namePlaceholder": "Please enter access name",
+    "provider": "Provider",
+    "providerPlaceholder": "Please enter provider (e.g. openai)",
+    "modelName": "Model",
+    "modelNamePlaceholder": "Please enter model name (e.g. gpt-4)",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Please enter API Key",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "Please enter Base URL (Optional)",
+    "baseUrlHelper": "Default: %{url}",
+    "use": "Use",
+    "allowedModels": "Allowed Models",
+    "allowedModelsPlaceholder": "Leave empty = allow all",
+    "allowedModelsDesc": "Restrict available models. Leave empty to allow all.",
+    "create": "Create Model",
+    "edit": "Edit Model",
+    "deleteConfirm": "Are you sure you want to delete this model?",
+    "deleteSuccess": "Deleted successfully",
+    "createSuccess": "Created successfully",
+    "updateSuccess": "Updated successfully",
+    "testConnection": "Test Connection",
+    "testConnectionSuccess": "Connection successful",
+    "testConnectionFailed": "Connection failed",
+    "pageDesc": {
+      "list": "Model List",
+      "desc": "Manage all available AI model access"
+    }
+  }
+}

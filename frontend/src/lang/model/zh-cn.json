@@ -1,0 +1,32 @@
+{
+  "model": {
+    "name": "接入名称",
+    "namePlaceholder": "请输入接入名称",
+    "provider": "提供商",
+    "providerPlaceholder": "请输入提供商(如: openai, anthropic)",
+    "modelName": "模型",
+    "modelNamePlaceholder": "请输入模型名称(如: gpt-4)",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "请输入 API Key",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "请输入 Base URL (可选)",
+    "baseUrlHelper": "默认: %{url}",
+    "use": "使用",
+    "allowedModels": "允许的模型",
+    "allowedModelsPlaceholder": "留空 = 允许所有",
+    "allowedModelsDesc": "限制可用模型。留空允许所有。",
+    "create": "创建模型",
+    "edit": "编辑模型",
+    "deleteConfirm": "确定要删除该模型吗？",
+    "deleteSuccess": "删除成功",
+    "createSuccess": "创建成功",
+    "updateSuccess": "更新成功",
+    "testConnection": "测试连通性",
+    "testConnectionSuccess": "连接成功",
+    "testConnectionFailed": "连接失败",
+    "pageDesc": {
+      "list": "模型列表",
+      "desc": "管理所有可用的AI模型接入"
+    }
+  }
+}

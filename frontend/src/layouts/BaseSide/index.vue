@@ -95,9 +95,9 @@
           <template #title>
             <div class="customize-menu">
               <el-icon v-if="!isCollapse"
-                ><i class="icon iconfont" :class="menuMap[menu.permission].icon"></i
+                ><i class="icon iconfont" :class="menuMap[menu.permission]?.icon"></i
               ></el-icon>
-              {{ menuMap[menu.permission].title }}
+              {{ menuMap[menu.permission]?.title }}
             </div>
           </template>
         </el-menu-item>
@@ -154,6 +154,8 @@ const menuMap: Record<string, { title: string; icon: string }> = {
   'mcpcan_rbac_manage:user': { title: t('sideMenu.userManage'), icon: 'MCP-yonghu' },
   'mcpcan_rbac_manage:dept': { title: t('sideMenu.departmentManage'), icon: 'MCP-zuzhibumen' },
   mcpcan_rbac_manage: { title: t('sideMenu.rbacManage'), icon: 'MCP-qita' },
+  mcpcan_model_manage: { title: '模型管理', icon: 'MCP-damoxing' },
+  mcpcan_ai_chat: { title: 'AI 聊天', icon: 'MCP-AIduihua' },
 }
 
 const menuList = shallowRef([
@@ -169,6 +171,8 @@ const menuList = shallowRef([
   { title: t('sideMenu.roleManage'), icon: 'MCP-jiaose', index: '/role-manage' },
   { title: t('sideMenu.userManage'), icon: 'MCP-yonghu', index: '/user-manage' },
   { title: t('sideMenu.departmentManage'), icon: 'MCP-zuzhibumen', index: '/department-manage' },
+  { title: '模型管理', icon: 'MCP-damoxing', index: '/model-manage' },
+  { title: 'AI 聊天', icon: 'MCP-AIduihua', index: '/ai-chat' },
 ])
 
 const handleToHome = () => {
