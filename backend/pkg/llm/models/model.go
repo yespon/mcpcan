@@ -89,6 +89,7 @@ func (m ModelInfo) IsMultimodal() bool {
 type ProviderInfo struct {
 	ID          string      `json:"id"`          // 提供商 ID
 	Name        string      `json:"name"`        // 显示名称
+	IconURL     string      `json:"iconUrl"`     // 品牌图标完整 URL（SVG/PNG）
 	BaseURL     string      `json:"baseUrl"`     // API 基础地址
 	RegisterURL string      `json:"registerUrl"` // API Key 注册地址
 	DocsURL     string      `json:"docsUrl"`     // 文档地址

@@ -12,6 +12,7 @@ package models
 var OpenAIProvider = ProviderInfo{
 	ID:          "openai",
 	Name:        "OpenAI (GPT-5系列)",
+	IconURL:     "https://cdn.openai.com/API/logo-dark.png",
 	BaseURL:     "https://api.openai.com/v1",
 	RegisterURL: "https://platform.openai.com/api-keys",
 	DocsURL:     "https://platform.openai.com/docs",
@@ -32,6 +33,7 @@ var OpenAIProvider = ProviderInfo{
 var AzureOpenAIProvider = ProviderInfo{
 	ID:          "azure_openai",
 	Name:        "Microsoft Azure OpenAI",
+	IconURL:     "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
 	BaseURL:     "",
 	RegisterURL: "https://azure.microsoft.com/en-us/products/ai-services/openai-service",
 	DocsURL:     "https://learn.microsoft.com/en-us/azure/ai-services/openai/",
@@ -48,6 +50,7 @@ var AzureOpenAIProvider = ProviderInfo{
 var AnthropicProvider = ProviderInfo{
 	ID:          "anthropic",
 	Name:        "Anthropic (Claude)",
+	IconURL:     "https://www.anthropic.com/images/icons/safari-pinned-tab.svg",
 	BaseURL:     "https://api.anthropic.com/v1",
 	RegisterURL: "https://console.anthropic.com/",
 	DocsURL:     "https://docs.anthropic.com/",
@@ -66,6 +69,7 @@ var AnthropicProvider = ProviderInfo{
 var GoogleVertexProvider = ProviderInfo{
 	ID:          "vertex_ai",
 	Name:        "Google Vertex AI (Gemini)",
+	IconURL:     "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
 	BaseURL:     "https://generativelanguage.googleapis.com/v1beta",
 	RegisterURL: "https://aistudio.google.com/apikey",
 	DocsURL:     "https://ai.google.dev/gemini-api/docs",
@@ -82,6 +86,7 @@ var GoogleVertexProvider = ProviderInfo{
 var BedrockProvider = ProviderInfo{
 	ID:          "bedrock",
 	Name:        "AWS Bedrock (多模型)",
+	IconURL:     "https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png",
 	BaseURL:     "",
 	RegisterURL: "https://aws.amazon.com/bedrock/",
 	DocsURL:     "https://docs.aws.amazon.com/bedrock/",
@@ -98,6 +103,7 @@ var BedrockProvider = ProviderInfo{
 var MetaLlamaProvider = ProviderInfo{
 	ID:          "meta_llama",
 	Name:        "Meta Llama 4",
+	IconURL:     "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/800px-Meta_Platforms_Inc._logo.svg.png",
 	BaseURL:     "https://api.llama.com/v1",
 	RegisterURL: "https://llama.meta.com/",
 	DocsURL:     "https://www.llama.com/docs/",
@@ -112,6 +118,7 @@ var MetaLlamaProvider = ProviderInfo{
 var MistralProvider = ProviderInfo{
 	ID:          "mistral",
 	Name:        "Mistral AI",
+	IconURL:     "https://mistral.ai/images/mistral-logo-a9cd3e3d.svg",
 	BaseURL:     "https://api.mistral.ai/v1",
 	RegisterURL: "https://console.mistral.ai/",
 	DocsURL:     "https://docs.mistral.ai/",
@@ -128,6 +135,7 @@ var MistralProvider = ProviderInfo{
 var CohereProvider = ProviderInfo{
 	ID:          "cohere",
 	Name:        "Cohere (Command R)",
+	IconURL:     "https://cohere.com/favicon.ico",
 	BaseURL:     "https://api.cohere.com/v1",
 	RegisterURL: "https://dashboard.cohere.com/api-keys",
 	DocsURL:     "https://docs.cohere.com/",
@@ -143,6 +151,7 @@ var CohereProvider = ProviderInfo{
 var XAIProvider = ProviderInfo{
 	ID:          "xai",
 	Name:        "xAI (Grok)",
+	IconURL:     "https://x.ai/favicon.ico",
 	BaseURL:     "https://api.x.ai/v1",
 	RegisterURL: "https://console.x.ai/",
 	DocsURL:     "https://docs.x.ai/",
@@ -158,6 +167,7 @@ var XAIProvider = ProviderInfo{
 var PerplexityProvider = ProviderInfo{
 	ID:          "perplexity",
 	Name:        "Perplexity AI (Sonar)",
+	IconURL:     "https://www.perplexity.ai/favicon.ico",
 	BaseURL:     "https://api.perplexity.ai",
 	RegisterURL: "https://www.perplexity.ai/settings/api",
 	DocsURL:     "https://docs.perplexity.ai/",
@@ -177,6 +187,7 @@ var PerplexityProvider = ProviderInfo{
 var QwenProvider = ProviderInfo{
 	ID:          "qwen",
 	Name:        "阿里云通义千问 (Qwen)",
+	IconURL:     "https://img.alicdn.com/imgextra/i1/O1CN01WnEBYH1QHPdT2pSTe_!!6000000001952-2-tps-120-120.png",
 	BaseURL:     "https://dashscope.aliyuncs.com/compatible-mode/v1",
 	RegisterURL: "https://bailian.console.aliyun.com/",
 	DocsURL:     "https://help.aliyun.com/zh/model-studio/",
@@ -199,6 +210,7 @@ var QwenProvider = ProviderInfo{
 var DoubaoProvider = ProviderInfo{
 	ID:          "doubao",
 	Name:        "字节豆包 (Doubao)",
+	IconURL:     "https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/doubao/web/logo-icon.png",
 	BaseURL:     "https://ark.cn-beijing.volces.com/api/v3",
 	RegisterURL: "https://console.volcengine.com/ark",
 	DocsURL:     "https://www.volcengine.com/docs/82379",
@@ -216,6 +228,7 @@ var DoubaoProvider = ProviderInfo{
 var ZhipuProvider = ProviderInfo{
 	ID:          "zhipu",
 	Name:        "智谱 AI (GLM)",
+	IconURL:     "https://www.zhipuai.cn/favicon.ico",
 	BaseURL:     "https://open.bigmodel.cn/api/paas/v4",
 	RegisterURL: "https://open.bigmodel.cn/",
 	DocsURL:     "https://open.bigmodel.cn/dev/api",
@@ -232,6 +245,7 @@ var ZhipuProvider = ProviderInfo{
 var MoonshotProvider = ProviderInfo{
 	ID:          "moonshot",
 	Name:        "月之暗面 (Kimi)",
+	IconURL:     "https://statics.moonshot.cn/kimi-chat/favicon.ico",
 	BaseURL:     "https://api.moonshot.cn/v1",
 	RegisterURL: "https://platform.moonshot.cn/",
 	DocsURL:     "https://platform.moonshot.cn/docs/api/chat",
@@ -246,6 +260,7 @@ var MoonshotProvider = ProviderInfo{
 var DeepSeekProvider = ProviderInfo{
 	ID:          "deepseek",
 	Name:        "DeepSeek",
+	IconURL:     "https://chat.deepseek.com/favicon.ico",
 	BaseURL:     "https://api.deepseek.com/v1",
 	RegisterURL: "https://platform.deepseek.com/",
 	DocsURL:     "https://api-docs.deepseek.com/",
@@ -262,6 +277,7 @@ var DeepSeekProvider = ProviderInfo{
 var MiniMaxProvider = ProviderInfo{
 	ID:          "minimax",
 	Name:        "MiniMax (abab)",
+	IconURL:     "https://www.minimaxi.com/favicon.ico",
 	BaseURL:     "https://api.minimax.chat/v1",
 	RegisterURL: "https://www.minimaxi.com/",
 	DocsURL:     "https://platform.minimaxi.com/document/introduction",
@@ -276,6 +292,7 @@ var MiniMaxProvider = ProviderInfo{
 var BaiduProvider = ProviderInfo{
 	ID:          "baidu",
 	Name:        "百度文心 (ERNIE)",
+	IconURL:     "https://nlp.bj.bcebos.com/ERNIE_logo.png",
 	BaseURL:     "https://qianfan.baidubce.com/v2",
 	RegisterURL: "https://console.bce.baidu.com/qianfan/ais/console/applicationConsole/application",
 	DocsURL:     "https://cloud.baidu.com/doc/WENXINWORKSHOP/",
@@ -292,6 +309,7 @@ var BaiduProvider = ProviderInfo{
 var HunyuanProvider = ProviderInfo{
 	ID:          "hunyuan",
 	Name:        "腾讯混元 (Hunyuan)",
+	IconURL:     "https://cloudcache.tencent-cloud.com/open_proj/proj_qcloud_v2/gateway/shareicons/cloud.png",
 	BaseURL:     "https://api.hunyuan.cloud.tencent.com/v1",
 	RegisterURL: "https://console.cloud.tencent.com/hunyuan/start",
 	DocsURL:     "https://cloud.tencent.com/document/product/1729",
@@ -307,6 +325,7 @@ var HunyuanProvider = ProviderInfo{
 var SparkProvider = ProviderInfo{
 	ID:          "spark",
 	Name:        "科大讯飞星火 (Spark)",
+	IconURL:     "https://xinghuo.xfyun.cn/favicon.ico",
 	BaseURL:     "https://spark-api-open.xf-yun.com/v1",
 	RegisterURL: "https://xinghuo.xfyun.cn/sparkapi",
 	DocsURL:     "https://www.xfyun.cn/doc/spark/",
@@ -321,6 +340,7 @@ var SparkProvider = ProviderInfo{
 var Yi01AIProvider = ProviderInfo{
 	ID:          "yi_01ai",
 	Name:        "零一万物 (Yi)",
+	IconURL:     "https://www.lingyiwanwu.com/favicon.ico",
 	BaseURL:     "https://api.lingyiwanwu.com/v1",
 	RegisterURL: "https://platform.lingyiwanwu.com/apikeys",
 	DocsURL:     "https://platform.lingyiwanwu.com/docs",
@@ -339,6 +359,7 @@ var Yi01AIProvider = ProviderInfo{
 var OpenRouterProvider = ProviderInfo{
 	ID:          "openrouter",
 	Name:        "OpenRouter",
+	IconURL:     "https://openrouter.ai/favicon.ico",
 	BaseURL:     "https://openrouter.ai/api/v1",
 	RegisterURL: "https://openrouter.ai/keys",
 	DocsURL:     "https://openrouter.ai/docs",
@@ -348,6 +369,7 @@ var OpenRouterProvider = ProviderInfo{
 var OllamaProvider = ProviderInfo{
 	ID:          "ollama",
 	Name:        "Ollama (本地)",
+	IconURL:     "https://ollama.com/public/ollama.png",
 	BaseURL:     "http://localhost:11434",
 	RegisterURL: "https://ollama.com/",
 	DocsURL:     "https://ollama.com/library",
@@ -357,6 +379,7 @@ var OllamaProvider = ProviderInfo{
 var LiteLLMProvider = ProviderInfo{
 	ID:          "litellm",
 	Name:        "LiteLLM (代理)",
+	IconURL:     "https://litellm.ai/favicon.ico",
 	BaseURL:     "http://localhost:4000",
 	RegisterURL: "https://litellm.vercel.app/",
 	DocsURL:     "https://docs.litellm.ai/",

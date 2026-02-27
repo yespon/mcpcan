@@ -1,47 +1,29 @@
 package llm
 
+// constants.go
+// 工具函数：通过 Model ID 查询能力信息。
+// 各厂商模型列表（XxxModels）已废弃——请直接使用 models.XxxProvider.GetModelIDs()
+// 或 models.GetAllModels()。
+
 import (
 	"github.com/kymo-mcp/mcpcan/pkg/llm/models"
 )
 
-// Re-export Model Lists for backward compatibility
-// These lists are populated from the central registry in pkg/llm/models
-var (
-	DeepSeekModels  = models.DeepSeekProvider.GetModelIDs()
-	OpenAIModels    = models.OpenAIProvider.GetModelIDs()
-	AnthropicModels = models.AnthropicProvider.GetModelIDs()
-	GoogleModels    = models.GoogleProvider.GetModelIDs()
-	DoubaoModels    = models.DoubaoProvider.GetModelIDs()
-	QwenModels      = models.QwenProvider.GetModelIDs()
-	ZhipuModels     = models.ZhipuProvider.GetModelIDs()
-	// 新增厂商
-	BaiduModels     = models.BaiduProvider.GetModelIDs()
-	HunyuanModels   = models.HunyuanProvider.GetModelIDs()
-	SparkModels     = models.SparkProvider.GetModelIDs()
-	MiniMaxModels   = models.MiniMaxProvider.GetModelIDs()
-	Yi01AIModels    = models.Yi01AIProvider.GetModelIDs()
-	MoonshotModels  = models.MoonshotProvider.GetModelIDs()
-	MistralModels   = models.MistralProvider.GetModelIDs()
-	XAIModels       = models.XAIProvider.GetModelIDs()
-	CohereModels    = models.CohereProvider.GetModelIDs()
-)
-
-// GetAllModels returns all supported model IDs
+// GetAllModelIDs 返回所有支持的模型 ID 列表
 func GetAllModelIDs() []string {
 	var ids []string
-	all := models.GetAllModels()
-	for _, m := range all {
+	for _, m := range models.GetAllModels() {
 		ids = append(ids, m.ID)
 	}
 	return ids
 }
 
-// GetModelInfo returns the full model info including capabilities
+// GetModelInfo 根据 Model ID 返回完整的模型能力信息
 func GetModelInfo(modelID string) *models.ModelInfo {
 	return models.GetModelByID(modelID)
 }
 
-// IsVisionSupported checks if the model supports multimodal input (images).
+// IsVisionSupported 检查模型是否支持图片输入
 func IsVisionSupported(modelID string) bool {
 	info := models.GetModelByID(modelID)
 	if info != nil {
@@ -50,7 +32,7 @@ func IsVisionSupported(modelID string) bool {
 	return false
 }
 
-// IsThinkingSupported checks if the model supports deep reasoning (e.g. o1, R1)
+// IsThinkingSupported 检查模型是否支持深度推理（o1、R1 等）
 func IsThinkingSupported(modelID string) bool {
 	info := models.GetModelByID(modelID)
 	if info != nil {
@@ -59,7 +41,7 @@ func IsThinkingSupported(modelID string) bool {
 	return false
 }
 
-// IsToolsSupported checks if the model supports function calling
+// IsToolsSupported 检查模型是否支持 Function Calling
 func IsToolsSupported(modelID string) bool {
 	info := models.GetModelByID(modelID)
 	if info != nil {
@@ -68,20 +50,20 @@ func IsToolsSupported(modelID string) bool {
 	return false
 }
 
-// IsSystemPromptSupported checks if the model supports custom system prompt
+// IsSystemPromptSupported 检查模型是否支持自定义 System Prompt
 func IsSystemPromptSupported(modelID string) bool {
 	info := models.GetModelByID(modelID)
 	if info != nil {
 		return info.SupportSystemPrompt
 	}
-	return true // Default to true for backward compatibility
+	return true // 默认兼容
 }
 
-// IsTemperatureSupported checks if temperature can be adjusted for this model
+// IsTemperatureSupported 检查模型是否支持 Temperature 调节
 func IsTemperatureSupported(modelID string) bool {
 	info := models.GetModelByID(modelID)
 	if info != nil {
 		return info.SupportTemperature
 	}
-	return true // Default to true for backward compatibility
+	return true // 默认兼容
 }

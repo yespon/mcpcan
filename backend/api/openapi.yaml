@@ -5,9 +5,441 @@ openapi: 3.0.3
 info:
     title: ""
     version: 0.0.1
-    title: ""
-    version: 0.0.1
 paths:
+    /ai/files/upload:
+        post:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_UploadFile
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UploadFileRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UploadFileResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models:
+        get:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_List
+            parameters:
+                - name: page
+                  in: query
+                  description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListModelAccessResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        put:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_Update
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateModelAccessRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UpdateModelAccessResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_Create
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateModelAccessRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateModelAccessResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models/available:
+        get:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_GetAvailableModels
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetAvailableModelsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models/supported:
+        get:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_GetSupportedModels
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetSupportedModelsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models/test:
+        post:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_TestConnectionNew
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TestConnectionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TestConnectionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models/{id}:
+        get:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_Get
+            parameters:
+                - name: id
+                  in: path
+                  description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetModelAccessResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_Delete
+            parameters:
+                - name: id
+                  in: path
+                  description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteModelAccessResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/models/{id}/test:
+        post:
+            tags:
+                - AiModelAccessService
+            operationId: AiModelAccessService_TestConnectionById
+            parameters:
+                - name: id
+                  in: path
+                  description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                  required: true
+                  schema:
+                    type: string
+                - name: modelName
+                  in: query
+                  description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TestConnectionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/sessions:
+        get:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_List
+            parameters:
+                - name: page
+                  in: query
+                  description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListSessionsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        put:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_Update
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateSessionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UpdateSessionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_Create
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateSessionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateSessionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/sessions/{id}:
+        get:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_Get
+            parameters:
+                - name: id
+                  in: path
+                  description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetSessionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        delete:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_Delete
+            parameters:
+                - name: id
+                  in: path
+                  description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/DeleteSessionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/sessions/{sessionID}/chat:
+        post:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_Chat
+            parameters:
+                - name: sessionID
+                  in: path
+                  description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/ChatRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ChatResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ai/sessions/{sessionID}/messages:
+        get:
+            tags:
+                - AiSessionService
+            operationId: AiSessionService_GetMessages
+            parameters:
+                - name: sessionID
+                  in: path
+                  description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                  required: true
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  description: '@inject_tag: json:"page" form:"page" desc:"Page number"'
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  description: '@inject_tag: json:"pageSize" form:"pageSize" desc:"Page size"'
+                  schema:
+                    type: integer
+                    format: int32
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetSessionMessagesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /authz/depts:
         put:
             tags:
@@ -2913,6 +3345,109 @@ components:
         AddUserRoleResponse:
             type: object
             properties: {}
+        AiMessage:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"ID"'
+                sessionID:
+                    type: string
+                    description: '@inject_tag: json:"sessionID" desc:"Session ID"'
+                role:
+                    type: string
+                    description: '@inject_tag: json:"role" desc:"Role"'
+                content:
+                    type: string
+                    description: '@inject_tag: json:"content" desc:"Content"'
+                toolCalls:
+                    type: string
+                    description: '@inject_tag: json:"toolCalls" desc:"Tool Calls"'
+                toolCallID:
+                    type: string
+                    description: '@inject_tag: json:"toolCallID" desc:"Tool Call ID"'
+                promptTokens:
+                    type: integer
+                    description: '@inject_tag: json:"promptTokens" desc:"Prompt Tokens"'
+                    format: int32
+                completionTokens:
+                    type: integer
+                    description: '@inject_tag: json:"completionTokens" desc:"Completion Tokens"'
+                    format: int32
+                totalTokens:
+                    type: integer
+                    description: '@inject_tag: json:"totalTokens" desc:"Total Tokens"'
+                    format: int32
+                createTime:
+                    type: string
+                    description: '@inject_tag: json:"createTime" desc:"Create Time"'
+        AiModelAccess:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Name"'
+                provider:
+                    type: string
+                    description: '@inject_tag: json:"provider" desc:"Provider"'
+                apiKey:
+                    type: string
+                    description: '@inject_tag: json:"apiKey" desc:"API Key"'
+                baseUrl:
+                    type: string
+                    description: '@inject_tag: json:"baseUrl" desc:"Base URL"'
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" desc:"Model Name"'
+                createTime:
+                    type: string
+                    description: '@inject_tag: json:"createTime" desc:"Create Time"'
+                updateTime:
+                    type: string
+                    description: '@inject_tag: json:"updateTime" desc:"Update Time"'
+                allowedModels:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"allowedModels" desc:"Allowed Models"'
+        AiSession:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Name"'
+                modelAccessID:
+                    type: string
+                    description: '@inject_tag: json:"modelAccessID" desc:"Model Access ID"'
+                toolsConfig:
+                    type: string
+                    description: '@inject_tag: json:"toolsConfig" desc:"Tools Config (JSON)"'
+                maxContext:
+                    type: integer
+                    description: '@inject_tag: json:"maxContext" desc:"Max Context"'
+                    format: int32
+                createTime:
+                    type: string
+                    description: '@inject_tag: json:"createTime" desc:"Create Time"'
+                updateTime:
+                    type: string
+                    description: '@inject_tag: json:"updateTime" desc:"Update Time"'
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" desc:"Model Name"'
+                temperature:
+                    type: number
+                    description: '@inject_tag: json:"temperature" desc:"Temperature(0.0-2.0)"'
+                    format: float
+                systemPrompt:
+                    type: string
+                    description: '@inject_tag: json:"systemPrompt" desc:"System Prompt"'
         AvailableCasesResponse:
             type: object
             properties:
@@ -3081,6 +3616,51 @@ components:
                         $ref: '#/components/schemas/CategoryInfo'
                     description: '@inject_tag: json:"list" desc:"分类列表"'
             description: 分类响应
+        ChatAttachment:
+            type: object
+            properties:
+                type:
+                    type: string
+                    description: '@inject_tag: json:"type" desc:"Type (image, file)"'
+                url:
+                    type: string
+                    description: '@inject_tag: json:"url" desc:"URL"'
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"ID (for local temp files)"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Original Name"'
+        ChatRequest:
+            type: object
+            properties:
+                sessionID:
+                    type: string
+                    description: '@inject_tag: json:"sessionID" form:"sessionID" uri:"sessionID" desc:"Session ID"'
+                content:
+                    type: string
+                    description: '@inject_tag: json:"content" form:"content" desc:"Content"'
+                tools:
+                    type: string
+                    description: '@inject_tag: json:"tools" desc:"Tools Config (legacy JSON string)"'
+                mcpProfile:
+                    allOf:
+                        - $ref: '#/components/schemas/McpProfile'
+                    description: '@inject_tag: json:"mcpProfile" desc:"Advanced MCP Debug Profile"'
+                attachments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ChatAttachment'
+                    description: '@inject_tag: json:"attachments" desc:"Attachments"'
+        ChatResponse:
+            type: object
+            properties:
+                type:
+                    type: string
+                    description: '@inject_tag: json:"type" desc:"Type"'
+                content:
+                    type: string
+                    description: '@inject_tag: json:"content" desc:"Content"'
         CheckN8NRequest:
             type: object
             properties:
@@ -3227,6 +3807,36 @@ components:
                         - $ref: '#/components/schemas/DockerVolumeInfo'
                     description: '@inject_tag: json:"volume" desc:"创建的卷信息"'
             description: CreateDockerVolumeResponse
+        CreateModelAccessRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" form:"name" desc:"Name"'
+                provider:
+                    type: string
+                    description: '@inject_tag: json:"provider" form:"provider" desc:"Provider"'
+                apiKey:
+                    type: string
+                    description: '@inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"'
+                baseUrl:
+                    type: string
+                    description: '@inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"'
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
+                allowedModels:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"allowedModels" form:"allowedModels" desc:"Allowed Models"'
+        CreateModelAccessResponse:
+            type: object
+            properties:
+                access:
+                    allOf:
+                        - $ref: '#/components/schemas/AiModelAccess'
+                    description: '@inject_tag: json:"access" desc:"Access"'
         CreateOpenapiRequest:
             type: object
             properties:
@@ -3453,6 +4063,39 @@ components:
                         - $ref: '#/components/schemas/SysRole'
                     description: '@inject_tag: json:"role" desc:"创建的角色信息"'
             description: 创建角色响应
+        CreateSessionRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" form:"name" desc:"Name"'
+                modelAccessID:
+                    type: string
+                    description: '@inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"'
+                toolsConfig:
+                    type: string
+                    description: '@inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config (JSON)"'
+                maxContext:
+                    type: integer
+                    description: '@inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"'
+                    format: int32
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
+                temperature:
+                    type: number
+                    description: '@inject_tag: json:"temperature" form:"temperature" desc:"Temperature"'
+                    format: float
+                systemPrompt:
+                    type: string
+                    description: '@inject_tag: json:"systemPrompt" form:"systemPrompt" desc:"System Prompt"'
+        CreateSessionResponse:
+            type: object
+            properties:
+                session:
+                    allOf:
+                        - $ref: '#/components/schemas/AiSession'
+                    description: '@inject_tag: json:"session" desc:"Session"'
         CreateUserRequest:
             type: object
             properties:
@@ -3517,6 +4160,12 @@ components:
                     type: string
                     description: '@inject_tag: json:"message" desc:"响应消息"'
             description: DeleteDeptResponse 删除部门响应
+        DeleteModelAccessResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    description: '@inject_tag: json:"success" desc:"Success"'
         DeleteOpenapiFileResponse:
             type: object
             properties:
@@ -3541,6 +4190,12 @@ components:
             type: object
             properties: {}
             description: 删除角色响应
+        DeleteSessionResponse:
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    description: '@inject_tag: json:"success" desc:"Success"'
         DeleteUserResponse:
             type: object
             properties: {}
@@ -4019,6 +4674,14 @@ components:
                 traceId:
                     type: string
                     description: '@inject_tag: json:"traceId" form:"traceId" desc:"trace ID"'
+        GetAvailableModelsResponse:
+            type: object
+            properties:
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AiModelAccess'
+                    description: '@inject_tag: json:"list" desc:"List"'
         GetCodeFileResponse:
             type: object
             properties:
@@ -4121,6 +4784,13 @@ components:
                     items:
                         $ref: '#/components/schemas/SysMenuTreeNode'
                     description: '@inject_tag: json:"list" desc:"菜单数据"'
+        GetModelAccessResponse:
+            type: object
+            properties:
+                access:
+                    allOf:
+                        - $ref: '#/components/schemas/AiModelAccess'
+                    description: '@inject_tag: json:"access" desc:"Access"'
         GetOpenapiFileContentResponse:
             type: object
             properties:
@@ -4160,6 +4830,24 @@ components:
                         type: string
                     description: '@inject_tag: json:"data" desc:"角色ID列表"'
             description: GetRoleIdsByUserIdResponse 根据用户ID获取角色ID列表响应
+        GetSessionMessagesResponse:
+            type: object
+            properties:
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AiMessage'
+                    description: '@inject_tag: json:"list" desc:"List"'
+                total:
+                    type: string
+                    description: '@inject_tag: json:"total" desc:"Total messages"'
+        GetSessionResponse:
+            type: object
+            properties:
+                session:
+                    allOf:
+                        - $ref: '#/components/schemas/AiSession'
+                    description: '@inject_tag: json:"session" desc:"Session"'
         GetStatusResp:
             type: object
             properties:
@@ -4193,6 +4881,14 @@ components:
                     type: boolean
                     description: '@inject_tag: json:"probeHttp" desc:"HTTP probe success"'
             description: GetStatusResp instance status probe response
+        GetSupportedModelsResponse:
+            type: object
+            properties:
+                providers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ModelProvider'
+                    description: '@inject_tag: json:"providers" desc:"Providers"'
         GetUserIdsByRoleIdResponse:
             type: object
             properties:
@@ -4386,6 +5082,17 @@ components:
                     items:
                         $ref: '#/components/schemas/McpServer'
                     description: '@inject_tag: json:"list" desc:"List"'
+        ListModelAccessResponse:
+            type: object
+            properties:
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AiModelAccess'
+                    description: '@inject_tag: json:"list" desc:"List"'
+                total:
+                    type: string
+                    description: '@inject_tag: json:"total" desc:"Total"'
         ListNamespacesRequest:
             type: object
             properties:
@@ -4633,6 +5340,17 @@ components:
                     type: string
                     description: '@inject_tag: json:"total" desc:"总记录数"'
             description: 角色列表响应
+        ListSessionsResponse:
+            type: object
+            properties:
+                list:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AiSession'
+                    description: '@inject_tag: json:"list" desc:"List"'
+                total:
+                    type: string
+                    description: '@inject_tag: json:"total" desc:"Total"'
         ListStorageClassesResponse:
             type: object
             properties:
@@ -4818,6 +5536,20 @@ components:
                     type: string
                     description: '@inject_tag: json:"updatedAt" desc:"update time"'
             description: McpEnvironmentInfo environment information
+        McpProfile:
+            type: object
+            properties:
+                instanceId:
+                    type: string
+                    description: '@inject_tag: json:"instanceId" desc:"MCP Instance ID"'
+                includeTools:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"includeTools" desc:"List of tools to include (by name)"'
+                enableAll:
+                    type: boolean
+                    description: '@inject_tag: json:"enableAll" desc:"Enable all tools from instance"'
         McpServer:
             type: object
             properties:
@@ -4944,6 +5676,99 @@ components:
                     type: string
                     description: '@inject_tag: json:"instanceId" desc:"Instance ID"'
             description: McpToken MCP token
+        ModelInfo:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"Model ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Display Name"'
+                description:
+                    type: string
+                    description: '@inject_tag: json:"description" desc:"Description"'
+                contextLength:
+                    type: integer
+                    description: '@inject_tag: json:"contextLength" desc:"Context Length (tokens)"'
+                    format: int32
+                supportTools:
+                    type: boolean
+                    description: '@inject_tag: json:"supportTools" desc:"Supports Function Calling / Tools"'
+                supportSystemPrompt:
+                    type: boolean
+                    description: '@inject_tag: json:"supportSystemPrompt" desc:"Supports custom System Prompt"'
+                supportTemperature:
+                    type: boolean
+                    description: '@inject_tag: json:"supportTemperature" desc:"Supports Temperature adjustment (reasoning models may not)"'
+                supportThinking:
+                    type: boolean
+                    description: '@inject_tag: json:"supportThinking" desc:"Supports deep thinking / reasoning mode (o1, R1, etc.)"'
+                supportsVision:
+                    type: boolean
+                    description: |-
+                        图片输入能力
+                         @inject_tag: json:"supportsVision" desc:"Supports image input"
+                imageMimeTypes:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"imageMimeTypes" desc:"Supported image MIME types, e.g. image/jpeg, image/png"'
+                maxImageSize:
+                    type: string
+                    description: '@inject_tag: json:"maxImageSize" desc:"Max image size per file in bytes"'
+                maxImageCount:
+                    type: integer
+                    description: '@inject_tag: json:"maxImageCount" desc:"Max number of images per request (0=unlimited)"'
+                    format: int32
+                supportsDocument:
+                    type: boolean
+                    description: |-
+                        文档附件能力
+                         @inject_tag: json:"supportsDocument" desc:"Supports document/file attachments"
+                documentMimeTypes:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"documentMimeTypes" desc:"Supported document MIME types, e.g. application/pdf, text/plain"'
+                maxDocumentSize:
+                    type: string
+                    description: '@inject_tag: json:"maxDocumentSize" desc:"Max document size per file in bytes"'
+                maxDocumentCount:
+                    type: integer
+                    description: '@inject_tag: json:"maxDocumentCount" desc:"Max number of documents per request (0=unlimited)"'
+                    format: int32
+        ModelProvider:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"Provider ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Provider Name"'
+                models:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"models" desc:"Model ID List (deprecated)"'
+                registerUrl:
+                    type: string
+                    description: '@inject_tag: json:"registerUrl" desc:"API Key Register URL"'
+                docsUrl:
+                    type: string
+                    description: '@inject_tag: json:"docsUrl" desc:"Documentation URL"'
+                baseUrl:
+                    type: string
+                    description: '@inject_tag: json:"baseUrl" desc:"API Base URL"'
+                modelInfos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/ModelInfo'
+                    description: '@inject_tag: json:"modelInfos" desc:"Model Details"'
+                iconUrl:
+                    type: string
+                    description: '@inject_tag: json:"iconUrl" desc:"Provider brand icon URL (SVG/PNG)"'
         NodeInfo:
             type: object
             properties:
@@ -5963,24 +6788,24 @@ components:
         TestConnectionRequest:
             type: object
             properties:
-                dbHost:
+                id:
                     type: string
-                dbPort:
-                    type: integer
-                    format: int32
-                dbUser:
+                    description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                modelName:
                     type: string
-                dbPassword:
-                    type: string
-                dbName:
-                    type: string
+                    description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
         TestConnectionResponse:
             type: object
             properties:
                 success:
                     type: boolean
+                    description: '@inject_tag: json:"success" desc:"Success"'
                 message:
                     type: string
+                    description: '@inject_tag: json:"message" desc:"Message"'
+                latencyMs:
+                    type: string
+                    description: '@inject_tag: json:"latencyMs" desc:"Latency (ms)"'
         TestConnectivityRequest:
             type: object
             properties:
@@ -6122,6 +6947,39 @@ components:
                 message:
                     type: string
                     description: '@inject_tag: json:"message" desc:"响应消息"'
+        UpdateModelAccessRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" form:"name" desc:"Name"'
+                provider:
+                    type: string
+                    description: '@inject_tag: json:"provider" form:"provider" desc:"Provider"'
+                apiKey:
+                    type: string
+                    description: '@inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"'
+                baseUrl:
+                    type: string
+                    description: '@inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"'
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
+                allowedModels:
+                    type: array
+                    items:
+                        type: string
+                    description: '@inject_tag: json:"allowedModels" form:"allowedModels" desc:"Allowed Models"'
+        UpdateModelAccessResponse:
+            type: object
+            properties:
+                access:
+                    allOf:
+                        - $ref: '#/components/schemas/AiModelAccess'
+                    description: '@inject_tag: json:"access" desc:"Access"'
         UpdateOpenapiRequest:
             type: object
             properties:
@@ -6226,6 +7084,42 @@ components:
                         - $ref: '#/components/schemas/SysRole'
                     description: '@inject_tag: json:"role" desc:"更新后的角色信息"'
             description: 更新角色响应
+        UpdateSessionRequest:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" form:"id" uri:"id" desc:"ID"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" form:"name" desc:"Name"'
+                toolsConfig:
+                    type: string
+                    description: '@inject_tag: json:"toolsConfig" form:"toolsConfig" desc:"Tools Config"'
+                maxContext:
+                    type: integer
+                    description: '@inject_tag: json:"maxContext" form:"maxContext" desc:"Max Context"'
+                    format: int32
+                modelAccessID:
+                    type: string
+                    description: '@inject_tag: json:"modelAccessID" form:"modelAccessID" desc:"Model Access ID"'
+                modelName:
+                    type: string
+                    description: '@inject_tag: json:"modelName" form:"modelName" desc:"Model Name"'
+                temperature:
+                    type: number
+                    description: '@inject_tag: json:"temperature" form:"temperature" desc:"Temperature"'
+                    format: float
+                systemPrompt:
+                    type: string
+                    description: '@inject_tag: json:"systemPrompt" form:"systemPrompt" desc:"System Prompt"'
+        UpdateSessionResponse:
+            type: object
+            properties:
+                session:
+                    allOf:
+                        - $ref: '#/components/schemas/AiSession'
+                    description: '@inject_tag: json:"session" desc:"Session"'
         UpdateUserRequest:
             type: object
             properties:
@@ -6272,6 +7166,21 @@ components:
                         - $ref: '#/components/schemas/SysUser'
                     description: '@inject_tag: json:"user" desc:"更新后的用户信息"'
             description: 更新用户响应
+        UploadFileRequest:
+            type: object
+            properties: {}
+        UploadFileResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: '@inject_tag: json:"id" desc:"File ID"'
+                url:
+                    type: string
+                    description: '@inject_tag: json:"url" desc:"File URL (local or remote)"'
+                name:
+                    type: string
+                    description: '@inject_tag: json:"name" desc:"Original Name"'
         UploadImageRequest:
             type: object
             properties:
@@ -6454,6 +7363,8 @@ components:
                     description: '@inject_tag: json:"volumeName" desc:"Volume name (required for volume type)"'
             description: VolumeMount volume mount configuration
 tags:
+    - name: AiModelAccessService
+    - name: AiSessionService
     - name: CodeService
       description: CodeService 代码管理服务
     - name: DashboardService

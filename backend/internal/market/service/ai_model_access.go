@@ -223,6 +223,7 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 		providers = append(providers, &pb.ModelProvider{
 			Id:          p.ID,
 			Name:        p.Name,
+			IconUrl:     p.IconURL,
 			Models:      p.GetModelIDs(),
 			RegisterUrl: p.RegisterURL,
 			DocsUrl:     p.DocsURL,

@@ -157,7 +157,10 @@ message ModelProvider {
     string baseUrl = 6;
     // @inject_tag: json:"modelInfos" desc:"Model Details"
     repeated ModelInfo modelInfos = 7;
+    // @inject_tag: json:"iconUrl" desc:"Provider brand icon URL (SVG/PNG)"
+    string iconUrl = 8;
 }
+
 
 message GetSupportedModelsRequest {}
 

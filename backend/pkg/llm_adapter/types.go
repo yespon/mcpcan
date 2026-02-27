@@ -1,216 +1,100 @@
 package llm_adapter
 
+// llm_adapter/types.go
+// 本文件直接 re-export pkg/llm 层的所有公共类型和常量，
+// 避免重复定义，保证 adapter 层与底层实现的类型完全一致。
+// ProviderType 常量、所有消息结构体（Message、ToolCall、ChatRequest 等）
+// 均以类型别名方式暴露，调用方无需关心底层包名。
+
 import (
 	"context"
 	"encoding/json"
 	"os"
+
+	orig_llm "github.com/kymo-mcp/mcpcan/pkg/llm"
 )
 
-// ProviderType defines the type of LLM provider
-type ProviderType string
+// ——— Provider 类型 ———
 
+// ProviderType 是 LLM 提供商的类型标识，直接复用底层定义
+type ProviderType = orig_llm.ProviderType
+
+// 所有支持的 Provider 常量，直接引用 pkg/llm 层
 const (
-	// 国际核心 Providers (OpenAI-compatible)
-	ProviderOpenAI      ProviderType = "openai"
-	ProviderAzureOpenAI ProviderType = "azure_openai"
-	ProviderDeepSeek    ProviderType = "deepseek"
-	ProviderAnthropic   ProviderType = "anthropic"
-	ProviderGoogle      ProviderType = "google"
-	ProviderMistral     ProviderType = "mistral"
-	ProviderXAI         ProviderType = "xai"
-	ProviderCohere      ProviderType = "cohere"
-	ProviderPerplexity  ProviderType = "perplexity"
-
-	// 聚合 / 代理 Providers
-	ProviderOpenRouter ProviderType = "openrouter"
-	ProviderLiteLLM    ProviderType = "litellm"
-	ProviderOllama     ProviderType = "ollama"
-
-	// 国内主流 Providers
-	ProviderQwen     ProviderType = "qwen"     // 阿里云通义千问
-	ProviderDoubao   ProviderType = "doubao"   // 字节豆包
-	ProviderZhipu    ProviderType = "zhipu"    // 智谱 GLM
-	ProviderMoonshot ProviderType = "moonshot" // 月之暗面 Kimi
-	ProviderBaidu    ProviderType = "baidu"    // 百度文心
-	ProviderHunyuan  ProviderType = "hunyuan"  // 腾讯混元
-	ProviderSpark    ProviderType = "spark"    // 科大讯飞星火
-	ProviderMiniMax  ProviderType = "minimax"  // MiniMax
-	ProviderYi01AI   ProviderType = "yi_01ai"  // 零一万物
-
-	// MCP 特殊 Provider
-	ProviderMCP ProviderType = "mcp"
+	ProviderOpenAI       = orig_llm.ProviderOpenAI
+	ProviderAzureOpenAI  = orig_llm.ProviderAzureOpenAI
+	ProviderDeepSeek     = orig_llm.ProviderDeepSeek
+	ProviderAnthropic    = orig_llm.ProviderAnthropic
+	ProviderGoogle       = orig_llm.ProviderGoogle
+	ProviderMistral      = orig_llm.ProviderMistral
+	ProviderXAI          = orig_llm.ProviderXAI
+	ProviderAzureBedrock = orig_llm.ProviderAzureBedrock
+	ProviderVertexAI     = orig_llm.ProviderVertexAI
+	ProviderMetaLlama    = orig_llm.ProviderMetaLlama
+	ProviderCohere       = orig_llm.ProviderCohere
+	ProviderPerplexity   = orig_llm.ProviderPerplexity
+	// 聚合 / 代理
+	ProviderOpenRouter = orig_llm.ProviderOpenRouter
+	ProviderLiteLLM    = orig_llm.ProviderLiteLLM
+	ProviderOllama     = orig_llm.ProviderOllama
+	// 国内主流
+	ProviderQwen     = orig_llm.ProviderQwen
+	ProviderDoubao   = orig_llm.ProviderDoubao
+	ProviderZhipu    = orig_llm.ProviderZhipu
+	ProviderMoonshot = orig_llm.ProviderMoonshot
+	ProviderBaidu    = orig_llm.ProviderBaidu
+	ProviderHunyuan  = orig_llm.ProviderHunyuan
+	ProviderSpark    = orig_llm.ProviderSpark
+	ProviderMiniMax  = orig_llm.ProviderMiniMax
+	ProviderYi01AI   = orig_llm.ProviderYi01AI
+	// 特殊
+	ProviderMCP = orig_llm.ProviderMCP
 )
 
-// SupportedProviders contains all valid provider types
-var SupportedProviders = map[ProviderType]bool{
-	ProviderOpenAI:      true,
-	ProviderAzureOpenAI: true,
-	ProviderDeepSeek:    true,
-	ProviderAnthropic:   true,
-	ProviderGoogle:      true,
-	ProviderMistral:     true,
-	ProviderXAI:         true,
-	ProviderOpenRouter:  true,
-	ProviderLiteLLM:     true,
-	ProviderOllama:      true,
-	ProviderQwen:        true,
-	ProviderDoubao:      true,
-	ProviderZhipu:       true,
-	ProviderMoonshot:    true,
-	ProviderMCP:         true,
+// SupportedProviders / DefaultBaseURLs / GetSupportedProviderList 均引用底层实现
+var SupportedProviders = orig_llm.SupportedProviders
+var DefaultBaseURLs = orig_llm.DefaultBaseURLs
+
+// GetSupportedProviderList 返回所有支持的 provider ID 列表
+func GetSupportedProviderList() []string {
+	return orig_llm.GetSupportedProviderList()
 }
 
-// DefaultBaseURLs contains default API endpoints for providers
-var DefaultBaseURLs = map[ProviderType]string{
-	ProviderOpenAI:      "https://api.openai.com/v1",
-	ProviderAzureOpenAI: "", // Azure requires specific resource name in URL
-	ProviderDeepSeek:    "https://api.deepseek.com/v1",
-	ProviderAnthropic:   "https://api.anthropic.com/v1",
-	ProviderGoogle:      "https://generativelanguage.googleapis.com/v1beta",
-	ProviderMistral:     "https://api.mistral.ai/v1",
-	ProviderXAI:         "https://api.x.ai/v1",
-	ProviderOpenRouter:  "https://openrouter.ai/api/v1",
-	ProviderLiteLLM:     "http://localhost:4000",
-	ProviderOllama:      "http://localhost:11434/api",
-	ProviderQwen:        "https://dashscope.aliyuncs.com/compatible-mode/v1",
-	ProviderDoubao:      "https://ark.cn-beijing.volces.com/api/v3",
-	ProviderZhipu:       "https://open.bigmodel.cn/api/paas/v4",
-	ProviderMoonshot:    "https://api.moonshot.cn/v1",
-	ProviderMCP:         "",
+// IsValidProvider 检查 provider 字符串是否有效
+func IsValidProvider(provider string) bool {
+	return orig_llm.IsValidProvider(provider)
 }
 
-// GlobalProxyURL defines the global proxy URL
-// If set, it will be used by default for all LLM requests (except local ones)
+// ——— 消息/请求/响应 类型别名（直接复用底层，zero copy）———
+
+type (
+	ProviderConfig      = orig_llm.ProviderConfig
+	MessageContentPart  = orig_llm.MessageContentPart
+	MessageImageURL     = orig_llm.MessageImageURL
+	Message             = orig_llm.Message
+	ToolCall            = orig_llm.ToolCall
+	ToolCallFunction    = orig_llm.ToolCallFunction
+	Tool                = orig_llm.Tool
+	Function            = orig_llm.Function
+	ChatRequest         = orig_llm.ChatRequest
+	ToolOutput          = orig_llm.ToolOutput
+	StreamResponse      = orig_llm.StreamResponse
+	Usage               = orig_llm.Usage
+)
+
+// ExtraContent 辅助类型（json 原始消息，与底层保持一致）
+var _ json.RawMessage // 保证 import 不被 trim
+
+// Provider 接口：直接复用底层定义
+type Provider interface {
+	StreamChat(ctx context.Context, req ChatRequest) (<-chan StreamResponse, error)
+}
+
+// GlobalProxyURL 全局代理配置
 var GlobalProxyURL string
 
-func init(){
-	// init global proxy
-	if os.Getenv("HTTP_PROXY") != "" {
-		GlobalProxyURL = os.Getenv("HTTP_PROXY")
+func init() {
+	if v := os.Getenv("HTTP_PROXY"); v != "" {
+		GlobalProxyURL = v
 	}
-}
-
-
-// GetSupportedProviderList returns list of all supported provider IDs
-func GetSupportedProviderList() []string {
-	return []string{
-		string(ProviderOpenAI),
-		string(ProviderAzureOpenAI),
-		string(ProviderAnthropic),
-		string(ProviderDeepSeek),
-		string(ProviderGoogle),
-		string(ProviderMistral),
-		string(ProviderXAI),
-		string(ProviderOpenRouter),
-		string(ProviderLiteLLM),
-		string(ProviderOllama),
-		string(ProviderQwen),
-		string(ProviderDoubao),
-		string(ProviderZhipu),
-		string(ProviderMoonshot),
-		string(ProviderMCP),
-	}
-}
-
-// IsValidProvider checks if the provider string is a valid provider type
-func IsValidProvider(provider string) bool {
-	return SupportedProviders[ProviderType(provider)]
-}
-
-// ProviderConfig holds configuration for LLM provider
-type ProviderConfig struct {
-	BaseURL  string
-	APIKey   string
-	ProxyURL string
-}
-
-// MessageContentPart represents a part of the message content (text or image)
-type MessageContentPart struct {
-	Type     string            `json:"type"` // text, image_url
-	Text     string            `json:"text,omitempty"`
-	ImageURL *MessageImageURL  `json:"image_url,omitempty"`
-}
-
-// MessageImageURL represents image url
-type MessageImageURL struct {
-	URL string `json:"url"`
-}
-
-// Message represents a chat message
-type Message struct {
-	Role             string               `json:"role"`
-	Content          string               `json:"content"` // For backwards compatibility and simple text
-	MultiContent     []MessageContentPart `json:"multi_content,omitempty"` // For multimodal content
-	ToolCalls        []ToolCall           `json:"tool_calls,omitempty"`
-	ToolCallID       string               `json:"tool_call_id,omitempty"`
-	ToolCallName     string               `json:"tool_call_name,omitempty"` // 工具函数名，Google FunctionResponse 需要
-	ReasoningContent string               `json:"reasoning_content,omitempty"` // 思考过程 (DeepSeek/Kimi)
-}
-
-// ToolCall represents a tool call request from LLM
-type ToolCall struct {
-	Index        int              `json:"index,omitempty"`
-	ID           string           `json:"id"`
-	Type         string           `json:"type"`
-	Function     ToolCallFunction `json:"function"`
-	ExtraContent json.RawMessage  `json:"extra_content,omitempty"` // 透传 Provider 扩展字段（如 Google thought_signature）
-}
-
-// ToolCallFunction represents the function call details in a tool call (arguments are string JSON)
-type ToolCallFunction struct {
-	Name      string `json:"name"`
-	Arguments string `json:"arguments"`
-}
-
-// Tool represents a tool definition
-type Tool struct {
-	Type     string   `json:"type"`
-	Function Function `json:"function"`
-}
-
-// Function represents the function call details
-type Function struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description,omitempty"`
-	Parameters  interface{} `json:"parameters,omitempty"` // JSON Schema
-}
-
-// ChatRequest represents a request to the LLM
-type ChatRequest struct {
-	Model       string
-	Messages    []Message
-	Tools       []Tool // Structured tool definition
-	Temperature float32
-	MaxTokens   int
-	Stream      bool
-}
-
-// ToolOutput represents the result of a tool execution
-type ToolOutput struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Result string `json:"result"`
-}
-
-// StreamResponse represents a chunk of response from streaming API
-type StreamResponse struct {
-	Content          string
-	ReasoningContent string       // Added for DeepSeek/Kimi thinking
-	ToolCalls        []ToolCall
-	ToolOutputs      []ToolOutput // Added for notifying execution results
-	Usage            *Usage
-	Error            error
-}
-
-// Usage represents token usage statistics
-type Usage struct {
-	PromptTokens     int
-	CompletionTokens int
-	TotalTokens      int
-}
-
-// Provider defines the interface for LLM providers
-type Provider interface {
-	// StreamChat sends a chat request and returns a stream of responses
-	StreamChat(ctx context.Context, req ChatRequest) (<-chan StreamResponse, error)
 }

@@ -3,6 +3,8 @@ package llm
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/kymo-mcp/mcpcan/pkg/llm/models"
 )
 
 // ProviderType defines the type of LLM provider
@@ -73,31 +75,23 @@ var SupportedProviders = map[ProviderType]bool{
 	ProviderMCP:         true,
 }
 
-// DefaultBaseURLs contains default API endpoints for providers
+// DefaultBaseURLs contains default API endpoints for each provider.
+// Populated at init time from models.AllProviders to avoid duplicate maintenance.
+// Fallback entries for providers not in AllProviders (e.g. MCP) are added manually.
 var DefaultBaseURLs = map[ProviderType]string{
-	ProviderOpenAI:      "https://api.openai.com/v1",
-	ProviderAzureOpenAI: "", // Azure requires specific resource name in URL
-	ProviderDeepSeek:    "https://api.deepseek.com/v1",
-	ProviderAnthropic:   "https://api.anthropic.com/v1",
-	ProviderGoogle:      "https://generativelanguage.googleapis.com/v1beta",
-	ProviderMistral:     "https://api.mistral.ai/v1",
-	ProviderXAI:         "https://api.x.ai/v1",
-	ProviderCohere:      "https://api.cohere.com/v1",
-	ProviderPerplexity:  "https://api.perplexity.ai",
-	ProviderOpenRouter:  "https://openrouter.ai/api/v1",
-	ProviderLiteLLM:     "http://localhost:4000",
-	ProviderOllama:      "http://localhost:11434/api",
-	ProviderQwen:        "https://dashscope.aliyuncs.com/compatible-mode/v1",
-	ProviderDoubao:      "https://ark.cn-beijing.volces.com/api/v3",
-	ProviderZhipu:       "https://open.bigmodel.cn/api/paas/v4",
-	ProviderMoonshot:    "https://api.moonshot.cn/v1",
-	ProviderBaidu:       "https://qianfan.baidubce.com/v2",
-	ProviderHunyuan:     "https://api.hunyuan.cloud.tencent.com/v1",
-	ProviderSpark:       "https://spark-api-open.xf-yun.com/v1",
-	ProviderMiniMax:     "https://api.minimax.chat/v1",
-	ProviderYi01AI:      "https://api.lingyiwanwu.com/v1",
-	ProviderMCP:         "",
+	ProviderMCP: "", // MCP 是本地协议，无需远端 BaseURL
 }
+
+func init() {
+	// 从 models 包动态填充，消除与 providers_gen.go 中 BaseURL 的重复
+	for _, p := range models.AllProviders {
+		pt := ProviderType(p.ID)
+		if _, exists := DefaultBaseURLs[pt]; !exists {
+			DefaultBaseURLs[pt] = p.BaseURL
+		}
+	}
+}
+
 
 // GetSupportedProviderList returns list of all supported provider IDs
 func GetSupportedProviderList() []string {
