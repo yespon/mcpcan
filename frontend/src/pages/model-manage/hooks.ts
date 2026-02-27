@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import { ChatAPI } from '@/api/agent'
 import { timestampToDate } from '@/utils/system'
 import { useI18n } from 'vue-i18n'

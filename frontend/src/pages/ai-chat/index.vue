@@ -1,86 +1,122 @@
 <template>
   <div class="h-full flex overflow-hidden">
-    <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col min-w-0 relative bg-[var(--ep-bg-color-page)]">
-      <!-- Header -->
-      <div
-        class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)]"
+    <el-splitter class="h-full">
+      <el-splitter-panel
+        :size="isSidebarOpen ? '20%' : '40px'"
+        :resizable="false"
+        :class="[
+          'transition-all h-full duration-300 ease-in-out',
+          !isSidebarOpen ? 'bg-[var(--ep-bg-color)] border-r border-[var(--ep-border-color)]' : '',
+        ]"
+        :min-size="isSidebarOpen ? '200px' : '40px'"
       >
-        <div class="font-medium truncate max-w-sm">
-          {{ currentSession?.name || 'New Chat' }}
-        </div>
-        <div class="flex items-center space-x-2">
-          <!-- Toggle Sidebar Button (Now controls History on right) -->
-          <el-button
-            v-if="!isSidebarOpen"
-            type="info"
-            text
-            circle
-            @click="isSidebarOpen = true"
-            class="!text-[var(--ep-text-color-secondary)] hover:!text-[var(--el-color-primary)]"
+        <!-- Left Sidebar (History & Collapsed State) -->
+        <div class="h-full flex flex-col overflow-hidden">
+          <!-- Expanded State Content -->
+          <div
+            v-if="isSidebarOpen"
+            class="h-full flex flex-col transition-all duration-300 ease-in-out opacity-100"
           >
-            <!-- Use Expand/Fold icon logic reversed since it's on right -->
-            <el-icon class="text-lg"><Fold class="transform rotate-180" /></el-icon>
-          </el-button>
+            <div
+              class="flex items-center justify-between p-4 border-b border-[var(--ep-border-color)]"
+            >
+              <div class="flex items-center gap-2">
+                <span class="font-medium">Chat History</span>
+                <el-button type="primary" link size="small" @click="openCreateSessionDialog">
+                  <el-icon><Plus /></el-icon> New
+                </el-button>
+              </div>
+              <el-button link @click="isSidebarOpen = false">
+                <el-icon><Fold /></el-icon>
+              </el-button>
+            </div>
+            <div class="flex-1 overflow-hidden flex flex-col">
+              <SessionList
+                :sessions="sessions"
+                :current-session-id="currentSession?.id"
+                @select="loadSession"
+                @delete="deleteSession"
+              />
+            </div>
+          </div>
+
+          <!-- Collapsed State Content -->
+          <div
+            v-else
+            class="h-full flex flex-col items-center justify-center py-4 gap-4 transition-all duration-300 ease-in-out"
+          >
+            <el-tooltip content="Expand" placement="right">
+              <el-button text circle @click="isSidebarOpen = true">
+                <el-icon><Expand /></el-icon>
+              </el-button>
+            </el-tooltip>
+          </div>
         </div>
-      </div>
+      </el-splitter-panel>
+      <el-splitter-panel :min-size="200">
+        <!-- Main Chat Area -->
+        <div class="h-full flex-1 flex flex-col min-w-0 relative bg-[var(--ep-bg-color-page)]">
+          <!-- Header -->
+          <div
+            class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)]"
+          >
+            <div class="flex items-center gap-3">
+              <div class="font-medium truncate max-w-sm">
+                {{ currentSession?.name || 'New Chat' }}
+              </div>
+            </div>
 
-      <!-- Messages Area -->
-      <div
-        class="flex-1 overflow-y-auto hide-scrollbar px-6 md:px-20 lg:px-40 py-6"
-        ref="messagesContainer"
-      >
-        <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
-        <div
-          v-if="messages.length === 0"
-          class="h-full flex flex-col items-center justify-center text-[var(--ep-text-color-placeholder)]"
-        >
-          <el-icon class="text-6xl mb-4"><ChatDotRound /></el-icon>
-          <p>Start a conversation</p>
+            <div class="flex items-center space-x-2"></div>
+          </div>
+
+          <!-- Toggle Sidebar Button (Floating) - Only visible when sidebar is open, as per requirement -->
+          <div
+            v-if="isSidebarOpen"
+            class="absolute top-1/2 -translate-y-1/2 z-10 transition-all duration-300"
+            :class="[isSidebarOpen ? 'left-0' : 'left-0']"
+          >
+            <el-tooltip content="Close sidebar" placement="right" :show-after="500">
+              <div
+                class="cursor-pointer bg-[var(--ep-bg-color)] border border-[var(--ep-border-color)] border-l-0 rounded-r-md py-4 pr-1 pl-0.5 shadow-sm hover:bg-[var(--ep-bg-color-page)] text-[var(--ep-text-color-secondary)] hover:text-[var(--ep-text-color-primary)] transition-colors flex items-center justify-center opacity-0 hover:opacity-100"
+                @click="isSidebarOpen = !isSidebarOpen"
+                style="width: 24px; height: 60px"
+              >
+                <el-icon class="text-xs">
+                  <ArrowLeft />
+                </el-icon>
+              </div>
+            </el-tooltip>
+          </div>
+
+          <!-- Messages Area -->
+          <div
+            class="flex-1 overflow-y-auto hide-scrollbar px-6 md:px-20 lg:px-40 py-6"
+            ref="messagesContainer"
+          >
+            <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
+            <div
+              v-if="messages.length === 0"
+              class="h-full flex flex-col items-center justify-center text-[var(--ep-text-color-placeholder)]"
+            >
+              <el-icon class="text-6xl mb-4"><ChatDotRound /></el-icon>
+              <p>Start a conversation</p>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="p-6 md:px-20 lg:px-40 pb-8 bg-[var(--ep-bg-color-page)]">
+            <ChatInput
+              v-model:currentModel="currentModel"
+              :models="models"
+              :supported-providers="supportedProviders"
+              :disabled="!currentSession"
+              @send="handleSend"
+              @add-model="addCustomModel"
+            />
+          </div>
         </div>
-      </div>
-
-      <!-- Input Area -->
-      <div class="p-6 md:px-20 lg:px-40 pb-8 bg-[var(--ep-bg-color-page)]">
-        <ChatInput
-          v-model:currentModel="currentModel"
-          :models="models"
-          :supported-providers="supportedProviders"
-          :disabled="!currentSession"
-          @send="handleSend"
-          @add-model="addCustomModel"
-        />
-      </div>
-    </div>
-
-    <!-- Right Sidebar (History) -->
-    <div
-      class="shrink-0 flex flex-col transition-all duration-300 ease-in-out border-l border-[var(--ep-border-color)] bg-[var(--ep-bg-color)]"
-      :class="[
-        isSidebarOpen ? 'w-80 translate-x-0' : 'w-0 translate-x-full overflow-hidden border-l-0',
-      ]"
-    >
-      <div class="flex items-center justify-between p-4 border-b border-[var(--ep-border-color)]">
-        <div class="flex items-center gap-2">
-          <span class="font-medium">Chat History</span>
-          <el-button type="primary" link size="small" @click="openCreateSessionDialog">
-            <el-icon><Plus /></el-icon> New
-          </el-button>
-        </div>
-        <el-button type="info" text circle size="small" @click="isSidebarOpen = false">
-          <el-icon><Expand /></el-icon>
-        </el-button>
-      </div>
-      <div class="flex-1 overflow-hidden flex flex-col">
-        <SessionList
-          :sessions="sessions"
-          :current-session-id="currentSession?.id"
-          @select="loadSession"
-          @delete="deleteSession"
-        />
-      </div>
-    </div>
-
+      </el-splitter-panel>
+    </el-splitter>
     <!-- Create Session Dialog -->
     <el-dialog
       v-model="createSessionDialogVisible"
@@ -174,7 +210,7 @@ import ChatMessage from './components/ChatMessage.vue'
 import ChatInput from './components/ChatInput.vue'
 import SessionList from './components/SessionList.vue'
 import { useChat } from './composables/useChat'
-import { Fold, Expand, ChatDotRound, Plus } from '@element-plus/icons-vue'
+import { Fold, Expand, ChatDotRound, Plus, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const {
