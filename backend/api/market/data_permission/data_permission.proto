@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package data_permission;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/kymo-mcp/mcpcan/api/market/data_permission";
+
+// 授权目标类型
+enum TargetType {
+  TARGET_TYPE_UNSPECIFIED = 0;
+  ALL = 1;
+  USER = 2;
+  DEPT = 3;
+  ROLE = 4;
+}
+
+// 获取数据权限请求
+message GetDataPermissionRequest {
+  // @inject_tag: json:"dataType" form:"dataType" binding:"required" desc:"数据类型，取值: instance, openapi_package, code_package, instance_tokens"
+  string dataType = 1;
+  // @inject_tag: json:"dataId" form:"dataId" binding:"required" desc:"数据ID"
+  string dataId = 2;
+}
+
+// 获取数据权限响应
+message GetDataPermissionResponse {
+  // @inject_tag: json:"dataType" desc:"数据类型，取值: instance, openapi_package, code_package, instance_tokens"
+  string dataType = 1;
+  // @inject_tag: json:"dataId" desc:"数据ID"
+  string dataId = 2;
+  // @inject_tag: json:"isAllPersonnel" desc:"是否全部人员"
+  bool isAllPersonnel = 3;
+  // @inject_tag: json:"deptIds" desc:"选中的部门 ID 列表"
+  repeated int64 deptIds = 4;
+  // @inject_tag: json:"roleIds" desc:"选中的角色 ID 列表"
+  repeated int64 roleIds = 5;
+  // @inject_tag: json:"userIds" desc:"选中的人员白名单 ID 列表"
+  repeated int64 userIds = 6;
+  // @inject_tag: json:"blacklistUserIds" desc:"选中的访问黑名单人员 ID 列表"
+  repeated int64 blacklistUserIds = 7;
+}
+
+// 保存数据权限请求
+message SaveDataPermissionRequest {
+  // @inject_tag: json:"dataType" binding:"required" desc:"数据类型，取值: instance, openapi_package, code_package, instance_tokens"
+  string dataType = 1;
+  // @inject_tag: json:"dataId" binding:"required" desc:"数据ID"
+  string dataId = 2;
+  // @inject_tag: json:"isAllPersonnel" desc:"是否全部人员"
+  bool isAllPersonnel = 3;
+  // @inject_tag: json:"deptIds" desc:"选中的部门 ID 列表"
+  repeated int64 deptIds = 4;
+  // @inject_tag: json:"roleIds" desc:"选中的角色 ID 列表"
+  repeated int64 roleIds = 5;
+  // @inject_tag: json:"userIds" desc:"选中的人员白名单 ID 列表"
+  repeated int64 userIds = 6;
+  // @inject_tag: json:"blacklistUserIds" desc:"选中的访问黑名单人员 ID 列表"
+  repeated int64 blacklistUserIds = 7;
+}
+
+// 保存数据权限响应
+message SaveDataPermissionResponse {}
+
+// 数据权限服务
+service DataPermissionService {
+  // 获取数据权限
+  rpc GetDataPermission(GetDataPermissionRequest) returns (GetDataPermissionResponse) {
+    option (google.api.http) = {
+      get: "/market/data_permission"
+    };
+  }
+
+  // 保存数据权限
+  rpc SaveDataPermission(SaveDataPermissionRequest) returns (SaveDataPermissionResponse) {
+    option (google.api.http) = {
+      post: "/market/data_permission"
+      body: "*"
+    };
+  }
+}

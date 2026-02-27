@@ -427,3 +427,18 @@
       method: POST
       permission:
         - mcpcan_rbac_manage:role:remove_user
+
+- name: DataPermissionService
+  auths:
+    - path: /market/data_permission
+      method: GET
+      permission:
+        - mcpcan_instance:data_permission
+        - mcpcan_resource_manage:data_permission
+        - mcpcan_agent_manage:data_permission
+    - path: /market/data_permission
+      method: POST
+      permission:
+        - mcpcan_instance:data_permission
+        - mcpcan_resource_manage:data_permission
+        - mcpcan_agent_manage:data_permission

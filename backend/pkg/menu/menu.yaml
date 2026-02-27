@@ -65,6 +65,11 @@
       title: 删除实例令牌
       engTitle: Delete Instance Token
       type: 2
+    - permission: mcpcan_instance:data_permission
+      title: 访问授权
+      engTitle: Instance Data Permission
+      type: 2
+
 - permission: mcpcan_market_manage
   title: 市场管理
   engTitle: Market
@@ -144,6 +149,11 @@
       title: 下载OpenAPI
       engTitle: Download OpenAPI
       type: 2
+    - permission: mcpcan_resource_manage:data_permission
+      title: 访问授权
+      engTitle: Instance Data Permission
+      type: 2
+
 - permission: mcpcan_agent_manage
   title: 智能体平台管理
   engTitle: Agent Platform
@@ -167,6 +177,11 @@
       title: 智能体平台连接测试
       engTitle: Agent Platform Connection Test
       type: 2
+    - permission: mcpcan_agent_manage:data_permission
+      title: 访问授权
+      engTitle: Instance Data Permission
+      type: 2
+
 - permission: mcpcan_model_manage
   title: 模型管理
   engTitle: Model Manage

@@ -17,7 +17,7 @@ func GetMenus(codeModel common.CodeMode) []*Menu {
 	var openCodeMenus []*Menu
 	if codeModel != common.EnterpriseCodeCodeMode {
 		for _, menu := range menus {
-			if strings.Contains(menu.Permission, "mcpcan_rbac_manage") {
+			if strings.Contains(menu.Permission, "mcpcan_rbac_manage") || strings.Contains(menu.Permission, "data_permission") {
 				continue
 			}
 			openCodeMenus = append(openCodeMenus, menu)

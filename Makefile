@@ -21,6 +21,13 @@ GOOS := linux
 CGO_ENABLED ?= 0
 GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
 GO_VERSION := $(shell go version | awk '{print $$3}')
+
+# Build tags based on CodeMode
+GO_BUILD_TAGS :=
+ifeq ($(CodeMode),EnterpriseCode)
+    GO_BUILD_TAGS := -tags enterprise
+endif
+
 # Validate CodeMode
 # Strip CodeMode before validation
 CodeMode := $(strip $(CodeMode))
@@ -44,7 +51,7 @@ LDFLAGS := -X 'github.com/kymo-mcp/mcpcan/pkg/version.Version=${VERSION}' \
 define go_build_service
 	@echo "---------- Start Go build $(1) ----------"
 	@echo "cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags \"$(LDFLAGS)\" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go"
-	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
+	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build $(GO_BUILD_TAGS) -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
 	@echo "---------- End Go build $(1) ----------"
 endef
 

@@ -65,3 +65,6 @@ backend/test/e2e/*
 backend/test/config.json
 
 .agent/*
+
+/backend/enterprise/
+/backend/internal/market/app/enterprise_hooks.go

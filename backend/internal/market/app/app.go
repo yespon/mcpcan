@@ -85,6 +85,11 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
+	// Register enterprise plugins (no-op when enterprise features are disabled)
+	if err := registerEnterprisePlugin(); err != nil {
+		return err
+	}
+
 	// Initialize Redis
 	if err := redis.Init(&a.config.Database.Redis); err != nil {
 		return fmt.Errorf("failed to initialize Redis: %w", err)
@@ -196,6 +201,9 @@ func (a *App) loadMysql() error {
 			}
 		},
 	}
+
+	// Append enterprise table initializers (empty when enterprise features are disabled)
+	tableInitializers = append(tableInitializers, enterpriseTableInitializers()...)
 
 	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
@@ -438,6 +446,9 @@ func (a *App) setupHttpServer() {
 
 	// Register file upload interface
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
+
+	// Register enterprise routes (no-op when enterprise features are disabled)
+	registerEnterpriseRoutes(a.ginEngine, routerPrefix)
 
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {
