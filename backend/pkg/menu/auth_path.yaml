@@ -301,15 +301,15 @@
     - path: /market/ai/models
       method: POST
       permission:
-        - mcpcan_model_manage:create
+        - mcpcan_model_manage
     - path: /market/ai/models
       method: PUT
       permission:
-        - mcpcan_model_manage:update
+        - mcpcan_model_manag
     - path: /market/ai/models/:id
       method: DELETE
       permission:
-        - mcpcan_model_manage:delete
+        - mcpcan_model_manage
     - path: /market/ai/models/:id
       method: GET
       permission:
