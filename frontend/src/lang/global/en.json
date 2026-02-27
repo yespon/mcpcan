@@ -92,7 +92,10 @@
     "off": "OFF",
     "more": "More",
     "select": "Select",
-    "use": "Use"
+    "use": "Use",
+    "total": "Total",
+    "updatedAt": "Updated At",
+    "loading": "Loading"
   },
   "status": {
     "active": "Active",

@@ -289,7 +289,7 @@ const submitCustomModel = async () => {
 
   loading.value = true
   try {
-    emit('add-model', {
+    await emit('add-model', {
       id: '',
       name: customModelForm.value.name,
       provider: customModelForm.value.provider,
@@ -299,7 +299,6 @@ const submitCustomModel = async () => {
       modelName: finalModelName,
       allowedModels: customModelForm.value.allowedModels,
     })
-
     dialogVisible.value = false
     // Reset form
     customModelForm.value = {

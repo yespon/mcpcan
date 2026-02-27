@@ -92,7 +92,10 @@
     "off": "关闭",
     "more": "更多",
     "select": "选择",
-    "use": "使用"
+    "use": "使用",
+    "total": "总数",
+    "updatedAt": "更新时间",
+    "loading": "加载中"
   },
   "status": {
     "active": "启用",

@@ -111,6 +111,15 @@ const router = createRouter({
           component: () => import('../pages/script-code/code-list/index.vue'),
         },
         {
+          path: '/model-manage',
+          name: 'modelManage',
+          meta: {
+            title: 'modelManage',
+            isMenu: true,
+          },
+          component: () => import('../pages/model-manage/index.vue'),
+        },
+        {
           path: '/update-code-package',
           name: 'updateCodePackage',
           meta: {
