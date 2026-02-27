@@ -309,7 +309,7 @@ export interface CreateModelAccessRequest {
   apiKey: string
   baseUrl?: string
   modelName: string
-  allowedModels?: string
+  allowedModels?: any[]
 }
 
 export interface UpdateModelAccessRequest {
@@ -319,13 +319,10 @@ export interface UpdateModelAccessRequest {
   apiKey?: string
   baseUrl?: string
   modelName?: string
-  allowedModels?: string
+  allowedModels?: any[]
 }
 
 export interface TestConnectionRequest {
-  id?: number
-  provider: string
-  apiKey: string
-  baseUrl?: string
+  id: number
   modelName: string
 }

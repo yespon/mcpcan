@@ -35,17 +35,17 @@ export const useModelTableHooks = () => {
     },
     {
       label: t('model.modelName'),
-      dataIndex: 'modelName',
+      dataIndex: 'allowedModels',
     },
     {
       label: t('model.baseUrl'),
       dataIndex: 'baseUrl',
     },
     {
-      dataIndex: 'updatedAt',
+      dataIndex: 'updateTime',
       label: t('common.updatedAt'),
       customRender: ({ row }: { row: any }) => {
-        return timestampToDate(row.updatedAt)
+        return timestampToDate(row.updateTime)
       },
     },
   ])
