@@ -17,7 +17,10 @@
         <!-- <el-header class="p-0 tag-view">
             <TagsView />
           </el-header> -->
-        <el-main :class="route.path === '/home' ? 'p-0' : ''" class="hide-scrollbar">
+        <el-main
+          :class="route.path === '/home' || route.path === '/ai-chat' ? 'p-0' : ''"
+          class="hide-scrollbar"
+        >
           <!-- when change language then refresh page -->
           <el-config-provider :locale="elLocale">
             <RouterView class="h-full"></RouterView>
