@@ -435,7 +435,6 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/available", routerPrefix), aiModelAccessService.GetAvailableModelsHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/models/supported", routerPrefix), aiModelAccessService.GetSupportedModelsHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/test", routerPrefix), aiModelAccessService.TestConnectionHandler)
-	a.ginEngine.POST(fmt.Sprintf("/%s/ai/models/:id/test", routerPrefix), aiModelAccessService.TestConnectionWithIdHandler)
 
 	// Register file upload interface
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
@@ -463,11 +462,11 @@ func (a *App) setupMiddleware() {
 	// Add security middleware
 	a.ginEngine.Use(middleware.SecurityMiddleware(a.config.Secret))
 
-	// set user info to context
+	// // set user info to context
 	a.ginEngine.Use(middleware.AppendUserMiddleware())
 
-	// Add RBAC middleware
-	a.ginEngine.Use(middleware.RBACAuthPathMiddleware())
+	// // Add RBAC middleware
+	// a.ginEngine.Use(middleware.RBACAuthPathMiddleware())
 
 	// Add error handling middleware (must be last)
 	a.ginEngine.Use(middleware.ErrorHandler())

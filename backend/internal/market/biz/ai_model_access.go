@@ -29,9 +29,6 @@ func NewAiModelAccessBiz(ctx context.Context) *AiModelAccessBiz {
 // Temporary structs until buf generate works
 type TestConnectionRequest struct {
 	ID        int64  `json:"id"`
-	Provider  string `json:"provider"`
-	BaseUrl   string `json:"baseUrl"`
-	ApiKey    string `json:"apiKey"`
 	ModelName string `json:"modelName"`
 }
 
@@ -150,32 +147,23 @@ func (b *AiModelAccessBiz) List(ctx context.Context, userID int64, page, pageSiz
 }
 
 func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnectionRequest) (*TestConnectionResponse, error) {
-	var (
-		providerStr string
-		baseUrl     string
-		apiKey      string
-		modelName   string
-	)
-
-	// 1. Determine config source
-	if req.ID > 0 {
-		// Load from DB
-		modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ID)
-		if err != nil {
-			return nil, fmt.Errorf("model access not found")
-		}
-		providerStr = modelAccess.Provider
-		baseUrl = modelAccess.BaseUrl
-		apiKey = modelAccess.ApiKey
-		// ModelName must be provided in request for testing
-		modelName = req.ModelName
-	} else {
-		// Use request params
-		providerStr = req.Provider
-		baseUrl = req.BaseUrl
-		apiKey = req.ApiKey
-		modelName = req.ModelName
+	if req.ID <= 0 {
+		return nil, fmt.Errorf("model access id is required")
 	}
+	if req.ModelName == "" {
+		return nil, fmt.Errorf("model name is required")
+	}
+
+	// 1. Determine config source: Load from DB purely based on ID
+	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ID)
+	if err != nil {
+		return nil, fmt.Errorf("model access not found")
+	}
+	
+	providerStr := modelAccess.Provider
+	baseUrl := modelAccess.BaseUrl
+	apiKey := modelAccess.ApiKey
+	modelName := req.ModelName
 
 	// 2. Init Provider
 	providerType := llm.ProviderOpenAI

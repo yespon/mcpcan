@@ -23,6 +23,8 @@ message AiModelAccess {
     int64 createTime = 7;
     // @inject_tag: json:"updateTime" desc:"Update Time"
     int64 updateTime = 8;
+    // @inject_tag: json:"allowedModels" desc:"Allowed Models"
+    repeated string allowedModels = 9;
 }
 
 message CreateModelAccessRequest {
@@ -36,6 +38,8 @@ message CreateModelAccessRequest {
     string baseUrl = 4;
     // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
     string modelName = 5;
+    // @inject_tag: json:"allowedModels" form:"allowedModels" desc:"Allowed Models"
+    repeated string allowedModels = 6;
 }
 
 message CreateModelAccessResponse {
@@ -56,6 +60,8 @@ message UpdateModelAccessRequest {
     string baseUrl = 5;
     // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
     string modelName = 6;
+    // @inject_tag: json:"allowedModels" form:"allowedModels" desc:"Allowed Models"
+    repeated string allowedModels = 7;
 }
 
 message UpdateModelAccessResponse {
@@ -104,10 +110,24 @@ message ModelInfo {
     string name = 2;
     // @inject_tag: json:"description" desc:"Description"
     string description = 3;
-    // @inject_tag: json:"contextLength" desc:"Context Length"
+    // @inject_tag: json:"contextLength" desc:"Context Length (tokens)"
     int32 contextLength = 4;
-    // @inject_tag: json:"modality" desc:"Modality"
+    // @inject_tag: json:"modality" desc:"Modality (text->text / multimodal)"
     string modality = 5;
+    // @inject_tag: json:"supportTools" desc:"Supports Function Calling / Tools"
+    bool supportTools = 6;
+    // @inject_tag: json:"supportSystemPrompt" desc:"Supports custom System Prompt"
+    bool supportSystemPrompt = 7;
+    // @inject_tag: json:"supportTemperature" desc:"Supports Temperature adjustment (reasoning models may not)"
+    bool supportTemperature = 8;
+    // @inject_tag: json:"supportsVision" desc:"Supports Image/Vision Input"
+    bool supportsVision = 9;
+    // @inject_tag: json:"supportsDocument" desc:"Supports Document/File attachments"
+    bool supportsDocument = 10;
+    // @inject_tag: json:"maxImageSize" desc:"Max allowed image size in bytes"
+    int64 maxImageSize = 11;
+    // @inject_tag: json:"maxDocumentSize" desc:"Max allowed document size in bytes"
+    int64 maxDocumentSize = 12;
 }
 
 message ModelProvider {
@@ -145,12 +165,6 @@ message GetAvailableModelsResponse {
 message TestConnectionRequest {
     // @inject_tag: json:"id" form:"id" uri:"id" desc:"ID"
     int64 id = 1;
-    // @inject_tag: json:"provider" form:"provider" desc:"Provider"
-    string provider = 2;
-    // @inject_tag: json:"apiKey" form:"apiKey" desc:"API Key"
-    string apiKey = 3;
-    // @inject_tag: json:"baseUrl" form:"baseUrl" desc:"Base URL"
-    string baseUrl = 4;
     // @inject_tag: json:"modelName" form:"modelName" desc:"Model Name"
     string modelName = 5;
 }

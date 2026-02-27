@@ -42,28 +42,6 @@ func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
 	i18nresp.SuccessResponse(c, resp)
 }
 
-// TestConnectionWithIdHandler tests connection to an existing model by ID
-func (s *AiModelAccessService) TestConnectionWithIdHandler(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeBadRequest, "invalid model access id")
-		return
-	}
-
-	req := biz.TestConnectionRequest{
-		ID: id,
-	}
-
-	resp, err := biz.GAiModelAccessBiz.TestConnection(c.Request.Context(), &req)
-	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, err.Error())
-		return
-	}
-
-	i18nresp.SuccessResponse(c, resp)
-}
-
 // CreateHandler creates a new ai model access
 func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
 	var req biz.CreateModelAccessRequest
@@ -218,6 +196,24 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 	// 使用 models.AllProviders 动态构建响应
 	var providers []*pb.ModelProvider
 	for _, p := range models.AllProviders {
+		var modelInfos []*pb.ModelInfo
+		for _, m := range p.Models {
+			modelInfos = append(modelInfos, &pb.ModelInfo{
+				Id:                  m.ID,
+				Name:                m.Name,
+				Description:         m.Description,
+				ContextLength:       int32(m.ContextLength),
+				Modality:            m.Modality,
+				SupportTools:        m.SupportTools,
+				SupportSystemPrompt: m.SupportSystemPrompt,
+				SupportTemperature:  m.SupportTemperature,
+				SupportsVision:      m.SupportsVision,
+				SupportsDocument:    m.SupportsDocument,
+				MaxImageSize:        m.MaxImageSize,
+				MaxDocumentSize:     m.MaxDocumentSize,
+			})
+		}
+
 		providers = append(providers, &pb.ModelProvider{
 			Id:          p.ID,
 			Name:        p.Name,
@@ -225,6 +221,7 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 			RegisterUrl: p.RegisterURL,
 			DocsUrl:     p.DocsURL,
 			BaseUrl:     p.BaseURL,
+			ModelInfos:  modelInfos,
 		})
 	}
 
