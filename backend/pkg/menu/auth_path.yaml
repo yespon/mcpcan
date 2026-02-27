@@ -331,11 +331,13 @@
     - path: /market/ai/models/test
       method: POST
       permission:
-        - mcpcan_model_manage:connect_test
+        - mcpcan_model_manage
+        - mcpcan_ai_chat
     - path: /market/ai/models/:id/test
       method: POST
       permission:
-        - mcpcan_model_manage:connect_test
+        - mcpcan_model_manage
+        - mcpcan_ai_chat
 
 - name: DeptService
   auths:
