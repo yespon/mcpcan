@@ -59,15 +59,26 @@
         <div class="h-full flex-1 flex flex-col min-w-0 relative bg-[var(--ep-bg-color-page)]">
           <!-- Header -->
           <div
-            class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)]"
+            class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)] relative"
           >
-            <div class="flex items-center gap-3">
-              <div class="font-medium truncate max-w-sm">
+            <div class="flex items-center gap-3 w-1/3"></div>
+
+            <div
+              class="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 cursor-pointer hover:bg-[var(--ep-fill-color-light)] px-3 py-1 rounded transition-colors group"
+              @click="currentSession && handleRenameSession(currentSession)"
+            >
+              <div class="font-medium truncate max-w-sm select-none">
                 {{ currentSession?.name || 'New Chat' }}
               </div>
+              <el-icon
+                v-if="currentSession"
+                class="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--ep-text-color-secondary)]"
+              >
+                <EditPen />
+              </el-icon>
             </div>
 
-            <div class="flex items-center space-x-2"></div>
+            <div class="flex items-center justify-end space-x-2 w-1/3"></div>
           </div>
 
           <!-- Toggle Sidebar Button (Floating) - Only visible when sidebar is open, as per requirement -->
@@ -211,7 +222,15 @@ import ChatMessage from './components/ChatMessage.vue'
 import ChatInput from './components/ChatInput.vue'
 import SessionList from './components/SessionList.vue'
 import { useChat } from './composables/useChat'
-import { Fold, Expand, ChatDotRound, Plus, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import {
+  Fold,
+  Expand,
+  ChatDotRound,
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  EditPen,
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const {
