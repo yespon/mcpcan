@@ -27,5 +27,6 @@
     "--proto_path=${workspaceFolder}/backend/third_party",
     "--proto_path=${workspaceFolder}/backend/api",
     "--proto_path=${workspaceFolder}/backend"
-  ]
+  ],
+  "livePreview.defaultPreviewPath": "/backend/test/chat_test.html"
 }

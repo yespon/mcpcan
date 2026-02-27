@@ -59,7 +59,11 @@ func NewProvider(typ ProviderType, config ProviderConfig) (Provider, error) {
 	}
 
 	switch typ {
-	case ProviderOpenAI, ProviderDeepSeek, ProviderMoonshot, ProviderQwen, ProviderDoubao, ProviderZhipu, ProviderXAI, ProviderMistral, ProviderOpenRouter, ProviderLiteLLM, ProviderAzureOpenAI:
+	case ProviderOpenAI, ProviderDeepSeek, ProviderMoonshot, ProviderQwen, ProviderDoubao, ProviderZhipu, ProviderXAI, ProviderMistral, ProviderOpenRouter, ProviderLiteLLM, ProviderAzureOpenAI,
+		// 新增国内厂商（都兼容 OpenAI Chat Completions 接口）
+		ProviderBaidu, ProviderHunyuan, ProviderSpark, ProviderMiniMax, ProviderYi01AI,
+		// 新增国际厂商（OpenAI 兼容接口）
+		ProviderCohere, ProviderPerplexity:
 		// 所有 OpenAI 兼容 Provider 统一使用自定义 HTTP 实现
 		// 支持 reasoning_content 等标准扩展字段，不依赖 langchaingo
 		baseURL := config.BaseURL

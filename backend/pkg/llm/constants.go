@@ -14,6 +14,16 @@ var (
 	DoubaoModels    = models.DoubaoProvider.GetModelIDs()
 	QwenModels      = models.QwenProvider.GetModelIDs()
 	ZhipuModels     = models.ZhipuProvider.GetModelIDs()
+	// 新增厂商
+	BaiduModels     = models.BaiduProvider.GetModelIDs()
+	HunyuanModels   = models.HunyuanProvider.GetModelIDs()
+	SparkModels     = models.SparkProvider.GetModelIDs()
+	MiniMaxModels   = models.MiniMaxProvider.GetModelIDs()
+	Yi01AIModels    = models.Yi01AIProvider.GetModelIDs()
+	MoonshotModels  = models.MoonshotProvider.GetModelIDs()
+	MistralModels   = models.MistralProvider.GetModelIDs()
+	XAIModels       = models.XAIProvider.GetModelIDs()
+	CohereModels    = models.CohereProvider.GetModelIDs()
 )
 
 // GetAllModels returns all supported model IDs
@@ -26,7 +36,7 @@ func GetAllModelIDs() []string {
 	return ids
 }
 
-// GetModelInfo returns the full model info including capabilities (multimodal, thinking, tools)
+// GetModelInfo returns the full model info including capabilities
 func GetModelInfo(modelID string) *models.ModelInfo {
 	return models.GetModelByID(modelID)
 }
@@ -56,4 +66,22 @@ func IsToolsSupported(modelID string) bool {
 		return info.SupportTools
 	}
 	return false
+}
+
+// IsSystemPromptSupported checks if the model supports custom system prompt
+func IsSystemPromptSupported(modelID string) bool {
+	info := models.GetModelByID(modelID)
+	if info != nil {
+		return info.SupportSystemPrompt
+	}
+	return true // Default to true for backward compatibility
+}
+
+// IsTemperatureSupported checks if temperature can be adjusted for this model
+func IsTemperatureSupported(modelID string) bool {
+	info := models.GetModelByID(modelID)
+	if info != nil {
+		return info.SupportTemperature
+	}
+	return true // Default to true for backward compatibility
 }

@@ -2,9 +2,11 @@ package biz
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	llm "github.com/kymo-mcp/mcpcan/pkg/llm_adapter"
@@ -26,38 +28,26 @@ func NewAiModelAccessBiz(ctx context.Context) *AiModelAccessBiz {
 	}
 }
 
-// Temporary structs until buf generate works
-type TestConnectionRequest struct {
-	ID        int64  `json:"id"`
-	ModelName string `json:"modelName"`
+// structs removed in favor of pb package
+
+// isMaskedKey 判断 apiKey 是否为脱敏后的占位字符串（含 ****）
+// 前端展示用的脱敏 key 不能写回数据库，也不能用于实际请求
+func isMaskedKey(key string) bool {
+	return len(key) > 0 && len(key) < 64 && (containsStr(key, "****") || containsStr(key, "***"))
 }
 
-type TestConnectionResponse struct {
-	Success   bool   `json:"success"`
-	Message   string `json:"message"`
-	LatencyMs int64  `json:"latencyMs"`
+func containsStr(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || (len(s) > 0 && func() bool {
+		for i := 0; i <= len(s)-len(substr); i++ {
+			if s[i:i+len(substr)] == substr {
+				return true
+			}
+		}
+		return false
+	}()))
 }
 
-// CreateModelAccessRequest 创建模型接入配置请求（自定义，支持 AllowedModels）
-type CreateModelAccessRequest struct {
-	Name          string `json:"name"`
-	Provider      string `json:"provider"`
-	ApiKey        string `json:"apiKey"`
-	BaseUrl       string `json:"baseUrl"`
-	AllowedModels string `json:"allowedModels"` // JSON 数组字符串，为空表示不限制
-}
-
-// UpdateModelAccessRequest 更新模型接入配置请求（自定义，支持 AllowedModels）
-type UpdateModelAccessRequest struct {
-	Id            int64  `json:"id"`
-	Name          string `json:"name"`
-	Provider      string `json:"provider"`
-	ApiKey        string `json:"apiKey"`
-	BaseUrl       string `json:"baseUrl"`
-	AllowedModels string `json:"allowedModels"` // JSON 数组字符串，为空表示不限制
-}
-
-func (b *AiModelAccessBiz) Create(ctx context.Context, req *CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
+func (b *AiModelAccessBiz) Create(ctx context.Context, req *pb.CreateModelAccessRequest, userID int64) (*model.AiModelAccess, error) {
 	// Validate provider
 	if req.Provider == "" {
 		return nil, fmt.Errorf("provider is required")
@@ -66,13 +56,19 @@ func (b *AiModelAccessBiz) Create(ctx context.Context, req *CreateModelAccessReq
 		return nil, fmt.Errorf("unsupported provider: %s, supported providers: %v", req.Provider, llm.GetSupportedProviderList())
 	}
 
+	
+	allowedModelsJson, _ := json.Marshal(req.AllowedModels)
+	if req.AllowedModels == nil {
+		allowedModelsJson = []byte("")
+	}
+
 	modelAccess := &model.AiModelAccess{
 		UserID:        userID,
 		Name:          req.Name,
 		Provider:      req.Provider,
 		ApiKey:        req.ApiKey,
 		BaseUrl:       req.BaseUrl,
-		AllowedModels: req.AllowedModels,
+		AllowedModels: string(allowedModelsJson),
 	}
 
 	if err := mysql.AiModelAccessRepo.Create(ctx, modelAccess); err != nil {
@@ -81,7 +77,7 @@ func (b *AiModelAccessBiz) Create(ctx context.Context, req *CreateModelAccessReq
 	return modelAccess, nil
 }
 
-func (b *AiModelAccessBiz) Update(ctx context.Context, req *UpdateModelAccessRequest) (*model.AiModelAccess, error) {
+func (b *AiModelAccessBiz) Update(ctx context.Context, req *pb.UpdateModelAccessRequest) (*model.AiModelAccess, error) {
 	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.Id)
 	if err != nil {
 		return nil, fmt.Errorf("model access not found")
@@ -98,13 +94,21 @@ func (b *AiModelAccessBiz) Update(ctx context.Context, req *UpdateModelAccessReq
 		modelAccess.Provider = req.Provider
 	}
 	if req.ApiKey != "" {
-		modelAccess.ApiKey = req.ApiKey
+		// 防止前端将脱敏值（含 ****）回写到数据库
+		if isMaskedKey(req.ApiKey) {
+			// 脱敏占位符，跳过更新（保留数据库中原始 key）
+		} else {
+			modelAccess.ApiKey = req.ApiKey
+		}
 	}
 	if req.BaseUrl != "" {
 		modelAccess.BaseUrl = req.BaseUrl
 	}
-	// AllowedModels 允许显式清空（传空字符串 "[]" 或 "" 时更新），所以直接赋值
-	modelAccess.AllowedModels = req.AllowedModels
+	// AllowedModels 允许显式清空
+	if req.AllowedModels != nil {
+		allowedModelsJson, _ := json.Marshal(req.AllowedModels)
+		modelAccess.AllowedModels = string(allowedModelsJson)
+	}
 
 	if err := mysql.AiModelAccessRepo.Update(ctx, modelAccess); err != nil {
 		return nil, err
@@ -146,8 +150,8 @@ func (b *AiModelAccessBiz) List(ctx context.Context, userID int64, page, pageSiz
 	return accesses[start:end], total, nil
 }
 
-func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnectionRequest) (*TestConnectionResponse, error) {
-	if req.ID <= 0 {
+func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *pb.TestConnectionRequest) (*pb.TestConnectionResponse, error) {
+	if req.Id <= 0 {
 		return nil, fmt.Errorf("model access id is required")
 	}
 	if req.ModelName == "" {
@@ -155,7 +159,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	}
 
 	// 1. Determine config source: Load from DB purely based on ID
-	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.ID)
+	modelAccess, err := mysql.AiModelAccessRepo.FindByID(ctx, req.Id)
 	if err != nil {
 		return nil, fmt.Errorf("model access not found")
 	}
@@ -164,6 +168,14 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	baseUrl := modelAccess.BaseUrl
 	apiKey := modelAccess.ApiKey
 	modelName := req.ModelName
+
+	// 安全检查：如果 DB 中的 apiKey 是脱敏值（历史脏数据或被误写入），直接报错
+	if isMaskedKey(apiKey) {
+		return &pb.TestConnectionResponse{
+			Success: false,
+			Message: "API Key 已损坏（存储的是脱敏占位符而非真实 Key）。请重新编辑该配置并重新输入完整的 API Key 后再测试。",
+		}, nil
+	}
 
 	// 2. Init Provider
 	providerType := llm.ProviderOpenAI
@@ -179,7 +191,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 
 	provider, err := llm.NewProvider(providerType, config)
 	if err != nil {
-		return &TestConnectionResponse{
+		return &pb.TestConnectionResponse{
 			Success: false,
 			Message: fmt.Sprintf("Failed to init provider: %v", err),
 		}, nil // Return success=false as a valid response, not system error
@@ -198,7 +210,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	start := time.Now()
 	stream, err := provider.StreamChat(ctx, chatReq)
 	if err != nil {
-		return &TestConnectionResponse{
+		return &pb.TestConnectionResponse{
 			Success: false,
 			Message: fmt.Sprintf("Connection failed: %v", err),
 		}, nil
@@ -215,7 +227,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 	latency := time.Since(start).Milliseconds()
 
 	if lastErr != nil {
-		return &TestConnectionResponse{
+		return &pb.TestConnectionResponse{
 			Success:   false,
 			Message:   fmt.Sprintf("Connection error during stream: %v. (Hint: If using a custom model, ensure it is supported by the configured Base URL/Provider endpoint)", lastErr),
 			LatencyMs: latency,
@@ -224,7 +236,7 @@ func (b *AiModelAccessBiz) TestConnection(ctx context.Context, req *TestConnecti
 
 	// Note: Empty content check omitted as some models might filter "Hi" or return empty but valid stream end
 	
-	return &TestConnectionResponse{
+	return &pb.TestConnectionResponse{
 		Success:   true,
 		Message:   "Connection successful",
 		LatencyMs: latency,

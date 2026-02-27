@@ -27,7 +27,7 @@ func NewAiModelAccessService(ctx context.Context) *AiModelAccessService {
 
 	// TestConnectionHandler tests connection to the model
 func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
-	var req biz.TestConnectionRequest
+	var req pb.TestConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
@@ -44,7 +44,7 @@ func (s *AiModelAccessService) TestConnectionHandler(c *gin.Context) {
 
 // CreateHandler creates a new ai model access
 func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
-	var req biz.CreateModelAccessRequest
+	var req pb.CreateModelAccessRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
@@ -71,7 +71,7 @@ func (s *AiModelAccessService) CreateHandler(c *gin.Context) {
 
 // UpdateHandler updates ai model access
 func (s *AiModelAccessService) UpdateHandler(c *gin.Context) {
-	var req biz.UpdateModelAccessRequest
+	var req pb.UpdateModelAccessRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
@@ -151,9 +151,9 @@ func (s *AiModelAccessService) ListHandler(c *gin.Context) {
 		return
 	}
 
-	var respList []*modelAccessResp
+	var respList []*pb.AiModelAccess
 	for _, access := range accesses {
-		respList = append(respList, s.convertModelToRespFull(access))
+		respList = append(respList, s.convertModelToProto(access))
 	}
 
 	resp := map[string]interface{}{
@@ -179,9 +179,9 @@ func (s *AiModelAccessService) GetAvailableModelsHandler(c *gin.Context) {
 		return
 	}
 
-	var respList []*modelAccessResp
+	var respList []*pb.AiModelAccess
 	for _, access := range accesses {
-		respList = append(respList, s.convertModelToRespFull(access))
+		respList = append(respList, s.convertModelToProto(access))
 	}
 
 	resp := map[string]interface{}{
@@ -203,14 +203,20 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 				Name:                m.Name,
 				Description:         m.Description,
 				ContextLength:       int32(m.ContextLength),
-				Modality:            m.Modality,
 				SupportTools:        m.SupportTools,
 				SupportSystemPrompt: m.SupportSystemPrompt,
 				SupportTemperature:  m.SupportTemperature,
-				SupportsVision:      m.SupportsVision,
-				SupportsDocument:    m.SupportsDocument,
-				MaxImageSize:        m.MaxImageSize,
-				MaxDocumentSize:     m.MaxDocumentSize,
+				SupportThinking:     m.SupportThinking,
+				// 图片输入能力
+				SupportsVision:  m.SupportsVision,
+				ImageMimeTypes:  m.ImageMimeTypes,
+				MaxImageSize:    m.MaxImageSize,
+				MaxImageCount:   int32(m.MaxImageCount),
+				// 文档附件能力
+				SupportsDocument:  m.SupportsDocument,
+				DocumentMimeTypes: m.DocumentMimeTypes,
+				MaxDocumentSize:   m.MaxDocumentSize,
+				MaxDocumentCount:  int32(m.MaxDocumentCount),
 			})
 		}
 
@@ -233,42 +239,7 @@ func (s *AiModelAccessService) GetSupportedModelsHandler(c *gin.Context) {
 }
 
 
-// modelAccessResp 是 AiModelAccess 的扮展响应结构，展展 allowedModels 字段
-type modelAccessResp struct {
-	Id            int64    `json:"id"`
-	Name          string   `json:"name"`
-	Provider      string   `json:"provider"`
-	ApiKey        string   `json:"apiKey"`
-	BaseUrl       string   `json:"baseUrl"`
-	CreateTime    int64    `json:"createTime"`
-	UpdateTime    int64    `json:"updateTime"`
-	AllowedModels []string `json:"allowedModels"` // 允许使用的模型 ID 列表，为空表示不限制
-}
-
 func (s *AiModelAccessService) convertModelToProto(m *model.AiModelAccess) *pb.AiModelAccess {
-	// Mask API Key
-	maskedKey := m.ApiKey
-	if len(maskedKey) > 8 {
-		maskedKey = maskedKey[:3] + "****" + maskedKey[len(maskedKey)-4:]
-	} else if len(maskedKey) > 0 {
-		maskedKey = "****"
-	}
-
-	return &pb.AiModelAccess{
-		Id:         m.ID,
-		Name:       m.Name,
-		Provider:   m.Provider,
-		ApiKey:     maskedKey,
-		BaseUrl:    m.BaseUrl,
-		// 利用 ModelName 字段传输 allowedModels JSON（临时方案，直到 proto 重新生成）
-		ModelName:  m.AllowedModels,
-		CreateTime: m.CreateTime.Unix(),
-		UpdateTime: m.UpdateTime.Unix(),
-	}
-}
-
-// convertModelToRespFull 返回包含 allowedModels 的完整响应结构
-func (s *AiModelAccessService) convertModelToRespFull(m *model.AiModelAccess) *modelAccessResp {
 	// Mask API Key
 	maskedKey := m.ApiKey
 	if len(maskedKey) > 8 {
@@ -283,15 +254,15 @@ func (s *AiModelAccessService) convertModelToRespFull(m *model.AiModelAccess) *m
 		_ = json.Unmarshal([]byte(m.AllowedModels), &allowedModels)
 	}
 
-	return &modelAccessResp{
+	return &pb.AiModelAccess{
 		Id:            m.ID,
 		Name:          m.Name,
 		Provider:      m.Provider,
 		ApiKey:        maskedKey,
 		BaseUrl:       m.BaseUrl,
+		AllowedModels: allowedModels,
 		CreateTime:    m.CreateTime.Unix(),
 		UpdateTime:    m.UpdateTime.Unix(),
-		AllowedModels: allowedModels,
 	}
 }
 

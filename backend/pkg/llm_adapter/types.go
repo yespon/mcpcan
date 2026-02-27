@@ -2,6 +2,7 @@ package llm_adapter
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 )
 
@@ -9,7 +10,7 @@ import (
 type ProviderType string
 
 const (
-	// Core Providers (OpenAI-compatible)
+	// 国际核心 Providers (OpenAI-compatible)
 	ProviderOpenAI      ProviderType = "openai"
 	ProviderAzureOpenAI ProviderType = "azure_openai"
 	ProviderDeepSeek    ProviderType = "deepseek"
@@ -17,19 +18,26 @@ const (
 	ProviderGoogle      ProviderType = "google"
 	ProviderMistral     ProviderType = "mistral"
 	ProviderXAI         ProviderType = "xai"
+	ProviderCohere      ProviderType = "cohere"
+	ProviderPerplexity  ProviderType = "perplexity"
 
-	// Aggregator/Proxy Providers
+	// 聚合 / 代理 Providers
 	ProviderOpenRouter ProviderType = "openrouter"
 	ProviderLiteLLM    ProviderType = "litellm"
 	ProviderOllama     ProviderType = "ollama"
 
-	// Chinese Providers
-	ProviderQwen     ProviderType = "qwen"     // Aliyun Tongyi Qwen
-	ProviderDoubao   ProviderType = "doubao"   // Volcengine Doubao
-	ProviderZhipu    ProviderType = "zhipu"    // Zhipu GLM
-	ProviderMoonshot ProviderType = "moonshot" // Moonshot Kimi
+	// 国内主流 Providers
+	ProviderQwen     ProviderType = "qwen"     // 阿里云通义千问
+	ProviderDoubao   ProviderType = "doubao"   // 字节豆包
+	ProviderZhipu    ProviderType = "zhipu"    // 智谱 GLM
+	ProviderMoonshot ProviderType = "moonshot" // 月之暗面 Kimi
+	ProviderBaidu    ProviderType = "baidu"    // 百度文心
+	ProviderHunyuan  ProviderType = "hunyuan"  // 腾讯混元
+	ProviderSpark    ProviderType = "spark"    // 科大讯飞星火
+	ProviderMiniMax  ProviderType = "minimax"  // MiniMax
+	ProviderYi01AI   ProviderType = "yi_01ai"  // 零一万物
 
-	// MCP Special Provider
+	// MCP 特殊 Provider
 	ProviderMCP ProviderType = "mcp"
 )
 
@@ -141,10 +149,11 @@ type Message struct {
 
 // ToolCall represents a tool call request from LLM
 type ToolCall struct {
-	Index    int              `json:"index,omitempty"` // Added for streaming aggregation
-	ID       string           `json:"id"`
-	Type     string           `json:"type"`
-	Function ToolCallFunction `json:"function"`
+	Index        int              `json:"index,omitempty"`
+	ID           string           `json:"id"`
+	Type         string           `json:"type"`
+	Function     ToolCallFunction `json:"function"`
+	ExtraContent json.RawMessage  `json:"extra_content,omitempty"` // 透传 Provider 扩展字段（如 Google thought_signature）
 }
 
 // ToolCallFunction represents the function call details in a tool call (arguments are string JSON)

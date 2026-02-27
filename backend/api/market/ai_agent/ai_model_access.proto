@@ -112,22 +112,34 @@ message ModelInfo {
     string description = 3;
     // @inject_tag: json:"contextLength" desc:"Context Length (tokens)"
     int32 contextLength = 4;
-    // @inject_tag: json:"modality" desc:"Modality (text->text / multimodal)"
-    string modality = 5;
     // @inject_tag: json:"supportTools" desc:"Supports Function Calling / Tools"
     bool supportTools = 6;
     // @inject_tag: json:"supportSystemPrompt" desc:"Supports custom System Prompt"
     bool supportSystemPrompt = 7;
     // @inject_tag: json:"supportTemperature" desc:"Supports Temperature adjustment (reasoning models may not)"
     bool supportTemperature = 8;
-    // @inject_tag: json:"supportsVision" desc:"Supports Image/Vision Input"
+    // @inject_tag: json:"supportThinking" desc:"Supports deep thinking / reasoning mode (o1, R1, etc.)"
+    bool supportThinking = 13;
+
+    // 图片输入能力
+    // @inject_tag: json:"supportsVision" desc:"Supports image input"
     bool supportsVision = 9;
-    // @inject_tag: json:"supportsDocument" desc:"Supports Document/File attachments"
-    bool supportsDocument = 10;
-    // @inject_tag: json:"maxImageSize" desc:"Max allowed image size in bytes"
+    // @inject_tag: json:"imageMimeTypes" desc:"Supported image MIME types, e.g. image/jpeg, image/png"
+    repeated string imageMimeTypes = 14;
+    // @inject_tag: json:"maxImageSize" desc:"Max image size per file in bytes"
     int64 maxImageSize = 11;
-    // @inject_tag: json:"maxDocumentSize" desc:"Max allowed document size in bytes"
+    // @inject_tag: json:"maxImageCount" desc:"Max number of images per request (0=unlimited)"
+    int32 maxImageCount = 15;
+
+    // 文档附件能力
+    // @inject_tag: json:"supportsDocument" desc:"Supports document/file attachments"
+    bool supportsDocument = 10;
+    // @inject_tag: json:"documentMimeTypes" desc:"Supported document MIME types, e.g. application/pdf, text/plain"
+    repeated string documentMimeTypes = 16;
+    // @inject_tag: json:"maxDocumentSize" desc:"Max document size per file in bytes"
     int64 maxDocumentSize = 12;
+    // @inject_tag: json:"maxDocumentCount" desc:"Max number of documents per request (0=unlimited)"
+    int32 maxDocumentCount = 17;
 }
 
 message ModelProvider {
