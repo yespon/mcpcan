@@ -16,6 +16,7 @@ export function useChat() {
   const supportedProviders = ref<SupportedProvider[]>([])
   const sessions = ref<AiSession[]>([])
   const currentModel = ref<string>('')
+  const currentTargetModel = ref<string>('') // New: Stores the specific model name (e.g. gpt-4)
   const currentSession = ref<AiSession | null>(null)
   const isStreaming = ref(false)
 
@@ -50,6 +51,13 @@ export function useChat() {
         }))
         if (models.value.length > 0 && !currentModel.value) {
           currentModel.value = models.value[0].id
+          // Set default target model if available (description or first allowed model)
+          const m = models.value[0]
+          if (m.allowedModels && m.allowedModels.length > 0) {
+            currentTargetModel.value = m.allowedModels[0]
+          } else {
+            currentTargetModel.value = m.description || m.name
+          }
         }
       }
     } catch (error) {
@@ -76,6 +84,12 @@ export function useChat() {
       const session = sessions.value.find((s) => s.id === sessionId)
       if (session) {
         currentSession.value = session
+        if (session.modelAccessID) {
+          currentModel.value = session.modelAccessID.toString()
+        }
+        if (session.modelName) {
+          currentTargetModel.value = session.modelName
+        }
         // Load messages
         const res = await ChatAPI.getSessionMessages(sessionId, { page: 1, pageSize: 100 })
         if (res && res.list) {
@@ -112,7 +126,7 @@ export function useChat() {
   }
 
   // Create new session with full config
-  const createNewSession = async (config?: Partial<CreateSessionRequest>) => {
+  const createNewSession = async (config?: Partial<CreateSessionRequest>, keepMessages = false) => {
     try {
       let req: CreateSessionRequest
 
@@ -139,10 +153,17 @@ export function useChat() {
           ElMessage.warning('Please select a model first')
           return
         }
+
+        // Use currentTargetModel if set, otherwise fallback
+        const targetModel =
+          currentTargetModel.value || selectedModel.description || selectedModel.name
+
         req = {
-          name: 'New Chat',
+          name: config && config.name ? config.name : 'New Chat',
           modelAccessID: parseInt(selectedModel.id),
-          modelName: selectedModel.description || selectedModel.name, // Use description/modelName as fallback target model
+          modelName: targetModel, // Use specific model
+          systemPrompt: config?.systemPrompt,
+          temperature: config?.temperature,
         }
       }
 
@@ -150,15 +171,23 @@ export function useChat() {
       if (res && res.session) {
         sessions.value.unshift(res.session)
         currentSession.value = res.session
-        messages.value = []
 
-        // Add optional welcome message
-        messages.value.push({
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: `Session "${req.name}" created.`,
-          timestamp: Date.now(),
-        })
+        // Clear messages unless asked to keep them (e.g. during auto-creation from existing prompt)
+        if (!keepMessages) {
+          messages.value = []
+        }
+
+        // Only clear messages if we are not keeping existing ones (e.g. from addMessage)
+        // If messages are already present (from the user prompt that triggered this), keep them.
+        if (messages.value.length === 0) {
+          // Add optional welcome message only if it's a fresh start (e.g. manual creation)
+          messages.value.push({
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `Session "${req.name}" created.`,
+            timestamp: Date.now(),
+          })
+        }
       }
     } catch (error) {
       console.error('Failed to create session:', error)
@@ -204,10 +233,37 @@ export function useChat() {
     }
   }
 
-  // Create or get session (Auto-create logic used by sendMessage)
-  const initSession = async () => {
+  const updateSessionSettings = async (
+    id: number,
+    settings: { systemPrompt?: string; temperature?: number },
+  ) => {
+    try {
+      await ChatAPI.updateSession({ id, ...settings })
+      const s = sessions.value.find((s) => s.id === id)
+      if (s) {
+        if (settings.systemPrompt !== undefined) s.systemPrompt = settings.systemPrompt
+        if (settings.temperature !== undefined) s.temperature = settings.temperature
+      }
+      if (currentSession.value?.id === id) {
+        if (settings.systemPrompt !== undefined)
+          currentSession.value.systemPrompt = settings.systemPrompt
+        if (settings.temperature !== undefined)
+          currentSession.value.temperature = settings.temperature
+      }
+      ElMessage.success('Settings updated')
+    } catch (error) {
+      console.error('Failed to update session settings:', error)
+      ElMessage.error('Failed to update settings')
+    }
+  }
+
+  const initSession = async (
+    settings?: { systemPrompt?: string; temperature?: number },
+    initialMessage?: string,
+  ) => {
     if (!currentSession.value) {
-      await createNewSession()
+      // Create session but keep existing messages (the user prompt)
+      await createNewSession({ ...settings, name: initialMessage }, true)
     }
   }
 
@@ -218,6 +274,7 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
+    sessionSettings?: { systemPrompt?: string; temperature?: number },
   ) => {
     if (!content.trim() && (!attachments || attachments.length === 0) && !file) return
 
@@ -235,7 +292,7 @@ export function useChat() {
     messages.value.push(userMsg)
 
     if (role === 'user') {
-      await sendMessageToBackend(content, attachments, tools, mcpProfile, file)
+      await sendMessageToBackend(content, attachments, tools, mcpProfile, file, sessionSettings)
     }
   }
 
@@ -245,9 +302,18 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
+    sessionSettings?: { systemPrompt?: string; temperature?: number },
   ) => {
     if (!currentSession.value) {
-      await initSession()
+      // Truncate long messages for title
+      let title = content.length > 30 ? content.slice(0, 30) + '...' : content
+      if (!title && file) {
+        title = `File: ${file.name}`
+      }
+      if (!title && attachments.length > 0) {
+        title = `File: ${attachments[0].name}`
+      }
+      await initSession(sessionSettings, title)
     }
 
     if (!currentSession.value) {
@@ -449,7 +515,7 @@ export function useChat() {
         apiKey: (model as any).apiKey,
         baseUrl: (model as any).baseUrl,
         modelName: (model as any).modelName || model.description || model.name,
-        allowedModels: JSON.stringify((model as any).allowedModels || []),
+        allowedModels: (model as any).allowedModels || [],
       }
       await ChatAPI.createModelAccess(createReq)
       ElMessage.success('Model added successfully')
@@ -483,6 +549,7 @@ export function useChat() {
     models,
     sessions,
     currentModel,
+    currentTargetModel, // Export new ref
     currentSession,
     isStreaming,
     addMessage,
@@ -491,6 +558,7 @@ export function useChat() {
     loadSession,
     createNewSession,
     updateSessionName,
+    updateSessionSettings,
     deleteSession,
     supportedProviders, // Expose supportedProviders
     fetchSupportedProviders, // Expose fetchSupportedProviders

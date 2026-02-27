@@ -22,9 +22,11 @@
             >
               <div class="flex items-center gap-2">
                 <span class="font-medium">Chat History</span>
-                <el-button type="primary" link size="small" @click="openCreateSessionDialog">
-                  <el-icon><Plus /></el-icon> New
-                </el-button>
+                <el-tooltip content="New Chat" placement="top">
+                  <el-button link @click="handleNewChat">
+                    <el-icon><Plus /></el-icon>
+                  </el-button>
+                </el-tooltip>
               </div>
               <el-button link @click="isSidebarOpen = false">
                 <el-icon><Fold /></el-icon>
@@ -119,11 +121,15 @@
           <div class="p-6 md:px-20 lg:px-40 pb-8 bg-[var(--ep-bg-color-page)]">
             <ChatInput
               v-model:currentModel="currentModel"
+              v-model:currentTargetModel="currentTargetModel"
+              v-model:systemPrompt="sessionSettings.systemPrompt"
+              v-model:temperature="sessionSettings.temperature"
               :models="models"
               :supported-providers="supportedProviders"
-              :disabled="!currentSession"
+              :disabled="false"
               @send="handleSend"
               @add-model="addCustomModel"
+              @save-settings="handleSaveSettings"
             />
           </div>
         </div>
@@ -240,6 +246,7 @@ const {
   // currentModel is less relevant for globally creating sessions now,
   // but we might use it for default values
   currentModel,
+  currentTargetModel,
   currentSession,
   addMessage,
   addCustomModel,
@@ -250,17 +257,60 @@ const {
   supportedProviders,
   fetchSupportedProviders,
   uploadFile,
+  updateSessionSettings,
 } = useChat()
 
 const isSidebarOpen = ref(true)
 const messagesContainer = ref<HTMLElement | null>(null)
+
+const sessionSettings = reactive({
+  systemPrompt: '',
+  temperature: 0.7,
+})
+
+// Update settings when session changes
+watch(
+  currentSession,
+  (sess) => {
+    if (sess) {
+      sessionSettings.systemPrompt = sess.systemPrompt || ''
+      sessionSettings.temperature = sess.temperature !== undefined ? sess.temperature : 0.7
+    } else {
+      // defaults for new session
+      sessionSettings.systemPrompt = ''
+      sessionSettings.temperature = 0.7
+    }
+  },
+  { immediate: true },
+)
+
+const handleNewChat = () => {
+  currentSession.value = null
+  messages.value = []
+}
+
+const handleSaveSettings = async () => {
+  if (currentSession.value) {
+    await updateSessionSettings(currentSession.value.id, {
+      systemPrompt: sessionSettings.systemPrompt,
+      temperature: sessionSettings.temperature,
+    })
+  }
+  // For new session (not created yet), the values in sessionSettings are already updated
+  // and will be used when sending the first message if we pass them to addMessage/createNewSession logic
+  // Update: useChat needs to be aware of these settings for new sessions
+}
 
 onMounted(() => {
   fetchSupportedProviders()
 })
 
 const handleSend = async (content: string, file?: File) => {
-  addMessage(content, 'user', [], undefined, undefined, file)
+  // If no session, these settings will be used to create one
+  addMessage(content, 'user', [], undefined, undefined, file, {
+    systemPrompt: sessionSettings.systemPrompt,
+    temperature: sessionSettings.temperature,
+  })
 }
 
 // Auto-scroll to bottom when messages change

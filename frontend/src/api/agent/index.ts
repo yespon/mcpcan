@@ -109,7 +109,7 @@ export const ChatAPI = {
       data,
     })
   },
-  updateSession(data: UpdateSessionRequest) {
+  updateSession(data: any | UpdateSessionRequest) {
     return request<any, any>({
       url: `/market/ai/sessions`,
       method: 'PUT',
