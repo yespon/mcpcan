@@ -24,7 +24,11 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="t('model.apiKey')" prop="apiKey">
-        <el-input v-model="form.apiKey" :placeholder="t('model.apiKeyPlaceholder')" />
+        <el-input
+          v-model="form.apiKey"
+          :placeholder="t('model.apiKeyPlaceholder')"
+          :disabled="isEdit"
+        />
       </el-form-item>
       <el-form-item :label="t('model.baseUrl')" prop="baseUrl">
         <el-input v-model="form.baseUrl" :placeholder="t('model.baseUrlPlaceholder')" />
@@ -151,11 +155,27 @@ watch(
           const { access } = await ChatAPI.getModelAccess(props.currentModel.id)
           const data = access
           // Ensure allowedModels is split if it's a string, or defaults to empty array
-          const allowedModels = data.allowedModels
-            ? typeof data.allowedModels === 'string'
-              ? data.allowedModels.split(',')
-              : data.allowedModels
-            : []
+          let allowedModels: string[] = []
+          if (data.allowedModels) {
+            if (Array.isArray(data.allowedModels)) {
+              allowedModels = data.allowedModels
+            } else if (typeof data.allowedModels === 'string') {
+              try {
+                // Try to parse as JSON first (backend sends JSON string)
+                const parsed = JSON.parse(data.allowedModels)
+                if (Array.isArray(parsed)) {
+                  allowedModels = parsed
+                } else {
+                  // Fallback for simple string or comma-separated
+                  allowedModels = data.allowedModels.split(',')
+                }
+              } catch {
+                // Not JSON, assume comma-separated
+                allowedModels = data.allowedModels.split(',')
+              }
+            }
+          }
+
           Object.assign(form, {
             ...data,
             allowedModels,
@@ -207,10 +227,9 @@ const handleSubmit = async () => {
             id: props.currentModel.id,
             name: form.name,
             provider: form.provider,
-            apiKey: form.apiKey,
             baseUrl: form.baseUrl,
             modelName: finalModelName,
-            allowedModels: form.allowedModels.join(','),
+            allowedModels: form.allowedModels || [],
           })
           ElMessage.success(t('model.updateSuccess'))
         } else {
@@ -220,7 +239,7 @@ const handleSubmit = async () => {
             apiKey: form.apiKey,
             baseUrl: form.baseUrl,
             modelName: finalModelName,
-            allowedModels: form.allowedModels.join(','),
+            allowedModels: form.allowedModels || [],
           })
           ElMessage.success(t('model.createSuccess'))
         }

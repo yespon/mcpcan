@@ -186,6 +186,24 @@ export function useChat() {
     }
   }
 
+  // Update session
+  const updateSessionName = async (id: number, name: string) => {
+    try {
+      await ChatAPI.updateSession({ id, name })
+      const s = sessions.value.find((s) => s.id === id)
+      if (s) {
+        s.name = name
+      }
+      if (currentSession.value?.id === id) {
+        currentSession.value.name = name
+      }
+      ElMessage.success('Session renamed')
+    } catch (error) {
+      console.error('Failed to update session:', error)
+      ElMessage.error('Failed to rename session')
+    }
+  }
+
   // Create or get session (Auto-create logic used by sendMessage)
   const initSession = async () => {
     if (!currentSession.value) {
@@ -472,6 +490,7 @@ export function useChat() {
     fetchSessions,
     loadSession,
     createNewSession,
+    updateSessionName,
     deleteSession,
     supportedProviders, // Expose supportedProviders
     fetchSupportedProviders, // Expose fetchSupportedProviders

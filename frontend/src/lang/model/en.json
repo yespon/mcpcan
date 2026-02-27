@@ -10,7 +10,7 @@
     "apiKeyPlaceholder": "Please enter API Key",
     "baseUrl": "Base URL",
     "baseUrlPlaceholder": "Please enter Base URL (Optional)",
-    "baseUrlHelper": "Default: %{url}",
+    "baseUrlHelper": "Default: {url}",
     "use": "Use",
     "allowedModels": "Allowed Models",
     "allowedModelsPlaceholder": "Leave empty = allow all",
@@ -24,6 +24,13 @@
     "testConnection": "Test Connection",
     "testConnectionSuccess": "Connection successful",
     "testConnectionFailed": "Connection failed",
+    "testFailed": "Connection to {model} failed",
+    "testSuccess": "Connection to {model} succeeded",
+    "clickToTest": "Click a model on the left to test... \nLogs will appear here.",
+    "testing": "Connecting to {model}...",
+    "test": "Test",
+    "selectModelToTest": "Select model to test",
+    "noModelsAvailable": "No models available",
     "pageDesc": {
       "list": "Model List",
       "desc": "Manage all available AI model access"

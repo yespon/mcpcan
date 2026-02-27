@@ -16,16 +16,26 @@
         <el-icon class="mr-2 text-base shrink-0"><ChatDotRound /></el-icon>
         <span class="truncate flex-1">{{ session.name || 'New Chat' }}</span>
 
-        <el-button
-          v-if="currentSessionId === session.id"
-          class="opacity-0 group-hover:opacity-100 transition-opacity"
-          type="danger"
-          link
-          size="small"
-          @click.stop="$emit('delete', session.id)"
-        >
-          <el-icon><Delete /></el-icon>
-        </el-button>
+        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex" @click.stop>
+          <el-dropdown trigger="click" @command="(cmd: string) => handleCommand(cmd, session)">
+            <el-button link size="small">
+              <el-icon
+                class="text-[var(--ep-text-color-secondary)] hover:text-[var(--ep-text-color-primary)]"
+                ><MoreFilled
+              /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="rename">
+                  <el-icon><Edit /></el-icon> Rename
+                </el-dropdown-item>
+                <el-dropdown-item command="delete" divided class="!text-red-500">
+                  <el-icon><Delete /></el-icon> Delete
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </div>
 
       <div
@@ -39,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, ChatDotRound, Delete } from '@element-plus/icons-vue'
+import { ChatDotRound, Delete, MoreFilled, Edit } from '@element-plus/icons-vue'
 import type { AiSession } from '../types'
 
 defineProps<{
@@ -47,11 +57,20 @@ defineProps<{
   currentSessionId?: number
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'create'): void
   (e: 'select', id: number): void
   (e: 'delete', id: number): void
+  (e: 'rename', session: AiSession): void
 }>()
+
+const handleCommand = (cmd: string, session: AiSession) => {
+  if (cmd === 'rename') {
+    emit('rename', session)
+  } else if (cmd === 'delete') {
+    emit('delete', session.id)
+  }
+}
 </script>
 
 <style scoped>

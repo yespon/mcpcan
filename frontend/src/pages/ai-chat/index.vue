@@ -36,6 +36,7 @@
                 :current-session-id="currentSession?.id"
                 @select="loadSession"
                 @delete="deleteSession"
+                @rename="handleRenameSession"
               />
             </div>
           </div>
@@ -211,7 +212,7 @@ import ChatInput from './components/ChatInput.vue'
 import SessionList from './components/SessionList.vue'
 import { useChat } from './composables/useChat'
 import { Fold, Expand, ChatDotRound, Plus, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const {
   messages,
@@ -225,6 +226,7 @@ const {
   addCustomModel,
   loadSession,
   createNewSession,
+  updateSessionName,
   deleteSession,
   supportedProviders,
   fetchSupportedProviders,
@@ -356,6 +358,24 @@ const submitCreateSession = async () => {
     ElMessage.error(e.message || 'Failed to create session')
   } finally {
     creatingSession.value = false
+  }
+}
+
+const handleRenameSession = async (session: { id: number; name: string }) => {
+  try {
+    const { value } = await ElMessageBox.prompt('Enter new session name', 'Rename Session', {
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Cancel',
+      inputValue: session.name,
+      inputPattern: /\S/,
+      inputErrorMessage: 'Name cannot be empty',
+    })
+
+    if (value && value.trim() !== session.name) {
+      await updateSessionName(session.id, value.trim())
+    }
+  } catch {
+    // cancelled
   }
 }
 </script>
