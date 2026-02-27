@@ -213,7 +213,7 @@ const handleTestConnection = async (row: any) => {
     await performTestConnection(row.id, models[0])
   } else {
     currentTestModalId.value = row.id
-    testModelOptions.value = [...models, 'doubao-seed-code-preview-251028']
+    testModelOptions.value = models
     selectedTestModel.value = ''
     testDialogVisible.value = true
   }

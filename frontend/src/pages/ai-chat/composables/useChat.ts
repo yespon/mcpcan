@@ -235,7 +235,12 @@ export function useChat() {
 
   const updateSessionSettings = async (
     id: number,
-    settings: { systemPrompt?: string; temperature?: number },
+    settings: {
+      systemPrompt?: string
+      temperature?: number
+      modelName?: string
+      modelAccessID?: number
+    },
   ) => {
     try {
       await ChatAPI.updateSession({ id, ...settings })
@@ -243,12 +248,17 @@ export function useChat() {
       if (s) {
         if (settings.systemPrompt !== undefined) s.systemPrompt = settings.systemPrompt
         if (settings.temperature !== undefined) s.temperature = settings.temperature
+        if (settings.modelName !== undefined) s.modelName = settings.modelName
+        if (settings.modelAccessID !== undefined) s.modelAccessID = settings.modelAccessID
       }
       if (currentSession.value?.id === id) {
         if (settings.systemPrompt !== undefined)
           currentSession.value.systemPrompt = settings.systemPrompt
         if (settings.temperature !== undefined)
           currentSession.value.temperature = settings.temperature
+        if (settings.modelName !== undefined) currentSession.value.modelName = settings.modelName
+        if (settings.modelAccessID !== undefined)
+          currentSession.value.modelAccessID = settings.modelAccessID
       }
       ElMessage.success('Settings updated')
     } catch (error) {
@@ -402,7 +412,7 @@ export function useChat() {
           Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
-          sessionID: sessionId,
+          sessionId: sessionId,
           content: content,
           tools,
           mcpProfile,
@@ -561,7 +571,7 @@ export function useChat() {
     updateSessionSettings,
     deleteSession,
     supportedProviders, // Expose supportedProviders
-    fetchSupportedProviders, // Expose fetchSupportedProviders
-    uploadFile, // Expose uploadFile method
+    fetchSupportedProviders,
+    uploadFile,
   }
 }

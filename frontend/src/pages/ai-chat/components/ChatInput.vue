@@ -24,7 +24,7 @@
         class="text-xs text-[var(--ep-text-color-secondary)] flex items-center gap-1 bg-[var(--ep-bg-color)] px-2 py-1 rounded border border-[var(--ep-border-color)]"
       >
         <el-icon><Paperclip /></el-icon> {{ selectedFile.name }}
-        <el-icon class="cursor-pointer hover:text-[var(--ep-color-danger)]" @click="clearFile">
+        <el-icon class="cursor-pointer hover:text-[var(--el-color-danger)]" @click="clearFile">
           <Close />
         </el-icon>
       </span>
@@ -92,7 +92,15 @@
                 "
                 @mouseenter="selectedAccessId = m.id"
               >
-                <div class="truncate">{{ m.name }}</div>
+                <div class="truncate flex items-center gap-2">
+                  <img
+                    v-if="getProviderIcon(m.provider)"
+                    :src="getProviderIcon(m.provider)"
+                    class="w-4 h-4 object-contain"
+                    :alt="m.provider"
+                  />
+                  {{ m.name }}
+                </div>
                 <el-icon v-if="selectedAccessId === m.id"><ArrowRight /></el-icon>
               </div>
 
@@ -312,6 +320,7 @@ const emit = defineEmits<{
   (e: 'update:temperature', temp: number): void
   (e: 'add-model', model: any): void
   (e: 'save-settings'): void
+  (e: 'model-change-confirmed', modelName: string, accessId: string): void
 }>()
 
 const { jumpToPage } = useRouterHooks()
@@ -393,8 +402,39 @@ const isModelSelected = (modelName: string) => {
 
 const handleSelectModel = (modelName: string) => {
   if (!selectedAccessId.value) return
-  emit('update:currentModel', selectedAccessId.value)
-  emit('update:currentTargetModel', modelName)
+
+  // If no session is active (disabled=false means we are ready to chat or chatting)
+  // Check if session exists via prop context if possible, but here we only have disabled.
+  // Actually, disabled updates if streaming.
+  // We need to know if there is an active session ID to update.
+  // Let's assume if currentTargetModel is set and different, we ask.
+
+  if (props.currentTargetModel && props.currentTargetModel !== modelName) {
+    ElMessageBox.confirm(
+      '现在更改模型将会导致聊天会话重新更新。这个动作不能被返回。',
+      '重启聊天会话？',
+      {
+        confirmButtonText: '重启聊天会话',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true,
+      },
+    )
+      .then(() => {
+        // Confirmed
+        emit('update:currentModel', selectedAccessId.value)
+        emit('update:currentTargetModel', modelName)
+        emit('model-change-confirmed', modelName, selectedAccessId.value)
+      })
+      .catch(() => {
+        // Cancelled
+      })
+  } else {
+    // No active session or just initial selection
+    emit('update:currentModel', selectedAccessId.value)
+    emit('update:currentTargetModel', modelName)
+  }
+
   modelSelectorVisible.value = false
 }
 
@@ -415,6 +455,12 @@ const getProviderBaseUrl = (pid: string) => {
   if (!props.supportedProviders) return ''
   const p = props.supportedProviders.find((x) => x.id === pid)
   return p ? p.baseUrl : ''
+}
+
+const getProviderIcon = (providerId: string) => {
+  if (!props.supportedProviders) return ''
+  const p = props.supportedProviders.find((x) => x.id === providerId)
+  return p ? p.iconUrl : ''
 }
 
 const handleProviderChange = () => {

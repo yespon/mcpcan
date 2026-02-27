@@ -2,7 +2,7 @@
   <div class="h-full flex overflow-hidden">
     <el-splitter class="h-full">
       <el-splitter-panel
-        :size="isSidebarOpen ? '20%' : '40px'"
+        :size="isSidebarOpen ? '200px' : '40px'"
         :resizable="false"
         :class="[
           'transition-all h-full duration-300 ease-in-out',
@@ -20,17 +20,21 @@
             <div
               class="flex items-center justify-between p-4 border-b border-[var(--ep-border-color)]"
             >
-              <div class="flex items-center gap-2">
-                <span class="font-medium">Chat History</span>
-                <el-tooltip content="New Chat" placement="top">
-                  <el-button link @click="handleNewChat">
-                    <el-icon><Plus /></el-icon>
+              <div class="flex flex-col gap-3 w-full">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium">Chat History</span>
+                  <el-button link @click="isSidebarOpen = false">
+                    <el-icon><Fold /></el-icon>
                   </el-button>
-                </el-tooltip>
+                </div>
+                <el-button
+                  class="w-full justify-start !rounded-xl !border-[var(--el-color-primary)] !text-[var(--el-color-primary)] hover:!bg-[var(--el-color-primary-light-9)]"
+                  plain
+                  @click="handleNewChat"
+                >
+                  <el-icon class="mr-2"><Plus /></el-icon> New Chat
+                </el-button>
               </div>
-              <el-button link @click="isSidebarOpen = false">
-                <el-icon><Fold /></el-icon>
-              </el-button>
             </div>
             <div class="flex-1 overflow-hidden flex flex-col">
               <SessionList
@@ -130,6 +134,7 @@
               @send="handleSend"
               @add-model="addCustomModel"
               @save-settings="handleSaveSettings"
+              @model-change-confirmed="handleModelChangeConfirmed"
             />
           </div>
         </div>
@@ -289,6 +294,20 @@ const handleNewChat = () => {
   messages.value = []
 }
 
+const handleModelChangeConfirmed = async (modelName: string, accessId: string) => {
+  if (currentSession.value) {
+    // Current session exists, update it
+    try {
+      await updateSessionSettings(currentSession.value.id, {
+        modelName: modelName,
+        modelAccessID: parseInt(accessId),
+      })
+    } catch (e) {
+      ElMessage.error('Failed to update session model')
+    }
+  }
+}
+
 const handleSaveSettings = async () => {
   if (currentSession.value) {
     await updateSessionSettings(currentSession.value.id, {
@@ -296,9 +315,6 @@ const handleSaveSettings = async () => {
       temperature: sessionSettings.temperature,
     })
   }
-  // For new session (not created yet), the values in sessionSettings are already updated
-  // and will be used when sending the first message if we pass them to addMessage/createNewSession logic
-  // Update: useChat needs to be aware of these settings for new sessions
 }
 
 onMounted(() => {

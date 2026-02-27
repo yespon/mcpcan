@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import baseConfig from '@/config/base_config.ts'
-import { update } from 'lodash-es'
 
 export const AgentAPI = {
   // agent list
