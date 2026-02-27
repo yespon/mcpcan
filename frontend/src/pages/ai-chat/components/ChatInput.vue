@@ -191,6 +191,7 @@
 <script setup lang="ts">
 import { Paperclip, Cpu, ArrowDown, Top, Plus, Close } from '@element-plus/icons-vue'
 import { ElMessage, type UploadFile } from 'element-plus'
+import { useRouterHooks } from '@/utils/url'
 import type { AIModel, SupportedProvider } from '../types'
 
 const props = defineProps<{
@@ -206,6 +207,7 @@ const emit = defineEmits<{
   (e: 'add-model', model: any): void
 }>()
 
+const { jumpToPage } = useRouterHooks()
 const input = ref('')
 const selectedFile = ref<File | null>(null)
 const dialogVisible = ref(false)
@@ -264,7 +266,9 @@ const handleSend = () => {
 
 const handleModelSelect = (command: string) => {
   if (command === 'add_custom') {
-    dialogVisible.value = true
+    jumpToPage({
+      url: '/model-manage',
+    })
   } else {
     emit('update:currentModel', command)
   }
