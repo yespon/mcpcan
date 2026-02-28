@@ -1,7 +1,7 @@
 {
   "aiChat": {
     "history": "历史记录",
-    "new": "新建",
+    "new": "新会话",
     "expand": "展开",
     "newChat": "新对话",
     "startConversation": "开始对话",
@@ -46,6 +46,18 @@
     "noLogsAvailable": "暂无日志",
     "systemEventsHere": "系统事件将显示在这里",
     "noChatHistory": "暂无聊天记录",
-    "tokens": "Tokens"
+    "tokens": "Tokens",
+    "mcpInstances": "MCP 实例",
+    "instances": "实例",
+    "selected": "已选择",
+    "noInstancesAvailable": "暂无实例",
+    "noMatchesFound": "没有找到匹配项",
+    "selectToken": "选择 Token",
+    "tokenActive": "可用",
+    "tokenInactive": "禁用",
+    "loadMore": "加载更多",
+    "mergedConfiguration": "合并配置",
+    "copyConfig": "复制配置",
+    "confirm": "确定"
   }
 }

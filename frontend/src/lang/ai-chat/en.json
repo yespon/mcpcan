@@ -46,6 +46,18 @@
     "noLogsAvailable": "No logs available",
     "systemEventsHere": "System events will appear here",
     "noChatHistory": "No chat history",
-    "tokens": "Tokens"
+    "tokens": "Tokens",
+    "mcpInstances": "MCP Instances",
+    "instances": "Instances",
+    "selected": "Selected",
+    "noInstancesAvailable": "No instances available",
+    "noMatchesFound": "No matches found",
+    "selectToken": "Select Token",
+    "tokenActive": "Active",
+    "tokenInactive": "Inactive",
+    "loadMore": "Load More",
+    "mergedConfiguration": "Merged Configuration",
+    "copyConfig": "Copy Config",
+    "confirm": "Confirm"
   }
 }

@@ -26,6 +26,7 @@
                   <el-button
                     class="!rounded-xl !border-[var(--el-color-primary)] !text-[var(--el-color-primary)] hover:!bg-[var(--el-color-primary-light-9)]"
                     plain
+                    size="small"
                     @click="handleNewChat"
                   >
                     <el-icon class="mr-2"><Plus /></el-icon> {{ t('aiChat.new') }}
@@ -63,7 +64,7 @@
         <div class="h-full flex-1 flex flex-col min-w-0 relative bg-[var(--ep-bg-color-page)]">
           <!-- Header -->
           <div
-            class="h-16 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)] relative"
+            class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)] relative"
           >
             <div class="flex items-center gap-3 w-1/3">
               <el-button link @click="isSidebarOpen = !isSidebarOpen">
@@ -111,15 +112,21 @@
             <ChatInput
               v-model:currentModel="currentModel"
               v-model:currentTargetModel="currentTargetModel"
+              v-model:mcpConfig="currentMcpConfig"
               v-model:systemPrompt="sessionSettings.systemPrompt"
               v-model:temperature="sessionSettings.temperature"
               :models="models"
               :supported-providers="supportedProviders"
-              :disabled="false"
+              :disabled="isStreaming"
+              :mcp-instances="mcpInstances"
+              :mcp-loading="mcpLoading"
+              :mcp-has-more="mcpHasMore"
               @send="handleSend"
               @add-model="addCustomModel"
               @save-settings="handleSaveSettings"
               @model-change-confirmed="handleModelChangeConfirmed"
+              @save-mcp-config="handleSaveMcpConfig"
+              @load-mcp="handleLoadMcp"
             />
           </div>
         </div>
@@ -234,6 +241,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import type { AiSession } from './types'
 
 const { t } = useI18n()
 
@@ -256,6 +264,13 @@ const {
   fetchSupportedProviders,
   uploadFile,
   updateSessionSettings,
+  mcpInstances,
+  fetchMcpInstances,
+  mcpHasMore,
+  mcpLoading,
+  isStreaming,
+  fetchModels,
+  fetchSessions,
 } = useChat()
 
 const isSidebarOpen = ref(true)
@@ -264,7 +279,11 @@ const messagesContainer = ref<HTMLElement | null>(null)
 const sessionSettings = reactive({
   systemPrompt: '',
   temperature: 0.7,
+  toolsConfig: '',
 })
+
+// Expose a currentMcpConfig ref for v-model:mcpConfig in the template and keep it in sync
+const currentMcpConfig = ref(sessionSettings.toolsConfig)
 
 // Update settings when session changes
 watch(
@@ -273,14 +292,24 @@ watch(
     if (sess) {
       sessionSettings.systemPrompt = sess.systemPrompt || ''
       sessionSettings.temperature = sess.temperature !== undefined ? sess.temperature : 0.7
+      sessionSettings.toolsConfig = sess.toolsConfig || ''
     } else {
       // defaults for new session
       sessionSettings.systemPrompt = ''
       sessionSettings.temperature = 0.7
+      sessionSettings.toolsConfig = ''
     }
+
+    // ensure the mcp config ref is updated whenever sessionSettings.toolsConfig changes on session switch
+    currentMcpConfig.value = sessionSettings.toolsConfig
   },
   { immediate: true },
 )
+
+// Keep sessionSettings.toolsConfig in sync when the child component updates currentMcpConfig
+watch(currentMcpConfig, (val) => {
+  sessionSettings.toolsConfig = val
+})
 
 const handleNewChat = () => {
   currentSession.value = null
@@ -301,24 +330,30 @@ const handleModelChangeConfirmed = async (modelName: string, accessId: string) =
   }
 }
 
+const handleSaveMcpConfig = async () => {
+  if (currentSession.value) {
+    await updateSessionSettings(currentSession.value.id, {
+      toolsConfig: sessionSettings.toolsConfig,
+    })
+  }
+}
+
 const handleSaveSettings = async () => {
   if (currentSession.value) {
     await updateSessionSettings(currentSession.value.id, {
       systemPrompt: sessionSettings.systemPrompt,
       temperature: sessionSettings.temperature,
+      toolsConfig: sessionSettings.toolsConfig,
     })
   }
 }
-
-onMounted(() => {
-  fetchSupportedProviders()
-})
 
 const handleSend = async (content: string, file?: File) => {
   // If no session, these settings will be used to create one
   addMessage(content, 'user', [], undefined, undefined, file, {
     systemPrompt: sessionSettings.systemPrompt,
     temperature: sessionSettings.temperature,
+    toolsConfig: sessionSettings.toolsConfig,
   })
 }
 
@@ -439,7 +474,25 @@ const submitCreateSession = async () => {
   }
 }
 
-const handleRenameSession = async (session: { id: number; name: string }) => {
+// Initial data fetch
+onMounted(async () => {
+  await fetchSupportedProviders()
+  await fetchModels()
+  await fetchSessions()
+  // Ensure we select the first session if available and no current session
+  if (sessions.value.length > 0 && !currentSession.value) {
+    loadSession(sessions.value[0].id)
+  } else if (!currentSession.value) {
+    // Or open create dialog if needed? No, just wait user action.
+    // Maybe collapse sidebar on mobile by default?
+  }
+})
+
+const handleLoadMcp = async (page: number, append: boolean, query: string = '') => {
+  await fetchMcpInstances(page, 20, query, append)
+}
+
+const handleRenameSession = async (session: AiSession) => {
   try {
     const { value } = await ElMessageBox.prompt(
       t('aiChat.enterNewName'),

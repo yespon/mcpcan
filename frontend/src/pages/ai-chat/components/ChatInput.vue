@@ -61,7 +61,13 @@
             <span
               class="flex items-center gap-1 cursor-pointer hover:text-[var(--el-color-primary)] transition-colors select-none"
             >
-              <el-icon><Cpu /></el-icon>
+              <img
+                v-if="currentModelIcon"
+                :src="currentModelIcon"
+                class="w-4 h-4 object-contain"
+                alt="provider"
+              />
+              <el-icon v-else><Cpu /></el-icon>
               {{ currentModelDisplayName }}
               <el-icon><ArrowDown /></el-icon>
             </span>
@@ -148,6 +154,21 @@
           <el-icon><Setting /></el-icon>
           {{ t('aiChat.systemPromptAndTemperature') }}
         </span>
+
+        <!-- MCP Instance Selector -->
+        <span
+          class="flex items-center gap-1 cursor-pointer hover:text-[var(--el-color-primary)] transition-colors select-none"
+          @click="openMcpSelector"
+        >
+          <el-icon><Connection /></el-icon>
+          {{ currentMcpDisplayName }}
+          <el-icon
+            v-if="mcpConfig && mcpConfig !== '{}'"
+            @click="clearMcpConfig"
+            class="text-xs hover:text-red-500"
+            ><Close
+          /></el-icon>
+        </span>
       </div>
 
       <div class="flex items-center gap-4">
@@ -175,7 +196,8 @@
   >
     <div class="flex flex-col gap-4">
       <div>
-        <div class="text-xs text-[var(--ep-text-color-secondary)] mb-1">
+        <div class="text-xs text-[var(--ep-text-color-secondary)] mb-1 flex items-center gap-1">
+          <el-icon><Document /></el-icon>
           {{ t('aiChat.systemPrompt') }}
         </div>
         <el-input
@@ -188,9 +210,10 @@
       </div>
       <div>
         <div class="flex items-center justify-between mb-1">
-          <span class="text-xs text-[var(--ep-text-color-secondary)]">{{
-            t('aiChat.temperature')
-          }}</span>
+          <span class="text-xs text-[var(--ep-text-color-secondary)] flex items-center gap-1">
+            <el-icon><Odometer /></el-icon>
+            {{ t('aiChat.temperature') }}
+          </span>
           <span class="text-xs font-mono">{{ settingsForm.temperature }}</span>
         </div>
         <el-slider
@@ -285,6 +308,19 @@
       </span>
     </template>
   </el-dialog>
+
+  <!-- MCP Selection Dialog -->
+  <McpSelector
+    v-model:visible="mcpSelectorVisible"
+    :title="t('aiChat.mcpConfig')"
+    :mcp-instances="mcpInstances"
+    :mcp-config="mcpConfig"
+    :mcp-loading="mcpLoading"
+    :mcp-has-more="mcpHasMore"
+    @update:mcpConfig="$emit('update:mcpConfig', $event)"
+    @save-mcp-config="$emit('save-mcp-config', $event)"
+    @load-mcp="(page, append, query) => $emit('load-mcp', page, append, query)"
+  />
 </template>
 
 <script setup lang="ts">
@@ -297,7 +333,13 @@ import {
   Close,
   ArrowRight,
   Check,
+  Document,
+  Odometer,
+  Setting,
+  Connection,
 } from '@element-plus/icons-vue'
+import McpSelector from './McpSelector.vue'
+
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -305,6 +347,8 @@ const { t } = useI18n()
 import { ElMessage, type UploadFile } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import type { AIModel, SupportedProvider } from '../types'
+import type { InstanceResult } from '@/types/instance'
+import { InstanceStatus } from '@/types/instance'
 
 const props = defineProps<{
   models: AIModel[]
@@ -314,6 +358,10 @@ const props = defineProps<{
   disabled?: boolean
   systemPrompt?: string
   temperature?: number
+  mcpInstances?: InstanceResult[]
+  mcpConfig?: string
+  mcpLoading?: boolean
+  mcpHasMore?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -325,6 +373,9 @@ const emit = defineEmits<{
   (e: 'add-model', model: any): void
   (e: 'save-settings'): void
   (e: 'model-change-confirmed', modelName: string, accessId: string): void
+  (e: 'update:mcpConfig', config: string): void
+  (e: 'save-mcp-config', config: string): void
+  (e: 'load-mcp', page: number, append: boolean, query: string): void
 }>()
 
 const { jumpToPage } = useRouterHooks()
@@ -333,6 +384,7 @@ const selectedFile = ref<File | null>(null)
 const dialogVisible = ref(false)
 const loading = ref(false)
 const modelSelectorVisible = ref(false)
+const mcpSelectorVisible = ref(false)
 const settingsVisible = ref(false)
 const selectedAccessId = ref('') // For temporary selection in popover
 const customModelForm = ref({
@@ -343,6 +395,20 @@ const customModelForm = ref({
   modelName: '',
   allowedModels: [] as string[],
 })
+
+// service status
+const activeOptions = {
+  active: {
+    label: t('status.' + InstanceStatus.ACTIVE),
+    type: 'success',
+    value: InstanceStatus.ACTIVE,
+  },
+  inactive: {
+    label: t('status.' + InstanceStatus.INACTIVE),
+    type: 'danger',
+    value: InstanceStatus.INACTIVE,
+  },
+}
 
 const settingsForm = reactive({
   systemPrompt: '',
@@ -371,6 +437,13 @@ const currentModelDisplayName = computed(() => {
 
   const model = props.models.find((m) => m.id === props.currentModel)
   return model ? model.description || model.name : 'Select Model'
+})
+
+const currentModelIcon = computed(() => {
+  if (!props.currentModel) return ''
+  const model = props.models.find((m) => m.id === props.currentModel)
+  if (!model) return ''
+  return getProviderIcon(model.provider)
 })
 
 const previewModels = computed(() => {
@@ -543,6 +616,35 @@ const saveSettings = () => {
   emit('save-settings')
   settingsVisible.value = false
 }
+
+const currentMcpDisplayName = computed(() => {
+  // Check if current mcpConfig matches any instance
+  if (!props.mcpInstances || !props.mcpConfig) return 'Select MCP'
+  // If not config string is empty
+  if (!props.mcpConfig || props.mcpConfig === '{}') return 'Select MCP'
+  // If multiple instances selected
+  try {
+    const config = JSON.parse(props.mcpConfig)
+    // Basic check if it looks like mcpServers config
+    if (config.mcpServers) {
+      const serverCount = Object.keys(config.mcpServers).length
+      if (serverCount > 0) return `${serverCount} MCP(s)`
+    }
+  } catch (e) {
+    // failed parse
+  }
+  return 'MCP'
+})
+
+const openMcpSelector = () => {
+  mcpSelectorVisible.value = true
+}
+
+const clearMcpConfig = (e: Event) => {
+  e.stopPropagation()
+  emit('update:mcpConfig', '{}')
+  emit('save-mcp-config', '{}')
+}
 </script>
 
 <style scoped>
@@ -550,5 +652,10 @@ const saveSettings = () => {
   box-shadow: none !important;
   background-color: transparent !important;
   color: var(--ep-text-color-primary) !important;
+}
+
+.editor-container {
+  height: calc(100% - 32px); /* Adjust based on your layout */
+  /* Optional: Add more styles as needed */
 }
 </style>

@@ -5,6 +5,8 @@ import {
   type ChatAttachment,
   type McpProfile,
 } from '@/api/agent'
+import { InstanceAPI } from '@/api/mcp/instance'
+import type { InstanceResult } from '@/types/instance'
 import type { ChatMessage, AIModel, AiSession, SupportedProvider } from '../types/index'
 import { ElMessage } from 'element-plus'
 import baseConfig from '@/config/base_config.ts'
@@ -13,6 +15,11 @@ import { Storage } from '@/utils/storage'
 export function useChat() {
   const messages = ref<ChatMessage[]>([])
   const models = ref<AIModel[]>([])
+  const mcpInstances = ref<InstanceResult[]>([])
+  const mcpTotal = ref(0)
+  const mcpPage = ref(1)
+  const mcpLoading = ref(false)
+  const mcpHasMore = computed(() => mcpInstances.value.length < mcpTotal.value)
   const supportedProviders = ref<SupportedProvider[]>([])
   const sessions = ref<AiSession[]>([])
   const currentModel = ref<string>('')
@@ -63,6 +70,32 @@ export function useChat() {
     } catch (error) {
       console.error('Failed to fetch models:', error)
       ElMessage.error('Failed to load AI models')
+    }
+  }
+
+  // Fetch MCP instances
+  const fetchMcpInstances = async (page = 1, pageSize = 20, name = '', append = false) => {
+    if (mcpLoading.value) return
+    mcpLoading.value = true
+    try {
+      const params: any = { page, pageSize }
+      if (name) {
+        params.name = name
+      }
+      const res: any = await InstanceAPI.list(params)
+      if (res && res.list) {
+        if (append) {
+          mcpInstances.value = [...mcpInstances.value, ...res.list]
+        } else {
+          mcpInstances.value = res.list
+        }
+        mcpTotal.value = res.total || 0
+        mcpPage.value = page
+      }
+    } catch (error) {
+      console.error('Failed to fetch MCP instances:', error)
+    } finally {
+      mcpLoading.value = false
     }
   }
 
@@ -164,6 +197,7 @@ export function useChat() {
           modelName: targetModel, // Use specific model
           systemPrompt: config?.systemPrompt,
           temperature: config?.temperature,
+          toolsConfig: config?.toolsConfig,
         }
       }
 
@@ -240,6 +274,7 @@ export function useChat() {
       temperature?: number
       modelName?: string
       modelAccessID?: number
+      toolsConfig?: string
     },
   ) => {
     try {
@@ -250,6 +285,7 @@ export function useChat() {
         if (settings.temperature !== undefined) s.temperature = settings.temperature
         if (settings.modelName !== undefined) s.modelName = settings.modelName
         if (settings.modelAccessID !== undefined) s.modelAccessID = settings.modelAccessID
+        if (settings.toolsConfig !== undefined) s.toolsConfig = settings.toolsConfig
       }
       if (currentSession.value?.id === id) {
         if (settings.systemPrompt !== undefined)
@@ -259,21 +295,38 @@ export function useChat() {
         if (settings.modelName !== undefined) currentSession.value.modelName = settings.modelName
         if (settings.modelAccessID !== undefined)
           currentSession.value.modelAccessID = settings.modelAccessID
+        if (settings.toolsConfig !== undefined)
+          currentSession.value.toolsConfig = settings.toolsConfig
       }
-      ElMessage.success('Settings updated')
-    } catch (error) {
-      console.error('Failed to update session settings:', error)
+    } catch (e) {
+      console.error('Failed to update session settings:', e)
       ElMessage.error('Failed to update settings')
     }
   }
 
   const initSession = async (
-    settings?: { systemPrompt?: string; temperature?: number },
+    settings?: {
+      systemPrompt?: string
+      temperature?: number
+      name?: string
+      toolsConfig?: string
+      modelAccessID?: number
+      modelName?: string
+      maxContext?: number
+    },
     initialMessage?: string,
   ) => {
     if (!currentSession.value) {
       // Create session but keep existing messages (the user prompt)
-      await createNewSession({ ...settings, name: initialMessage }, true)
+      // settings contains potential session configuration
+      // We pass settings directly and override name if needed
+      await createNewSession(
+        {
+          ...settings,
+          name: settings?.name || initialMessage || 'New Chat',
+        },
+        true,
+      )
     }
   }
 
@@ -284,13 +337,13 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
-    sessionSettings?: { systemPrompt?: string; temperature?: number },
+    sessionSettings?: { systemPrompt?: string; temperature?: number; toolsConfig?: string },
   ) => {
     if (!content.trim() && (!attachments || attachments.length === 0) && !file) return
 
     // Add user message immediately
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
       role: 'user',
       content:
         content +
@@ -312,7 +365,7 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
-    sessionSettings?: { systemPrompt?: string; temperature?: number },
+    sessionSettings?: { systemPrompt?: string; temperature?: number; toolsConfig?: string },
   ) => {
     if (!currentSession.value) {
       // Truncate long messages for title
@@ -332,7 +385,7 @@ export function useChat() {
     }
 
     isStreaming.value = true
-    const assistantMsgId = Date.now().toString()
+    const assistantMsgId = Date.now().toString() + Math.random().toString(36).substring(2, 9)
     const assistantMsg: ChatMessage = {
       id: assistantMsgId,
       role: 'assistant',
@@ -400,8 +453,13 @@ export function useChat() {
 
     // Use relative path to allow proxy to work correctly in dev mode
     // and relative path in production
-    const normalizedApiBase = apiBase.startsWith('/') ? apiBase : `/${apiBase}`
-    const url = `${normalizedApiBase}/market/ai/sessions/${sessionId}/chat`
+    // const normalizedApiBase = apiBase.startsWith('/') ? apiBase : `/${apiBase}` // Correct path normalization
+    // const url = `${normalizedApiBase}/market/ai/sessions/${sessionId}/chat`
+    // Wait, proxy handling of axios vs fetch.
+    // If using baseConfig, it includes /api.
+    // Let's rely on standard fetch to handle relative path if running on same origin.
+    // Assuming backend is at /api prefix.
+    const url = `/api/market/ai/sessions/${sessionId}/chat`
 
     try {
       console.log('Starting chat stream to:', url)
@@ -474,6 +532,8 @@ export function useChat() {
                       args: '?',
                       result: json.content,
                     })
+                  } else if (json.type === 'done') {
+                    msgRef.isStreaming = false
                   } else if (json.type === 'error') {
                     ElMessage.error(json.content)
                     msgRef.content += `\n[System Error: ${json.content}]`
@@ -570,8 +630,15 @@ export function useChat() {
     updateSessionName,
     updateSessionSettings,
     deleteSession,
-    supportedProviders, // Expose supportedProviders
+    supportedProviders,
     fetchSupportedProviders,
     uploadFile,
+    fetchModels, // Add this
+    mcpInstances,
+    mcpTotal,
+    mcpPage,
+    mcpLoading,
+    mcpHasMore,
+    fetchMcpInstances,
   }
 }

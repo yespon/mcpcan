@@ -46,4 +46,5 @@ export interface AiSession {
   updateTime: number
   systemPrompt?: string
   temperature?: number
+  toolsConfig?: string
 }
