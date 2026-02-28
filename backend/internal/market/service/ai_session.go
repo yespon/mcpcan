@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
+	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 )
 
@@ -317,9 +320,9 @@ func (s *AiSessionService) GetSessionUsageHandler(c *gin.Context) {
 }
 
 // UploadFileHandler handles file upload for chat
+// 表单字段: file (multipart), sessionId (string)
 func (s *AiSessionService) UploadFileHandler(c *gin.Context) {
-	// Parse multipart form
-	// Max 100MB for chat files, or configure separately
+	// 解析 multipart form（最大 100MB）
 	if err := c.Request.ParseMultipartForm(100 << 20); err != nil {
 		common.GinError(c, i18nresp.CodeBadRequest, fmt.Sprintf("failed to parse multipart form: %v", err))
 		return
@@ -332,8 +335,59 @@ func (s *AiSessionService) UploadFileHandler(c *gin.Context) {
 	}
 	defer file.Close()
 
-	// Call Biz
-	resp, err := biz.GAiFileManager.UploadFile(c.Request.Context(), file, header)
+	// 获取并校验会话
+	var sessionId int64
+	if sidStr := c.Request.FormValue("sessionId"); sidStr != "" {
+		fmt.Sscanf(sidStr, "%d", &sessionId)
+	}
+
+	session, err := biz.GAiSessionBiz.Get(c.Request.Context(), sessionId)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeNotFound, "session not found")
+		return
+	}
+
+	// 加载模型限制
+	modelAccess, err := mysql.AiModelAccessRepo.FindByID(c.Request.Context(), session.ModelAccessID)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, "model access config not found")
+		return
+	}
+
+	if !modelAccess.VisionEnabled {
+		common.GinError(c, i18nresp.CodeBadRequest, "The active model does not support vision/image upload")
+		return
+	}
+
+	// 文件大小校验
+	maxBytes := int64(modelAccess.MaxImageSize * 1024 * 1024)
+	if header.Size > maxBytes {
+		common.GinError(c, i18nresp.CodeBadRequest, fmt.Sprintf("Image size exceeds the model's limit of %d MB", modelAccess.MaxImageSize))
+		return
+	}
+
+	// 格式后缀校验
+	if modelAccess.AllowedImageTypes != "" && modelAccess.AllowedImageTypes != "[]" {
+		var allowedTypes []string
+		if err := json.Unmarshal([]byte(modelAccess.AllowedImageTypes), &allowedTypes); err == nil && len(allowedTypes) > 0 {
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			ext = strings.TrimPrefix(ext, ".")
+			validExt := false
+			for _, allowed := range allowedTypes {
+				if strings.ToLower(allowed) == ext {
+					validExt = true
+					break
+				}
+			}
+			if !validExt {
+				common.GinError(c, i18nresp.CodeBadRequest, fmt.Sprintf("Unsupported image format. Allowed formats: %v", allowedTypes))
+				return
+			}
+		}
+	}
+
+	// 调用 Biz 上传 (纯相对路径存储，不传 host)
+	resp, err := biz.GAiFileManager.UploadChatImage(c.Request.Context(), sessionId, file, header)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to upload file: %v", err))
 		return
@@ -341,3 +395,4 @@ func (s *AiSessionService) UploadFileHandler(c *gin.Context) {
 
 	i18nresp.SuccessResponse(c, resp)
 }
+

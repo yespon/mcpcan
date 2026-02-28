@@ -24,7 +24,6 @@ require (
 	github.com/mark3labs/mcp-go v0.44.0-beta.3
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/sashabaranov/go-openai v1.41.2
 	github.com/spf13/viper v1.18.2
 	github.com/tmc/langchaingo v0.1.14
 	go.uber.org/zap v1.27.0

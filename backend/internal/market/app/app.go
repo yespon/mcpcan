@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kymo-mcp/mcpcan/internal/market/biz"
 	cfg "github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/internal/market/service"
 	"github.com/kymo-mcp/mcpcan/internal/market/task"
@@ -126,6 +127,9 @@ func (a *App) Initialize() error {
 	if err := a.initializeHTTPServer(); err != nil {
 		return fmt.Errorf("failed to initialize HTTP server: %w", err)
 	}
+
+	// 用配置中的 staticPath 重新初始化 AiFileManager（覆盖 init() 中的默认路径）
+	biz.GAiFileManager = biz.NewAiFileManager(a.config.Storage.StaticPath)
 
 	a.logger.Info("Application initialization completed")
 	return nil

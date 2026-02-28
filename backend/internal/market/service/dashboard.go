@@ -104,8 +104,8 @@ func (s *DashboardService) AvailableCases(ctx context.Context, req *pb.Available
 			Description: template.Notes,
 			CreatedAt:   template.CreatedAt.Unix(),
 			IconPath:    template.IconPath,
-			SourceType:  common.ConvertSourceType(template.SourceType),
-			AccessType:  protoAccessType,
+			SourceType:  instancepb.SourceType(common.ConvertSourceType(template.SourceType)),
+			AccessType:  instancepb.AccessType(protoAccessType),
 		}
 		cases = append(cases, caseInfo)
 	}

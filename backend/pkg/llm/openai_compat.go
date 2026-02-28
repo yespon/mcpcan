@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -42,7 +45,7 @@ func NewOpenAICompatProvider(baseURL, apiKey string, client *http.Client, extraH
 // oaiMessage represents a message in OpenAI-compatible API format
 type oaiMessage struct {
 	Role             string        `json:"role"`
-	Content          string        `json:"content"`
+	Content          any           `json:"content"`
 	ReasoningContent *string       `json:"reasoning_content,omitempty"` // nil=不序列化, ""=序列化为空字符串
 	ToolCalls        []oaiToolCall `json:"tool_calls,omitempty"`
 	ToolCallID       string        `json:"tool_call_id,omitempty"`
@@ -108,6 +111,37 @@ type oaiDelta struct {
 	ToolCalls        []oaiToolCall `json:"tool_calls,omitempty"`
 }
 
+// getLocalImageBase64 检查相对路径，如果是本地 /static 图片则转为 base64
+func getLocalImageBase64(urlPath string) string {
+	if !strings.HasPrefix(urlPath, "/static/") {
+		return urlPath
+	}
+
+	// 映射到本地物理路径
+	// 当前写死为相对运行目录的 data/static。如果是正式服可通过 filepath.Join 和全局 config
+	localPath := filepath.Join("data", urlPath)
+
+	body, err := os.ReadFile(localPath)
+	if err != nil {
+		log.Printf("[OpenAICompat] Failed to read local image %s: %v", localPath, err)
+		return urlPath
+	}
+
+	ext := strings.ToLower(filepath.Ext(localPath))
+	mimeType := "image/jpeg"
+	switch ext {
+	case ".png":
+		mimeType = "image/png"
+	case ".webp":
+		mimeType = "image/webp"
+	case ".gif":
+		mimeType = "image/gif"
+	}
+
+	b64 := base64.StdEncoding.EncodeToString(body)
+	return fmt.Sprintf("data:%s;base64,%s", mimeType, b64)
+}
+
 // StreamChat implements Provider interface
 func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) (<-chan StreamResponse, error) {
 	outCh := make(chan StreamResponse)
@@ -115,9 +149,27 @@ func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) 
 	// 1. Convert Messages
 	var messages []oaiMessage
 	for _, m := range req.Messages {
+		var content any
+		if len(m.MultiContent) > 0 {
+			var multiParts []map[string]any
+			for _, part := range m.MultiContent {
+				p := map[string]any{"type": part.Type}
+				if part.Type == "text" {
+					p["text"] = part.Text
+				} else if part.Type == "image_url" && part.ImageURL != nil {
+					finalUrl := getLocalImageBase64(part.ImageURL.URL)
+					p["image_url"] = map[string]string{"url": finalUrl}
+				}
+				multiParts = append(multiParts, p)
+			}
+			content = multiParts
+		} else {
+			content = m.Content
+		}
+
 		msg := oaiMessage{
 			Role:       m.Role,
-			Content:    m.Content,
+			Content:    content,
 			ToolCallID: m.ToolCallID,
 			Name:       m.ToolCallName,
 		}

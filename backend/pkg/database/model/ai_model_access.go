@@ -12,8 +12,11 @@ type AiModelAccess struct {
 	ApiKey        string    `gorm:"size:512;column:api_key;comment:API Key(加密存储)"`
 	BaseUrl       string    `gorm:"size:255;column:base_url;comment:Base URL"`
 	// AllowedModels 允许使用的模型ID列表（JSON数组），为空则表示不限制，可使用提供商所有模型
-	AllowedModels string    `gorm:"type:text;column:allowed_models;comment:允许使用的模型ID列表(JSON数组),为空则不限制"`
-	CreateTime    time.Time `gorm:"autoCreateTime;column:create_time;comment:创建时间"`
+	AllowedModels     string    `gorm:"type:text;column:allowed_models;comment:允许使用的模型ID列表(JSON数组),为空则不限制"`
+	VisionEnabled     bool      `gorm:"default:true;column:vision_enabled;comment:是否支持多模态视觉"`
+	MaxImageSize      int       `gorm:"default:10;column:max_image_size;comment:单张图片最大限制(MB)"`
+	AllowedImageTypes string    `gorm:"type:text;column:allowed_image_types;comment:允许上传的图片格式(JSON数组),空不限制"`
+	CreateTime        time.Time `gorm:"autoCreateTime;column:create_time;comment:创建时间"`
 	UpdateTime    time.Time `gorm:"autoUpdateTime;column:update_time;comment:更新时间"`
 }
 

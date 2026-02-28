@@ -5,61 +5,109 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	pb "github.com/kymo-mcp/mcpcan/api/market/ai_agent"
 )
 
+// ChatImageSubDir 图片聊天文件存放的子目录（相对于 staticPath）
+const ChatImageSubDir = "images/chat"
+
+// ChatImageURLPrefix 静态文件对外访问的 URL 前缀
+const ChatImageURLPrefix = "/static/images/chat"
+
 type AiFileManager struct {
-	basePath string
-	domain   string
+	// uploadDir 是处理后的实际存储路径（staticPath + images/chat）
+	uploadDir string
 }
 
 var GAiFileManager *AiFileManager
 
-func init() {
-	// Initialize with default local path, configuration can override this later if needed
-	GAiFileManager = NewAiFileManager("data/chat-files", "")
+// NewAiFileManager 使用配置中的 staticPath 创建文件管理器
+func NewAiFileManager(staticPath string) *AiFileManager {
+	if staticPath == "" {
+		panic("staticPath is required for AiFileManager")
+	}
+
+	uploadDir := filepath.Join(staticPath, ChatImageSubDir)
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		fmt.Printf("Failed to create chat image directory %s: %v\n", uploadDir, err)
+	}
+	return &AiFileManager{uploadDir: uploadDir}
 }
 
-func NewAiFileManager(basePath string, domain string) *AiFileManager {
-	// Ensure base directory exists
-	if err := os.MkdirAll(basePath, 0755); err != nil {
-		fmt.Printf("Failed to create base path %s: %v\n", basePath, err)
+// UploadChatImage 上传聊天图片
+//
+//   - sessionId: 会话 ID，用于生成文件名前缀
+//   - file:      multipart 文件内容
+//   - header:    multipart 文件头（用于获取原始文件名）
+//
+// 返回:
+//   - RelativePath: /static/images/chat/{sessionId}-{filename}  —— 存入数据库及返回给前端的值
+func (m *AiFileManager) UploadChatImage(
+	_ context.Context,
+	sessionId int64,
+	file multipart.File,
+	header *multipart.FileHeader,
+) (*pb.UploadFileResponse, error) {
+	// 1. 确保目录存在
+	if err := os.MkdirAll(m.uploadDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create chat image directory: %w", err)
 	}
-	return &AiFileManager{
-		basePath: basePath,
-		domain:   domain,
+
+	// 2. 构造文件名: {sessionId}-{originalFilename}
+	originalName := filepath.Base(header.Filename)
+	// 去掉路径中的目录分隔符防注入
+	originalName = strings.ReplaceAll(originalName, string(filepath.Separator), "_")
+	newFileName := fmt.Sprintf("%d-%s", sessionId, originalName)
+
+	// 3. 写入磁盘
+	dstPath := filepath.Join(m.uploadDir, newFileName)
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file: %w", err)
 	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
+
+	// 4. 构造相对路径（存数据库/返回给前端）
+	// 格式: /static/images/chat/{sessionId}-{filename}
+	relativePath := fmt.Sprintf("%s/%s", ChatImageURLPrefix, newFileName)
+	relativePath = strings.ReplaceAll(relativePath, "\\", "/")
+
+	return &pb.UploadFileResponse{
+		Id:   relativePath, // 相对路径，用于删除时定位
+		Url:  relativePath, // 存入数据库/返回给前端的相对路径
+		Name: header.Filename,
+	}, nil
 }
 
-// DeleteFiles deletes multiple files by their paths or URLs
+// DeleteFiles 根据相对路径删除文件
+//
+// 支持格式: /static/images/chat/{filename}
 func (m *AiFileManager) DeleteFiles(files []string) error {
 	for _, file := range files {
-		// Basic sanitization/resolution
-		// If it's a URL like /files/..., convert to path
-		// If it's a full path, just delete
-		// Current implementation of Upload returns:
-		// Id: abs path, Url: relative url
-		
-		targetPath := file
-		if strings.HasPrefix(file, "/files/chat-files/") {
-			relPath := strings.TrimPrefix(file, "/files/chat-files/")
-			targetPath = filepath.Join(m.basePath, relPath)
-		} else if strings.HasPrefix(file, "/files/") {
-			// Convert web path to fs path: /files/2024/... -> data/chat-files/2024/...
-			relPath := strings.TrimPrefix(file, "/files/")
-			targetPath = filepath.Join(m.basePath, relPath)
+		var relPath string
+		if strings.HasPrefix(file, ChatImageURLPrefix) {
+			// /static/images/chat/filename -> images/chat/filename
+			relPath = strings.TrimPrefix(file, "/static/")
+		} else if strings.HasPrefix(file, "/files/chat-files/") {
+			// 兼容旧路径格式
+			relPath = strings.TrimPrefix(file, "/files/")
+		} else {
+			// 按文件系统路径直接删除
+			_ = os.Remove(file)
+			continue
 		}
 
-		// Security check: ensure within base path
-		// rel, err := filepath.Rel(m.basePath, targetPath)
-		// if err != nil || strings.HasPrefix(rel, "..") { continue }
+		// 提取文件名
+		fileName := filepath.Base(relPath)
+		targetPath := filepath.Join(m.uploadDir, fileName)
 
 		if err := os.Remove(targetPath); err != nil {
 			if !os.IsNotExist(err) {
@@ -72,92 +120,3 @@ func (m *AiFileManager) DeleteFiles(files []string) error {
 	return nil
 }
 
-// UploadFile handles the file upload logic
-func (m *AiFileManager) UploadFile(ctx context.Context, file multipart.File, header *multipart.FileHeader) (*pb.UploadFileResponse, error) {
-	// 1. Generate unique file ID and name
-	fileID := uuid.New().String()
-	ext := filepath.Ext(header.Filename)
-	newFileName := fmt.Sprintf("%s%s", fileID, ext)
-
-	// 2. Create directory (organized by date)
-	dateDir := time.Now().Format("2006/01/02")
-	relDir := filepath.Join("chat-files", dateDir) // relative path for URL construction
-	absDir := filepath.Join(m.basePath, dateDir)   // absolute path for file storage
-
-	if err := os.MkdirAll(absDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	// 3. Save file
-	dstPath := filepath.Join(absDir, newFileName)
-	dst, err := os.Create(dstPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		return nil, fmt.Errorf("failed to save file: %w", err)
-	}
-
-	// 4. Construct response
-	// URL construction logic: assuming there will be a static file handler serving 'data' or similar
-	// For now, return a relative URL that the frontend or backend can resolve
-	// TODO: Replace with configured domain/CDN URL
-	url := fmt.Sprintf("/files/%s/%s", relDir, newFileName)
-	
-	// If domain is configured, prepend it
-	if m.domain != "" {
-		url = strings.TrimRight(m.domain, "/") + url
-	} else {
-		// Try to use common helper if available or default relative
-		// For local dev, relative is usually fine if proxied correctly
-	}
-	
-	// Clean up URL path separators for web
-	url = strings.ReplaceAll(url, "\\", "/")
-
-	absPath, _ := filepath.Abs(dstPath)
-	return &pb.UploadFileResponse{
-		Id:   absPath, // Return absolute path for robust access (e.g. deletion, testing)
-		Url:  url,
-		Name: header.Filename,
-	}, nil
-}
-
-// GetFileContent reads file content for LLM ingestion (e.g. base64 encoding)
-func (m *AiFileManager) GetFileContent(path string) ([]byte, error) {
-	// Security check: ensure path is within basePath
-	// This is a basic check, in production use more robust path validation
-	// abspath, _ := filepath.Abs(path)
-	// if !strings.HasPrefix(abspath, m.basePath) { ... }
-	
-	return os.ReadFile(path)
-}
-
-// DetectContentType detects mime type from file content
-func (m *AiFileManager) DetectContentType(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	// Only the first 512 bytes are used to sniff the content type.
-	buffer := make([]byte, 512)
-	_, err = f.Read(buffer)
-	if err != nil && err != io.EOF {
-		return "", err
-	}
-
-	return http.DetectContentType(buffer), nil
-}
-
-// Helper to check if file is an image
-func (m *AiFileManager) IsImage(path string) bool {
-	contentType, err := m.DetectContentType(path)
-	if err != nil {
-		return false
-	}
-	return strings.HasPrefix(contentType, "image/")
-}
