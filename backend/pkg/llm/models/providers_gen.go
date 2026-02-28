@@ -187,7 +187,7 @@ var PerplexityProvider = ProviderInfo{
 var QwenProvider = ProviderInfo{
 	ID:          "qwen",
 	Name:        "阿里云通义千问 (Qwen)",
-	IconURL:     "https://img.alicdn.com/imgextra/i1/O1CN01WnEBYH1QHPdT2pSTe_!!6000000001952-2-tps-120-120.png",
+	IconURL:     "https://avatars.githubusercontent.com/u/148330874?s=200&v=4",
 	BaseURL:     "https://dashscope.aliyuncs.com/compatible-mode/v1",
 	RegisterURL: "https://bailian.console.aliyun.com/",
 	DocsURL:     "https://help.aliyun.com/zh/model-studio/",
@@ -218,7 +218,7 @@ var DoubaoProvider = ProviderInfo{
 		// Doubao Seed 2.0 系列（2026 旗舰，256K 上下文）
 		{ID: "doubao-seed-2-0-pro-260215", Name: "豆包 Seed 2.0 Pro", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: false, SupportThinking: true, SupportsVision: true, ImageMimeTypes: DoubaoImageTypes, MaxImageSize: MCPMaxImageSize, MaxImageCount: MCPMaxImageCount, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
 		{ID: "doubao-seed-2-0-lite", Name: "豆包 Seed 2.0 Lite", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
-		{ID: "doubao-seed-2-0-code-preview", Name: "豆包 Seed 2.0 Code", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
+		{ID: "doubao-seed-code-preview-251028", Name: "豆包 Seed 2.0 Code", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, Provider: "doubao"},
 		// Doubao Seed 1.8 系列（2025-12 旗舰）
 		{ID: "doubao-seed-1-8-251228", Name: "豆包 Seed 1.8", ContextLength: 256000, SupportTools: true, SupportSystemPrompt: true, SupportTemperature: true, SupportsDocument: true, DocumentMimeTypes: BasicDocTypes, MaxDocumentSize: MCPMaxDocumentSize, MaxDocumentCount: MCPMaxDocumentCount, Provider: "doubao"},
 		// Doubao 1.5 系列（2025-01）
