@@ -32,6 +32,9 @@ import zhCnSystem from './system/zh-cn.json'
 // model
 import enModel from './model/en.json'
 import zhCnModel from './model/zh-cn.json'
+// ai chat
+import enAiChat from './ai-chat/en.json'
+import zhCnAiChat from './ai-chat/zh-cn.json'
 
 const messages = {
   'zh-cn': {
@@ -45,6 +48,7 @@ const messages = {
     ...zhCnMarket,
     ...zhCnSystem,
     ...zhCnModel,
+    ...zhCnAiChat,
   },
   en: {
     ...enGlobal,
@@ -57,10 +61,11 @@ const messages = {
     ...enMarket,
     ...enSystem,
     ...enModel,
+    ...enAiChat,
   },
 }
 
-const i18n = createI18n({
+export const i18n = createI18n({
   legacy: false,
   locale: Storage.get('language'),
   messages,

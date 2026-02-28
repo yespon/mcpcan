@@ -7,11 +7,7 @@
       v-model="input"
       type="textarea"
       :rows="3"
-      :placeholder="
-        disabled
-          ? 'Create or select a session to start chatting...'
-          : 'Ask something... Use Slash \'/\' commands for Skills & MCP prompts'
-      "
+      :placeholder="disabled ? t('aiChat.createOrSelectSession') : t('aiChat.askSomething')"
       resize="none"
       class="!border-none !shadow-none bg-transparent chat-input"
       :disabled="disabled"
@@ -41,7 +37,7 @@
           :on-change="handleFileChange"
           :disabled="disabled"
         >
-          <el-tooltip content="Upload File" placement="top">
+          <el-tooltip :content="t('aiChat.uploadFile')" placement="top">
             <el-button
               link
               class="!text-[var(--ep-text-color-secondary)] hover:!text-[var(--el-color-primary)]"
@@ -79,7 +75,7 @@
               <div
                 class="p-3 text-xs font-bold text-[var(--ep-text-color-secondary)] uppercase tracking-wider"
               >
-                Provider Config
+                {{ t('aiChat.providerConfig') }}
               </div>
               <div
                 v-for="m in models"
@@ -111,7 +107,7 @@
                   class="w-full justify-start text-[var(--ep-text-color-secondary)] hover:!text-[var(--el-color-primary)]"
                   @click="handleAddCustom"
                 >
-                  <el-icon class="mr-1"><Plus /></el-icon> Add Custom
+                  <el-icon class="mr-1"><Plus /></el-icon> {{ t('aiChat.addCustom') }}
                 </el-button>
               </div>
             </div>
@@ -121,13 +117,13 @@
               <div
                 class="p-3 text-xs font-bold text-[var(--ep-text-color-secondary)] uppercase tracking-wider sticky top-0 bg-[var(--ep-bg-color-page)] z-10 backdrop-blur-sm"
               >
-                Models
+                {{ t('aiChat.models') }}
               </div>
               <div
                 v-if="previewModels.length === 0"
                 class="p-4 text-center text-[var(--ep-text-color-secondary)] text-sm"
               >
-                No models available
+                {{ t('aiChat.noModelsAvailable') }}
               </div>
               <div
                 v-for="modelName in previewModels"
@@ -150,7 +146,7 @@
           @click="settingsVisible = true"
         >
           <el-icon><Setting /></el-icon>
-          System Prompt & Temperature
+          {{ t('aiChat.systemPromptAndTemperature') }}
         </span>
       </div>
 
@@ -172,25 +168,29 @@
   <!-- System Prompt & Temperature Settings Dialog -->
   <el-dialog
     v-model="settingsVisible"
-    title="System Prompt & Temperature"
+    :title="t('aiChat.systemPromptAndTemperature')"
     width="500px"
     center
     append-to-body
   >
     <div class="flex flex-col gap-4">
       <div>
-        <div class="text-xs text-[var(--ep-text-color-secondary)] mb-1">System Prompt</div>
+        <div class="text-xs text-[var(--ep-text-color-secondary)] mb-1">
+          {{ t('aiChat.systemPrompt') }}
+        </div>
         <el-input
           v-model="settingsForm.systemPrompt"
           type="textarea"
           :rows="6"
-          placeholder="You are a helpful assistant..."
+          :placeholder="t('aiChat.systemPromptPlaceholder')"
           class="!bg-[var(--ep-bg-color-page)]"
         />
       </div>
       <div>
         <div class="flex items-center justify-between mb-1">
-          <span class="text-xs text-[var(--ep-text-color-secondary)]">Temperature</span>
+          <span class="text-xs text-[var(--ep-text-color-secondary)]">{{
+            t('aiChat.temperature')
+          }}</span>
           <span class="text-xs font-mono">{{ settingsForm.temperature }}</span>
         </div>
         <el-slider
@@ -298,6 +298,10 @@ import {
   ArrowRight,
   Check,
 } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 import { ElMessage, type UploadFile } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import type { AIModel, SupportedProvider } from '../types'

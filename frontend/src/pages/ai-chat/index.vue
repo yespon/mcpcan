@@ -22,18 +22,15 @@
             >
               <div class="flex flex-col gap-3 w-full">
                 <div class="flex items-center justify-between">
-                  <span class="font-medium">Chat History</span>
-                  <el-button link @click="isSidebarOpen = false">
-                    <el-icon><Fold /></el-icon>
+                  <span class="font-medium">{{ t('aiChat.history') }}</span>
+                  <el-button
+                    class="!rounded-xl !border-[var(--el-color-primary)] !text-[var(--el-color-primary)] hover:!bg-[var(--el-color-primary-light-9)]"
+                    plain
+                    @click="handleNewChat"
+                  >
+                    <el-icon class="mr-2"><Plus /></el-icon> {{ t('aiChat.new') }}
                   </el-button>
                 </div>
-                <el-button
-                  class="w-full justify-start !rounded-xl !border-[var(--el-color-primary)] !text-[var(--el-color-primary)] hover:!bg-[var(--el-color-primary-light-9)]"
-                  plain
-                  @click="handleNewChat"
-                >
-                  <el-icon class="mr-2"><Plus /></el-icon> New Chat
-                </el-button>
               </div>
             </div>
             <div class="flex-1 overflow-hidden flex flex-col">
@@ -50,10 +47,11 @@
           <!-- Collapsed State Content -->
           <div
             v-else
-            class="h-full flex flex-col items-center justify-center py-4 gap-4 transition-all duration-300 ease-in-out"
+            class="h-full flex flex-col items-center justify-center py-4 gap-4 transition-all duration-300 ease-in-out hover:bg-[var(--ep-fill-color-light)] cursor-pointer rounded"
+            @click="isSidebarOpen = true"
           >
-            <el-tooltip content="Expand" placement="right">
-              <el-button text circle @click="isSidebarOpen = true">
+            <el-tooltip :content="t('aiChat.expand')" placement="right">
+              <el-button text circle>
                 <el-icon><Expand /></el-icon>
               </el-button>
             </el-tooltip>
@@ -65,16 +63,20 @@
         <div class="h-full flex-1 flex flex-col min-w-0 relative bg-[var(--ep-bg-color-page)]">
           <!-- Header -->
           <div
-            class="h-14 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)] relative"
+            class="h-16 flex items-center justify-between px-6 border-b border-[var(--ep-border-color)] bg-[var(--ep-bg-color)] relative"
           >
-            <div class="flex items-center gap-3 w-1/3"></div>
+            <div class="flex items-center gap-3 w-1/3">
+              <el-button link @click="isSidebarOpen = !isSidebarOpen">
+                <el-icon><Fold v-if="isSidebarOpen" /></el-icon>
+              </el-button>
+            </div>
 
             <div
               class="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 cursor-pointer hover:bg-[var(--ep-fill-color-light)] px-3 py-1 rounded transition-colors group"
               @click="currentSession && handleRenameSession(currentSession)"
             >
               <div class="font-medium truncate max-w-sm select-none">
-                {{ currentSession?.name || 'New Chat' }}
+                {{ currentSession?.name || t('aiChat.newChat') }}
               </div>
               <el-icon
                 v-if="currentSession"
@@ -87,24 +89,7 @@
             <div class="flex items-center justify-end space-x-2 w-1/3"></div>
           </div>
 
-          <!-- Toggle Sidebar Button (Floating) - Only visible when sidebar is open, as per requirement -->
-          <div
-            v-if="isSidebarOpen"
-            class="absolute top-1/2 -translate-y-1/2 z-10 transition-all duration-300"
-            :class="[isSidebarOpen ? 'left-0' : 'left-0']"
-          >
-            <el-tooltip content="Close sidebar" placement="right" :show-after="500">
-              <div
-                class="cursor-pointer bg-[var(--ep-bg-color)] border border-[var(--ep-border-color)] border-l-0 rounded-r-md py-4 pr-1 pl-0.5 shadow-sm hover:bg-[var(--ep-bg-color-page)] text-[var(--ep-text-color-secondary)] hover:text-[var(--ep-text-color-primary)] transition-colors flex items-center justify-center opacity-0 hover:opacity-100"
-                @click="isSidebarOpen = !isSidebarOpen"
-                style="width: 24px; height: 60px"
-              >
-                <el-icon class="text-xs">
-                  <ArrowLeft />
-                </el-icon>
-              </div>
-            </el-tooltip>
-          </div>
+          <!-- Toggle Sidebar Button (Floating) - Removed as it's now in Header -->
 
           <!-- Messages Area -->
           <div
@@ -117,7 +102,7 @@
               class="h-full flex flex-col items-center justify-center text-[var(--ep-text-color-placeholder)]"
             >
               <el-icon class="text-6xl mb-4"><ChatDotRound /></el-icon>
-              <p>Start a conversation</p>
+              <p>{{ t('aiChat.startConversation') }}</p>
             </div>
           </div>
 
@@ -143,19 +128,22 @@
     <!-- Create Session Dialog -->
     <el-dialog
       v-model="createSessionDialogVisible"
-      title="Create New Session"
+      :title="$t('aiChat.createSession')"
       width="500px"
       top="8vh"
     >
       <el-form label-position="top" size="large">
-        <el-form-item label="Session Name">
-          <el-input v-model="newSessionForm.name" placeholder="e.g. Code Helper (Optional)" />
+        <el-form-item :label="t('aiChat.sessionName')">
+          <el-input
+            v-model="newSessionForm.name"
+            :placeholder="t('aiChat.sessionNamePlaceholder')"
+          />
         </el-form-item>
 
-        <el-form-item label="Model Access" required>
+        <el-form-item :label="t('aiChat.modelAccess')" required>
           <el-select
             v-model="newSessionForm.modelAccessID"
-            placeholder="Select Model Access"
+            :placeholder="t('aiChat.selectModelAccess')"
             class="w-full"
             filterable
             @change="handleModelAccessChange"
@@ -164,10 +152,10 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Target Model" required>
+        <el-form-item :label="t('aiChat.targetModel')" required>
           <el-select
             v-model="newSessionForm.modelName"
-            placeholder="Select or enter model ID"
+            :placeholder="t('aiChat.targetModelPlaceholder')"
             class="w-full"
             filterable
             allow-create
@@ -176,20 +164,20 @@
             <el-option v-for="m in targetModelOptions" :key="m" :label="m" :value="m" />
           </el-select>
           <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-            Specific model ID to use (e.g. gpt-4)
+            {{ t('aiChat.targetModelHint') }}
           </div>
         </el-form-item>
 
-        <el-form-item label="System Prompt">
+        <el-form-item :label="t('aiChat.systemPrompt')">
           <el-input
             v-model="newSessionForm.systemPrompt"
             type="textarea"
             :rows="3"
-            placeholder="You are a helpful assistant..."
+            :placeholder="t('aiChat.systemPromptPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="Temperature">
+        <el-form-item :label="t('aiChat.temperature')">
           <div class="flex items-center gap-4 w-full">
             <el-slider
               v-model="newSessionForm.temperature"
@@ -203,11 +191,11 @@
             {{ newSessionForm.temperature.toFixed(1) }}
           </div>
           <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-            Higher values make output more random, lower values more deterministic.
+            {{ t('aiChat.temperatureHint') }}
           </div>
         </el-form-item>
 
-        <el-form-item label="MCP Config (JSON)">
+        <el-form-item :label="t('aiChat.mcpConfig')">
           <el-input
             v-model="newSessionForm.toolsConfig"
             type="textarea"
@@ -218,9 +206,11 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="createSessionDialogVisible = false">Cancel</el-button>
+          <el-button @click="createSessionDialogVisible = false">{{
+            t('aiChat.cancel')
+          }}</el-button>
           <el-button type="primary" @click="submitCreateSession" :loading="creatingSession">
-            Create
+            {{ t('aiChat.create') }}
           </el-button>
         </div>
       </template>
@@ -243,6 +233,9 @@ import {
   EditPen,
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const {
   messages,
@@ -303,7 +296,7 @@ const handleModelChangeConfirmed = async (modelName: string, accessId: string) =
         modelAccessID: parseInt(accessId),
       })
     } catch (e) {
-      ElMessage.error('Failed to update session model')
+      ElMessage.error(t('aiChat.failedToUpdateModel'))
     }
   }
 }
@@ -405,11 +398,11 @@ const openCreateSessionDialog = () => {
 
 const submitCreateSession = async () => {
   if (!newSessionForm.modelAccessID) {
-    ElMessage.warning('Please select a Model Access')
+    ElMessage.warning(t('aiChat.pleaseSelectModelAccess'))
     return
   }
   if (!newSessionForm.modelName) {
-    ElMessage.warning('Please select a Target Model')
+    ElMessage.warning(t('aiChat.pleaseSelectTargetModel'))
     return
   }
 
@@ -421,7 +414,7 @@ const submitCreateSession = async () => {
       parsedTools = newSessionForm.toolsConfig
     }
   } catch (e) {
-    ElMessage.error('Invalid MCP Config JSON')
+    ElMessage.error(t('aiChat.invalidMcpConfig'))
     return
   }
 
@@ -440,7 +433,7 @@ const submitCreateSession = async () => {
 
     createSessionDialogVisible.value = false
   } catch (e: any) {
-    ElMessage.error(e.message || 'Failed to create session')
+    ElMessage.error(e.message || t('aiChat.failedToCreateSession'))
   } finally {
     creatingSession.value = false
   }
@@ -448,13 +441,17 @@ const submitCreateSession = async () => {
 
 const handleRenameSession = async (session: { id: number; name: string }) => {
   try {
-    const { value } = await ElMessageBox.prompt('Enter new session name', 'Rename Session', {
-      confirmButtonText: 'OK',
-      cancelButtonText: 'Cancel',
-      inputValue: session.name,
-      inputPattern: /\S/,
-      inputErrorMessage: 'Name cannot be empty',
-    })
+    const { value } = await ElMessageBox.prompt(
+      t('aiChat.enterNewName'),
+      t('aiChat.renameSession'),
+      {
+        confirmButtonText: 'OK',
+        cancelButtonText: t('aiChat.cancel'),
+        inputValue: session.name,
+        inputPattern: /\S/,
+        inputErrorMessage: t('aiChat.nameEmpty'),
+      },
+    )
 
     if (value && value.trim() !== session.name) {
       await updateSessionName(session.id, value.trim())

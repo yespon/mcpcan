@@ -6,11 +6,9 @@
     >
       <el-icon :size="20"><Service /></el-icon>
     </div>
-    <div
-      v-else
-      class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[var(--ep-bg-color)] border border-[var(--ep-border-color)] shadow-sm"
-    >
-      <el-icon :size="20" class="text-[var(--el-text-color-primary)]"><User /></el-icon>
+    <div v-else class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+      <el-avatar v-if="userInfo.avatar" :src="userInfo.avatar" fit="cover" :size="28" />
+      <el-avatar v-else :icon="UserFilled" :size="28" />
     </div>
 
     <div class="flex-1 max-w-[85%] flex flex-col" :class="{ 'items-end': isUser }">
@@ -29,9 +27,9 @@
       >
         <div class="whitespace-pre-wrap leading-relaxed break-words">
           {{ message.content }}
-          <span v-if="message.isStreaming && !message.content" class="italic opacity-50"
-            >Thinking...</span
-          >
+          <span v-if="message.isStreaming && !message.content" class="italic opacity-50">{{
+            t('aiChat.thinking')
+          }}</span>
         </div>
 
         <!-- Tool Calls Display -->
@@ -63,7 +61,7 @@
           v-if="message.usage"
           class="text-[10px] text-[var(--ep-text-color-secondary)] mt-2 text-right opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          Tokens: {{ message.usage.totalTokens }}
+          {{ t('aiChat.tokens') }}: {{ message.usage.totalTokens }}
         </div>
       </div>
     </div>
@@ -71,8 +69,15 @@
 </template>
 
 <script setup lang="ts">
-import { User, Service } from '@element-plus/icons-vue'
+import { User, Service, UserFilled } from '@element-plus/icons-vue'
 import type { ChatMessage } from '../types'
+import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+
+const { t } = useI18n()
+const { userInfo } = storeToRefs(useUserStore())
 
 const props = defineProps<{
   message: ChatMessage

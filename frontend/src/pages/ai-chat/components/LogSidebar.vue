@@ -6,7 +6,9 @@
     <div
       class="px-4 py-3 border-b border-[var(--ep-border-color)] dark:border-b-[rgba(255,255,255,0.08)] flex items-center justify-between shrink-0"
     >
-      <span class="text-sm font-medium text-[var(--ep-text-color-primary)]">Logs</span>
+      <span class="text-sm font-medium text-[var(--ep-text-color-primary)]">{{
+        t('aiChat.logs')
+      }}</span>
       <el-button
         link
         class="!text-[var(--ep-text-color-secondary)] hover:!text-[var(--ep-color-primary)]"
@@ -22,14 +24,14 @@
     >
       <el-input
         v-model="searchQuery"
-        placeholder="Filter logs..."
+        :placeholder="t('aiChat.filterLogs')"
         prefix-icon="Search"
         class="w-full !mr-0"
         size="small"
         clearable
       />
       <div class="flex items-center shrink-0">
-        <el-tooltip content="Clear Logs" placement="top">
+        <el-tooltip :content="t('aiChat.clearLogs')" placement="top">
           <el-button
             link
             class="!text-[var(--ep-text-color-secondary)] hover:!text-[var(--ep-color-danger)]"
@@ -46,9 +48,9 @@
         class="flex flex-col items-center justify-center h-full text-[var(--ep-text-color-secondary)] opacity-60"
       >
         <el-icon :size="48" class="mb-2"><Document /></el-icon>
-        <p class="text-sm font-medium">No logs available</p>
+        <p class="text-sm font-medium">{{ t('aiChat.noLogsAvailable') }}</p>
         <p class="text-xs mt-1 text-[var(--ep-text-color-placeholder)]">
-          System events will appear here
+          {{ t('aiChat.systemEventsHere') }}
         </p>
       </div>
     </div>
@@ -57,6 +59,9 @@
 
 <script setup lang="ts">
 import { Search, Delete, Expand, Document } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const searchQuery = ref('')
 const emit = defineEmits(['close'])
