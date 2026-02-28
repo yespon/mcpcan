@@ -36,6 +36,7 @@
           :show-file-list="false"
           :on-change="handleFileChange"
           :disabled="disabled"
+          accept=".png,.jpg,.jpeg"
         >
           <el-tooltip :content="t('aiChat.uploadFile')" placement="top">
             <el-button

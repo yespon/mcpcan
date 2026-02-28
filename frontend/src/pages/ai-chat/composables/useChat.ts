@@ -600,9 +600,32 @@ export function useChat() {
   const uploadFile = async (file: File) => {
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('image', file)
       const res = await ChatAPI.uploadFile(formData)
-      return res // expected { url: string, ... }
+      // Adapt response for chat component expected format { url: string }
+      // The response structure is data: { path: "...", size: ..., mime: ... } but request.ts interceptor returns data directly.
+      // So res will be { path: "..." } or similar depending on interceptor.
+      // Wait, request.ts: "if (code === 0) { return data }".
+      // So if backend returns { code: 0, data: { path: "..." } }, then res is { path: "..." }.
+      // User says: "data": { "path": ... }.
+      // If the interceptor returns `response.data.data`, then res has `.path`.
+
+      const path = res.path || (res.data && res.data.path)
+
+      if (path) {
+        let fullUrl = path
+        // If path is relative, prepend base URL
+        if (!fullUrl.startsWith('http')) {
+          const cleanPath = fullUrl.startsWith('/') ? fullUrl : `/${fullUrl}`
+          // Use window.location.origin as requested
+          const baseUrl = window.location.origin
+          // Remove trailing slash from baseUrl if exists to avoid double slash
+          const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+          fullUrl = `${cleanBase}${cleanPath}`
+        }
+        return { url: fullUrl }
+      }
+      return res // fallback
     } catch (error) {
       console.error('Failed to upload file:', error)
       throw error

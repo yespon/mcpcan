@@ -158,7 +158,7 @@ export const ChatAPI = {
   },
   uploadFile(data: FormData) {
     return request<any, any>({
-      url: `/market/ai/files/upload`,
+      url: `/market/storage/image`,
       method: 'POST',
       data,
       headers: {
