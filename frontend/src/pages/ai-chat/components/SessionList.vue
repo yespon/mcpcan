@@ -14,7 +14,7 @@
         @click="$emit('select', session.id)"
       >
         <el-icon class="mr-2 text-base shrink-0"><ChatDotRound /></el-icon>
-        <span class="truncate flex-1">{{ session.name || 'New Chat' }}</span>
+        <span class="truncate flex-1">{{ session.name || t('aiChat.newChat') }}</span>
 
         <div class="opacity-0 group-hover:opacity-100 transition-opacity flex" @click.stop>
           <el-dropdown trigger="click" @command="(cmd: string) => handleCommand(cmd, session)">
@@ -27,10 +27,10 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="rename">
-                  <el-icon><Edit /></el-icon> Rename
+                  <el-icon><Edit /></el-icon> {{ t('aiChat.rename') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="delete" divided class="!text-red-500">
-                  <el-icon><Delete /></el-icon> Delete
+                  <el-icon><Delete /></el-icon> {{ t('aiChat.delete') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -42,7 +42,7 @@
         v-if="sessions.length === 0"
         class="text-center py-8 text-[var(--ep-text-color-placeholder)] text-xs"
       >
-        No chat history
+        {{ t('aiChat.noChatHistory') }}
       </div>
     </div>
   </div>
@@ -51,6 +51,9 @@
 <script setup lang="ts">
 import { ChatDotRound, Delete, MoreFilled, Edit } from '@element-plus/icons-vue'
 import type { AiSession } from '../types'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps<{
   sessions: AiSession[]

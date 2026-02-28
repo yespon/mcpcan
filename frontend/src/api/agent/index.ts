@@ -1,6 +1,4 @@
 import request from '@/utils/request'
-import baseConfig from '@/config/base_config.ts'
-import { update } from 'lodash-es'
 
 export const AgentAPI = {
   // agent list
@@ -160,7 +158,7 @@ export const ChatAPI = {
   },
   uploadFile(data: FormData) {
     return request<any, any>({
-      url: `/market/ai/files/upload`,
+      url: `/market/storage/image`,
       method: 'POST',
       data,
       headers: {

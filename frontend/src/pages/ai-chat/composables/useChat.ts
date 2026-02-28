@@ -5,6 +5,8 @@ import {
   type ChatAttachment,
   type McpProfile,
 } from '@/api/agent'
+import { InstanceAPI } from '@/api/mcp/instance'
+import type { InstanceResult } from '@/types/instance'
 import type { ChatMessage, AIModel, AiSession, SupportedProvider } from '../types/index'
 import { ElMessage } from 'element-plus'
 import baseConfig from '@/config/base_config.ts'
@@ -13,6 +15,11 @@ import { Storage } from '@/utils/storage'
 export function useChat() {
   const messages = ref<ChatMessage[]>([])
   const models = ref<AIModel[]>([])
+  const mcpInstances = ref<InstanceResult[]>([])
+  const mcpTotal = ref(0)
+  const mcpPage = ref(1)
+  const mcpLoading = ref(false)
+  const mcpHasMore = computed(() => mcpInstances.value.length < mcpTotal.value)
   const supportedProviders = ref<SupportedProvider[]>([])
   const sessions = ref<AiSession[]>([])
   const currentModel = ref<string>('')
@@ -63,6 +70,32 @@ export function useChat() {
     } catch (error) {
       console.error('Failed to fetch models:', error)
       ElMessage.error('Failed to load AI models')
+    }
+  }
+
+  // Fetch MCP instances
+  const fetchMcpInstances = async (page = 1, pageSize = 20, name = '', append = false) => {
+    if (mcpLoading.value) return
+    mcpLoading.value = true
+    try {
+      const params: any = { page, pageSize }
+      if (name) {
+        params.name = name
+      }
+      const res: any = await InstanceAPI.list(params)
+      if (res && res.list) {
+        if (append) {
+          mcpInstances.value = [...mcpInstances.value, ...res.list]
+        } else {
+          mcpInstances.value = res.list
+        }
+        mcpTotal.value = res.total || 0
+        mcpPage.value = page
+      }
+    } catch (error) {
+      console.error('Failed to fetch MCP instances:', error)
+    } finally {
+      mcpLoading.value = false
     }
   }
 
@@ -164,6 +197,7 @@ export function useChat() {
           modelName: targetModel, // Use specific model
           systemPrompt: config?.systemPrompt,
           temperature: config?.temperature,
+          toolsConfig: config?.toolsConfig,
         }
       }
 
@@ -235,7 +269,13 @@ export function useChat() {
 
   const updateSessionSettings = async (
     id: number,
-    settings: { systemPrompt?: string; temperature?: number },
+    settings: {
+      systemPrompt?: string
+      temperature?: number
+      modelName?: string
+      modelAccessID?: number
+      toolsConfig?: string
+    },
   ) => {
     try {
       await ChatAPI.updateSession({ id, ...settings })
@@ -243,27 +283,50 @@ export function useChat() {
       if (s) {
         if (settings.systemPrompt !== undefined) s.systemPrompt = settings.systemPrompt
         if (settings.temperature !== undefined) s.temperature = settings.temperature
+        if (settings.modelName !== undefined) s.modelName = settings.modelName
+        if (settings.modelAccessID !== undefined) s.modelAccessID = settings.modelAccessID
+        if (settings.toolsConfig !== undefined) s.toolsConfig = settings.toolsConfig
       }
       if (currentSession.value?.id === id) {
         if (settings.systemPrompt !== undefined)
           currentSession.value.systemPrompt = settings.systemPrompt
         if (settings.temperature !== undefined)
           currentSession.value.temperature = settings.temperature
+        if (settings.modelName !== undefined) currentSession.value.modelName = settings.modelName
+        if (settings.modelAccessID !== undefined)
+          currentSession.value.modelAccessID = settings.modelAccessID
+        if (settings.toolsConfig !== undefined)
+          currentSession.value.toolsConfig = settings.toolsConfig
       }
-      ElMessage.success('Settings updated')
-    } catch (error) {
-      console.error('Failed to update session settings:', error)
+    } catch (e) {
+      console.error('Failed to update session settings:', e)
       ElMessage.error('Failed to update settings')
     }
   }
 
   const initSession = async (
-    settings?: { systemPrompt?: string; temperature?: number },
+    settings?: {
+      systemPrompt?: string
+      temperature?: number
+      name?: string
+      toolsConfig?: string
+      modelAccessID?: number
+      modelName?: string
+      maxContext?: number
+    },
     initialMessage?: string,
   ) => {
     if (!currentSession.value) {
       // Create session but keep existing messages (the user prompt)
-      await createNewSession({ ...settings, name: initialMessage }, true)
+      // settings contains potential session configuration
+      // We pass settings directly and override name if needed
+      await createNewSession(
+        {
+          ...settings,
+          name: settings?.name || initialMessage || 'New Chat',
+        },
+        true,
+      )
     }
   }
 
@@ -274,13 +337,13 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
-    sessionSettings?: { systemPrompt?: string; temperature?: number },
+    sessionSettings?: { systemPrompt?: string; temperature?: number; toolsConfig?: string },
   ) => {
     if (!content.trim() && (!attachments || attachments.length === 0) && !file) return
 
     // Add user message immediately
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
       role: 'user',
       content:
         content +
@@ -302,7 +365,7 @@ export function useChat() {
     tools?: string,
     mcpProfile?: McpProfile,
     file?: File,
-    sessionSettings?: { systemPrompt?: string; temperature?: number },
+    sessionSettings?: { systemPrompt?: string; temperature?: number; toolsConfig?: string },
   ) => {
     if (!currentSession.value) {
       // Truncate long messages for title
@@ -322,7 +385,7 @@ export function useChat() {
     }
 
     isStreaming.value = true
-    const assistantMsgId = Date.now().toString()
+    const assistantMsgId = Date.now().toString() + Math.random().toString(36).substring(2, 9)
     const assistantMsg: ChatMessage = {
       id: assistantMsgId,
       role: 'assistant',
@@ -390,8 +453,13 @@ export function useChat() {
 
     // Use relative path to allow proxy to work correctly in dev mode
     // and relative path in production
-    const normalizedApiBase = apiBase.startsWith('/') ? apiBase : `/${apiBase}`
-    const url = `${normalizedApiBase}/market/ai/sessions/${sessionId}/chat`
+    // const normalizedApiBase = apiBase.startsWith('/') ? apiBase : `/${apiBase}` // Correct path normalization
+    // const url = `${normalizedApiBase}/market/ai/sessions/${sessionId}/chat`
+    // Wait, proxy handling of axios vs fetch.
+    // If using baseConfig, it includes /api.
+    // Let's rely on standard fetch to handle relative path if running on same origin.
+    // Assuming backend is at /api prefix.
+    const url = `/api/market/ai/sessions/${sessionId}/chat`
 
     try {
       console.log('Starting chat stream to:', url)
@@ -402,7 +470,7 @@ export function useChat() {
           Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
-          sessionID: sessionId,
+          sessionId: sessionId,
           content: content,
           tools,
           mcpProfile,
@@ -464,6 +532,8 @@ export function useChat() {
                       args: '?',
                       result: json.content,
                     })
+                  } else if (json.type === 'done') {
+                    msgRef.isStreaming = false
                   } else if (json.type === 'error') {
                     ElMessage.error(json.content)
                     msgRef.content += `\n[System Error: ${json.content}]`
@@ -530,9 +600,32 @@ export function useChat() {
   const uploadFile = async (file: File) => {
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('image', file)
       const res = await ChatAPI.uploadFile(formData)
-      return res // expected { url: string, ... }
+      // Adapt response for chat component expected format { url: string }
+      // The response structure is data: { path: "...", size: ..., mime: ... } but request.ts interceptor returns data directly.
+      // So res will be { path: "..." } or similar depending on interceptor.
+      // Wait, request.ts: "if (code === 0) { return data }".
+      // So if backend returns { code: 0, data: { path: "..." } }, then res is { path: "..." }.
+      // User says: "data": { "path": ... }.
+      // If the interceptor returns `response.data.data`, then res has `.path`.
+
+      const path = res.path || (res.data && res.data.path)
+
+      if (path) {
+        let fullUrl = path
+        // If path is relative, prepend base URL
+        if (!fullUrl.startsWith('http')) {
+          const cleanPath = fullUrl.startsWith('/') ? fullUrl : `/${fullUrl}`
+          // Use window.location.origin as requested
+          const baseUrl = window.location.origin
+          // Remove trailing slash from baseUrl if exists to avoid double slash
+          const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+          fullUrl = `${cleanBase}${cleanPath}`
+        }
+        return { url: fullUrl }
+      }
+      return res // fallback
     } catch (error) {
       console.error('Failed to upload file:', error)
       throw error
@@ -560,8 +653,15 @@ export function useChat() {
     updateSessionName,
     updateSessionSettings,
     deleteSession,
-    supportedProviders, // Expose supportedProviders
-    fetchSupportedProviders, // Expose fetchSupportedProviders
-    uploadFile, // Expose uploadFile method
+    supportedProviders,
+    fetchSupportedProviders,
+    uploadFile,
+    fetchModels, // Add this
+    mcpInstances,
+    mcpTotal,
+    mcpPage,
+    mcpLoading,
+    mcpHasMore,
+    fetchMcpInstances,
   }
 }

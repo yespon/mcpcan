@@ -34,6 +34,7 @@ export interface SupportedProvider {
   name: string
   models: string[]
   baseUrl: string
+  iconUrl?: string
 }
 
 export interface AiSession {
@@ -45,4 +46,5 @@ export interface AiSession {
   updateTime: number
   systemPrompt?: string
   temperature?: number
+  toolsConfig?: string
 }

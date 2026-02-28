@@ -6,11 +6,9 @@
     >
       <el-icon :size="20"><Service /></el-icon>
     </div>
-    <div
-      v-else
-      class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[var(--ep-bg-color)] border border-[var(--ep-border-color)] shadow-sm"
-    >
-      <el-icon :size="20" class="text-[var(--el-text-color-primary)]"><User /></el-icon>
+    <div v-else class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+      <el-avatar v-if="userInfo.avatar" :src="userInfo.avatar" fit="cover" :size="28" />
+      <el-avatar v-else :icon="UserFilled" :size="28" />
     </div>
 
     <div class="flex-1 max-w-[85%] flex flex-col" :class="{ 'items-end': isUser }">
@@ -27,11 +25,11 @@
             : 'bg-transparent text-[var(--ep-text-color-primary)] rounded-tl-sm'
         "
       >
-        <div class="whitespace-pre-wrap leading-relaxed break-words">
-          {{ message.content }}
-          <span v-if="message.isStreaming && !message.content" class="italic opacity-50"
-            >Thinking...</span
-          >
+        <div class="leading-relaxed break-words markdown-body">
+          <div v-html="renderedContent"></div>
+          <span v-if="message.isStreaming && !message.content" class="italic opacity-50">{{
+            t('aiChat.thinking')
+          }}</span>
         </div>
 
         <!-- Tool Calls Display -->
@@ -63,7 +61,7 @@
           v-if="message.usage"
           class="text-[10px] text-[var(--ep-text-color-secondary)] mt-2 text-right opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          Tokens: {{ message.usage.totalTokens }}
+          {{ t('aiChat.tokens') }}: {{ message.usage.totalTokens }}
         </div>
       </div>
     </div>
@@ -71,12 +69,99 @@
 </template>
 
 <script setup lang="ts">
-import { User, Service } from '@element-plus/icons-vue'
+import { User, Service, UserFilled } from '@element-plus/icons-vue'
 import type { ChatMessage } from '../types'
+import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
+import MarkdownIt from 'markdown-it'
+
+const { t } = useI18n()
+const { userInfo } = storeToRefs(useUserStore())
 
 const props = defineProps<{
   message: ChatMessage
 }>()
 
 const isUser = computed(() => props.message.role === 'user')
+
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+})
+
+const renderedContent = computed(() => {
+  return md.render(props.message.content || '')
+})
 </script>
+
+<style scoped>
+:deep(.markdown-body) {
+  font-size: 14px;
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+    &:not(:last-child) {
+      margin-bottom: 0.5em;
+    }
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    display: block;
+  }
+
+  pre {
+    background-color: var(--ep-fill-color-light);
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+  }
+
+  code {
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+    background-color: var(--ep-fill-color-light);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 1em;
+  }
+
+  ul,
+  ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+
+  a {
+    color: var(--el-color-primary);
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid var(--ep-border-color);
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: var(--ep-text-color-secondary);
+  }
+}
+</style>
