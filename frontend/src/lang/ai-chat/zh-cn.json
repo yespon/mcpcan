@@ -32,7 +32,7 @@
     "failedToCreateSession": "创建会话失败",
     "thinking": "思考中...",
     "toolCalls": "工具调用",
-    "askSomething": "问点什么... 使用斜杠 '/' 命令调用技能和 MCP 提示",
+    "askSomething": "请输入你的问题.....",
     "createOrSelectSession": "创建或选择一个会话开始聊天...",
     "uploadFile": "上传文件",
     "providerConfig": "提供商配置",

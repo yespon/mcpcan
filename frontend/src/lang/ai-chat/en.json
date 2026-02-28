@@ -32,7 +32,7 @@
     "failedToCreateSession": "Failed to create session",
     "thinking": "Thinking...",
     "toolCalls": "Tool Calls",
-    "askSomething": "Ask something... Use Slash '/' commands for Skills & MCP prompts",
+    "askSomething": "Ask something... ",
     "createOrSelectSession": "Create or select a session to start chatting...",
     "uploadFile": "Upload File",
     "providerConfig": "Provider Config",

@@ -25,8 +25,8 @@
             : 'bg-transparent text-[var(--ep-text-color-primary)] rounded-tl-sm'
         "
       >
-        <div class="whitespace-pre-wrap leading-relaxed break-words">
-          {{ message.content }}
+        <div class="leading-relaxed break-words markdown-body">
+          <div v-html="renderedContent"></div>
           <span v-if="message.isStreaming && !message.content" class="italic opacity-50">{{
             t('aiChat.thinking')
           }}</span>
@@ -75,6 +75,7 @@ import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
+import MarkdownIt from 'markdown-it'
 
 const { t } = useI18n()
 const { userInfo } = storeToRefs(useUserStore())
@@ -84,4 +85,83 @@ const props = defineProps<{
 }>()
 
 const isUser = computed(() => props.message.role === 'user')
+
+const md = new MarkdownIt({
+  html: false,
+  linkify: true,
+  typographer: true,
+})
+
+const renderedContent = computed(() => {
+  return md.render(props.message.content || '')
+})
 </script>
+
+<style scoped>
+:deep(.markdown-body) {
+  font-size: 14px;
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+    &:not(:last-child) {
+      margin-bottom: 0.5em;
+    }
+  }
+
+  img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    display: block;
+  }
+
+  pre {
+    background-color: var(--ep-fill-color-light);
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+  }
+
+  code {
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+    background-color: var(--ep-fill-color-light);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 1em;
+  }
+
+  ul,
+  ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+
+  a {
+    color: var(--el-color-primary);
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid var(--ep-border-color);
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: var(--ep-text-color-secondary);
+  }
+}
+</style>
