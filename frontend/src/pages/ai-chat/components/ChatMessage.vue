@@ -25,6 +25,33 @@
             : 'bg-transparent text-[var(--ep-text-color-primary)] rounded-tl-sm'
         "
       >
+        <!-- Attachments Preview -->
+        <div
+          v-if="message.attachments && message.attachments.length > 0"
+          class="mb-2 flex flex-wrap gap-2"
+        >
+          <template v-for="(att, idx) in message.attachments" :key="idx">
+            <el-image
+              v-if="att.type === 'image'"
+              :src="att.url"
+              :preview-src-list="imagePreviewList"
+              :initial-index="idx"
+              fit="cover"
+              class="w-40 h-40 rounded-lg border border-[var(--ep-border-color)] cursor-pointer object-cover"
+              :alt="att.name"
+            />
+            <a
+              v-else
+              :href="att.url"
+              target="_blank"
+              class="flex items-center gap-1 px-3 py-2 rounded-lg border border-[var(--ep-border-color)] bg-[var(--ep-bg-color-page)] text-xs text-[var(--ep-text-color-regular)] hover:text-[var(--el-color-primary)] transition-colors"
+            >
+              <el-icon><Document /></el-icon>
+              {{ att.name || 'File' }}
+            </a>
+          </template>
+        </div>
+
         <div class="leading-relaxed break-words markdown-body">
           <div v-html="renderedContent"></div>
           <span v-if="message.isStreaming && !message.content" class="italic opacity-50">{{
@@ -69,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { User, Service, UserFilled } from '@element-plus/icons-vue'
+import { User, Service, UserFilled, Document } from '@element-plus/icons-vue'
 import type { ChatMessage } from '../types'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
@@ -85,6 +112,11 @@ const props = defineProps<{
 }>()
 
 const isUser = computed(() => props.message.role === 'user')
+
+const imagePreviewList = computed(() => {
+  if (!props.message.attachments) return []
+  return props.message.attachments.filter((a) => a.type === 'image').map((a) => a.url)
+})
 
 const md = new MarkdownIt({
   html: false,
