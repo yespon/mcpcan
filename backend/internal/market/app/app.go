@@ -395,6 +395,11 @@ func (a *App) setupHttpServer() {
 		a.ginEngine.GET(fmt.Sprintf("/%s/platform/list", routerPrefix), platformMarketService.ListMcpServer)
 	}
 
+	// Register Traefik Gateway interfaces
+	gatewayService := service.NewGatewayService()
+	a.ginEngine.GET("/internal/gateway/auth", gatewayService.AuthHandler)
+	a.ginEngine.GET("/internal/gateway/routes", gatewayService.RoutesHandler)
+
 	// Register gateway log interface
 	gatewayLogService := service.NewGatewayLogService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/gateway-log/find", routerPrefix), gatewayLogService.FindHandler)

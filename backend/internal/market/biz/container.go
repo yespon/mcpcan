@@ -797,6 +797,19 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
 
+	// Traefik support labels
+	prefix := common.GetGatewayRoutePrefix()
+	prefix = strings.Trim(prefix, "/")
+	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
+	stripMidName := fmt.Sprintf("mcp-strip-%s", instanceID)
+	
+	labels["traefik.enable"] = "true"
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("%s,mcp-auth@file", stripMidName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMidName)] = fmt.Sprintf("/%s/%s/", prefix, instanceID)
+	// Since port mapping might be dynamic, Traefik needs to know which port to route to if the image exposes multiple
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", imgPms.port)
+
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     imgPms.image,
@@ -838,6 +851,18 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	if runningTimeout > 0 {
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
+
+	// Traefik support labels
+	prefix := common.GetGatewayRoutePrefix()
+	prefix = strings.Trim(prefix, "/")
+	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
+	stripMidName := fmt.Sprintf("mcp-strip-%s", instanceID)
+	
+	labels["traefik.enable"] = "true"
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("%s,mcp-auth@file", stripMidName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMidName)] = fmt.Sprintf("/%s/%s/", prefix, instanceID)
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "8080"
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)

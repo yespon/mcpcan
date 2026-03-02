@@ -1,0 +1,18 @@
+http:
+  middlewares:
+    mcp-auth:
+      forwardAuth:
+        # 内部调用 market 的网关鉴权接口
+        # 在宿主机本地测试时，此处填写 host.docker.internal 指向 market
+        address: "http://host.docker.internal:3000/internal/gateway/auth"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "X-Mcp-Instance-Id"
+          - "X-Mcp-Session-Id"
+          - "X-Agent-Protocol"
+
+  providers:
+    http:
+      # 获取外部直连架构路由规则
+      endpoint: "http://host.docker.internal:3000/internal/gateway/routes"
+      pollInterval: "5s"

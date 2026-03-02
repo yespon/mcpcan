@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: mcp-traefik-gateway
+    restart: always
+    ports:
+      - "80:80" # default HTTP port
+      - "443:443" # default HTTPS port
+      - "8080:8080" # Traefik Dashboard port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./backend/config-example/traefik-dynamic.yaml:/etc/traefik/dynamic.yaml:ro
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.filename=/etc/traefik/dynamic.yaml"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=DEBUG"
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+
+# To check dashboard: http://localhost:8080/dashboard/
