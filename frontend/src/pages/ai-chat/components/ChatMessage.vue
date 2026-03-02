@@ -47,7 +47,7 @@
               class="flex items-center gap-1 px-3 py-2 rounded-lg border border-[var(--ep-border-color)] bg-[var(--ep-bg-color-page)] text-xs text-[var(--ep-text-color-regular)] hover:text-[var(--el-color-primary)] transition-colors"
             >
               <el-icon><Document /></el-icon>
-              {{ att.name || 'File' }}
+              {{ att.name || t('aiChat.file') }}
             </a>
           </template>
         </div>

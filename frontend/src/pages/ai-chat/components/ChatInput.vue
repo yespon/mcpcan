@@ -33,7 +33,7 @@
         v-if="isUploading"
         class="text-xs text-[var(--ep-text-color-secondary)] flex items-center gap-1"
       >
-        <el-icon class="is-loading"><Loading /></el-icon> Uploading...
+        <el-icon class="is-loading"><Loading /></el-icon> {{ t('aiChat.uploading') }}
       </div>
     </div>
 
@@ -240,28 +240,28 @@
           size="small"
         />
         <div class="text-[10px] text-[var(--ep-text-color-secondary)]">
-          Focus (0.0 - 0.3) <span class="mx-1">|</span> Creative (0.7 - 2.0)
+          {{ t('aiChat.temperatureRange') }}
         </div>
       </div>
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="settingsVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="saveSettings">Save</el-button>
+        <el-button @click="settingsVisible = false">{{ t('aiChat.cancel') }}</el-button>
+        <el-button type="primary" @click="saveSettings">{{ t('aiChat.save') }}</el-button>
       </span>
     </template>
   </el-dialog>
 
   <!-- Add Custom Model Dialog -->
-  <el-dialog v-model="dialogVisible" title="Add Custom Model" width="500px">
+  <el-dialog v-model="dialogVisible" :title="t('aiChat.addCustomModel')" width="500px">
     <el-form :model="customModelForm" label-width="120px">
-      <el-form-item label="Display Name" required>
-        <el-input v-model="customModelForm.name" placeholder="e.g. My Custom Model" />
+      <el-form-item :label="t('aiChat.displayName')" required>
+        <el-input v-model="customModelForm.name" :placeholder="t('aiChat.modelNamePlaceholder')" />
       </el-form-item>
-      <el-form-item label="Provider" required>
+      <el-form-item :label="t('aiChat.provider')" required>
         <el-select
           v-model="customModelForm.provider"
-          placeholder="Select provider"
+          :placeholder="t('aiChat.selectProvider')"
           filterable
           class="w-full"
           @change="handleProviderChange"
@@ -273,53 +273,55 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="API Key" required>
+      <el-form-item :label="t('aiChat.apiKey')" required>
         <el-input
           v-model="customModelForm.apiKey"
           type="password"
           show-password
-          placeholder="sk-..."
+          :placeholder="t('aiChat.apiKeyPlaceholder')"
         />
       </el-form-item>
-      <el-form-item label="Base URL">
-        <el-input v-model="customModelForm.baseUrl" placeholder="https://api.openai.com/v1" />
+      <el-form-item :label="t('aiChat.baseUrl')">
+        <el-input v-model="customModelForm.baseUrl" :placeholder="t('aiChat.baseUrlPlaceholder')" />
         <div
           class="text-xs text-[var(--ep-text-color-secondary)] mt-1"
           v-if="customModelForm.provider && getProviderBaseUrl(customModelForm.provider)"
         >
-          Default: {{ getProviderBaseUrl(customModelForm.provider) }}
+          {{ t('aiChat.defaultBaseUrl') }} {{ getProviderBaseUrl(customModelForm.provider) }}
           <el-button
             type="primary"
             link
             size="small"
             @click="customModelForm.baseUrl = getProviderBaseUrl(customModelForm.provider)"
           >
-            Use
+            {{ t('aiChat.useDefault') }}
           </el-button>
         </div>
       </el-form-item>
 
-      <el-form-item label="Allowed Models">
+      <el-form-item :label="t('aiChat.allowedModels')">
         <el-select
           v-model="customModelForm.allowedModels"
           multiple
           filterable
           allow-create
           default-first-option
-          placeholder="Leave empty = allow all"
+          :placeholder="t('aiChat.allowedModelsPlaceholder')"
           class="w-full"
         >
           <el-option v-for="m in selectedProviderModels" :key="m" :label="m" :value="m" />
         </el-select>
         <div class="text-xs text-[var(--ep-text-color-secondary)] mt-1">
-          Restrict available models. Leave empty to allow all.
+          {{ t('aiChat.allowedModelsHint') }}
         </div>
       </el-form-item>
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="submitCustomModel" :loading="loading">Save</el-button>
+        <el-button @click="dialogVisible = false">{{ t('aiChat.cancel') }}</el-button>
+        <el-button type="primary" @click="submitCustomModel" :loading="loading">{{
+          t('aiChat.save')
+        }}</el-button>
       </span>
     </template>
   </el-dialog>
@@ -356,7 +358,7 @@ import {
 } from '@element-plus/icons-vue'
 import McpSelector from './McpSelector.vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, type UploadFile } from 'element-plus'
+import { ElMessage, ElMessageBox, type UploadFile } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import type { AIModel, SupportedProvider } from '../types'
 import type { InstanceResult } from '@/types/instance'
@@ -456,7 +458,7 @@ const currentModelDisplayName = computed(() => {
   if (props.currentTargetModel) return props.currentTargetModel
 
   const model = props.models.find((m) => m.id === props.currentModel)
-  return model ? model.description || model.name : 'Select Model'
+  return model ? model.description || model.name : t('aiChat.selectModel')
 })
 
 const currentModelIcon = computed(() => {
@@ -539,16 +541,12 @@ const handleSelectModel = (modelName: string) => {
   // Let's assume if currentTargetModel is set and different, we ask.
 
   if (props.currentTargetModel && props.currentTargetModel !== modelName) {
-    ElMessageBox.confirm(
-      '现在更改模型将会导致聊天会话重新更新。这个动作不能被返回。',
-      '重启聊天会话？',
-      {
-        confirmButtonText: '重启聊天会话',
-        cancelButtonText: '取消',
-        type: 'warning',
-        center: true,
-      },
-    )
+    ElMessageBox.confirm(t('aiChat.changeModelWarning'), t('aiChat.changeModelConfirmTitle'), {
+      confirmButtonText: t('aiChat.changeModelConfirmBtn'),
+      cancelButtonText: t('aiChat.cancel'),
+      type: 'warning',
+      center: true,
+    })
       .then(() => {
         // Confirmed
         emit('update:currentModel', selectedAccessId.value)
@@ -664,7 +662,7 @@ const submitCustomModel = async () => {
     !customModelForm.value.provider ||
     !customModelForm.value.apiKey
   ) {
-    ElMessage.warning('Please fill in required fields (Name, Provider, API Key)')
+    ElMessage.warning(t('aiChat.fillRequiredFields'))
     return
   }
 
@@ -710,21 +708,21 @@ const saveSettings = () => {
 
 const currentMcpDisplayName = computed(() => {
   // Check if current mcpConfig matches any instance
-  if (!props.mcpInstances || !props.mcpConfig) return 'Select MCP'
+  if (!props.mcpInstances || !props.mcpConfig) return t('aiChat.selectMcp')
   // If not config string is empty
-  if (!props.mcpConfig || props.mcpConfig === '{}') return 'Select MCP'
+  if (!props.mcpConfig || props.mcpConfig === '{}') return t('aiChat.selectMcp')
   // If multiple instances selected
   try {
     const config = JSON.parse(props.mcpConfig)
     // Basic check if it looks like mcpServers config
     if (config.mcpServers) {
       const serverCount = Object.keys(config.mcpServers).length
-      if (serverCount > 0) return `${serverCount} MCP(s)`
+      if (serverCount > 0) return t('aiChat.mcpCount', { count: serverCount })
     }
   } catch (e) {
     // failed parse
   }
-  return 'MCP'
+  return t('aiChat.mcp')
 })
 
 const openMcpSelector = () => {

@@ -64,19 +64,34 @@
             </el-icon>
             <el-popover
               placement="right"
-              :width="400"
+              :width="320"
               trigger="hover"
+              popper-class="!rounded-lg"
               v-if="session.toolsConfig && session.toolsConfig !== '{}'"
             >
               <template #reference>
-                <span class="truncate border-b">
+                <span class="truncate border-b cursor-pointer hover:text-[var(--el-color-primary)]">
                   MCP ({{ getMcpCount(session.toolsConfig) }})
                 </span>
               </template>
-              <div class="max-h-60 overflow-y-auto text-xs">
-                <pre class="whitespace-pre-wrap break-all">{{
-                  JsonFormatter.format(session.toolsConfig)
-                }}</pre>
+              <div class="flex flex-col gap-2">
+                <div
+                  class="text-xs font-bold text-[var(--ep-text-color-secondary)] uppercase tracking-wider"
+                >
+                  {{ t('aiChat.mcpInstances') }}
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <el-tag
+                    v-for="(name, idx) in getMcpInstanceNames(session.toolsConfig)"
+                    :key="idx"
+                    size="small"
+                    effect="plain"
+                    type="primary"
+                    class="!rounded-md"
+                  >
+                    {{ name }}
+                  </el-tag>
+                </div>
               </div>
             </el-popover>
             <span v-else class="text-[var(--ep-text-color-placeholder)]">MCP (0)</span>
@@ -106,7 +121,6 @@ import {
 } from '@element-plus/icons-vue'
 import type { AiSession, AIModel, SupportedProvider } from '../types'
 import { useI18n } from 'vue-i18n'
-import { JsonFormatter } from '@/utils/json'
 
 const { t } = useI18n()
 
@@ -155,6 +169,21 @@ const getMcpCount = (configStr?: string) => {
     return 0
   }
   return 0
+}
+
+const getMcpInstanceNames = (configStr?: string): string[] => {
+  if (!configStr || configStr === '{}') return []
+  try {
+    const config = JSON.parse(configStr)
+    if (config.mcpServers) {
+      return Object.values(config.mcpServers).map((server: any) => {
+        return server.instanceName || t('aiChat.unknown')
+      })
+    }
+  } catch (e) {
+    return []
+  }
+  return []
 }
 </script>
 

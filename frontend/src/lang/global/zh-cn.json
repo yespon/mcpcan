@@ -68,7 +68,9 @@
     "rbacManage": "权限管理",
     "roleManage": "角色管理",
     "userManage": "用户管理",
-    "departmentManage": "部门管理"
+    "departmentManage": "部门管理",
+    "modelManage": "模型配置",
+    "aiChat": "聊天对话"
   },
   "common": {
     "edit": "编辑",

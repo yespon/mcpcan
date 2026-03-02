@@ -501,7 +501,7 @@ const handleRenameSession = async (session: AiSession) => {
       t('aiChat.enterNewName'),
       t('aiChat.renameSession'),
       {
-        confirmButtonText: 'OK',
+        confirmButtonText: t('aiChat.ok'),
         cancelButtonText: t('aiChat.cancel'),
         inputValue: session.name,
         inputPattern: /\S/,

@@ -68,7 +68,9 @@
     "rbacManage": "RBAC Manage",
     "roleManage": "Role-Manage",
     "userManage": "User-Manage",
-    "departmentManage": "Dept-Manage"
+    "departmentManage": "Dept-Manage",
+    "modelManage": "Model Config",
+    "aiChat": "AI Chat"
   },
   "common": {
     "edit": "Edit",
