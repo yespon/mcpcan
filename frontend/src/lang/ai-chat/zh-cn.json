@@ -60,6 +60,10 @@
     "copyConfig": "复制配置",
     "confirm": "确定",
     "toolsConfig": "工具配置",
-    "noTools": "无工具"
+    "noTools": "无工具",
+    "modelNoFileSupport": "当前模型不支持文件上传",
+    "unsupportedFileType": "当前模型不支持该文件类型",
+    "fileTooLarge": "文件大小超出限制",
+    "uploadFailed": "文件上传失败"
   }
 }

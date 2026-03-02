@@ -46,14 +46,17 @@
           :auto-upload="false"
           :show-file-list="false"
           :on-change="handleFileChange"
-          :disabled="disabled"
-          accept=".png,.jpg,.jpeg"
+          :disabled="disabled || !supportsFileUpload"
+          :accept="acceptFileTypes"
         >
-          <el-tooltip :content="t('aiChat.uploadFile')" placement="top">
+          <el-tooltip
+            :content="supportsFileUpload ? t('aiChat.uploadFile') : t('aiChat.modelNoFileSupport')"
+            placement="top"
+          >
             <el-button
               link
               class="!text-[var(--ep-text-color-secondary)] hover:!text-[var(--el-color-primary)]"
-              :disabled="disabled"
+              :disabled="disabled || !supportsFileUpload"
             >
               <el-icon class="text-lg"><Paperclip /></el-icon>
             </el-button>
@@ -375,6 +378,7 @@ const props = defineProps<{
   mcpConfig?: string
   mcpLoading?: boolean
   mcpHasMore?: boolean
+  sessionId?: number
 }>()
 
 const emit = defineEmits<{
@@ -460,6 +464,38 @@ const currentModelIcon = computed(() => {
   const model = props.models.find((m) => m.id === props.currentModel)
   if (!model) return ''
   return getProviderIcon(model.provider)
+})
+
+// Find the current model's ModelInfo from supportedProviders
+const currentModelInfo = computed(() => {
+  if (!props.currentTargetModel || !props.currentModel || !props.supportedProviders) return null
+  // Find the access config to get the provider id
+  const access = props.models.find((m) => m.id === props.currentModel)
+  if (!access) return null
+  // Find the provider
+  const provider = props.supportedProviders.find((p) => p.id === access.provider)
+  if (!provider || !provider.modelInfos) return null
+  // Find the specific model info
+  return provider.modelInfos.find((mi) => mi.id === props.currentTargetModel) || null
+})
+
+// Whether the current model supports file upload (image or document)
+const supportsFileUpload = computed(() => {
+  if (!currentModelInfo.value) return false
+  return !!(currentModelInfo.value.supportsVision || currentModelInfo.value.supportsDocument)
+})
+
+// Build accept string from imageMimeTypes + documentMimeTypes
+const acceptFileTypes = computed(() => {
+  if (!currentModelInfo.value) return ''
+  const mimeTypes: string[] = []
+  if (currentModelInfo.value.supportsVision && currentModelInfo.value.imageMimeTypes) {
+    mimeTypes.push(...currentModelInfo.value.imageMimeTypes)
+  }
+  if (currentModelInfo.value.supportsDocument && currentModelInfo.value.documentMimeTypes) {
+    mimeTypes.push(...currentModelInfo.value.documentMimeTypes)
+  }
+  return mimeTypes.join(',')
 })
 
 const previewModels = computed(() => {
@@ -564,18 +600,43 @@ const handleProviderChange = () => {
 
 const handleFileChange = async (file: UploadFile) => {
   if (file.raw) {
+    const modelInfo = currentModelInfo.value
+
+    // Validate file type against model capabilities
+    if (modelInfo) {
+      const fileMime = file.raw.type
+      const isImage = modelInfo.supportsVision && modelInfo.imageMimeTypes?.includes(fileMime)
+      const isDocument =
+        modelInfo.supportsDocument && modelInfo.documentMimeTypes?.includes(fileMime)
+
+      if (!isImage && !isDocument) {
+        ElMessage.warning(t('aiChat.unsupportedFileType'))
+        return
+      }
+
+      // Validate file size
+      const maxSize = isImage ? modelInfo.maxImageSize || 0 : modelInfo.maxDocumentSize || 0
+      if (maxSize > 0 && file.raw.size > maxSize) {
+        const maxSizeMB = (maxSize / 1024 / 1024).toFixed(1)
+        ElMessage.warning(`${t('aiChat.fileTooLarge')} (max ${maxSizeMB}MB)`)
+        return
+      }
+    }
+
     isUploading.value = true
     try {
-      const res = await useChatUploadFile(file.raw)
+      const res = await useChatUploadFile(file.raw, props.sessionId!)
       if (res && res.url) {
+        // Determine attachment type based on MIME
+        const fileType = file.raw.type.startsWith('image/') ? 'image' : 'file'
         attachments.value.push({
           name: file.name,
           url: res.url,
-          type: 'image',
+          type: fileType,
         })
       }
     } catch (error) {
-      ElMessage.error('Image upload failed')
+      ElMessage.error(t('aiChat.uploadFailed'))
     } finally {
       isUploading.value = false
     }

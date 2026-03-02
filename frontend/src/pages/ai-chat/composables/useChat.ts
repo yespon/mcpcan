@@ -405,7 +405,7 @@ export function useChat(skipInit = false) {
       // Upload file if exists
       if (file) {
         try {
-          const res = await uploadFile(file)
+          const res = await uploadFile(file, currentSession.value.id)
           if (res && res.url) {
             attachments.push({
               type: 'image',
@@ -599,33 +599,24 @@ export function useChat(skipInit = false) {
     }
   }
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, sessionId: number) => {
     try {
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('file', file)
+      formData.append('sessionId', sessionId.toString())
       const res = await ChatAPI.uploadFile(formData)
-      // Adapt response for chat component expected format { url: string }
-      // The response structure is data: { path: "...", size: ..., mime: ... } but request.ts interceptor returns data directly.
-      // So res will be { path: "..." } or similar depending on interceptor.
-      // Wait, request.ts: "if (code === 0) { return data }".
-      // So if backend returns { code: 0, data: { path: "..." } }, then res is { path: "..." }.
-      // User says: "data": { "path": ... }.
-      // If the interceptor returns `response.data.data`, then res has `.path`.
 
-      const path = res.path || (res.data && res.data.path)
-
-      if (path) {
-        let fullUrl = path
-        // If path is relative, prepend base URL
+      // The new /ai/files/upload API returns { id, url, name } directly
+      if (res && res.url) {
+        let fullUrl = res.url
+        // If url is relative, prepend base URL
         if (!fullUrl.startsWith('http')) {
           const cleanPath = fullUrl.startsWith('/') ? fullUrl : `/${fullUrl}`
-          // Use window.location.origin as requested
           const baseUrl = window.location.origin
-          // Remove trailing slash from baseUrl if exists to avoid double slash
           const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
           fullUrl = `${cleanBase}${cleanPath}`
         }
-        return { url: fullUrl }
+        return { id: res.id, url: fullUrl, name: res.name }
       }
       return res // fallback
     } catch (error) {

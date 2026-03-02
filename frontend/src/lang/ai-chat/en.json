@@ -60,6 +60,10 @@
     "copyConfig": "Copy Config",
     "confirm": "Confirm",
     "toolsConfig": "Tools Config",
-    "noTools": "No Tools"
+    "noTools": "No Tools",
+    "modelNoFileSupport": "Current model does not support file upload",
+    "unsupportedFileType": "Current model does not support this file type",
+    "fileTooLarge": "File size exceeds the limit",
+    "uploadFailed": "File upload failed"
   }
 }

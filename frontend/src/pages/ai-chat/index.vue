@@ -123,6 +123,7 @@
               :mcp-instances="mcpInstances"
               :mcp-loading="mcpLoading"
               :mcp-has-more="mcpHasMore"
+              :session-id="currentSession?.id"
               @send="handleSend"
               @add-model="addCustomModel"
               @save-settings="handleSaveSettings"

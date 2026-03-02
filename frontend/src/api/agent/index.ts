@@ -157,8 +157,8 @@ export const ChatAPI = {
     })
   },
   uploadFile(data: FormData) {
-    return request<any, any>({
-      url: `/market/storage/image`,
+    return request<any, UploadFileResponse>({
+      url: `/market/ai/files/upload`,
       method: 'POST',
       data,
       headers: {
@@ -323,4 +323,10 @@ export interface UpdateModelAccessRequest {
 export interface TestConnectionRequest {
   id: number
   modelName: string
+}
+
+export interface UploadFileResponse {
+  id: string
+  url: string
+  name: string
 }
