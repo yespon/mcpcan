@@ -1,4 +1,5 @@
 import type { ChatAttachment } from '@/api/agent'
+export type { ChatAttachment }
 
 export interface ChatMessage {
   id: string

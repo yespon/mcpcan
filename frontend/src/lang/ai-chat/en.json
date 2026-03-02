@@ -58,6 +58,8 @@
     "loadMore": "Load More",
     "mergedConfiguration": "Merged Configuration",
     "copyConfig": "Copy Config",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "toolsConfig": "Tools Config",
+    "noTools": "No Tools"
   }
 }

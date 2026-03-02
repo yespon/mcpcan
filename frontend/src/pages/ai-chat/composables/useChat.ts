@@ -12,7 +12,7 @@ import { ElMessage } from 'element-plus'
 import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
 
-export function useChat() {
+export function useChat(skipInit = false) {
   const messages = ref<ChatMessage[]>([])
   const models = ref<AIModel[]>([])
   const mcpInstances = ref<InstanceResult[]>([])
@@ -348,7 +348,9 @@ export function useChat() {
       content:
         content +
         (file ? `\n[File: ${file.name}]` : '') +
-        (attachments.length > 0 && !file ? `\n[File: ${attachments[0].name}]` : ''),
+        (attachments.length > 0 && !file
+          ? `\n[Attachments: ${attachments.map((a) => a.name).join(', ')}]`
+          : ''),
       timestamp: Date.now(),
       attachments,
     }
@@ -633,8 +635,10 @@ export function useChat() {
   }
 
   onMounted(() => {
-    fetchModels()
-    fetchSessions()
+    if (!skipInit) {
+      fetchModels()
+      fetchSessions()
+    }
   })
 
   return {

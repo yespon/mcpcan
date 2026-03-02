@@ -2,13 +2,13 @@
   <div class="h-full flex overflow-hidden">
     <el-splitter class="h-full">
       <el-splitter-panel
-        :size="isSidebarOpen ? '200px' : '40px'"
+        :size="isSidebarOpen ? '300px' : '40px'"
         :resizable="false"
         :class="[
           'transition-all h-full duration-300 ease-in-out',
           !isSidebarOpen ? 'bg-[var(--ep-bg-color)] border-r border-[var(--ep-border-color)]' : '',
         ]"
-        :min-size="isSidebarOpen ? '200px' : '40px'"
+        :min-size="isSidebarOpen ? '300px' : '40px'"
       >
         <!-- Left Sidebar (History & Collapsed State) -->
         <div class="h-full flex flex-col overflow-hidden">
@@ -38,6 +38,8 @@
               <SessionList
                 :sessions="sessions"
                 :current-session-id="currentSession?.id"
+                :models="models"
+                :supported-providers="supportedProviders"
                 @select="loadSession"
                 @delete="deleteSession"
                 @rename="handleRenameSession"
@@ -241,7 +243,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import type { AiSession } from './types'
+import type { AiSession, ChatAttachment } from './types'
 
 const { t } = useI18n()
 
@@ -348,9 +350,9 @@ const handleSaveSettings = async () => {
   }
 }
 
-const handleSend = async (content: string, file?: File) => {
+const handleSend = async (content: string, attachments: ChatAttachment[] = []) => {
   // If no session, these settings will be used to create one
-  addMessage(content, 'user', [], undefined, undefined, file, {
+  addMessage(content, 'user', attachments, undefined, undefined, undefined, {
     systemPrompt: sessionSettings.systemPrompt,
     temperature: sessionSettings.temperature,
     toolsConfig: sessionSettings.toolsConfig,
