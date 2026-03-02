@@ -2,13 +2,13 @@
   <div class="h-full flex overflow-hidden">
     <el-splitter class="h-full">
       <el-splitter-panel
-        :size="isSidebarOpen ? '200px' : '40px'"
+        :size="isSidebarOpen ? '300px' : '40px'"
         :resizable="false"
         :class="[
           'transition-all h-full duration-300 ease-in-out',
           !isSidebarOpen ? 'bg-[var(--ep-bg-color)] border-r border-[var(--ep-border-color)]' : '',
         ]"
-        :min-size="isSidebarOpen ? '200px' : '40px'"
+        :min-size="isSidebarOpen ? '300px' : '40px'"
       >
         <!-- Left Sidebar (History & Collapsed State) -->
         <div class="h-full flex flex-col overflow-hidden">
@@ -38,6 +38,8 @@
               <SessionList
                 :sessions="sessions"
                 :current-session-id="currentSession?.id"
+                :models="models"
+                :supported-providers="supportedProviders"
                 @select="loadSession"
                 @delete="deleteSession"
                 @rename="handleRenameSession"

@@ -58,6 +58,8 @@
     "loadMore": "加载更多",
     "mergedConfiguration": "合并配置",
     "copyConfig": "复制配置",
-    "confirm": "确定"
+    "confirm": "确定",
+    "toolsConfig": "工具配置",
+    "noTools": "无工具"
   }
 }
