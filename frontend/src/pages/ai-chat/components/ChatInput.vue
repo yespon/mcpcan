@@ -15,15 +15,26 @@
     />
 
     <!-- Selected File Preview -->
-    <div v-if="selectedFile" class="mt-2 flex items-center gap-2">
-      <span
+    <div v-if="attachments.length > 0" class="mt-2 flex items-center gap-2">
+      <div
+        v-for="(file, index) in attachments"
+        :key="index"
         class="text-xs text-[var(--ep-text-color-secondary)] flex items-center gap-1 bg-[var(--ep-bg-color)] px-2 py-1 rounded border border-[var(--ep-border-color)]"
       >
-        <el-icon><Paperclip /></el-icon> {{ selectedFile.name }}
-        <el-icon class="cursor-pointer hover:text-[var(--el-color-danger)]" @click="clearFile">
+        <el-icon><Paperclip /></el-icon> {{ file.name }}
+        <el-icon
+          class="cursor-pointer hover:text-[var(--el-color-danger)]"
+          @click="clearFile(index)"
+        >
           <Close />
         </el-icon>
-      </span>
+      </div>
+      <div
+        v-if="isUploading"
+        class="text-xs text-[var(--ep-text-color-secondary)] flex items-center gap-1"
+      >
+        <el-icon class="is-loading"><Loading /></el-icon> Uploading...
+      </div>
     </div>
 
     <div
@@ -178,7 +189,7 @@
           type="primary"
           circle
           class="send-btn !bg-[var(--el-color-primary)] !border-none !text-white hover:!bg-[var(--el-color-primary-light-3)] transition-colors"
-          :disabled="disabled || (!input.trim() && !selectedFile)"
+          :disabled="disabled || isUploading || (!input.trim() && attachments.length === 0)"
           @click="handleSend"
         >
           <el-icon><Top /></el-icon>
@@ -338,18 +349,19 @@ import {
   Odometer,
   Setting,
   Connection,
+  Loading,
 } from '@element-plus/icons-vue'
 import McpSelector from './McpSelector.vue'
-
 import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n()
-
 import { ElMessage, type UploadFile } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
 import type { AIModel, SupportedProvider } from '../types'
 import type { InstanceResult } from '@/types/instance'
 import { InstanceStatus } from '@/types/instance'
+import { useChat } from '../composables/useChat'
+import type { ChatAttachment } from '@/api/agent'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   models: AIModel[]
@@ -366,7 +378,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'send', content: string, file?: File): void
+  (e: 'send', content: string, attachments: ChatAttachment[]): void
   (e: 'update:currentModel', id: string): void
   (e: 'update:currentTargetModel', name: string): void
   (e: 'update:systemPrompt', prompt: string): void
@@ -380,8 +392,11 @@ const emit = defineEmits<{
 }>()
 
 const { jumpToPage } = useRouterHooks()
+const { uploadFile: useChatUploadFile } = useChat(true)
+
 const input = ref('')
-const selectedFile = ref<File | null>(null)
+const attachments = ref<ChatAttachment[]>([])
+const isUploading = ref(false)
 const dialogVisible = ref(false)
 const loading = ref(false)
 const modelSelectorVisible = ref(false)
@@ -547,24 +562,38 @@ const handleProviderChange = () => {
   // Actually, chat_test.html does not auto-fill, just shows a helper button.
 }
 
-const handleFileChange = (uploadFile: UploadFile) => {
-  if (uploadFile.raw) {
-    selectedFile.value = uploadFile.raw
+const handleFileChange = async (file: UploadFile) => {
+  if (file.raw) {
+    isUploading.value = true
+    try {
+      const res = await useChatUploadFile(file.raw)
+      if (res && res.url) {
+        attachments.value.push({
+          name: file.name,
+          url: res.url,
+          type: 'image',
+        })
+      }
+    } catch (error) {
+      ElMessage.error('Image upload failed')
+    } finally {
+      isUploading.value = false
+    }
   }
 }
 
-const clearFile = () => {
-  selectedFile.value = null
+const clearFile = (index: number) => {
+  attachments.value.splice(index, 1)
 }
 
 const handleSend = () => {
-  if (!input.value.trim() && !selectedFile.value) return
+  if (!input.value.trim() && attachments.value.length === 0) return
   if (props.disabled) return
 
-  emit('send', input.value.trim(), selectedFile.value || undefined)
+  emit('send', input.value.trim(), [...attachments.value])
 
   input.value = ''
-  selectedFile.value = null
+  attachments.value = []
 }
 
 const submitCustomModel = async () => {

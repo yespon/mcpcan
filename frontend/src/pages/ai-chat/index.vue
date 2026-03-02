@@ -243,7 +243,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import type { AiSession } from './types'
+import type { AiSession, ChatAttachment } from './types'
 
 const { t } = useI18n()
 
@@ -350,9 +350,9 @@ const handleSaveSettings = async () => {
   }
 }
 
-const handleSend = async (content: string, file?: File) => {
+const handleSend = async (content: string, attachments: ChatAttachment[] = []) => {
   // If no session, these settings will be used to create one
-  addMessage(content, 'user', [], undefined, undefined, file, {
+  addMessage(content, 'user', attachments, undefined, undefined, undefined, {
     systemPrompt: sessionSettings.systemPrompt,
     temperature: sessionSettings.temperature,
     toolsConfig: sessionSettings.toolsConfig,
