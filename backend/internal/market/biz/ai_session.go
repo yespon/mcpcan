@@ -369,83 +369,27 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	mcpManager := NewMcpManager()
 
 	// Determine config to use
-	var configToUse string
-	var requestedTools []string
-	var enableAllTools bool
-	var useProfile bool
-
-	if req.McpProfile != nil && req.McpProfile.InstanceId != "" {
-		useProfile = true
-		// Load instance config
-		instance, err := GInstanceBiz.GetInstance(req.McpProfile.InstanceId)
-		if err != nil {
-			mcpManager.Close()
-			return nil, fmt.Errorf("failed to load mcp instance: %v", err)
-		}
-		if instance != nil {
-			configToUse = string(instance.SourceConfig)
-			// Parse tool filters
-			requestedTools = req.McpProfile.IncludeTools
-			enableAllTools = req.McpProfile.EnableAll
-		}
-	} else {
-		// Fallback to session/request overrides
-		configToUse = string(session.ToolsConfig)
-		if req.Tools != "" {
-			configToUse = req.Tools
-		}
-		enableAllTools = true // Default to all if not using profile (legacy behavior)
-	}
-
+	configToUse := string(session.ToolsConfig)
 	systemInstruction := ""
 
 	// Debug: log the config being used for MCP
 	log.Printf("[MCP Debug] Session %d, configToUse length=%d, value=%s", sessionID, len(configToUse), configToUse)
 
-	if len(configToUse) > 0 && configToUse != "{}" && configToUse != "null" {
+	if len(configToUse) > 0 && configToUse != "{}" && configToUse != "null" && configToUse != `{"mcpServers":{}}` && !strings.Contains(strings.ReplaceAll(configToUse, " ", ""), `"mcpServers":{}`) {
+		var allTools []llm.Tool
 		log.Printf("[MCP Debug] Initializing MCP tools...")
 		if err := mcpManager.Initialize(ctx, configToUse); err != nil {
-			log.Printf("[MCP Error] Failed to init: %v", err)
-			mcpManager.Close()
-			return nil, fmt.Errorf("failed to init mcp tools: %v", err)
-		}
-
-		allTools, err := mcpManager.GetTools(ctx)
-		if err != nil {
-			mcpManager.Close()
-			return nil, fmt.Errorf("failed to get tools: %v", err)
-		}
-
-		// Robust Check: If toolsConfig was provided but no tools found, return error
-		if len(allTools) == 0 {
-			mcpManager.Close()
-			return nil, fmt.Errorf("mcp initialization successful but no tools found. please check your mcp status or config")
-		}
-
-		if useProfile && !enableAllTools && len(requestedTools) > 0 {
-			// Filter tools
-			toolMap := make(map[string]llm.Tool)
-			for _, t := range allTools {
-				toolMap[t.Function.Name] = t
-			}
-
-			var filteredTools []llm.Tool
-			var missingTools []string
-
-			for _, name := range requestedTools {
-				if t, ok := toolMap[name]; ok {
-					filteredTools = append(filteredTools, t)
-				} else {
-					missingTools = append(missingTools, name)
-				}
-			}
-			tools = filteredTools
-
-			// Inject warning for missing tools
-			if len(missingTools) > 0 {
-				systemInstruction = fmt.Sprintf("\n[System Warning]: The following requested tools are unavailable or not found: %s. You cannot use them.", strings.Join(missingTools, ", "))
-			}
+			log.Printf("[MCP Warning] Failed to init (possibly empty config or no valid server): %v", err)
+			// Do not block chat functionality, just continue without tools
 		} else {
+			var err error
+			allTools, err = mcpManager.GetTools(ctx)
+			if err != nil {
+				log.Printf("[MCP Warning] Failed to get tools after successful init: %v", err)
+			}
+		}
+
+		if len(allTools) > 0 {
 			tools = allTools
 		}
 	}
