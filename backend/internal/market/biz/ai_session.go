@@ -169,6 +169,25 @@ func (b *AiSessionBiz) Get(ctx context.Context, id int64) (*model.AiSession, err
 	return mysql.AiSessionRepo.FindByID(ctx, id)
 }
 
+// ResetMemory 重置会话记忆
+// 记录当前最新消息 ID 作为卡位点，后续 Chat 只拉取卡位点之后的消息
+func (b *AiSessionBiz) ResetMemory(ctx context.Context, sessionID int64) error {
+	// 1. 确认会话存在
+	if _, err := mysql.AiSessionRepo.FindByID(ctx, sessionID); err != nil {
+		return fmt.Errorf("session not found")
+	}
+
+	// 2. 获取当前最新消息 ID
+	latestMsgId, err := mysql.AiMessageRepo.GetLatestMessageId(ctx, sessionID)
+	if err != nil {
+		// 如果没有消息，用 0 作为卡位（等于不过滤）
+		latestMsgId = 0
+	}
+
+	// 3. 更新会话的记忆重置卡位
+	return mysql.AiSessionRepo.ResetMemory(ctx, sessionID, latestMsgId)
+}
+
 func (b *AiSessionBiz) List(ctx context.Context, userID int64, page, pageSize int) ([]*model.AiSession, int64, error) {
 	sessions, err := mysql.AiSessionRepo.FindByUserID(ctx, userID)
 	if err != nil {
@@ -227,7 +246,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 	if limit <= 0 {
 		limit = 20
 	}
-	historyMessages, err := mysql.AiMessageRepo.GetLastN(ctx, sessionID, limit)
+	historyMessages, err := mysql.AiMessageRepo.GetLastN(ctx, sessionID, limit, session.MemoryResetMessageId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load history")
 	}

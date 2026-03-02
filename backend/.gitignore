@@ -27,7 +27,7 @@ logs/*
 # protobuf
 api/**/*.go
 api/**/*.json
-api/*.json
+api/openapi.yaml
 
 # config
 config/*

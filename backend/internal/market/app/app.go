@@ -436,6 +436,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/messages", routerPrefix), aiSessionService.GetSessionMessagesHandler)
 	a.ginEngine.GET(fmt.Sprintf("/%s/ai/sessions/:id/usage", routerPrefix), aiSessionService.GetSessionUsageHandler)
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions/:id/chat", routerPrefix), aiSessionService.ChatHandler)
+	a.ginEngine.POST(fmt.Sprintf("/%s/ai/sessions/reset-memory", routerPrefix), aiSessionService.ResetMemoryHandler)
 
 	// Register AI model access management interface
 	aiModelAccessService := service.NewAiModelAccessService(context.Background())

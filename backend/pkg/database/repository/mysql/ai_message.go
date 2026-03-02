@@ -31,18 +31,26 @@ func (r *AiMessageRepository) Create(ctx context.Context, message *model.AiMessa
 }
 
 // GetLastN 获取最近 N 条消息 (用于构建 Context)
+// afterId > 0 时只取 id > afterId 的消息（记忆重置卡位）
 // 返回按时间正序排列的消息 (旧 -> 新)
-func (r *AiMessageRepository) GetLastN(ctx context.Context, sessionID int64, n int) ([]*model.AiMessage, error) {
-	return r.FindBySessionId(ctx, sessionID, n)
+func (r *AiMessageRepository) GetLastN(ctx context.Context, sessionID int64, n int, afterId int64) ([]*model.AiMessage, error) {
+	return r.FindBySessionId(ctx, sessionID, n, afterId)
 }
 
 // FindBySessionId 获取会话的消息列表
+// afterId > 0 时只取 id > afterId 的消息
 // 返回按时间正序排列的消息 (旧 -> 新)
-func (r *AiMessageRepository) FindBySessionId(ctx context.Context, sessionID int64, limit int) ([]*model.AiMessage, error) {
+func (r *AiMessageRepository) FindBySessionId(ctx context.Context, sessionID int64, limit int, afterId ...int64) ([]*model.AiMessage, error) {
 	var messages []*model.AiMessage
+	query := r.getDB().WithContext(ctx).Where("session_id = ?", sessionID)
+
+	// 记忆重置卡位：只取 id > afterId 的消息
+	if len(afterId) > 0 && afterId[0] > 0 {
+		query = query.Where("id > ?", afterId[0])
+	}
+
 	// 先按倒序取最近N条
-	err := r.getDB().WithContext(ctx).
-		Where("session_id = ?", sessionID).
+	err := query.
 		Order("id desc").
 		Limit(limit).
 		Find(&messages).Error
@@ -78,6 +86,19 @@ func (r *AiMessageRepository) FindBySessionIdPaged(ctx context.Context, sessionI
 	}
 
 	return messages, total, nil
+}
+
+// GetLatestMessageId 获取会话的最新消息 ID
+func (r *AiMessageRepository) GetLatestMessageId(ctx context.Context, sessionID int64) (int64, error) {
+	var msg model.AiMessage
+	err := r.getDB().WithContext(ctx).
+		Where("session_id = ?", sessionID).
+		Order("id desc").
+		First(&msg).Error
+	if err != nil {
+		return 0, err
+	}
+	return msg.ID, nil
 }
 
 // InitTable 初始化表结构

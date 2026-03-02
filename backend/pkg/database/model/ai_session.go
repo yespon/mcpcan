@@ -16,8 +16,9 @@ type AiSession struct {
 	Temperature   float64         `gorm:"default:0.7;column:temperature;comment:模型温度"`
 	SystemPrompt  string          `gorm:"type:text;column:system_prompt;comment:系统提示词"`
 	ToolsConfig   json.RawMessage `gorm:"type:json;column:tools_config;comment:启用的工具配置"`
-	MaxContext    int             `gorm:"default:20;column:max_context;comment:最大上下文条数"`
-	CreateTime    time.Time       `gorm:"autoCreateTime;column:create_time;comment:创建时间"`
+	MaxContext           int             `gorm:"default:20;column:max_context;comment:最大上下文条数"`
+	MemoryResetMessageId int64          `gorm:"default:0;column:memory_reset_message_id;comment:记忆重置卡位消息ID"`
+	CreateTime           time.Time      `gorm:"autoCreateTime;column:create_time;comment:创建时间"`
 	UpdateTime    time.Time       `gorm:"autoUpdateTime;column:update_time;comment:更新时间"`
 }
 

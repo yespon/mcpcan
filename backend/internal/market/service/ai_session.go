@@ -301,6 +301,31 @@ func (s *AiSessionService) convertModelToProto(m *model.AiSession) *pb.AiSession
 	}
 }
 
+// ResetMemoryHandler 重置会话记忆
+func (s *AiSessionService) ResetMemoryHandler(c *gin.Context) {
+	var req struct {
+		SessionId int64 `json:"sessionId" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+		return
+	}
+
+	// 鉴权：从认证上下文中获取当前用户 ID
+	_, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeUnauthorized, "user not authenticated")
+		return
+	}
+
+	if err := biz.GAiSessionBiz.ResetMemory(c.Request.Context(), req.SessionId); err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to reset memory: %s", err.Error()))
+		return
+	}
+
+	i18nresp.SuccessResponse(c, gin.H{"success": true})
+}
+
 // GetSessionUsageHandler 获取会话的 Token 使用统计
 func (s *AiSessionService) GetSessionUsageHandler(c *gin.Context) {
 	idStr := c.Param("id")

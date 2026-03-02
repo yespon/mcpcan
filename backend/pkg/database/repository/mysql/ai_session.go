@@ -62,6 +62,14 @@ func (r *AiSessionRepository) FindByUserID(ctx context.Context, userID int64) ([
 	return sessions, nil
 }
 
+// ResetMemory 重置会话记忆：更新卡位消息 ID
+func (r *AiSessionRepository) ResetMemory(ctx context.Context, sessionID int64, messageID int64) error {
+	return GetDB().WithContext(ctx).
+		Model(&model.AiSession{}).
+		Where("id = ?", sessionID).
+		Update("memory_reset_message_id", messageID).Error
+}
+
 // InitTable 初始化表结构
 func (r *AiSessionRepository) InitTable() error {
 	if err := r.getDB().AutoMigrate(&model.AiSession{}); err != nil {
