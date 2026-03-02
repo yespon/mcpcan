@@ -280,10 +280,11 @@ const generateInstanceConfig = (instance: InstanceResult) => {
   const instancePath = (instance as any).publicProxyPath || ''
   const cleanPublicPath = publicPath
 
-  let fullUrl = `${window.location.origin}${cleanPublicPath}${instancePath}`.replace(
-    /([^:]\/)\/+/g,
-    '$1',
-  )
+  let fullUrl =
+    `${'https://mcp-dev.itqm.com' || window.location.origin}${cleanPublicPath}${instancePath}`.replace(
+      /([^:]\/)\/+/g,
+      '$1',
+    )
 
   const serverKey = `mcp-${instance.instanceId.slice(0, 8)}`
 

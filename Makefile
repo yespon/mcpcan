@@ -126,7 +126,7 @@ init:
 pnpm-build:
 	@echo "---------- Start build frontend ----------"
 	@echo "cd $(FRONTEND_PATH) && pnpm i && pnpm build"
-	@cd $(FRONTEND_PATH) && rm -rf node_modules && CI=true pnpm i && pnpm build
+	@cd $(FRONTEND_PATH) && rm -rf node_modules && CI=true pnpm i && NODE_OPTIONS="--max-old-space-size=8192"&& pnpm build
 	@echo "---------- End build frontend ----------"
 
 .PHONY: go-mod-tidy
