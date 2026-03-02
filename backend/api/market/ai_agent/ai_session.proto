@@ -173,10 +173,6 @@ message ChatRequest {
     int64 sessionId = 1;
     // @inject_tag: json:"content" form:"content" desc:"Content"
     string content = 2;
-    // @inject_tag: json:"tools" desc:"Tools Config (legacy JSON string)"
-    string tools = 3; 
-    // @inject_tag: json:"mcpProfile" desc:"Advanced MCP Debug Profile"
-    McpProfile mcpProfile = 4;
     // @inject_tag: json:"attachments" desc:"Attachments"
     repeated ChatAttachment attachments = 5;
 }
