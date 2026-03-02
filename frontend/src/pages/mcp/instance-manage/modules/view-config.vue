@@ -146,6 +146,13 @@
                                 </el-button>
                               </el-dropdown-item>
                             </div>
+                            <div v-auth="'mcpcan_instance:data_permission'">
+                              <el-dropdown-item @click="handleTokenDataPermission(token)">
+                                <el-button link>
+                                  {{ t('dataPermission.title') }}
+                                </el-button>
+                              </el-dropdown-item>
+                            </div>
                             <div v-auth="'mcpcan_instance:delete_token'">
                               <el-dropdown-item
                                 v-if="showDeleteBtn(token)"
@@ -285,6 +292,8 @@
     ref="batchChangeHeaderRef"
     @on-confirm="handleCommitHeader"
   ></BatchChangeHeader>
+
+  <DataPermissionDialog ref="dataPermissionDialog"></DataPermissionDialog>
 </template>
 <script setup lang="ts">
 import { setClipboardData, timestampToDate } from '@/utils/system'
@@ -301,6 +310,7 @@ import { useRouterHooks } from '@/utils/url'
 import SearchForm from '@/components/SearchForm/index.vue'
 import TokenForm from './components/token-form-list.vue'
 import BatchChangeHeader from './components/batch-change-header.vue'
+import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 // @ts-expect-error - vue-virtual-scroller 缺少类型定义
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
@@ -312,6 +322,7 @@ const emit = defineEmits<{
   (e: 'on-refresh'): void
 }>()
 const batchChangeHeaderRef = ref()
+const dataPermissionDialog = ref()
 const formRef = ref()
 const formData = ref<any>({
   visible: false,
@@ -687,6 +698,18 @@ const handleViewLog = (index: number) => {
       instanceId: dialogInfo.value.instanceInfo.instanceId,
       token: tokenList.value[index].token || '',
     },
+  })
+}
+
+/**
+ * Handle token data permission
+ * @param token - token item
+ */
+const handleTokenDataPermission = (token: any) => {
+  dataPermissionDialog.value.init({
+    id: String(token.id),
+    name: token.token,
+    type: 'instance_tokens',
   })
 }
 

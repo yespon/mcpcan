@@ -55,7 +55,7 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '180px',
+        width: '210px',
         fixed: 'right',
         align: 'center',
       }"
@@ -109,6 +109,16 @@
           {{ t('common.download') }}
         </el-button>
         <el-button
+          v-auth="'mcpcan_resource_manage:data_permission'"
+          type="text"
+          size="small"
+          link
+          @click="handleDataPermission(row)"
+          class="base-btn-link"
+        >
+          {{ t('dataPermission.title') }}
+        </el-button>
+        <el-button
           v-auth="'mcpcan_resource_manage:delete_openapi'"
           type="danger"
           size="small"
@@ -118,6 +128,7 @@
         >
       </template>
     </TablePlus>
+    <DataPermissionDialog ref="dataPermissionDialog"></DataPermissionDialog>
   </div>
 </template>
 
@@ -125,6 +136,7 @@
 import { UploadFilled, More } from '@element-plus/icons-vue'
 import { DocsAPI } from '@/api/api-docs/index'
 import TablePlus from '@/components/TablePlus/index.vue'
+import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 import { useDocsTableHooks } from './hooks.ts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
@@ -135,6 +147,19 @@ import McpButton from '@/components/mcp-button/index.vue'
 const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo, action, headers } =
   useDocsTableHooks()
 const { jumpToPage } = useRouterHooks()
+
+const dataPermissionDialog = ref()
+/**
+ * Handle data permission dialog
+ * @param row - openapi docs item
+ */
+const handleDataPermission = (row: any) => {
+  dataPermissionDialog.value.init({
+    id: String(row.id),
+    name: row.name,
+    type: 'openapi_package',
+  })
+}
 
 /**
  * Handle jump to the page of update code package

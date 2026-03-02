@@ -112,7 +112,10 @@
         "accessConfig": "Configuration",
         "viewLogs": "Logs",
         "saveAndRun": "Save and Run",
-        "backList": "List"
+        "backList": "List",
+        "dataPermission": "Data Permission",
+        "dataPermissionDesc": "Configure the data permission of this instance",
+        "dataPermissionEmpty": "No data permission configuration"
       },
       "pageDesc": {
         "createTitle": "Create a instance",

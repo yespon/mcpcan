@@ -59,7 +59,7 @@
       :columns="columns"
       v-model:pageConfig="pageConfig"
       :handlerColumnConfig="{
-        width: '180px',
+        width: '210px',
         fixed: 'right',
         align: 'center',
       }"
@@ -113,6 +113,16 @@
           {{ t('common.download') }}
         </el-button>
         <el-button
+          v-auth="'mcpcan_resource_manage:data_permission'"
+          type="text"
+          size="small"
+          link
+          @click="handleDataPermission(row)"
+          class="base-btn-link"
+        >
+          {{ t('dataPermission.title') }}
+        </el-button>
+        <el-button
           v-auth="'mcpcan_resource_manage:delete_code_package'"
           type="danger"
           size="small"
@@ -142,6 +152,7 @@
         </el-dropdown> -->
       </template>
     </TablePlus>
+    <DataPermissionDialog ref="dataPermissionDialog"></DataPermissionDialog>
   </div>
 </template>
 
@@ -149,6 +160,7 @@
 import { UploadFilled, More } from '@element-plus/icons-vue'
 import { CodeAPI } from '@/api/code/index'
 import TablePlus from '@/components/TablePlus/index.vue'
+import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 import { useCodeTableHooks } from './hooks'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouterHooks } from '@/utils/url'
@@ -158,6 +170,19 @@ import zipLogo from '@/assets/logo/zip.png'
 const { t, tablePlus, columns, requestConfig, pageConfig, pageInfo, action, headers } =
   useCodeTableHooks()
 const { jumpToPage } = useRouterHooks()
+
+const dataPermissionDialog = ref()
+/**
+ * Handle data permission dialog
+ * @param row - code package item
+ */
+const handleDataPermission = (row: any) => {
+  dataPermissionDialog.value.init({
+    id: String(row.id),
+    name: row.name,
+    type: 'code_package',
+  })
+}
 
 const handleSuccess = (response: { code: number; data: { path: string } }) => {
   if (response.code !== 0) {

@@ -113,6 +113,16 @@
             >
               {{ t('common.delete') }}
             </el-button>
+            <el-button
+              v-auth="'mcpcan_agent_manage:data_permission'"
+              type="text"
+              size="small"
+              link
+              class="base-btn-link"
+              @click="handleDataPermission(row)"
+            >
+              {{ t('dataPermission.title') }}
+            </el-button>
           </div>
         </template>
         <template #slotCard="{ row }: { row: any }">
@@ -184,6 +194,17 @@
                     </el-icon>
                   </el-tooltip>
                 </div>
+                <div v-auth="'mcpcan_agent_manage:data_permission'">
+                  <el-tooltip :content="t('dataPermission.title')" placement="top">
+                    <el-icon
+                      :size="16"
+                      class="mx-2 cursor-pointer link-hover"
+                      @click="handleDataPermission(row)"
+                    >
+                      <Lock />
+                    </el-icon>
+                  </el-tooltip>
+                </div>
               </div>
             </div>
           </el-card>
@@ -192,16 +213,18 @@
     </div>
 
     <FormAgent ref="formAgent" @on-refresh="handleFormSuccess"></FormAgent>
+    <DataPermissionDialog ref="dataPermissionDialog"></DataPermissionDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plus, More, Edit, Delete, Link } from '@element-plus/icons-vue'
+import { Plus, More, Edit, Delete, Link, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import TablePlus from '@/components/TablePlus/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import McpImage from '@/components/mcp-image/index.vue'
 import FormAgent from './modules/form-dialog.vue'
+import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 import { kymo, dify, coze, n8n } from '@/utils/logo.ts'
 import agentLogo from '@/assets/logo/instance.png'
 import { useAgentTableHooks } from './index.ts'
@@ -211,6 +234,19 @@ const { t, tablePlus, columns, pageInfo, requestConfig, pageConfig, AgentAPI, lo
   useAgentTableHooks()
 // view model：'card' or 'table'
 const formAgent = ref()
+const dataPermissionDialog = ref()
+
+/**
+ * Handle data permission dialog
+ * @param row - agent item
+ */
+const handleDataPermission = (row: any) => {
+  dataPermissionDialog.value.init({
+    id: row.accessID,
+    name: row.accessName,
+    type: 'intelligent_access',
+  })
+}
 
 const handleNewAgent = (accessType: string) => {
   formAgent.value.init(accessType, null)
