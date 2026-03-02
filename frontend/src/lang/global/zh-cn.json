@@ -157,6 +157,41 @@
       "codePackage": "代码包",
       "instanceTokens": "令牌",
       "intelligentAccess": "智能体平台"
-    }
+    },
+    "tab": {
+      "access": "访问授权",
+      "blacklist": "访问黑名单"
+    },
+    "personnelScope": {
+      "all": "全部人员",
+      "partial": "部分人员"
+    },
+    "allPersonnelTip": "已选择全部人员",
+    "dimension": {
+      "dept": "组织架构",
+      "role": "角色",
+      "user": "人员"
+    },
+    "placeholder": {
+      "searchDept": "请输入部门名称搜索",
+      "searchRole": "请输入角色名称搜索",
+      "searchUser": "请输入用户名/名称进行搜索",
+      "searchSelectedUser": "请输入人员名称搜索"
+    },
+    "selected": "已选",
+    "selectedDept": "已选部门",
+    "selectedRole": "角色",
+    "selectedMember": "成员",
+    "selectedBlacklist": "已选黑名单人员",
+    "unit": "个",
+    "item": "项",
+    "all": "全部",
+    "clear": "清除",
+    "noData": "暂无数据",
+    "nickname": "姓名",
+    "username": "用户名",
+    "deptName": "部门",
+    "saveSuccess": "数据权限保存成功",
+    "loadFailed": "数据权限加载失败"
   }
 }

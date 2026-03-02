@@ -157,6 +157,41 @@
       "codePackage": "Code Package",
       "instanceTokens": "Token",
       "intelligentAccess": "Agent Platform"
-    }
+    },
+    "tab": {
+      "access": "Access Authorization",
+      "blacklist": "Access Blacklist"
+    },
+    "personnelScope": {
+      "all": "All Personnel",
+      "partial": "Partial Personnel"
+    },
+    "allPersonnelTip": "All personnel selected",
+    "dimension": {
+      "dept": "Department",
+      "role": "Role",
+      "user": "User"
+    },
+    "placeholder": {
+      "searchDept": "Search department name",
+      "searchRole": "Search role name",
+      "searchUser": "Search username/name",
+      "searchSelectedUser": "Search selected user"
+    },
+    "selected": "Selected",
+    "selectedDept": "Selected Depts",
+    "selectedRole": "Roles",
+    "selectedMember": "Members",
+    "selectedBlacklist": "Selected Blacklist",
+    "unit": "",
+    "item": "items",
+    "all": "All",
+    "clear": "Clear",
+    "noData": "No data",
+    "nickname": "Name",
+    "username": "Username",
+    "deptName": "Department",
+    "saveSuccess": "Data permission saved successfully",
+    "loadFailed": "Failed to load data permission"
   }
 }

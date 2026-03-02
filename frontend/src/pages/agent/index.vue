@@ -55,7 +55,7 @@
         v-model:pageConfig="pageConfig"
         :gridConfig="{ xs: 24, sm: 12, md: 12, lg: 8, xl: 6 }"
         :handlerColumnConfig="{
-          width: '180px',
+          width: '210px',
           fixed: 'right',
           align: 'center',
         }"
@@ -105,15 +105,6 @@
               {{ t('common.connection') }}
             </el-button>
             <el-button
-              v-auth="'mcpcan_agent_manage:delete'"
-              type="danger"
-              size="small"
-              link
-              @click="handleDelete(row)"
-            >
-              {{ t('common.delete') }}
-            </el-button>
-            <el-button
               v-auth="'mcpcan_agent_manage:data_permission'"
               type="text"
               size="small"
@@ -122,6 +113,15 @@
               @click="handleDataPermission(row)"
             >
               {{ t('dataPermission.title') }}
+            </el-button>
+            <el-button
+              v-auth="'mcpcan_agent_manage:delete'"
+              type="danger"
+              size="small"
+              link
+              @click="handleDelete(row)"
+            >
+              {{ t('common.delete') }}
             </el-button>
           </div>
         </template>
@@ -182,6 +182,17 @@
                     </el-icon>
                   </el-tooltip>
                 </div>
+                <div v-auth="'mcpcan_agent_manage:data_permission'">
+                  <el-tooltip :content="t('dataPermission.title')" placement="top">
+                    <el-icon
+                      :size="16"
+                      class="mx-2 cursor-pointer link-hover"
+                      @click="handleDataPermission(row)"
+                    >
+                      <Lock />
+                    </el-icon>
+                  </el-tooltip>
+                </div>
                 <div v-auth="'mcpcan_agent_manage:delete'">
                   <el-tooltip :content="t('common.delete')" placement="top">
                     <el-icon
@@ -191,17 +202,6 @@
                       color="#F56C6C"
                     >
                       <Delete />
-                    </el-icon>
-                  </el-tooltip>
-                </div>
-                <div v-auth="'mcpcan_agent_manage:data_permission'">
-                  <el-tooltip :content="t('dataPermission.title')" placement="top">
-                    <el-icon
-                      :size="16"
-                      class="mx-2 cursor-pointer link-hover"
-                      @click="handleDataPermission(row)"
-                    >
-                      <Lock />
                     </el-icon>
                   </el-tooltip>
                 </div>
