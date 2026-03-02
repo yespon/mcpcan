@@ -86,7 +86,7 @@
         :gridConfig="{ xs: 24, sm: 12, md: 12, lg: 8, xl: 6 }"
         :handlerColumnConfig="{
           fixed: 'right',
-          width: '380px',
+          width: '240px',
           align: 'center',
         }"
         @on-selection-change="handleTableSelect"
@@ -270,6 +270,16 @@
               {{ t('mcp.instance.action.probe') }}
             </el-button>
             <el-button
+              type="primary"
+              size="small"
+              link
+              class="base-btn-link"
+              v-auth="'mcpcan_instance:data_permission'"
+              @click="handleDataPermission(row)"
+            >
+              {{ t('mcp.instance.action.dataPermission') }}
+            </el-button>
+            <el-button
               size="small"
               type="danger"
               link
@@ -426,6 +436,20 @@
                         </el-icon>
                       </el-tooltip>
                     </div>
+                    <div v-auth="'mcpcan_instance:data_permission'">
+                      <el-tooltip
+                        :content="t('mcp.instance.action.dataPermission')"
+                        placement="top"
+                      >
+                        <el-icon
+                          :size="16"
+                          class="mx-2 cursor-pointer link-hover"
+                          @click="handleDataPermission(row)"
+                        >
+                          <Lock />
+                        </el-icon>
+                      </el-tooltip>
+                    </div>
                     <div v-auth="'mcpcan_instance:delete'">
                       <el-tooltip :content="t('mcp.instance.action.delete')" placement="top">
                         <el-icon
@@ -521,6 +545,8 @@
     <AgentSyncDialog ref="agentSyncDialog"></AgentSyncDialog>
     <TaskList ref="taskList" v-auth="'mcpcan_instance:agent_platform_sync'"></TaskList>
     <LogDialog ref="logDialog"></LogDialog>
+    <!-- data permission dialog -->
+    <DataPermissionDialog ref="dataPermissionDialog" @on-refresh="init"></DataPermissionDialog>
   </div>
 </template>
 
@@ -534,6 +560,7 @@ import {
   Operation,
   Edit,
   Delete,
+  Lock,
 } from '@element-plus/icons-vue'
 import { timestampToDate } from '@/utils/system'
 import TablePlus from '@/components/TablePlus/index.vue'
@@ -556,6 +583,7 @@ import AgentSyncDialog from './modules/agent-sync-dialog.vue'
 import TaskList from './modules/task-list.vue'
 import SpotlightCard from '@/components/Animation/SpotlightCard.vue'
 import LogDialog from './modules/log-dialog.vue'
+import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 
 const { t } = useI18n()
 const layout = useLayout()
@@ -732,6 +760,19 @@ const handleViewAccessLog = (row: InstanceResult) => {
 const logDialog = ref()
 const handleViewAllLog = (row: InstanceResult) => {
   logDialog.value.init(row)
+}
+
+const dataPermissionDialog = ref()
+/**
+ * Handle data permission dialog
+ * @param row - item of instance data
+ */
+const handleDataPermission = (row: InstanceResult) => {
+  dataPermissionDialog.value.init({
+    id: row.instanceId,
+    name: row.instanceName,
+    type: 'instance',
+  })
 }
 
 /**

@@ -144,5 +144,19 @@
     "system": "系统出错",
     "relogin": "请重新登录",
     "KeyPem": "秘钥获取失败"
+  },
+  "dataPermission": {
+    "title": "数据权限",
+    "desc": "配置该资源的数据权限",
+    "resourceName": "资源名称",
+    "resourceType": "资源类型",
+    "empty": "暂无数据权限配置",
+    "type": {
+      "instance": "MCP实例",
+      "openapiPackage": "OpenAPI 文件",
+      "codePackage": "代码包",
+      "instanceTokens": "令牌",
+      "intelligentAccess": "智能体平台"
+    }
   }
 }

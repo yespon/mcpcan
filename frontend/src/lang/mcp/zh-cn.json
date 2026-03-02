@@ -112,7 +112,10 @@
         "accessConfig": "访问配置",
         "viewLogs": "查看日志",
         "saveAndRun": "保存并运行",
-        "backList": "返回列表"
+        "backList": "返回列表",
+        "dataPermission": "数据权限",
+        "dataPermissionDesc": "配置该实例的数据权限",
+        "dataPermissionEmpty": "暂无数据权限配置"
       },
       "pageDesc": {
         "createTitle": "创建实例",

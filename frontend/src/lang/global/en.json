@@ -144,5 +144,19 @@
     "system": "System error",
     "relogin": "Please login again",
     "KeyPem": "Key acquisition failed"
+  },
+  "dataPermission": {
+    "title": "Data Permission",
+    "desc": "Configure the data permission of this resource",
+    "resourceName": "Resource Name",
+    "resourceType": "Resource Type",
+    "empty": "No data permission configuration",
+    "type": {
+      "instance": "MCP Instance",
+      "openapiPackage": "OpenAPI File",
+      "codePackage": "Code Package",
+      "instanceTokens": "Token",
+      "intelligentAccess": "Agent Platform"
+    }
   }
 }
