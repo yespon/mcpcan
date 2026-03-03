@@ -27,6 +27,7 @@ import (
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/n8n"
+	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
@@ -66,9 +67,10 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		return
 	}
 
-	userId, err := common.GetUserIDFromContext(c)
+	userInfo, err := utils.GetCurrentUser(c)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
 	}
 
 	// validate request
@@ -130,7 +132,7 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 
 	task := &model.McpToIntelligentTask{
 		Desc:                   req.Desc,
-		Creator:                userId,
+		Creator:                userInfo.UserId,
 		IntelligentAccessID:    req.IntelligentAccessID,
 		IntelligentAccessName:  intelligentAccess.AccessName,
 		InsertIntelligentInfos: insertInfos,
