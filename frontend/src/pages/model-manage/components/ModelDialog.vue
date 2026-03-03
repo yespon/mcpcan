@@ -131,7 +131,7 @@ const getProviderBaseUrl = (pid: string) => {
 }
 
 const handleProviderChange = () => {
-  // Logic from ChatInput.vue
+  form.allowedModels = []
 }
 
 const fetchSupportedProviders = async () => {

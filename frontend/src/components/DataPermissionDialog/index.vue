@@ -57,7 +57,7 @@
           <div class="dp-split-panel">
             <!-- 左侧：选择面板 -->
             <div class="dp-left">
-              <div class="dp-panel-header">
+              <div class="dp-panel-header h-10">
                 <el-checkbox
                   v-model="isLeftAllChecked"
                   :indeterminate="isLeftIndeterminate"
@@ -143,7 +143,7 @@
 
             <!-- 右侧：已选面板 -->
             <div class="dp-right">
-              <div class="dp-panel-header dp-right-header">
+              <div class="dp-panel-header h-10 dp-right-header">
                 <span class="dp-selected-summary">
                   {{ t('dataPermission.selectedDept') }}{{ selectedDeptIds.length
                   }}{{ t('dataPermission.unit') }}，{{ t('dataPermission.selectedRole')
