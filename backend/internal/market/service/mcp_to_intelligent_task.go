@@ -63,6 +63,12 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
 	}
+
+	userId, err := common.GetUserIDFromContext(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
+	}
+
 	// validate request
 	if req.Desc == "" || req.IntelligentAccessID == 0 || len(req.InsertIntelligentInfos) == 0 || len(req.McpInstanceIDs) == 0 {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
@@ -122,6 +128,7 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 
 	task := &model.McpToIntelligentTask{
 		Desc:                   req.Desc,
+		Creator:                userId,
 		IntelligentAccessID:    req.IntelligentAccessID,
 		IntelligentAccessName:  intelligentAccess.AccessName,
 		InsertIntelligentInfos: insertInfos,

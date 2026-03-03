@@ -28,6 +28,7 @@ type StringSlice []string
 // McpToIntelligentTask mcp到智能体平台任务
 type McpToIntelligentTask struct {
 	ID                     int64                  `gorm:"primaryKey;autoIncrement;column:id;comment:接入信息ID"`
+	Creator                int64                  `gorm:"type:bigint;not null;column:creator;comment:创建者ID"`
 	Desc                   string                 `gorm:"type:varchar(255);not null;column:desc;comment:任务描述"`
 	IntelligentAccessID    int64                  `gorm:"type:bigint;not null;column:intelligent_access_id;comment:智能体平台ID"`
 	IntelligentAccessName  string                 `gorm:"type:varchar(255);not null;column:intelligent_access_name;comment:智能体平台名称"`
