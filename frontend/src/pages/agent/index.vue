@@ -242,7 +242,7 @@ const dataPermissionDialog = ref()
  */
 const handleDataPermission = (row: any) => {
   dataPermissionDialog.value.init({
-    id: row.accessID,
+    id: String(row.accessID),
     name: row.accessName,
     type: 'intelligent_access',
   })
