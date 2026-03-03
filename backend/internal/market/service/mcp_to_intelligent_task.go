@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kymo-mcp/mcpcan/api/authz/user_auth"
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
@@ -22,6 +23,7 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/postgres"
 	"github.com/kymo-mcp/mcpcan/pkg/dify"
+	"github.com/kymo-mcp/mcpcan/pkg/gomap"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/n8n"
@@ -472,6 +474,12 @@ func ProcessMcpToIntelligentTask(id int64) {
 					<-sem
 					wg.Done()
 				}()
+
+				// 企业版数据权限 mysql 插件使用
+				if task.Creator != 0 {
+					gomap.Set(common.UserInfoContextKey, &user_auth.UserInfo{UserId: task.Creator})
+					defer gomap.Del(common.UserInfoContextKey)
+				}
 
 				// 获取任务最新状态，如果是取消则停止
 				searchTask, err := mysql.McpToIntelligentTaskRepo.FindByID(context.Background(), id)
