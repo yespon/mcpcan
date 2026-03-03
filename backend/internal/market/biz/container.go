@@ -328,7 +328,7 @@ type imageParams struct {
 	commandArgs []string
 }
 
-func (cd *ContainerBiz) getMcpHostingImageCfg(imgAddress string, port int32, initScript string, codepkgInstallScript string, mcpServerCfg string) (*imageParams, error) {
+func (cd *ContainerBiz) getMcpHostingImageCfg(instanceID string, imgAddress string, port int32, initScript string, codepkgInstallScript string, mcpServerCfg string) (*imageParams, error) {
 	if len(imgAddress) == 0 {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
 	}
@@ -339,12 +339,35 @@ func (cd *ContainerBiz) getMcpHostingImageCfg(imgAddress string, port int32, ini
 		initScript = "echo 'No initialization commands specified'"
 	}
 
+	// Traefik routing configuration for Sidecar
+	prefix := common.GetGatewayRoutePrefix()
+	strippedPrefix := strings.Trim(prefix, "/")
+	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
+
 	// Build complete startup script
 	// Escape single quotes for shell echo command
 	mcpServerCfg = strings.ReplaceAll(mcpServerCfg, "'", "'\\''")
 	startupScript := fmt.Sprintf(`
 		# Create working directory
 		mkdir -p /app/init
+
+		# =================【新增 Sidecar 静态配置】=================
+		cat > /app/agentgateway.yaml << 'EOF_PROXY'
+listeners:
+  - name: local-ingress
+    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
+routes:
+  - id: "local-route"
+    backend_id: "local-backend"
+    match:
+      pathPrefix: "%s"           # 截取流量并重写 SSE Payload (这是 AgentGateway 的核心能力)
+backends:
+  - id: "local-backend"
+    servers:
+      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
+EOF_PROXY
+		# ========================================================
+
 		# Generate initialization script dynamically
 		cat > /app/init/startup.sh << 'EOF'
 #!/bin/sh
@@ -360,7 +383,11 @@ echo "[$(date)] Starting initialization script execution..."
 %s
 echo "[$(date)] Initialization script execution completed"
 
-# Start main program
+# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
+echo "[$(date)] Starting local AgentGateway Sidecar..."
+agentgateway -c /app/agentgateway.yaml &
+
+# 2. 前台启动真实 MCP 应用进程（内部 8080）
 echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
 mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
 EOF
@@ -371,6 +398,8 @@ EOF
 		# Execute initialization script
 		/app/init/startup.sh
 	`,
+		instancePath,
+		port,
 		mcpServerCfg,
 		codepkgInstallScript,
 		initScript,
@@ -379,7 +408,7 @@ EOF
 
 	imgPms := &imageParams{
 		image:       imgAddress,
-		port:        port,
+		port:        80, // Target port changes to 80 for Traefik label
 		command:     []string{"/bin/sh"},
 		commandArgs: []string{"-c", startupScript},
 	}
@@ -387,7 +416,7 @@ EOF
 	return imgPms, nil
 }
 
-func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(imgAddress string, port int32, initScript string, command string, codepkgInstallScript string) (*imageParams, error) {
+func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(instanceID string, imgAddress string, port int32, initScript string, command string, codepkgInstallScript string) (*imageParams, error) {
 	if len(imgAddress) == 0 {
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
 	}
@@ -395,10 +424,33 @@ func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(imgAddress s
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeStartupCommandRequired))
 	}
 
+	// Traefik routing configuration for Sidecar
+	prefix := common.GetGatewayRoutePrefix()
+	strippedPrefix := strings.Trim(prefix, "/")
+	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
+
 	// Build complete startup script
 	startupScript := fmt.Sprintf(`
 		# Create working directory
 		mkdir -p /app/init
+
+		# =================【新增 Sidecar 静态配置】=================
+		cat > /app/agentgateway.yaml << 'EOF_PROXY'
+listeners:
+  - name: local-ingress
+    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
+routes:
+  - id: "local-route"
+    backend_id: "local-backend"
+    match:
+      pathPrefix: "%s"           # 截取流量并重写 SSE Payload (这是 AgentGateway 的核心能力)
+backends:
+  - id: "local-backend"
+    servers:
+      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
+EOF_PROXY
+		# ========================================================
+
 		# Generate initialization script dynamically
 		cat > /app/init/startup.sh << 'EOF'
 #!/bin/sh
@@ -409,7 +461,12 @@ set -e
 # Execute initialization script
 %s
 
-echo "Starting startup command script"
+# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
+echo "[$(date)] Starting local AgentGateway Sidecar..."
+agentgateway -c /app/agentgateway.yaml &
+
+# 2. 前台启动真实 MCP 应用进程
+echo "[$(date)] Starting startup command script"
 %s
 EOF
 		# Set script execution permissions
@@ -418,11 +475,11 @@ EOF
 		# Execute startup command script
 		/app/init/startup.sh
 	`,
-		codepkgInstallScript, initScript, command)
+		instancePath, port, codepkgInstallScript, initScript, command)
 
 	imgPms := &imageParams{
 		image:       imgAddress,
-		port:        port,
+		port:        80, // Target port changes to 80 for Traefik label
 		command:     []string{"/bin/sh"},
 		commandArgs: []string{"-c", startupScript},
 	}
@@ -753,13 +810,13 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	imgPms := &imageParams{}
 	if mcpProtocol == model.McpProtocolSSE || mcpProtocol == model.McpProtocolStreamableHttp {
 		// Generate image configuration
-		imgPms, err = cd.getMcpHostingImageCfgForSSEAndSteamableHttp(imgAddress, port, initScript, command, codepkgInstallScript)
+		imgPms, err = cd.getMcpHostingImageCfgForSSEAndSteamableHttp(instanceID, imgAddress, port, initScript, command, codepkgInstallScript)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
 		}
 	} else {
 		// Generate image configuration
-		imgPms, err = cd.getMcpHostingImageCfg(imgAddress, port, initScript, codepkgInstallScript, mcpServices)
+		imgPms, err = cd.getMcpHostingImageCfg(instanceID, imgAddress, port, initScript, codepkgInstallScript, mcpServices)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get mcp hosting image config: %w", err)
 		}
@@ -801,12 +858,11 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	prefix := common.GetGatewayRoutePrefix()
 	prefix = strings.Trim(prefix, "/")
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
-	stripMidName := fmt.Sprintf("mcp-strip-%s", instanceID)
 	
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("%s,mcp-auth@file", stripMidName)
-	labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMidName)] = fmt.Sprintf("/%s/%s/", prefix, instanceID)
+	// 只需要保留 mcp-auth 全局鉴权中间件即可，切记不要再加 strip_prefix
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
 	// Since port mapping might be dynamic, Traefik needs to know which port to route to if the image exposes multiple
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", imgPms.port)
 
@@ -856,27 +912,67 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	prefix := common.GetGatewayRoutePrefix()
 	prefix = strings.Trim(prefix, "/")
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
-	stripMidName := fmt.Sprintf("mcp-strip-%s", instanceID)
 	
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("%s,mcp-auth@file", stripMidName)
-	labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMidName)] = fmt.Sprintf("/%s/%s/", prefix, instanceID)
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "8080"
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
 	downloadLink := cd.createDownloadLink(downloadLinkPath)
-	script := fmt.Sprintf("curl -f '%s' -o /app/run.yaml && exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 --base-url=%s run.yaml", downloadLink, openapiBaseUrl)
+	instancePath := fmt.Sprintf("/%s/%s/", prefix, instanceID)
+
+	startupScript := fmt.Sprintf(`
+		# Create working directory
+		mkdir -p /app/init
+
+		# =================【新增 Sidecar 静态配置】=================
+		cat > /app/agentgateway.yaml << 'EOF_PROXY'
+listeners:
+  - name: local-ingress
+    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
+routes:
+  - id: "local-route"
+    backend_id: "local-backend"
+    match:
+      pathPrefix: "%s"           # 截取流量并重写 SSE Payload
+backends:
+  - id: "local-backend"
+    servers:
+      - url: "http://127.0.0.1:8080" # 代理给真实的同容器 MCP 服务
+EOF_PROXY
+		# ========================================================
+
+		# Generate initialization script dynamically
+		cat > /app/init/startup.sh << 'EOF'
+#!/bin/bash
+set -e
+
+# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
+echo "[$(date)] Starting local AgentGateway Sidecar..."
+agentgateway -c /app/agentgateway.yaml &
+
+# 2. 前台启动真实 MCP 应用进程
+echo "[$(date)] Starting openapi-mcp..."
+curl -f '%s' -o /app/run.yaml
+exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 --base-url=%s run.yaml
+EOF
+		# Set script execution permissions
+		chmod +x /app/init/startup.sh
+		
+		# Execute startup command script
+		/app/init/startup.sh
+	`, instancePath, downloadLink, openapiBaseUrl)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          8080,
-		Command:       []string{"sh", "-c"},
-		CommandArgs:   []string{script},
+		Port:          80, // Changed from 8080
+		Command:       []string{"bash", "-c"}, // Use bash for process substitution
+		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
 		Labels:        labels,
 		EnvVars:       envVars,
