@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -357,11 +358,51 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	// The container ID is always the last line of the output.
 	outStr := strings.TrimSpace(string(output))
 	lines := strings.Split(outStr, "\n")
+	containerID := outStr
 	if len(lines) > 0 {
-		return strings.TrimSpace(lines[len(lines)-1]), nil
+		containerID = strings.TrimSpace(lines[len(lines)-1])
 	}
 
-	return outStr, nil
+	// Start Sidecar if configured
+	if options.Sidecar != nil && options.Sidecar.ImageName != "" {
+		if err := dcm.createDockerSidecar(ctx, options.ContainerName, options.Sidecar); err != nil {
+			// rollback
+			dcm.Delete(ctx, options.ContainerName)
+			return "", fmt.Errorf("failed to create sidecar container: %w", err)
+		}
+	}
+
+	return containerID, nil
+}
+
+func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, mainContainerName string, sidecar *SidecarOptions) error {
+	args := []string{"run", "-d", "--name", sidecar.ContainerName, "--network", fmt.Sprintf("container:%s", mainContainerName)}
+
+	for key, value := range sidecar.EnvVars {
+		args = append(args, "-e", fmt.Sprintf("%s=%s", key, value))
+	}
+	if len(sidecar.Command) > 0 {
+		args = append(args, "--entrypoint", sidecar.Command[0])
+	}
+	args = append(args, sidecar.ImageName)
+	if len(sidecar.CommandArgs) > 0 {
+		args = append(args, sidecar.CommandArgs...)
+	}
+
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	_, err := cmd.Output()
+	if err != nil {
+		// Attempt to get logs in case of error
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			err = fmt.Errorf("%w: %s", err, string(exitErr.Stderr))
+		}
+	}
+	return err
 }
 
 // Delete deletes container
@@ -374,8 +415,17 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	}
 	_ = stopCmd.Run() // ignore stop error, container might already be stopped
 
+	// Stop sidecar
+	sidecarName := containerName + "-sidecar"
+	stopSidecarCmd := exec.CommandContext(ctx, "docker", "stop", sidecarName)
+	stopSidecarCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		stopSidecarCmd.Env = append(stopSidecarCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	_ = stopSidecarCmd.Run()
+
 	// Delete container
-	rmCmd := exec.CommandContext(ctx, "docker", "rm", containerName)
+	rmCmd := exec.CommandContext(ctx, "docker", "rm", "-f", containerName)
 	rmCmd.Env = os.Environ()
 	if dcm.config.DockerHost != "" {
 		rmCmd.Env = append(rmCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
@@ -383,6 +433,14 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	if err := rmCmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete Docker container: %w", err)
 	}
+
+	// Delete sidecar
+	rmSidecarCmd := exec.CommandContext(ctx, "docker", "rm", "-f", sidecarName)
+	rmSidecarCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		rmSidecarCmd.Env = append(rmSidecarCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	_ = rmSidecarCmd.Run()
 
 	return nil
 }

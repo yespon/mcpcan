@@ -339,34 +339,12 @@ func (cd *ContainerBiz) getMcpHostingImageCfg(instanceID string, imgAddress stri
 		initScript = "echo 'No initialization commands specified'"
 	}
 
-	// Traefik routing configuration for Sidecar
-	prefix := common.GetGatewayRoutePrefix()
-	strippedPrefix := strings.Trim(prefix, "/")
-	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
-
 	// Build complete startup script
 	// Escape single quotes for shell echo command
 	mcpServerCfg = strings.ReplaceAll(mcpServerCfg, "'", "'\\''")
 	startupScript := fmt.Sprintf(`
 		# Create working directory
 		mkdir -p /app/init
-
-		# =================【新增 Sidecar 静态配置】=================
-		cat > /app/agentgateway.yaml << 'EOF_PROXY'
-listeners:
-  - name: local-ingress
-    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
-routes:
-  - id: "local-route"
-    backend_id: "local-backend"
-    match:
-      pathPrefix: "%s"           # 截取流量并重写 SSE Payload (这是 AgentGateway 的核心能力)
-backends:
-  - id: "local-backend"
-    servers:
-      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
-EOF_PROXY
-		# ========================================================
 
 		# Generate initialization script dynamically
 		cat > /app/init/startup.sh << 'EOF'
@@ -383,11 +361,7 @@ echo "[$(date)] Starting initialization script execution..."
 %s
 echo "[$(date)] Initialization script execution completed"
 
-# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
-echo "[$(date)] Starting local AgentGateway Sidecar..."
-agentgateway -c /app/agentgateway.yaml &
-
-# 2. 前台启动真实 MCP 应用进程（内部 8080）
+# 前台启动真实 MCP 应用进程
 echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
 mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
 EOF
@@ -398,8 +372,6 @@ EOF
 		# Execute initialization script
 		/app/init/startup.sh
 	`,
-		instancePath,
-		port,
 		mcpServerCfg,
 		codepkgInstallScript,
 		initScript,
@@ -408,7 +380,7 @@ EOF
 
 	imgPms := &imageParams{
 		image:       imgAddress,
-		port:        80, // Target port changes to 80 for Traefik label
+		port:        port,
 		command:     []string{"/bin/sh"},
 		commandArgs: []string{"-c", startupScript},
 	}
@@ -424,32 +396,10 @@ func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(instanceID s
 		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeStartupCommandRequired))
 	}
 
-	// Traefik routing configuration for Sidecar
-	prefix := common.GetGatewayRoutePrefix()
-	strippedPrefix := strings.Trim(prefix, "/")
-	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
-
 	// Build complete startup script
 	startupScript := fmt.Sprintf(`
 		# Create working directory
 		mkdir -p /app/init
-
-		# =================【新增 Sidecar 静态配置】=================
-		cat > /app/agentgateway.yaml << 'EOF_PROXY'
-listeners:
-  - name: local-ingress
-    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
-routes:
-  - id: "local-route"
-    backend_id: "local-backend"
-    match:
-      pathPrefix: "%s"           # 截取流量并重写 SSE Payload (这是 AgentGateway 的核心能力)
-backends:
-  - id: "local-backend"
-    servers:
-      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
-EOF_PROXY
-		# ========================================================
 
 		# Generate initialization script dynamically
 		cat > /app/init/startup.sh << 'EOF'
@@ -461,11 +411,7 @@ set -e
 # Execute initialization script
 %s
 
-# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
-echo "[$(date)] Starting local AgentGateway Sidecar..."
-agentgateway -c /app/agentgateway.yaml &
-
-# 2. 前台启动真实 MCP 应用进程
+# 前台启动真实 MCP 应用进程
 echo "[$(date)] Starting startup command script"
 %s
 EOF
@@ -475,11 +421,11 @@ EOF
 		# Execute startup command script
 		/app/init/startup.sh
 	`,
-		instancePath, port, codepkgInstallScript, initScript, command)
+		codepkgInstallScript, initScript, command)
 
 	imgPms := &imageParams{
 		image:       imgAddress,
-		port:        80, // Target port changes to 80 for Traefik label
+		port:        port,
 		command:     []string{"/bin/sh"},
 		commandArgs: []string{"-c", startupScript},
 	}
@@ -856,15 +802,30 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 
 	// Traefik support labels
 	prefix := common.GetGatewayRoutePrefix()
-	prefix = strings.Trim(prefix, "/")
+	strippedPrefix := strings.Trim(prefix, "/")
+	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
 	
 	labels["traefik.enable"] = "true"
-	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
 	// 只需要保留 mcp-auth 全局鉴权中间件即可，切记不要再加 strip_prefix
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
-	// Since port mapping might be dynamic, Traefik needs to know which port to route to if the image exposes multiple
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", imgPms.port)
+	// Sidecar 暴露的入口端口是 80
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
+
+	// 动态生成 agentgateway 配置
+	agentGatewayConfig := fmt.Sprintf(`listeners:
+  - name: local-ingress
+    address: "0.0.0.0:80"
+routes:
+  - id: "local-route"
+    backend_id: "local-backend"
+    match:
+      pathPrefix: "%s"
+backends:
+  - id: "local-backend"
+    servers:
+      - url: "http://127.0.0.1:%d"`, instancePath, imgPms.port)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
@@ -879,6 +840,16 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		EnvVars:       envVars,
 		Mounts:        mounts,
 		WorkingDir:    "/app",
+		Sidecar: &container.SidecarOptions{
+			ImageName:     "77kymo/mcp-gateway:latest", // 使用已有的网关镜像作为 Sidecar 基底
+			ContainerName: containerName + "-sidecar",
+			Port:          80, // Sidecar 暴露容器网络上的 80 端口
+			Command:       []string{"/bin/sh"},
+			CommandArgs:   []string{"-c", `echo "$AG_CONFIG" > /app/proxy.yaml && agentgateway -c /app/proxy.yaml`},
+			EnvVars: map[string]string{
+				"AG_CONFIG": agentGatewayConfig,
+			},
+		},
 	}
 
 	// Create Kubernetes container runtime configuration

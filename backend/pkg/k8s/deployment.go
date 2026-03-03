@@ -49,6 +49,19 @@ type DeploymentCreateOptions struct {
 	// 资源限制
 	ResourceRequests map[string]string `json:"resourceRequests,omitempty"`
 	ResourceLimits   map[string]string `json:"resourceLimits,omitempty"`
+
+	// Sidecar
+	Sidecar *SidecarOptions `json:"sidecar,omitempty"`
+}
+
+// SidecarOptions sidecar container options
+type SidecarOptions struct {
+	ImageName     string
+	ContainerName string
+	Port          int32
+	Command       []string
+	CommandArgs   []string
+	EnvVars       map[string]string
 }
 
 // Create 创建 Deployment
@@ -78,7 +91,40 @@ func (dm *DeploymentManager) Create(options DeploymentCreateOptions) (string, er
 	}
 
 	// 构建容器
-	container := dm.buildContainer(options, volumeMounts)
+	appContainer := dm.buildContainer(options, volumeMounts)
+	
+	containers := []corev1.Container{appContainer}
+	
+	// 构建 Sidecar 容器
+	if options.Sidecar != nil && options.Sidecar.ImageName != "" {
+		sidecarContainer := corev1.Container{
+			Name:  options.Sidecar.ContainerName,
+			Image: options.Sidecar.ImageName,
+		}
+		if len(options.Sidecar.Command) > 0 {
+			sidecarContainer.Command = options.Sidecar.Command
+		}
+		if len(options.Sidecar.CommandArgs) > 0 {
+			sidecarContainer.Args = options.Sidecar.CommandArgs
+		}
+		if len(options.Sidecar.EnvVars) > 0 {
+			for key, value := range options.Sidecar.EnvVars {
+				sidecarContainer.Env = append(sidecarContainer.Env, corev1.EnvVar{
+					Name:  key,
+					Value: value,
+				})
+			}
+		}
+		if options.Sidecar.Port > 0 {
+			sidecarContainer.Ports = []corev1.ContainerPort{
+				{
+					ContainerPort: options.Sidecar.Port,
+					Protocol:      corev1.ProtocolTCP,
+				},
+			}
+		}
+		containers = append(containers, sidecarContainer)
+	}
 
 	// 构建节点亲和性
 	nodeAffinity, err := dm.buildAutoNodeAffinity(options, targetNamespace)
@@ -103,7 +149,7 @@ func (dm *DeploymentManager) Create(options DeploymentCreateOptions) (string, er
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Containers:       []corev1.Container{container},
+					Containers:       containers,
 					Volumes:          volumes,
 					RestartPolicy:    corev1.RestartPolicyAlways, // Deployment 中总是 Always
 					ImagePullSecrets: dm.buildImagePullSecrets(options.ImagePullSecrets),

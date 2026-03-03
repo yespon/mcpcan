@@ -110,6 +110,18 @@ func (kcm *KubernetesContainerManager) Create(ctx context.Context, options Conta
 		deploymentOptions.ImagePullSecrets = options.ImagePullSecrets
 	}
 
+	// Set sidecar config
+	if options.Sidecar != nil {
+		deploymentOptions.Sidecar = &k8s.SidecarOptions{
+			ImageName:     options.Sidecar.ImageName,
+			ContainerName: options.Sidecar.ContainerName,
+			Port:          options.Sidecar.Port,
+			Command:       options.Sidecar.Command,
+			CommandArgs:   options.Sidecar.CommandArgs,
+			EnvVars:       options.Sidecar.EnvVars,
+		}
+	}
+
 	// Create deployment
 	deploymentName, err := kcm.Entry.Client.Deployment().Create(deploymentOptions)
 	if err != nil {

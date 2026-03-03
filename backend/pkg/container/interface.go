@@ -62,7 +62,17 @@ type ContainerCreateOptions struct {
 	RestartPolicy    string             `json:"restartPolicy"`    // restart policy (Docker: no/always/unless-stopped/on-failure)
 	WorkingDir       string             `json:"workingDir"`       // working directory
 	ImagePullSecrets []string           `json:"imagePullSecrets"` // image pull secret names list (only applicable to Kubernetes)
+	Sidecar          *SidecarOptions    `json:"sidecar"`          // optional sidecar container configuration
+}
 
+// SidecarOptions sidecar container options
+type SidecarOptions struct {
+	ImageName     string            `json:"imageName"`
+	ContainerName string            `json:"containerName"`
+	Port          int32             `json:"port"`
+	Command       []string          `json:"command"`
+	CommandArgs   []string          `json:"commandArgs"`
+	EnvVars       map[string]string `json:"envVars"`
 }
 
 // ContainerInfo container information
