@@ -3,8 +3,13 @@ server:
 
 secret: "dev-app-secret"
 
-domain: "http://demo.mcp-box.com"
-
+runEnvironment:
+  enabled: true
+  name: "Default-Run-Environment"
+  type: "docker"
+  docker:
+    host: "unix:///var/run/docker.sock"
+    network: "docker-compose_mcpcan-network"
 services:
   mcpMarket:
     host: "mcp-market-svc"
