@@ -3,7 +3,11 @@ package biz
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -120,10 +124,10 @@ func (cd *ContainerBiz) CreateContainer(ctx context.Context, containerCreateOpti
 
 	entry, err := cd.GetRuntimeEntry(ctx, uint(environmentId))
 	if err != nil {
-		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure, err))
 	}
 	if entry == nil {
-		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized)+": %w", "entyr is nil")
+		return errors.New(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized, "entry is nil"))
 	}
 
 	// create container
@@ -133,7 +137,7 @@ func (cd *ContainerBiz) CreateContainer(ctx context.Context, containerCreateOpti
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
-		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerCreateFailure)+": %v", err)
+		return errors.New(i18n.FormatWithContext(ctx, i18n.CodeContainerCreateFailure, err))
 	}
 
 	// Check runtime type
@@ -151,7 +155,7 @@ func (cd *ContainerBiz) CreateContainer(ctx context.Context, containerCreateOpti
 		if containerName != "" {
 			_ = entry.GetContainerManager().Delete(ctx, containerName)
 		}
-		return fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeServiceCreateFailure)+": %w", err)
+		return errors.New(i18n.FormatWithContext(ctx, i18n.CodeServiceCreateFailure, err))
 	}
 
 	return nil
@@ -160,17 +164,17 @@ func (cd *ContainerBiz) CreateContainer(ctx context.Context, containerCreateOpti
 // DeleteContainer delete container business logic
 func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*ContainerDeleteResult, error) {
 	if len(instance.ContainerName) <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
 	}
 	if instance.EnvironmentID <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceEnvironmentIDNotExists))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceEnvironmentIDNotExists))
 	}
 	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure), err)
 	}
 	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	message := ""
@@ -205,7 +209,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 		model.AccessTypeHosting, // Only hosting mode needs to query container status
 	)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode), err)
 	}
 	if len(instance.ContainerName) <= 0 {
 		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
@@ -217,7 +221,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 
 	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure), err)
 	}
 	if entry == nil {
 		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
@@ -228,7 +232,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 	// 3. Check container ready status
 	containerReady, runInfo, err := entry.GetContainerManager().IsReady(cd.ctx, instance.ContainerName)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerReadyCheckFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeContainerReadyCheckFailure), err)
 	}
 	if !containerReady {
 
@@ -270,7 +274,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 	}
 	err = mysql.McpInstanceRepo.Update(context.Background(), instance)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeUpdateInstanceFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeUpdateInstanceFailure), err)
 	}
 
 	events := make([]*instancepb.ContainerEvent, 0, len(warningEvents))
@@ -330,10 +334,10 @@ type imageParams struct {
 
 func (cd *ContainerBiz) getMcpHostingImageCfg(instanceID string, imgAddress string, port int32, initScript string, codepkgInstallScript string, mcpServerCfg string) (*imageParams, error) {
 	if len(imgAddress) == 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
 	}
 	if port == 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodePortRequired))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodePortRequired))
 	}
 	if len(initScript) == 0 {
 		initScript = "echo 'No initialization commands specified'"
@@ -363,7 +367,12 @@ echo "[$(date)] Initialization script execution completed"
 
 # 前台启动真实 MCP 应用进程
 echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
-mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
+		if [ -f "/usr/local/bin/mcp-hosting" ]; then
+			mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
+		else
+			echo "Error: mcp-hosting binary not found at /usr/local/bin/mcp-hosting"
+			exit 1
+		fi
 EOF
 
 		# Set script execution permissions
@@ -390,10 +399,10 @@ EOF
 
 func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(instanceID string, imgAddress string, port int32, initScript string, command string, codepkgInstallScript string) (*imageParams, error) {
 	if len(imgAddress) == 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeImageAddressRequired))
 	}
 	if len(command) == 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeStartupCommandRequired))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeStartupCommandRequired))
 	}
 
 	// Build complete startup script
@@ -465,21 +474,21 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 		model.AccessTypeHosting, // Only hosting mode needs container scaling
 	)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceNotHostingMode), err)
 	}
 	if len(instance.ContainerName) <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceContainerNotExists))
 	}
 	if instance.EnvironmentID <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceEnvironmentIDNotExists))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeInstanceEnvironmentIDNotExists))
 	}
 
 	entry, err := cd.GetRuntimeEntry(cd.ctx, instance.EnvironmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeGetRuntimeEntryFailure), err)
 	}
 	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	// Get container manager and service manager
@@ -494,13 +503,13 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 			// Kubernetes: Set replicas to 0
 			e1 := containerManager.Scale(cd.ctx, instance.ContainerName, 0)
 			if e1 != nil {
-				return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)+": %w", e1)
+				return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero), e1)
 			}
 		} else {
 			// Docker: Delete container
 			e2 := containerManager.Delete(cd.ctx, instance.ContainerName)
 			if e2 != nil {
-				return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure)+": %w", e2)
+				return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure), e2)
 			}
 		}
 	}
@@ -512,7 +521,7 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 	instance.ContainerLastMessage = i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)
 	err = mysql.McpInstanceRepo.Update(cd.ctx, instance)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeUpdateInstanceFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeUpdateInstanceFailure), err)
 	}
 
 	return &ContainerScaleResult{Message: i18n.FormatWithContext(cd.ctx, i18n.CodeContainerScaledToZero)}, nil
@@ -522,27 +531,27 @@ func (cd *ContainerBiz) ScaleContainerToZero(instance *model.McpInstance) (*Cont
 func (cd *ContainerBiz) GetContainerLogs(ctx context.Context, params ContainerLogsParams) (string, error) {
 	instance, err := mysql.McpInstanceRepo.FindByInstanceID(ctx, params.InstanceID)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceQueryFailure)+": %w", err)
+		return "", errors.New(i18n.FormatWithContext(ctx, i18n.CodeInstanceQueryFailure, err))
 	}
 	if instance == nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceNotExists))
+		return "", fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeInstanceNotExists))
 	}
 	if instance.AccessType != model.AccessTypeHosting {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceNotHostingMode))
+		return "", fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeInstanceNotHostingMode))
 	}
 	if len(instance.ContainerName) <= 0 {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
+		return "", fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
 	}
 	if instance.EnvironmentID <= 0 {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceEnvironmentIDNotExists))
+		return "", fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeInstanceEnvironmentIDNotExists))
 	}
 
 	entry, err := cd.GetRuntimeEntry(ctx, instance.EnvironmentID)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return "", errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure, err))
 	}
 	if entry == nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return "", fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	// Set default number of lines
@@ -554,7 +563,7 @@ func (cd *ContainerBiz) GetContainerLogs(ctx context.Context, params ContainerLo
 	// Get container logs
 	logs, err := entry.GetContainerManager().GetLogs(ctx, instance.ContainerName, lines)
 	if err != nil {
-		return "", fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetContainerLogsFailure)+": %w", err)
+		return "", errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetContainerLogsFailure, err))
 	}
 
 	return logs, nil
@@ -564,24 +573,24 @@ func (cd *ContainerBiz) GetContainerLogs(ctx context.Context, params ContainerLo
 func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.McpInstance) (*ContainerRestartResult, error) {
 	entry, err := cd.GetRuntimeEntry(ctx, instance.EnvironmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure)+": %w", err)
+		return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetRuntimeEntryFailure, err))
 	}
 	if entry == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeContainerRuntimeNotInitialized))
 	}
 
 	if len(instance.ContainerName) <= 0 {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeInstanceContainerNotExists))
 	}
 
 	// Parse container creation options
 	var containerOptions container.ContainerCreateOptions
 	if len(instance.ContainerCreateOptions) > 0 {
 		if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure)+": %w", e2)
+			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
 		}
 	} else {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+		return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
 	}
 
 	// Ensure container name is consistent with instance
@@ -590,14 +599,14 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 	// Call container manager's restart method
 	err = entry.GetContainerManager().Restart(ctx, containerOptions)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+		return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure, err))
 	}
 
 	if entry.GetRuntimeType() == container.RuntimeKubernetes {
 		// Get service
 		err = entry.GetServiceManager().Restart(ctx, containerOptions)
 		if err != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure)+": %w", err)
+			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeRestartContainerFailure, err))
 		}
 	}
 
@@ -641,7 +650,7 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	// Find code package
 	codePackage, err := mysql.McpCodePackageRepo.FindByPackageID(cd.ctx, packageId)
 	if err != nil {
-		return codepkgInstallScript, fmt.Errorf(i18n.FormatWithContext(cd.ctx, i18n.CodeFailedToFindCodePackage)+": %w", err)
+		return codepkgInstallScript, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeFailedToFindCodePackage), err)
 	}
 	// ext := codePackage.PackageType
 
@@ -654,18 +663,20 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	if len(pkgLink) > 0 {
 		codepkgInstallScript = fmt.Sprintf(`
 		# Download and extract ZIP package
-		echo "[$(date)] Starting to download package: %s"
-		echo "mkdir -p /app/codepkg"
+		echo "[$(date)] Starting to download package from: %s"
 		mkdir -p /app/codepkg
 		cd /tmp
-		wget -O package.zip "%s" || curl -L -o package.zip "%s"
-		echo "[$(date)] Package download completed, starting extraction to /app/codepkg"
-		echo "unzip -o package.zip -d /app/codepkg"
-		unzip -o package.zip -d /app/codepkg
-		ls -al /app/codepkg
-		echo "[$(date)] End Download and Extract"
+		if wget -q -O package.zip "%s" || curl -sL -o package.zip "%s"; then
+			echo "[$(date)] Package download completed (size: $(stat -c%%s package.zip 2>/dev/null || echo 'unknown')). Starting extraction..."
+			unzip -q -o package.zip -d /app/codepkg
+			echo "[$(date)] Extraction completed. Root contents of /app/codepkg:"
+			ls -l /app/codepkg
+		else
+			echo "[$(date)] Error: Failed to download package from %s"
+			exit 1
+		fi
 		cd /app
-		`, pkgLink, pkgLink, pkgLink)
+		`, pkgLink, pkgLink, pkgLink, pkgLink)
 	}
 	return codepkgInstallScript, nil
 }
@@ -675,7 +686,7 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 	// Get environment information by environment ID
 	environment, err := GEnvironmentBiz.GetEnvironment(ctx, environmentID)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure), err)
 	}
 
 	// Create different runtime configurations based on environment type
@@ -684,7 +695,7 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 		// Create Kubernetes container runtime entry
 		cfg, err := ed.getKubernetesRuntimeConfig(ctx, environment)
 		if err != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetK8sRuntimeEntryFailure)+": %w", err)
+			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetK8sRuntimeEntryFailure, err))
 		}
 		// Create Kubernetes container runtime entry
 		return container.NewEntry(cfg)
@@ -692,11 +703,11 @@ func (ed *ContainerBiz) GetRuntimeEntry(ctx context.Context, environmentID uint)
 		// Create Docker container runtime entry
 		cfg, err := ed.getDockerRuntimeConfig(ctx, environment)
 		if err != nil {
-			return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure)+": %w", err)
+			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeGetEnvironmentInfoFailure, err))
 		}
 		return container.NewEntry(cfg)
 	default:
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeUnsupportedEnvironmentType))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeUnsupportedEnvironmentType))
 	}
 }
 
@@ -800,32 +811,70 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
 
-	// Traefik support labels
+	// Traefik support labels — 所有容器统一通过 Docker Label 自动发现
+	// 确保 ForwardAuth 鉴权和日志转发统一覆盖所有实例
 	prefix := common.GetGatewayRoutePrefix()
 	strippedPrefix := strings.Trim(prefix, "/")
 	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
-	
+
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	// 只需要保留 mcp-auth 全局鉴权中间件即可，切记不要再加 strip_prefix
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
-	// Sidecar 暴露的入口端口是 80
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-strip-%s@docker,mcp-auth@file", instanceID)
+	// 后端指向 Sidecar (agentgateway) 端口 80，SSE 实例由独享 sidecar 处理 URL 重写
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
+	// StripPrefix 中间件：剥离网关前缀，让 agentgateway 收到干净的路径（/sse, /mcp 等）
+	labels[fmt.Sprintf("traefik.http.middlewares.mcp-strip-%s.stripPrefix.prefixes", instanceID)] = instancePath
+
+	// 确定 agentgateway 路由中后端 MCP 服务的路径
+	// 注意：agentgateway 接收的是 Traefik StripPrefix 之后的路径，无需包含网关前缀
+	var mcpBackendPath string
+	switch mcpProtocol {
+	case model.McpProtocolSSE:
+		mcpBackendPath = "/sse"
+	case model.McpProtocolStreamableHttp:
+		mcpBackendPath = "/mcp"
+	default:
+		// stdio 协议经 mcp-hosting 转换后以 StreamableHttp 对外
+		mcpBackendPath = "/mcp"
+	}
 
 	// 动态生成 agentgateway 配置
-	agentGatewayConfig := fmt.Sprintf(`listeners:
-  - name: local-ingress
-    address: "0.0.0.0:80"
-routes:
-  - id: "local-route"
-    backend_id: "local-backend"
-    match:
-      pathPrefix: "%s"
-backends:
-  - id: "local-backend"
-    servers:
-      - url: "http://127.0.0.1:%d"`, instancePath, imgPms.port)
+	// 将多行字符串拼接改为直接序列化为单行 JSON，绝对安全，防止任何转义与命令行处理问题
+	agentGatewayConfigMap := map[string]interface{}{
+		"binds": []interface{}{
+			map[string]interface{}{
+				"port": 80,
+				"listeners": []interface{}{
+					map[string]interface{}{
+						"routes": []interface{}{
+							map[string]interface{}{
+								"backends": []interface{}{
+									map[string]interface{}{
+										"mcp": map[string]interface{}{
+											"targets": []interface{}{
+												map[string]interface{}{
+													"name": "mcp-backend",
+													"sse": map[string]interface{}{
+														// Sidecar 通过同一 Docker 网络的 DNS 访问主容器
+														"host": containerName,
+														"port": imgPms.port,
+														"path": mcpBackendPath,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	configBytes, _ := json.Marshal(agentGatewayConfigMap)
+	agentGatewayConfig := string(configBytes)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
@@ -840,15 +889,19 @@ backends:
 		EnvVars:       envVars,
 		Mounts:        mounts,
 		WorkingDir:    "/app",
+		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"), // 支持通过环境变量指定平台，默认空即自适应
 		Sidecar: &container.SidecarOptions{
-			ImageName:     "77kymo/mcp-gateway:latest", // 使用已有的网关镜像作为 Sidecar 基底
+			// 使用官方 agentgateway 稳定镜像
+			ImageName:     "cr.agentgateway.dev/agentgateway:0.11.1",
 			ContainerName: containerName + "-sidecar",
-			Port:          80, // Sidecar 暴露容器网络上的 80 端口
-			Command:       []string{"/bin/sh"},
-			CommandArgs:   []string{"-c", `echo "$AG_CONFIG" > /app/proxy.yaml && agentgateway -c /app/proxy.yaml`},
-			EnvVars: map[string]string{
-				"AG_CONFIG": agentGatewayConfig,
-			},
+			Port:          80, // Sidecar 暴露容器网络上的 80 端口供 Traefik 访问
+			// 镜像已有 Entrypoint (/app/agentgateway)，无需设置 Command 覆盖
+			Command:     nil,
+			CommandArgs: []string{"-f", "/etc/agentgateway/config.yaml"},
+			EnvVars:     map[string]string{},
+			Platform:    "", // Sidecar 取消 amd64 强指，使用原生架构防 Rosetta bug
+			// 配置内容通过文件挂载传入，彻底避免 CLI 参数传递导致的 Runc 兼容性问题
+			ConfigContent: agentGatewayConfig,
 		},
 	}
 
@@ -883,7 +936,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	prefix := common.GetGatewayRoutePrefix()
 	prefix = strings.Trim(prefix, "/")
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
-	
+
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
@@ -941,15 +994,115 @@ EOF
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          80, // Changed from 8080
+		Port:          80,                     // Sidecar 监听 80 端口，由 Traefik Label 自动发现
 		Command:       []string{"bash", "-c"}, // Use bash for process substitution
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
 		Labels:        labels,
 		EnvVars:       envVars,
 		WorkingDir:    "/app",
+		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"), // 支持通过环境变量指定平台，默认为空
 	}
 
-	// Create Kubernetes container runtime configuration
+	return &containerOptions, nil
+}
+
+// BuildProxySidecarOptions 为外部 SSE 实例（Proxy/Direct 类型）构建翻译器容器选项
+// 该容器本质上是一个独立的 agentgateway，负责将外部 SSE 流量重写为带网关前缀的路径
+func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID string, remoteURL string) (*container.ContainerCreateOptions, error) {
+	containerName := fmt.Sprintf("mcp-ext-%s", instanceID)
+	serviceName := fmt.Sprintf("mcp-ext-svc-%s", instanceID)
+
+	// 解析远程 URL
+	u, err := url.Parse(remoteURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid remote URL: %w", err)
+	}
+
+	host := u.Hostname()
+	portStr := u.Port()
+	if portStr == "" {
+		if u.Scheme == "https" {
+			portStr = "443"
+		} else {
+			portStr = "80"
+		}
+	}
+	p, _ := strconv.Atoi(portStr)
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+
+	// Set labels
+	labels := make(map[string]string)
+	labels["app"] = containerName
+	labels["instance"] = instanceID
+	labels["managed-by"] = common.SourceServerName
+	labels["mcp.instance.type"] = "proxy-translator"
+
+	// Traefik support labels
+	prefix := common.GetGatewayRoutePrefix()
+	strippedPrefix := strings.Trim(prefix, "/")
+	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
+	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
+
+	labels["traefik.enable"] = "true"
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-strip-%s@docker,mcp-auth@file", instanceID)
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
+	labels[fmt.Sprintf("traefik.http.middlewares.mcp-strip-%s.stripPrefix.prefixes", instanceID)] = instancePath
+
+	// 动态生成 agentgateway 配置
+	agentGatewayConfigMap := map[string]interface{}{
+		"binds": []interface{}{
+			map[string]interface{}{
+				"port": 80,
+				"listeners": []interface{}{
+					map[string]interface{}{
+						"routes": []interface{}{
+							map[string]interface{}{
+								"backends": []interface{}{
+									map[string]interface{}{
+										"mcp": map[string]interface{}{
+											"targets": []interface{}{
+												map[string]interface{}{
+													"name": "remote-mcp",
+													"sse": map[string]interface{}{
+														"host": host,
+														"port": p,
+														"path": path,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	configBytes, _ := json.Marshal(agentGatewayConfigMap)
+	agentGatewayConfig := string(configBytes)
+
+	containerOptions := container.ContainerCreateOptions{
+		ImageName:     "cr.agentgateway.dev/agentgateway:0.11.1",
+		ContainerName: containerName,
+		ServiceName:   serviceName,
+		Port:          80, // 容器内部监听 80
+		// 镜像已有 Entrypoint (/app/agentgateway)，无需设置 Command 覆盖
+		Command:       nil,
+		CommandArgs:   []string{"-f", "/etc/agentgateway/config.yaml"},
+		RestartPolicy: "Always",
+		Labels:        labels,
+		EnvVars:       map[string]string{"NODE_ENV": "production"},
+		Platform:      "", // 取消 amd64 强指，使用原生架构防 Rosetta bug
+		// 配置内容通过文件挂载传入，彻底避免 CLI 参数传递导致的 Runc 兼容性问题
+		ConfigContent: agentGatewayConfig,
+	}
+
 	return &containerOptions, nil
 }

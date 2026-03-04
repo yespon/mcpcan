@@ -121,8 +121,10 @@ func (s *GatewayService) RoutesHandler(c *gin.Context) {
 	prefix = strings.Trim(prefix, "/")
 
 	for _, instance := range instances {
-		// 目前只针对 AccessTypeDirect 和 AccessTypeProxy 生成外部路由，托管在 Docker 内的已由 Label 处理
-		if instance.AccessType != model.AccessTypeDirect && instance.AccessType != model.AccessTypeProxy {
+		// Hosting 类实例由 Docker Label 或 K8s Ingress 自动发现
+		// 此处只为 Direct/Proxy 类型生成 HTTP Provider 路由
+		// 如果实例有关联容器（如翻译器 Sidecar），则通过 Docker Label/K8s Ingress 自动发现，此处跳过
+		if instance.ContainerName != "" {
 			continue
 		}
 		if instance.ContainerServiceURL == "" {
@@ -137,7 +139,7 @@ func (s *GatewayService) RoutesHandler(c *gin.Context) {
 		response.HTTP.Routers[routerName] = Router{
 			Rule:        fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instance.InstanceID),
 			Service:     serviceName,
-			Middlewares: []string{stripMidName, "mcp-auth@file"}, 
+			Middlewares: []string{stripMidName, "mcp-auth@file"},
 		}
 
 		// 后端服务

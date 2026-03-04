@@ -124,6 +124,27 @@ func (biz *InstanceBiz) createInstanceDirectMode(ctx context.Context, req *insta
 		Notes:        req.Notes,            // Add notes field handling
 		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
 		TemplateID:   uint(req.TemplateId), // Add templateId field handling
+		EnvironmentID: uint(req.EnvironmentId),
+		EnabledToken: req.EnabledToken,
+	}
+
+	// 如果是 SSE 协议且指定了环境，启动翻译器 Sidecar
+	if mcpProtocol == model.McpProtocolSSE && req.EnvironmentId > 0 {
+		options, err := GContainerBiz.BuildProxySidecarOptions(ctx, instanceID, validationResult.Url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build proxy sidecar options: %w", err)
+		}
+		err = GContainerBiz.CreateContainer(ctx, options, req.EnvironmentId, req.StartupTimeout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create proxy sidecar container: %w", err)
+		}
+		instance.ContainerName = options.ContainerName
+		instance.ContainerServiceName = options.ServiceName
+		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ServiceName)
+		instance.EnvironmentID = uint(req.EnvironmentId)
+		// 路由协议转换为 SSE (经 sidecar 重写)
+		instance.ProxyProtocol = model.McpProtocolSSE
+		instance.PublicProxyPath = biz.CreatePublicProxyPath(instanceID, model.McpProtocolSSE)
 	}
 
 	// Save instance to database
@@ -275,6 +296,9 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 	proxyProtocol := mcpProtocol
 	publicProxyPath := biz.CreatePublicProxyPath(instanceID, proxyProtocol)
 
+	// DEBUG: 临时日志，验证 EnvironmentId 接收值
+	fmt.Printf("[DEBUG] createInstanceProxyMode: req.EnvironmentId=%d, mcpProtocol=%s\n", req.EnvironmentId, mcpProtocol)
+
 	// Create new instance record
 	instance := &model.McpInstance{
 		InstanceID:      instanceID,
@@ -291,6 +315,26 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		EnabledToken:    req.EnabledToken,
 		PublicProxyPath: publicProxyPath,
 		ProxyProtocol:   proxyProtocol,
+		EnvironmentID:   uint(req.EnvironmentId),
+	}
+
+	// 如果是 SSE 协议且指定了环境，启动翻译器 Sidecar
+	if mcpProtocol == model.McpProtocolSSE && req.EnvironmentId > 0 {
+		options, err := GContainerBiz.BuildProxySidecarOptions(ctx, instanceID, validationResult.Url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build proxy sidecar options: %w", err)
+		}
+		err = GContainerBiz.CreateContainer(ctx, options, req.EnvironmentId, req.StartupTimeout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create proxy sidecar container: %w", err)
+		}
+		instance.ContainerName = options.ContainerName
+		instance.ContainerServiceName = options.ServiceName
+		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ServiceName)
+		instance.EnvironmentID = uint(req.EnvironmentId)
+		// 路由协议转换为 SSE (经 sidecar 重写)
+		instance.ProxyProtocol = model.McpProtocolSSE
+		instance.PublicProxyPath = biz.CreatePublicProxyPath(instanceID, model.McpProtocolSSE)
 	}
 
 	if len(req.Tokens) > 0 {
@@ -1280,6 +1324,7 @@ func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolNam
 	}
 	return resp, nil
 }
+
 
 func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*client.Client, error) {
 	mcpInstance, err := biz.GetInstance(instanceID)
