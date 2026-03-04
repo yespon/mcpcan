@@ -51,9 +51,11 @@ func BindAndValidateUniversal(c *gin.Context, req interface{}) error {
 		}
 	}
 
-	// 2. Bind Query parameters (second lowest priority)
-	if err := c.ShouldBindQuery(req); err != nil {
-		// Query parameter binding failure doesn't return error directly, continue with other binding methods
+	// 2. Bind Query parameters (second lowest priority), only when query exists
+	if c.Request.URL.RawQuery != "" {
+		if err := c.ShouldBindQuery(req); err != nil {
+			// Query parameter binding failure doesn't return error directly, continue with other binding methods
+		}
 	}
 
 	// 3. Handle RawQuery parameters (second highest priority)
