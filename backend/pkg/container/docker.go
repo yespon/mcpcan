@@ -219,8 +219,8 @@ type DockerPort struct {
 
 // Create creates container
 func (dcm *DockerContainerManager) Create(ctx context.Context, options ContainerCreateOptions) (string, error) {
-	// Build docker run command
-	args := []string{"run", "-d"}
+	// Build docker create command
+	args := []string{"create"}
 
 	// Set container name
 	if options.ContainerName != "" {
@@ -339,21 +339,21 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		args = append(args, "--entrypoint", options.Command[0])
 	}
 
-	// 行业通用方案：将配置内容写入宿主机临时文件，通过 -v 挂载进容器
+	// 行业通用方案：将配置内容写入宿主机临时文件，随后通过 docker cp 写入容器，规避 DinD -v 挂载路径不存在的问题
+	var configTmpFile string
 	if options.ConfigContent != "" {
 		tmpFile, err := os.CreateTemp("", "container-config-*.yaml")
 		if err != nil {
 			return "", fmt.Errorf("failed to create temp config file: %w", err)
 		}
-		configTmpFile := tmpFile.Name()
+		configTmpFile = tmpFile.Name()
 		if _, err := tmpFile.WriteString(options.ConfigContent); err != nil {
 			tmpFile.Close()
 			os.Remove(configTmpFile)
 			return "", fmt.Errorf("failed to write config to temp file: %w", err)
 		}
 		tmpFile.Close()
-		args = append(args, "-v", fmt.Sprintf("%s:/etc/agentgateway/config.yaml:ro", configTmpFile))
-		log.Printf("[Docker Create] config written to temp file: %s", configTmpFile)
+		log.Printf("[Docker Create] config written to temp file: %s (will be copied)", configTmpFile)
 	}
 
 	// Add image name
@@ -364,7 +364,7 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		args = append(args, options.CommandArgs...)
 	}
 
-	// Execute docker run command
+	// Execute docker create command
 	log.Printf("[Docker Create] executing: docker %s", strings.Join(args, " "))
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Env = os.Environ()
@@ -373,18 +373,46 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		if configTmpFile != "" {
+			os.Remove(configTmpFile)
+		}
 		log.Printf("[Docker Create] failed: %v, output: %s", err, string(output))
 		return "", fmt.Errorf("failed to create Docker container: %w, output: %s", err, string(output))
 	}
 
 	// Parse output to get container ID
-	// When image is not found locally, docker run outputs pull progress.
-	// The container ID is always the last line of the output.
 	outStr := strings.TrimSpace(string(output))
 	lines := strings.Split(outStr, "\n")
 	containerID := outStr
 	if len(lines) > 0 {
 		containerID = strings.TrimSpace(lines[len(lines)-1])
+	}
+
+	// If there's config content to copy, copy it (to /ag-config.yaml) and start
+	if configTmpFile != "" {
+		// 赋予 777 权限，确保 non-root 用户在容器内可读
+		_ = os.Chmod(configTmpFile, 0777)
+		cpArgs := []string{"cp", configTmpFile, fmt.Sprintf("%s:/ag-config.yaml", containerID)}
+		log.Printf("[Docker Create] executing: docker %s", strings.Join(cpArgs, " "))
+		cpCmd := exec.CommandContext(ctx, "docker", cpArgs...)
+		cpCmd.Env = cmd.Env
+		cpOutput, cpErr := cpCmd.CombinedOutput()
+		os.Remove(configTmpFile)
+		if cpErr != nil {
+			dcm.Delete(ctx, containerID) // cleanup
+			return "", fmt.Errorf("failed to copy config to container: %w, output: %s", cpErr, string(cpOutput))
+		}
+	}
+
+	// Now start the container
+	startArgs := []string{"start", containerID}
+	log.Printf("[Docker Create] executing: docker %s", strings.Join(startArgs, " "))
+	startCmd := exec.CommandContext(ctx, "docker", startArgs...)
+	startCmd.Env = cmd.Env
+	startOutput, startErr := startCmd.CombinedOutput()
+	if startErr != nil {
+		dcm.Delete(ctx, containerID)
+		return "", fmt.Errorf("failed to start container: %w, output: %s", startErr, string(startOutput))
 	}
 
 	// Start Sidecar if configured
@@ -402,7 +430,7 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, mainContainerName string, sidecar *SidecarOptions) error {
 	// 行业标准方案：Sidecar 加入与主容器相同的 Docker 网络，通过容器名 DNS 互相通信
 	// 不再使用 --network container:xxx 共享命名空间，避免主容器进程退出导致 Runc 崩溃
-	args := []string{"run", "-d", "--name", sidecar.ContainerName, "--network", dcm.networkName}
+	args := []string{"create", "--name", sidecar.ContainerName, "--network", dcm.networkName}
 
 	if sidecar.Platform != "" {
 		args = append(args, "--platform", sidecar.Platform)
@@ -411,9 +439,12 @@ func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, main
 	for key, value := range sidecar.EnvVars {
 		args = append(args, "-e", fmt.Sprintf("%s=%s", key, value))
 	}
+	for key, value := range sidecar.Labels {
+		args = append(args, "--label", fmt.Sprintf("%s=%s", key, value))
+	}
 
-	// 行业通用方案：将配置内容写入宿主机临时文件，通过 -v 挂载进容器
-	// 彻底避免 CLI 参数传递导致的 Runc 兼容性问题
+	// 行业通用方案：将配置内容写入宿主机临时文件，随后通过 docker cp 写入容器
+	// 彻底避免 CLI 参数传递导致的 Runc 兼容性问题与 Dind 环境挂载问题
 	var configTmpFile string
 	if sidecar.ConfigContent != "" {
 		tmpFile, err := os.CreateTemp("", "agentgateway-config-*.yaml")
@@ -427,9 +458,7 @@ func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, main
 			return fmt.Errorf("failed to write config to temp file: %w", err)
 		}
 		tmpFile.Close()
-		// 挂载配置文件到容器内固定路径
-		args = append(args, "-v", fmt.Sprintf("%s:/etc/agentgateway/config.yaml:ro", configTmpFile))
-		log.Printf("[Docker Sidecar] config written to temp file: %s", configTmpFile)
+		log.Printf("[Docker Sidecar] config written to temp file: %s (will be copied)", configTmpFile)
 	}
 
 	if len(sidecar.Command) > 0 {
@@ -448,13 +477,37 @@ func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, main
 	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Printf("[Docker Sidecar] failed: %v, output: %s", err, string(output))
-		// 清理临时配置文件
 		if configTmpFile != "" {
 			os.Remove(configTmpFile)
 		}
-		return fmt.Errorf("sidecar creation failed: %w, output: %s", err, string(output))
+		return fmt.Errorf("failed to create sidecar container: %w, output: %s", err, string(output))
 	}
+
+	if configTmpFile != "" {
+		// 赋予 777 权限，确保 non-root 用户在容器内可读
+		_ = os.Chmod(configTmpFile, 0777)
+		cpArgs := []string{"cp", configTmpFile, fmt.Sprintf("%s:/ag-config.yaml", sidecar.ContainerName)}
+		log.Printf("[Docker Sidecar] executing: docker %s", strings.Join(cpArgs, " "))
+		cpCmd := exec.CommandContext(ctx, "docker", cpArgs...)
+		cpCmd.Env = cmd.Env
+		cpOutput, cpErr := cpCmd.CombinedOutput()
+		os.Remove(configTmpFile)
+		if cpErr != nil {
+			dcm.Delete(ctx, sidecar.ContainerName)
+			return fmt.Errorf("failed to copy config to sidecar container: %w, output: %s", cpErr, string(cpOutput))
+		}
+	}
+
+	startArgs := []string{"start", sidecar.ContainerName}
+	log.Printf("[Docker Sidecar] executing: docker %s", strings.Join(startArgs, " "))
+	startCmd := exec.CommandContext(ctx, "docker", startArgs...)
+	startCmd.Env = cmd.Env
+	startOutput, startErr := startCmd.CombinedOutput()
+	if startErr != nil {
+		dcm.Delete(ctx, sidecar.ContainerName)
+		return fmt.Errorf("failed to start sidecar container: %w, output: %s", startErr, string(startOutput))
+	}
+
 	return nil
 }
 

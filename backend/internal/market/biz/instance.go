@@ -113,38 +113,19 @@ func (biz *InstanceBiz) createInstanceDirectMode(ctx context.Context, req *insta
 	sourceConfig := json.RawMessage([]byte(req.McpServers))
 	// Create new instance record
 	instance := &model.McpInstance{
-		InstanceID:   instanceID,
-		InstanceName: req.Name,
-		AccessType:   accessType,
-		McpProtocol:  mcpProtocol,
-		SourceType:   sourceType,
-		SourceConfig: sourceConfig,
-		Status:       model.InstanceStatusActive,
-		IconPath:     req.IconPath,         // Add iconPath field handling
-		Notes:        req.Notes,            // Add notes field handling
-		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:   uint(req.TemplateId), // Add templateId field handling
+		InstanceID:    instanceID,
+		InstanceName:  req.Name,
+		AccessType:    accessType,
+		McpProtocol:   mcpProtocol,
+		SourceType:    sourceType,
+		SourceConfig:  sourceConfig,
+		Status:        model.InstanceStatusActive,
+		IconPath:      req.IconPath,         // Add iconPath field handling
+		Notes:         req.Notes,            // Add notes field handling
+		McpServerID:   req.McpServerId,      // Add mcpServerId field handling
+		TemplateID:    uint(req.TemplateId), // Add templateId field handling
 		EnvironmentID: uint(req.EnvironmentId),
-		EnabledToken: req.EnabledToken,
-	}
-
-	// 如果是 SSE 协议且指定了环境，启动翻译器 Sidecar
-	if mcpProtocol == model.McpProtocolSSE && req.EnvironmentId > 0 {
-		options, err := GContainerBiz.BuildProxySidecarOptions(ctx, instanceID, validationResult.Url)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build proxy sidecar options: %w", err)
-		}
-		err = GContainerBiz.CreateContainer(ctx, options, req.EnvironmentId, req.StartupTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create proxy sidecar container: %w", err)
-		}
-		instance.ContainerName = options.ContainerName
-		instance.ContainerServiceName = options.ServiceName
-		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ServiceName)
-		instance.EnvironmentID = uint(req.EnvironmentId)
-		// 路由协议转换为 SSE (经 sidecar 重写)
-		instance.ProxyProtocol = model.McpProtocolSSE
-		instance.PublicProxyPath = biz.CreatePublicProxyPath(instanceID, model.McpProtocolSSE)
+		EnabledToken:  req.EnabledToken,
 	}
 
 	// Save instance to database
@@ -225,7 +206,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		ContainerIsReady:       false,
 		ContainerCreateOptions: containerCreateOptions,
 		ContainerLastMessage:   "container is pending",
-		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp"),
+		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, "mcp"),
 		StartupTimeout:         int64(0),
 		RunningTimeout:         int64(0),
 		SourceConfig:           nil,
@@ -318,8 +299,8 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		EnvironmentID:   uint(req.EnvironmentId),
 	}
 
-	// 如果是 SSE 协议且指定了环境，启动翻译器 Sidecar
-	if mcpProtocol == model.McpProtocolSSE && req.EnvironmentId > 0 {
+	// 如果指定了环境，我们需要启动翻译代理 Sidecar，以此支持完整的代理鉴权及多重协议（如 stdio / http）的转发
+	if req.EnvironmentId > 0 {
 		options, err := GContainerBiz.BuildProxySidecarOptions(ctx, instanceID, validationResult.Url)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build proxy sidecar options: %w", err)
@@ -330,7 +311,7 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		}
 		instance.ContainerName = options.ContainerName
 		instance.ContainerServiceName = options.ServiceName
-		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ServiceName)
+		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ContainerName)
 		instance.EnvironmentID = uint(req.EnvironmentId)
 		// 路由协议转换为 SSE (经 sidecar 重写)
 		instance.ProxyProtocol = model.McpProtocolSSE
@@ -432,11 +413,11 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp")
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, "mcp")
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
@@ -1016,6 +997,23 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.SourceConfig = sourceConfig
 		oriInstance.ProxyProtocol = model.McpProtocol(reqMcpResult.ProtocolType)
 		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
+
+		// 如果实例配置了运行环境，当发生上游基础信息变更时，需要同步重建对应的代理 Sidecar 容器
+		if oriInstance.EnvironmentID > 0 {
+			options, errBuild := GContainerBiz.BuildProxySidecarOptions(ctx, oriInstance.InstanceID, reqMcpResult.Url)
+			if errBuild != nil {
+				return nil, fmt.Errorf("failed to build proxy sidecar options: %w", errBuild)
+			}
+			_, _ = GContainerBiz.DeleteContainer(oriInstance)
+			// 重建容器
+			errCreate := GContainerBiz.CreateContainer(ctx, options, int32(oriInstance.EnvironmentID), 30) // 默认 30s 启动超时
+			if errCreate != nil {
+				return nil, fmt.Errorf("failed to recreate proxy sidecar container: %w", errCreate)
+			}
+			oriInstance.ContainerName = options.ContainerName
+			oriInstance.ContainerServiceName = options.ServiceName
+			oriInstance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ContainerName)
+		}
 	}
 
 	// Save to database
@@ -1288,9 +1286,9 @@ func (biz *InstanceBiz) UpdateInstanceStatusToPending(ctx context.Context, insta
 }
 
 // ListTools list tools of instance
-func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain string) ([]mcp.Tool, error) {
+func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, mcpServerUrl string, token string) ([]mcp.Tool, error) {
 	// 获取 mcp 客户端
-	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	mcpClient, err := biz.getMcpClientInfo(instanceID, mcpServerUrl, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
@@ -1304,9 +1302,10 @@ func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain
 	return tools.Tools, nil
 }
 
-func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolName string, arguments any, domain string) (interface{}, error) {
+// CallTool call tools of instance
+func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolName string, arguments any, mcpServerUrl string, token string) (interface{}, error) {
 	// 获取 mcp 客户端
-	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	mcpClient, err := biz.getMcpClientInfo(instanceID, mcpServerUrl, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
@@ -1325,8 +1324,7 @@ func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolNam
 	return resp, nil
 }
 
-
-func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*client.Client, error) {
+func (biz *InstanceBiz) getMcpClientInfo(instanceID string, mcpServerUrl string, token string) (*client.Client, error) {
 	mcpInstance, err := biz.GetInstance(instanceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get instance: %s", err.Error())
@@ -1335,20 +1333,26 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 		return nil, fmt.Errorf("instance does not exist")
 	}
 
-	tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list tokens: %s", err.Error())
-	}
-
-	var defaultTokens = getDefaultToken(tokens)
-	// 访问头
 	listToolsHeader := map[string]string{}
-	if defaultTokens != nil {
-		listToolsHeader["Authorization"] = defaultTokens.Token
+
+	// 根据要求：统一严格使用传入的 token。如果外部没有传入，但是实例开启了 token 验证，则去数据库取默认 token 兼容旧的逻辑。
+	if token != "" {
+		listToolsHeader["Authorization"] = token
+	} else if mcpInstance.EnabledToken {
+		tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list tokens: %s", err.Error())
+		}
+		var defaultTokens = getDefaultToken(tokens)
+		if defaultTokens != nil {
+			listToolsHeader["Authorization"] = defaultTokens.Token
+		}
 	}
 
-	// 外部访问地址
-	mcpServerUrl := domain
+	// 验证 mcpServerUrl 必须由前端/调用端提供
+	if mcpServerUrl == "" {
+		return nil, fmt.Errorf("mcpServerUrl is required")
+	}
 
 	// 给该 mcp 实例创建对应的 http client
 	var mcpClient *client.Client

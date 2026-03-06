@@ -1,0 +1,19 @@
+# agentgateway sidecar 配置模板 - Hosting 实例（SSE协议）
+# 占位符：
+#   {{INSTANCE_PATH}}  - 路由路径前缀，如 /mcp-gateway/xxx-id/
+#   {{CONTAINER_HOST}} - 主容器容器名（Docker 网络 DNS 解析）
+#   {{CONTAINER_PORT}} - 主容器监听端口整数，如 8080（u16，不加引号）
+#   {{MCP_PATH}}       - MCP 服务路径，如 /sse 或 /mcp
+binds:
+  - port: 80
+    listeners:
+      - routes:
+          - backends:
+              - mcp:
+                  prefixMode: "always"
+                  targets:
+                    - name: mcp-backend
+                      sse:
+                        host: "{{CONTAINER_HOST}}"
+                        port: CONTAINER_PORT_PLACEHOLDER
+                        path: "{{MCP_PATH}}"

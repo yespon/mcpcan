@@ -397,8 +397,7 @@ func (a *App) setupHttpServer() {
 
 	// Register Traefik Gateway interfaces
 	gatewayService := service.NewGatewayService()
-	a.ginEngine.GET("/internal/gateway/auth", gatewayService.AuthHandler)
-	a.ginEngine.GET("/internal/gateway/routes", gatewayService.RoutesHandler)
+	a.ginEngine.GET(fmt.Sprintf("/%s/gateway/auth", routerPrefix), gatewayService.AuthHandler)
 
 	// Register gateway log interface
 	gatewayLogService := service.NewGatewayLogService()

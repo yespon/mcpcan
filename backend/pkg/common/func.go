@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -146,6 +147,9 @@ func MarshalAndAssignConfig(config interface{}) (json.RawMessage, error) {
 // GetMcpHostingImage returns mcp-hosting image
 func GetMcpHostingImage() string {
 	arch := os.Getenv("MCP_HOSTING_ARCH")
+	if arch == "" {
+		arch = runtime.GOARCH
+	}
 	if arch == "arm64" {
 		return "77kymo/mcp-hosting-arm64:v4"
 	}

@@ -323,7 +323,7 @@ const configUrl = computed(() => {
     const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
     return mcpServers[Object.keys(mcpServers)[0]].url
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}`
 })
 // Computed
 const filteredTools = computed(() => {
@@ -360,13 +360,29 @@ const formatTime = (ts: number) => {
   return new Date(ts).toLocaleTimeString()
 }
 
+// 获取默认 token
+const getDefaultToken = () => {
+  if (
+    instanceInfo.value.enabledToken &&
+    instanceInfo.value.tokens &&
+    instanceInfo.value.tokens.length > 0
+  ) {
+    const defaultTokenObj = instanceInfo.value.tokens.find(
+      (t: any) => t.usages && t.usages.includes('default'),
+    )
+    return defaultTokenObj ? defaultTokenObj.token : ''
+  }
+  return ''
+}
+
 // handle get tool list
 const getTools = async () => {
   try {
     loading.value = true
     const list = await deBugAPI.toolList({
       instanceId: instanceId.value || '',
-      domain: configUrl.value,
+      mcpServerUrl: configUrl.value,
+      token: getDefaultToken(),
     })
     toolList.value = list || []
   } finally {
@@ -417,7 +433,8 @@ const handleRunTool = async () => {
     const data = await deBugAPI.toolCall({
       instanceId: instanceId.value || '',
       toolName: currentTool.value.name,
-      domain: configUrl.value,
+      mcpServerUrl: configUrl.value,
+      token: getDefaultToken(),
       arguments: JSON.stringify(params),
     })
 

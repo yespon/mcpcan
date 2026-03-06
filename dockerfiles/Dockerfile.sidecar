@@ -1,0 +1,37 @@
+# Builder stage
+FROM 77kymo/builder:latest AS builder
+ARG CodeMode
+ENV CodeMode=${CodeMode}
+
+# Work in /app and copy project sources
+WORKDIR /app
+COPY ../ /app
+
+RUN cd /app && make proto-buf go-mod-tidy go-build-sidecar
+
+# Runtime stage
+FROM alpine:3.22
+
+# Set apk aliyun mirror
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# Install necessary runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata
+
+# Set timezone
+ENV TZ=Asia/Shanghai
+
+WORKDIR /app
+
+# Copy binary from builder stage
+COPY --from=builder /app/backend/bin/mcp-sidecar /app/mcp-sidecar
+
+# Make binary executable
+RUN chmod +x /app/mcp-sidecar
+
+# Default port for Sidecar
+ENV PORT=80
+EXPOSE 80
+
+# Run the sidecar proxy
+CMD ["/app/mcp-sidecar"]

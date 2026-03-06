@@ -2,12 +2,13 @@ package biz
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,6 +26,21 @@ import (
 
 // TaskStatus task status information
 // Remove TaskStatus struct, no longer use task management
+
+//go:embed sidecar_hosting_template.yaml
+var sidecarHostingTemplate string
+
+//go:embed sidecar_proxy_template.yaml
+var sidecarProxyTemplate string
+
+// buildSidecarConfig 将模板中的占位符替换为实际值
+func buildSidecarConfig(tmpl string, replacements map[string]string) string {
+	cfg := tmpl
+	for k, v := range replacements {
+		cfg = strings.ReplaceAll(cfg, k, v)
+	}
+	return cfg
+}
 
 // ContainerBiz container data layer
 type ContainerBiz struct {
@@ -287,7 +303,7 @@ func (cd *ContainerBiz) GetContainerStatus(params ContainerStatusParams) (*insta
 		})
 	}
 
-	// Use HTTP probe to check service availability
+	// Use HTTP probe to check service availability (since we moved back to container cross network probing)
 	probeResult := utils.ProbePortFromURL(cd.ctx, instance.ContainerServiceURL, 5*time.Second)
 
 	probeHttp := false
@@ -343,44 +359,48 @@ func (cd *ContainerBiz) getMcpHostingImageCfg(instanceID string, imgAddress stri
 		initScript = "echo 'No initialization commands specified'"
 	}
 
+	// 整理脚本，去除首尾空格
+	codepkgInstallScript = strings.TrimSpace(codepkgInstallScript)
+	initScript = strings.TrimSpace(initScript)
+
 	// Build complete startup script
 	// Escape single quotes for shell echo command
 	mcpServerCfg = strings.ReplaceAll(mcpServerCfg, "'", "'\\''")
 	startupScript := fmt.Sprintf(`
-		# Create working directory
-		mkdir -p /app/init
+# Create working directory
+mkdir -p /app/init
 
-		# Generate initialization script dynamically
-		cat > /app/init/startup.sh << 'EOF'
+# Generate initialization script dynamically
+cat > /app/init/startup.sh << 'EOF_STARTUP'
 #!/bin/sh
 set -e
 
-# Write /app/mcp-servers.json
+echo "[$(date)] --- Startup Script Stage 1: Write Config ---"
 echo '%s' > /app/mcp-servers.json
 
-# Download and extract code package
+echo "[$(date)] --- Startup Script Stage 2: Code Package ---"
 %s
 
-echo "[$(date)] Starting initialization script execution..."
+echo "[$(date)] --- Startup Script Stage 3: Init Script ---"
+# Execute initialization script
 %s
-echo "[$(date)] Initialization script execution completed"
 
-# 前台启动真实 MCP 应用进程
-echo "[$(date)] Starting main program: mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json"
-		if [ -f "/usr/local/bin/mcp-hosting" ]; then
-			mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
-		else
-			echo "Error: mcp-hosting binary not found at /usr/local/bin/mcp-hosting"
-			exit 1
-		fi
-EOF
+echo "[$(date)] --- Startup Script Stage 4: Main Command ---"
+echo "[$(date)] Starting main program: mcp-hosting --port=%d"
+if [ -f "/usr/local/bin/mcp-hosting" ]; then
+    exec mcp-hosting --port=%d --mcp-servers-config /app/mcp-servers.json
+else
+    echo "Error: mcp-hosting binary not found at /usr/local/bin/mcp-hosting"
+    exit 1
+fi
+EOF_STARTUP
 
-		# Set script execution permissions
-		chmod +x /app/init/startup.sh
-		
-		# Execute initialization script
-		/app/init/startup.sh
-	`,
+# Set script execution permissions
+chmod +x /app/init/startup.sh
+
+# Execute startup command script
+exec /app/init/startup.sh
+`,
 		mcpServerCfg,
 		codepkgInstallScript,
 		initScript,
@@ -405,32 +425,38 @@ func (cd *ContainerBiz) getMcpHostingImageCfgForSSEAndSteamableHttp(instanceID s
 		return nil, fmt.Errorf("%s", i18n.FormatWithContext(cd.ctx, i18n.CodeStartupCommandRequired))
 	}
 
+	// 整理脚本，去除首尾空格
+	codepkgInstallScript = strings.TrimSpace(codepkgInstallScript)
+	initScript = strings.TrimSpace(initScript)
+	command = strings.TrimSpace(command)
+
 	// Build complete startup script
 	startupScript := fmt.Sprintf(`
-		# Create working directory
-		mkdir -p /app/init
+# Create working directory
+mkdir -p /app/init
 
-		# Generate initialization script dynamically
-		cat > /app/init/startup.sh << 'EOF'
+# Generate initialization script dynamically
+cat > /app/init/startup.sh << 'EOF_STARTUP'
 #!/bin/sh
 set -e
-# Download and extract code package
+
+echo "[$(date)] --- Startup Script Stage 1: Code Package ---"
 %s
 
-# Execute initialization script
+echo "[$(date)] --- Startup Script Stage 2: Init Script ---"
 %s
 
-# 前台启动真实 MCP 应用进程
-echo "[$(date)] Starting startup command script"
+echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
+echo "[$(date)] Starting startup command: %s"
 %s
-EOF
-		# Set script execution permissions
-		chmod +x /app/init/startup.sh
-		
-		# Execute startup command script
-		/app/init/startup.sh
-	`,
-		codepkgInstallScript, initScript, command)
+EOF_STARTUP
+# Set script execution permissions
+chmod +x /app/init/startup.sh
+
+# Execute startup command script
+exec /app/init/startup.sh
+`,
+		codepkgInstallScript, initScript, command, command)
 
 	imgPms := &imageParams{
 		image:       imgAddress,
@@ -585,12 +611,48 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 
 	// Parse container creation options
 	var containerOptions container.ContainerCreateOptions
-	if len(instance.ContainerCreateOptions) > 0 {
-		if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
-			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+	if instance.AccessType == model.AccessTypeHosting {
+		// Rebuild options to incorporate latest logic (e.g. Sidecar path fixes)
+		var sourceCfg struct {
+			McpServers string `json:"mcpServers"`
+		}
+		if len(instance.SourceConfig) > 0 {
+			_ = json.Unmarshal(instance.SourceConfig, &sourceCfg)
+		}
+
+		var evs map[string]string
+		if len(instance.EnvironmentVariables) > 0 {
+			_ = json.Unmarshal(instance.EnvironmentVariables, &evs)
+		}
+
+		var vms []*instancepb.VolumeMount
+		if len(instance.VolumeMounts) > 0 {
+			_ = json.Unmarshal(instance.VolumeMounts, &vms)
+		}
+
+		newOptions, err := cd.BuildContainerOptions(ctx, instance.InstanceID, instance.McpProtocol,
+			sourceCfg.McpServers, instance.PackageID, instance.Port, instance.InitScript, instance.Command, instance.ImgAddr,
+			evs, vms, int32(instance.StartupTimeout), int32(instance.RunningTimeout))
+		if err != nil {
+			log.Printf("[RestartContainer] Warning: failed to rebuild options for instance %s: %v, falling back to stored options", instance.InstanceID, err)
+			if len(instance.ContainerCreateOptions) > 0 {
+				if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
+					return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+				}
+			} else {
+				return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+			}
+		} else {
+			containerOptions = *newOptions
 		}
 	} else {
-		return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+		if len(instance.ContainerCreateOptions) > 0 {
+			if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
+				return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+			}
+		} else {
+			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+		}
 	}
 
 	// Ensure container name is consistent with instance
@@ -617,14 +679,17 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 }
 
 // createDownloadLink creates download link
+// 使用固定的服务名（容器网络内的 DNS）和 HTTP 端口构建下载地址，
+// 供实例容器在同一 Docker 网络中访问 mcp-market 服务下载资源。
 func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
-	mcpMarketSvc := config.GlobalConfig.Services.McpMarket
-	if mcpMarketSvc == nil {
-		return ""
+	host := "host.docker.internal"
+	port := config.GlobalConfig.Server.HttpPort
+	if port <= 0 {
+		port = 8080
 	}
 	return fmt.Sprintf("http://%s:%d/%s/%s",
-		mcpMarketSvc.Host,
-		mcpMarketSvc.Port,
+		host,
+		port,
 		strings.TrimPrefix(common.GetMarketRoutePrefix(), "/"),
 		strings.TrimPrefix(downloadLinkPath, "/"))
 }
@@ -659,25 +724,37 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	if codePackage == nil {
 		return codepkgInstallScript, fmt.Errorf("code package is nil")
 	}
-	// Build download and extract ZIP package commands
-	if len(pkgLink) > 0 {
-		codepkgInstallScript = fmt.Sprintf(`
-		# Download and extract ZIP package
-		echo "[$(date)] Starting to download package from: %s"
-		mkdir -p /app/codepkg
-		cd /tmp
-		if wget -q -O package.zip "%s" || curl -sL -o package.zip "%s"; then
-			echo "[$(date)] Package download completed (size: $(stat -c%%s package.zip 2>/dev/null || echo 'unknown')). Starting extraction..."
-			unzip -q -o package.zip -d /app/codepkg
-			echo "[$(date)] Extraction completed. Root contents of /app/codepkg:"
-			ls -l /app/codepkg
-		else
-			echo "[$(date)] Error: Failed to download package from %s"
-			exit 1
-		fi
-		cd /app
-		`, pkgLink, pkgLink, pkgLink, pkgLink)
-	}
+	// 增加对本地已挂载代码包的兼容性支持，如果目录已存在且非空，则跳过下载
+	codepkgInstallScript = fmt.Sprintf(`
+if [ -d "/app/codepkg" ] && [ "$(ls -A /app/codepkg 2>/dev/null)" ]; then
+    echo "[$(date)] Local code package detected at /app/codepkg. Checking for subfolders..."
+else
+    echo "[$(date)] No code package found at /app/codepkg. Starting download from: %s"
+    mkdir -p /app/codepkg /tmp/download
+    cd /tmp/download
+    if wget -q -O package.zip "%s" || curl -sL -o package.zip "%s"; then
+        echo "[$(date)] Package download completed. Extracting to /app/codepkg..."
+        unzip -q -o package.zip -d /app/codepkg
+        rm package.zip
+    else
+        echo "[$(date)] ERROR: Failed to download package from %s"
+        exit 1
+    fi
+fi
+
+# Compatibility Logic: Ensure 'mcp-sys-monitor' directory exists (link it if necessary)
+if [ ! -d "/app/codepkg/mcp-sys-monitor" ]; then
+    actual_dir=$(ls -d /app/codepkg/* 2>/dev/null | grep -v "mcp-sys-monitor" | head -n 1)
+    if [ -n "$actual_dir" ] && [ -d "$actual_dir" ]; then
+        echo "[$(date)] Creating compatibility symlink: /app/codepkg/mcp-sys-monitor -> $actual_dir"
+        ln -sf "$actual_dir" /app/codepkg/mcp-sys-monitor
+    fi
+fi
+
+echo "[$(date)] Final /app/codepkg structure:"
+ls -F /app/codepkg
+cd /app
+`, pkgLink, pkgLink, pkgLink, pkgLink)
 	return codepkgInstallScript, nil
 }
 
@@ -811,71 +888,30 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
 
-	// Traefik support labels — 所有容器统一通过 Docker Label 自动发现
-	// 确保 ForwardAuth 鉴权和日志转发统一覆盖所有实例
+	// Traefik support labels — 移动到 Sidecar 容器上
 	prefix := common.GetGatewayRoutePrefix()
 	strippedPrefix := strings.Trim(prefix, "/")
-	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
+	instancePath := fmt.Sprintf("/%s/%s", strippedPrefix, instanceID)
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
 
-	labels["traefik.enable"] = "true"
-	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-strip-%s@docker,mcp-auth@file", instanceID)
-	// 后端指向 Sidecar (agentgateway) 端口 80，SSE 实例由独享 sidecar 处理 URL 重写
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
-	// StripPrefix 中间件：剥离网关前缀，让 agentgateway 收到干净的路径（/sse, /mcp 等）
-	labels[fmt.Sprintf("traefik.http.middlewares.mcp-strip-%s.stripPrefix.prefixes", instanceID)] = instancePath
+	traefikLabels := make(map[string]string)
+	sidecarContainerName := containerName + "-sidecar" // Sidecar 容器名，用于 Traefik service
+	traefikLabels["traefik.enable"] = "true"
+	// 动态添加针对该实例前缀的 StripPrefix 中间件
+	stripMiddleware := fmt.Sprintf("%s-strip", routerName)
+	traefikLabels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMiddleware)] = instancePath
+	// 设置路由规则及中间件链 (Auth -> Strip)
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker", stripMiddleware)
+	// 健壮性关键修复：router 显式指向 sidecar 容器的 service，防止 Traefik 将同 router 下多个容器的负载规则任意合并
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = sidecarContainerName
+	traefikLabels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", sidecarContainerName)] = "80"
 
-	// 确定 agentgateway 路由中后端 MCP 服务的路径
-	// 注意：agentgateway 接收的是 Traefik StripPrefix 之后的路径，无需包含网关前缀
-	var mcpBackendPath string
-	switch mcpProtocol {
-	case model.McpProtocolSSE:
-		mcpBackendPath = "/sse"
-	case model.McpProtocolStreamableHttp:
-		mcpBackendPath = "/mcp"
-	default:
-		// stdio 协议经 mcp-hosting 转换后以 StreamableHttp 对外
-		mcpBackendPath = "/mcp"
-	}
+	// 默认禁用主容器的 Traefik 直接发现（由 Sidecar 代劳）
+	labels["traefik.enable"] = "false"
 
-	// 动态生成 agentgateway 配置
-	// 将多行字符串拼接改为直接序列化为单行 JSON，绝对安全，防止任何转义与命令行处理问题
-	agentGatewayConfigMap := map[string]interface{}{
-		"binds": []interface{}{
-			map[string]interface{}{
-				"port": 80,
-				"listeners": []interface{}{
-					map[string]interface{}{
-						"routes": []interface{}{
-							map[string]interface{}{
-								"backends": []interface{}{
-									map[string]interface{}{
-										"mcp": map[string]interface{}{
-											"targets": []interface{}{
-												map[string]interface{}{
-													"name": "mcp-backend",
-													"sse": map[string]interface{}{
-														// Sidecar 通过同一 Docker 网络的 DNS 访问主容器
-														"host": containerName,
-														"port": imgPms.port,
-														"path": mcpBackendPath,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	configBytes, _ := json.Marshal(agentGatewayConfigMap)
-	agentGatewayConfig := string(configBytes)
 
+	// 使用 embed 模板生成 agentgateway sidecar 配置
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     imgPms.image,
@@ -889,19 +925,18 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		EnvVars:       envVars,
 		Mounts:        mounts,
 		WorkingDir:    "/app",
-		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"), // 支持通过环境变量指定平台，默认空即自适应
+		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"),
 		Sidecar: &container.SidecarOptions{
-			// 使用官方 agentgateway 稳定镜像
-			ImageName:     "cr.agentgateway.dev/agentgateway:0.11.1",
-			ContainerName: containerName + "-sidecar",
-			Port:          80, // Sidecar 暴露容器网络上的 80 端口供 Traefik 访问
-			// 镜像已有 Entrypoint (/app/agentgateway)，无需设置 Command 覆盖
-			Command:     nil,
-			CommandArgs: []string{"-f", "/etc/agentgateway/config.yaml"},
-			EnvVars:     map[string]string{},
-			Platform:    "", // Sidecar 取消 amd64 强指，使用原生架构防 Rosetta bug
-			// 配置内容通过文件挂载传入，彻底避免 CLI 参数传递导致的 Runc 兼容性问题
-			ConfigContent: agentGatewayConfig,
+			ImageName:     "mcpcan-sidecar:latest",
+			ContainerName: sidecarContainerName,
+			Port:          80, // mcpcan-sidecar default port
+			EnvVars: map[string]string{
+				// 因为自研 proxy 支持 websocket 和所有请求透传，所以无需区分 sse，直接代理到 mcpBackend 的根或具体路径
+				"MCP_TARGET_URL":   fmt.Sprintf("http://%s:%d", containerName, imgPms.port),
+				"MCP_ROUTE_PREFIX": instancePath,
+			},
+			Labels:        traefikLabels,
+			Platform:      os.Getenv("MCP_HOSTING_PLATFORM"),
 		},
 	}
 
@@ -937,15 +972,16 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	prefix = strings.Trim(prefix, "/")
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
 
+	instancePath := fmt.Sprintf("/%s/%s/", prefix, instanceID)
+
 	labels["traefik.enable"] = "true"
-	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instanceID)
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
 	downloadLink := cd.createDownloadLink(downloadLinkPath)
-	instancePath := fmt.Sprintf("/%s/%s/", prefix, instanceID)
 
 	startupScript := fmt.Sprintf(`
 		# Create working directory
@@ -969,25 +1005,28 @@ EOF_PROXY
 		# ========================================================
 
 		# Generate initialization script dynamically
-		cat > /app/init/startup.sh << 'EOF'
+		cat > /app/init/startup.sh << 'EOF_STARTUP'
 #!/bin/bash
 set -e
 
-# 1. 后台非阻塞启动专注协议重写的边车（Sidecar）代理
+echo "[$(date)] --- Startup Script Stage 1: Sidecar ---"
 echo "[$(date)] Starting local AgentGateway Sidecar..."
-agentgateway -c /app/agentgateway.yaml &
+agentgateway -f /app/agentgateway.yaml &
 
-# 2. 前台启动真实 MCP 应用进程
-echo "[$(date)] Starting openapi-mcp..."
+echo "[$(date)] --- Startup Script Stage 2: App Prep ---"
+echo "[$(date)] Downloading openapi-mcp configuration..."
 curl -f '%s' -o /app/run.yaml
+
+echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
+echo "[$(date)] Starting openapi-mcp: --base-url=%s"
 exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 --base-url=%s run.yaml
-EOF
+EOF_STARTUP
 		# Set script execution permissions
 		chmod +x /app/init/startup.sh
 		
 		# Execute startup command script
-		/app/init/startup.sh
-	`, instancePath, downloadLink, openapiBaseUrl)
+		exec /app/init/startup.sh
+	`, instancePath, downloadLink, openapiBaseUrl, openapiBaseUrl)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
@@ -1028,7 +1067,6 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 			portStr = "80"
 		}
 	}
-	p, _ := strconv.Atoi(portStr)
 	path := u.Path
 	if path == "" {
 		path = "/"
@@ -1044,64 +1082,48 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 	// Traefik support labels
 	prefix := common.GetGatewayRoutePrefix()
 	strippedPrefix := strings.Trim(prefix, "/")
-	instancePath := fmt.Sprintf("/%s/%s/", strippedPrefix, instanceID)
+	instancePath := fmt.Sprintf("/%s/%s", strippedPrefix, instanceID)
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
 
 	labels["traefik.enable"] = "true"
-	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-strip-%s@docker,mcp-auth@file", instanceID)
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
-	labels[fmt.Sprintf("traefik.http.middlewares.mcp-strip-%s.stripPrefix.prefixes", instanceID)] = instancePath
+	
+	// 动态添加针对该实例前缀的 StripPrefix 中间件
+	stripMiddleware := fmt.Sprintf("%s-strip", routerName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMiddleware)] = instancePath
 
-	// 动态生成 agentgateway 配置
-	agentGatewayConfigMap := map[string]interface{}{
-		"binds": []interface{}{
-			map[string]interface{}{
-				"port": 80,
-				"listeners": []interface{}{
-					map[string]interface{}{
-						"routes": []interface{}{
-							map[string]interface{}{
-								"backends": []interface{}{
-									map[string]interface{}{
-										"mcp": map[string]interface{}{
-											"targets": []interface{}{
-												map[string]interface{}{
-													"name": "remote-mcp",
-													"sse": map[string]interface{}{
-														"host": host,
-														"port": p,
-														"path": path,
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	configBytes, _ := json.Marshal(agentGatewayConfigMap)
-	agentGatewayConfig := string(configBytes)
+	// 增加 Header 重写中间件，确保 Host 头部与容器名一致
+	headersMiddlewareName := fmt.Sprintf("mcp-proxy-headers-%s", instanceID)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.headers.customrequestheaders.Host", headersMiddlewareName)] = containerName
+
+	// 设置路由规则及中间件链
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("HostRegexp(`{host:.+}`) && PathPrefix(`%s`)", instancePath)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker,%s@docker", stripMiddleware, headersMiddlewareName)
+	// 健壮性关键修复：router 显式指向本容器自身的 service (containerName)
+	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = containerName
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", containerName)] = "80"
+
+	// 使用 embed 模板生成 agentgateway sidecar 配置（Proxy 模式）
+	// 模板基于已验证的 proxy-test.yaml 格式（无 protocol/match 字段，使用 sse 拆分字段）
+	agentGatewayYAML := buildSidecarConfig(sidecarProxyTemplate, map[string]string{
+		"{{INSTANCE_PATH}}": instancePath,
+		"{{REMOTE_HOST}}": host,
+		"REMOTE_PORT_PLACEHOLDER": portStr,
+		"{{REMOTE_PATH}}": path,
+		"{{REMOTE_SCHEME}}": u.Scheme,
+	})
 
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     "cr.agentgateway.dev/agentgateway:0.11.1",
 		ContainerName: containerName,
 		ServiceName:   serviceName,
 		Port:          80, // 容器内部监听 80
-		// 镜像已有 Entrypoint (/app/agentgateway)，无需设置 Command 覆盖
-		Command:       nil,
-		CommandArgs:   []string{"-f", "/etc/agentgateway/config.yaml"},
+		// 容器内部自带 Entrypoint，此处使用 -f 加载下发的配置文件
+		CommandArgs:   []string{"-f", "/ag-config.yaml"},
 		RestartPolicy: "Always",
 		Labels:        labels,
-		EnvVars:       map[string]string{"NODE_ENV": "production"},
-		Platform:      "", // 取消 amd64 强指，使用原生架构防 Rosetta bug
-		// 配置内容通过文件挂载传入，彻底避免 CLI 参数传递导致的 Runc 兼容性问题
-		ConfigContent: agentGatewayConfig,
+		EnvVars:       map[string]string{"RUST_LOG": "debug"},
+		Platform:      "", 
+		ConfigContent: agentGatewayYAML,
 	}
 
 	return &containerOptions, nil

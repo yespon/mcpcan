@@ -77,6 +77,7 @@ type SidecarOptions struct {
 	Command       []string          `json:"command"`
 	CommandArgs   []string          `json:"commandArgs"`
 	EnvVars       map[string]string `json:"envVars"`
+	Labels        map[string]string `json:"labels"`
 	Platform      string            `json:"platform"`
 	// ConfigContent 是需要写入文件并挂载进容器的配置内容（如 agentgateway YAML/JSON）
 	// 非空时，docker 层会自动写入临时文件并通过 -v 挂载，CommandArgs 中应使用 -f 引用挂载路径

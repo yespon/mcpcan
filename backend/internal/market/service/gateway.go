@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -60,11 +61,24 @@ func (s *GatewayService) AuthHandler(c *gin.Context) {
 
 	// 4. 校验 Token
 	if instanceInfo.EnabledToken {
-		errToken := validateMcpTokenForInstance(c, instanceID)
+		mcpToken, errToken := validateMcpTokenForInstance(c, instanceID)
 		if errToken != nil {
 			logger.Warn("Gateway token validation failed", zap.String("instance_id", instanceID), zap.Error(errToken))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token validation failed"})
 			return
+		}
+		
+		// 将 Token 中自定义的外部请求 Header 发载入 Auth response header
+		// 这样经过配置了 authResponseHeadersRegex 的 Traefik Middleware 后就会被全数添加回发给上游服务的 Request Headers 中。
+		if mcpToken != nil && len(mcpToken.Headers) > 0 {
+			var extraHeaders map[string]string
+			if err := json.Unmarshal(mcpToken.Headers, &extraHeaders); err == nil {
+				for k, v := range extraHeaders {
+					c.Header(k, v)
+				}
+			} else {
+				logger.Warn("Failed to unmarshal mcp token extra headers", zap.Error(err))
+			}
 		}
 	}
 
@@ -75,94 +89,8 @@ func (s *GatewayService) AuthHandler(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// RoutesHandler 给 Traefik HTTP Provider 提供 "直连 MCP" (无需 docker) 的动态路由列表
-func (s *GatewayService) RoutesHandler(c *gin.Context) {
-	// 查询活跃的实例列表
-	instances, err := mysql.McpInstanceRepo.FindByStatus(context.Background(), model.InstanceStatusActive)
-	if err != nil {
-		logger.Error("Failed to fetch instances for traefik routes", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{})
-		return
-	}
-
-	// 构造 Traefik HTTP Provider 格式
-	type Service struct {
-		LoadBalancer struct {
-			Servers []struct {
-				URL string `json:"url"`
-			} `json:"servers"`
-		} `json:"loadBalancer"`
-	}
-	type StripPrefix struct {
-		Prefixes []string `json:"prefixes"`
-	}
-	type Middleware struct {
-		StripPrefix *StripPrefix `json:"stripPrefix,omitempty"`
-	}
-
-	type Router struct {
-		Rule        string   `json:"rule"`
-		Service     string   `json:"service"`
-		Middlewares []string `json:"middlewares"`
-	}
-
-	response := struct {
-		HTTP struct {
-			Routers     map[string]Router     `json:"routers"`
-			Services    map[string]Service    `json:"services"`
-			Middlewares map[string]Middleware `json:"middlewares"`
-		} `json:"http"`
-	}{}
-	response.HTTP.Routers = make(map[string]Router)
-	response.HTTP.Services = make(map[string]Service)
-	response.HTTP.Middlewares = make(map[string]Middleware)
-
-	prefix := common.GetGatewayRoutePrefix()
-	prefix = strings.Trim(prefix, "/")
-
-	for _, instance := range instances {
-		// Hosting 类实例由 Docker Label 或 K8s Ingress 自动发现
-		// 此处只为 Direct/Proxy 类型生成 HTTP Provider 路由
-		// 如果实例有关联容器（如翻译器 Sidecar），则通过 Docker Label/K8s Ingress 自动发现，此处跳过
-		if instance.ContainerName != "" {
-			continue
-		}
-		if instance.ContainerServiceURL == "" {
-			continue
-		}
-
-		routerName := fmt.Sprintf("mcp-ext-inst-%s", instance.InstanceID)
-		serviceName := fmt.Sprintf("mcp-ext-svc-%s", instance.InstanceID)
-		stripMidName := fmt.Sprintf("mcp-ext-strip-%s", instance.InstanceID)
-
-		// 路由 (将 /mcp-gateway/xxx/ 前缀捕获过来)
-		response.HTTP.Routers[routerName] = Router{
-			Rule:        fmt.Sprintf("PathPrefix(`/%s/%s/`)", prefix, instance.InstanceID),
-			Service:     serviceName,
-			Middlewares: []string{stripMidName, "mcp-auth@file"},
-		}
-
-		// 后端服务
-		srv := Service{}
-		srv.LoadBalancer.Servers = []struct {
-			URL string `json:"url"`
-		}{{URL: instance.ContainerServiceURL}}
-		response.HTTP.Services[serviceName] = srv
-
-		// 剥离前缀的中间件
-		mid := Middleware{
-			StripPrefix: &StripPrefix{
-				Prefixes: []string{fmt.Sprintf("/%s/%s/", prefix, instance.InstanceID)},
-			},
-		}
-		response.HTTP.Middlewares[stripMidName] = mid
-	}
-
-	c.JSON(http.StatusOK, response)
-}
-
 // 抽取自老网关的 Token 校验逻辑
-func validateMcpTokenForInstance(c *gin.Context, instanceID string) error {
+func validateMcpTokenForInstance(c *gin.Context, instanceID string) (*model.McpToken, error) {
 	req := c.Request
 	token := req.Header.Get("Authorization")
 	if token == "" {
@@ -175,35 +103,53 @@ func validateMcpTokenForInstance(c *gin.Context, instanceID string) error {
 		token = c.Query("token") // 有些 SSE 流喜欢把 token 放在 query 里面
 	}
 	
-	// 如果是 Bearer xxx 格式，剥离 Bearer
+	// 预先准备好带有 Bearer 和不带 Bearer 的两种形式，兼容数据库不同的存储历史
+	rawToken := token
+	strippedToken := token
 	if strings.HasPrefix(strings.ToLower(token), "bearer ") {
-		token = token[7:]
+		strippedToken = strings.TrimSpace(token[7:])
 	}
+	bearerToken := "Bearer " + strippedToken
 
-	if strings.TrimSpace(token) == "" {
-		return fmt.Errorf("token header missing or empty")
+	if strings.TrimSpace(strippedToken) == "" {
+		return nil, fmt.Errorf("token header missing or empty")
 	}
 
 	tokenCache := redis.GetMcpTokenCache()
-	cacheKey := tokenCache.GenerateCacheKey(instanceID, token)
 	var mcpToken *model.McpToken
 
-	if v := tokenCache.GetRedis(cacheKey); v != nil {
-		mcpToken = v
+	// 优先查询原始 token 格式，没找到再查替代格式
+	searchTokens := []string{rawToken}
+	if rawToken == strippedToken {
+		searchTokens = append(searchTokens, bearerToken)
 	} else {
-		trow, err := mysql.McpTokenRepo.FindByToken(context.Background(), instanceID, token)
-		if err != nil || trow == nil || trow.InstanceID != instanceID {
-			return fmt.Errorf("not found")
+		searchTokens = append(searchTokens, strippedToken)
+	}
+
+	for _, t := range searchTokens {
+		cacheKey := tokenCache.GenerateCacheKey(instanceID, t)
+		if v := tokenCache.GetRedis(cacheKey); v != nil {
+			mcpToken = v
+			break
 		}
-		_ = tokenCache.SetRedis(cacheKey, trow, redis.TokenCacheExpire)
-		mcpToken = trow
+		
+		trow, err := mysql.McpTokenRepo.FindByToken(context.Background(), instanceID, t)
+		if err == nil && trow != nil && trow.InstanceID == instanceID {
+			_ = tokenCache.SetRedis(cacheKey, trow, redis.TokenCacheExpire)
+			mcpToken = trow
+			break
+		}
+	}
+
+	if mcpToken == nil {
+		return nil, fmt.Errorf("not found")
 	}
 
 	if !mcpToken.Enabled {
-		return fmt.Errorf("disabled token")
+		return nil, fmt.Errorf("disabled token")
 	}
 
-	return nil
+	return mcpToken, nil
 }
 
 // 供 strings.Trim 等函数容错使用

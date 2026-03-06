@@ -169,8 +169,12 @@ go-build-authz:
 go-build-gateway:
 	$(call go_build_service,gateway)
 
+.PHONY: go-build-sidecar
+go-build-sidecar:
+	$(call go_build_service,mcp-sidecar)
+
 .PHONY: go-build-all 
-go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz go-build-gateway
+go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz go-build-gateway go-build-sidecar
 
 # Frontend build targets
 
@@ -208,8 +212,12 @@ docker-build-frontend:
 docker-build-backend:
 	$(call build_docker_image,backend,mcp-backend)
 
+.PHONY: docker-build-sidecar
+docker-build-sidecar:
+	$(call build_docker_image,sidecar,mcp-sidecar)
+
 .PHONY: docker-build-all
-docker-build-all: export-go-build docker-build-init docker-build-market docker-build-openapi-to-mcp docker-build-authz docker-build-gateway docker-build-frontend
+docker-build-all: export-go-build docker-build-init docker-build-market docker-build-openapi-to-mcp docker-build-authz docker-build-gateway docker-build-frontend docker-build-sidecar
 
 .PHONY: docker-push-init
 docker-push-init:
@@ -239,8 +247,12 @@ docker-push-frontend:
 docker-push-backend:
 	$(call push_docker_image,mcp-backend)
 
+.PHONY: docker-push-sidecar
+docker-push-sidecar:
+	$(call push_docker_image,mcp-sidecar)
+
 .PHONY: docker-push-all
-docker-push-all: docker-push-init docker-push-market docker-push-openapi-to-mcp docker-push-authz docker-push-gateway docker-push-frontend
+docker-push-all: docker-push-init docker-push-market docker-push-openapi-to-mcp docker-push-authz docker-push-gateway docker-push-frontend docker-push-sidecar
 
 # Docker build and push targets (using existing build and push steps)
 .PHONY: docker-build-push-init
@@ -262,7 +274,10 @@ docker-build-push-gateway: docker-build-gateway docker-push-gateway
 docker-build-push-frontend: docker-build-frontend docker-push-frontend
 
 .PHONY: docker-build-push-backend
-docker-build-push-backend: docker-build-push-init docker-build-push-market docker-build-push-openapi-to-mcp docker-build-push-authz docker-build-push-gateway
+docker-build-push-backend: docker-build-push-init docker-build-push-market docker-build-push-openapi-to-mcp docker-build-push-authz docker-build-push-gateway docker-build-push-sidecar
+
+.PHONY: docker-build-push-sidecar
+docker-build-push-sidecar: docker-build-sidecar docker-push-sidecar
 
 .PHONY: docker-build-push-all
 docker-build-push-all: docker-build-all docker-push-all

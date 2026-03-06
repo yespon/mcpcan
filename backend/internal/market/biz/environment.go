@@ -225,48 +225,48 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 // ListNamespaces gets namespace list (only supports Kubernetes environment)
 func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, environmentType model.McpEnvironmentType) ([]string, error) {
 	if environmentType != model.McpEnvironmentKubernetes {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeOnlyK8sSupportNamespace))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeOnlyK8sSupportNamespace))
 	}
 
 	// Validate if config data is valid YAML format
 	var yamlData interface{}
 	if err := yaml.Unmarshal([]byte(config), &yamlData); err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigFormatError)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigFormatError), err)
 	}
 
 	// Validate if it's a valid kubeconfig structure
 	var kubeconfigStruct map[string]interface{}
 	if err := yaml.Unmarshal([]byte(config), &kubeconfigStruct); err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigParseFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigParseFailure), err)
 	}
 
 	// Check required kubeconfig fields
 	if _, exists := kubeconfigStruct["apiVersion"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "apiVersion"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "apiVersion"))
 	}
 	if _, exists := kubeconfigStruct["kind"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "kind"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "kind"))
 	}
 	if _, exists := kubeconfigStruct["clusters"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "clusters"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "clusters"))
 	}
 	if _, exists := kubeconfigStruct["contexts"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "contexts"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "contexts"))
 	}
 	if _, exists := kubeconfigStruct["users"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "users"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "users"))
 	}
 
 	// Convert kubeconfigStruct to YAML string
 	configYAML, err := yaml.Marshal(kubeconfigStruct)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigYamlConversionFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigYamlConversionFailure), err)
 	}
 
 	// Use the fixed SetKubeConfig function
 	kubeconfig := common.SetKubeConfig([]byte(configYAML))
 	if kubeconfig == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigConversionFailure))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigConversionFailure))
 	}
 
 	// Create container runtime configuration
@@ -280,18 +280,18 @@ func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, en
 	// Create container runtime entry
 	entry, err := container.NewEntry(containerConfig)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeK8sClientInitFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeK8sClientInitFailure), err)
 	}
 
 	// Check if it's Kubernetes runtime
 	if !entry.IsKubernetes() {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRuntimeTypeError))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeRuntimeTypeError))
 	}
 
 	// Get K8s entry
 	namespaces, err := entry.ListNamespaces()
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeListNamespacesFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeListNamespacesFailure), err)
 	}
 	return namespaces, nil
 }

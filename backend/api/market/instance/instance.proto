@@ -787,8 +787,10 @@ message UpdateOpenapiRequest {
 message ListToolsRequest {
     // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
     string instanceId = 1;
-    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
-    string domain = 2;
+    // @inject_tag: json:"mcpServerUrl" form:"mcpServerUrl" desc:"MCP Server Absolute URL"
+    string mcpServerUrl = 2;
+    // @inject_tag: json:"token" form:"token" desc:"Token"
+    string token = 3;
 }
 
 message ListToolsResp {
@@ -797,12 +799,14 @@ message ListToolsResp {
 message CallToolRequest {
     // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
     string instanceId = 1;
-    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
-    string domain = 2;
+    // @inject_tag: json:"mcpServerUrl" form:"mcpServerUrl" desc:"MCP Server Absolute URL"
+    string mcpServerUrl = 2;
     // @inject_tag: json:"toolName" form:"toolName" desc:"Tool name"
     string toolName = 3;
     // @inject_tag: json:"arguments" form:"arguments" desc:"Tool arguments"
     string arguments = 4;
+    // @inject_tag: json:"token" form:"token" desc:"Token"
+    string token = 5;
 }
 
 message CallToolResp {

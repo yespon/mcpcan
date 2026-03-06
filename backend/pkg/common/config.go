@@ -104,16 +104,6 @@ type LogConfig struct {
 	Output string `mapstructure:"output"`
 }
 
-type Services struct {
-	McpMarket *Service `mapstructure:"mcpMarket"`
-	McpAuthz  *Service `mapstructure:"mcpAuthz"`
-}
-
-type Service struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
-}
-
 // findProjectRoot find project root directory
 func findProjectRoot() (string, error) {
 	// Start searching from current directory upwards
