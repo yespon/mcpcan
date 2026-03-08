@@ -33,6 +33,8 @@ type Config struct {
 	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
 	DemoMaxInstances int `mapstructure:"demoMaxInstances"`
+	// Domain specifies the official domain name for the service
+	Domain string `mapstructure:"domain"`
 }
 
 var serviceName = "market"
@@ -119,6 +121,11 @@ func Load() (*Config, error) {
 	// Append Version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
+
+	// If Market.Host is empty, fallback to top-level Domain
+	if strings.TrimSpace(config.Market.Host) == "" && config.Domain != "" {
+		config.Market.Host = config.Domain
+	}
 
 	GlobalConfig = &config
 

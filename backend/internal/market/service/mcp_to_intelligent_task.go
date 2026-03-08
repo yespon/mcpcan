@@ -344,6 +344,8 @@ func ProcessMcpToIntelligentTask(id int64) {
 		logger.Error(fmt.Sprintf("failed to find mcp to intelligent task: %s", err.Error()), zap.Int64("taskId", id))
 		return
 	}
+
+	domain := task.Domain
 	// 从数据库中获取智能体访问信息
 	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(context.Background(), task.IntelligentAccessID)
 	if err != nil {
@@ -524,13 +526,13 @@ func ProcessMcpToIntelligentTask(id int64) {
 
 				// 根据不同的平台创建对应的mcp插件
 				if intelligentAccess.AccessType == iapb.IntelligentAccessType_COZE.String() {
-					err = createCozeTools(task.Domain, insertInfo, mcpInstance, userSpaces, task.Cookie)
+					err = createCozeTools(domain, insertInfo, mcpInstance, userSpaces, task.Cookie)
 				} else if intelligentAccess.AccessType == iapb.IntelligentAccessType_N8N.String() {
 					// 执行创建 n8n tools
-					err = createN8NTools(task.Domain, insertInfo, mcpInstance, userSpaces, intelligentAccess, n8nCookie)
+					err = createN8NTools(domain, insertInfo, mcpInstance, userSpaces, intelligentAccess, n8nCookie)
 				} else {
 					// 执行创建 dify tools
-					err = createDifyTools(task.Domain, insertInfo, mcpInstance, userSpaces, difyConn)
+					err = createDifyTools(domain, insertInfo, mcpInstance, userSpaces, difyConn)
 				}
 				if err != nil {
 					log := model.McpToIntelligentTaskLog{
