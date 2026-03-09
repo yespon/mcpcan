@@ -56,8 +56,8 @@ endef
 # README Push logic (Industry Standard)
 # Paras: 1-ImageName, 2-ShortDesc
 define push_readme_doc
-	@echo "Updating README for $(1)..."
 	@if [ -n "$(DOCKER_USER)" ] && [ -n "$(DOCKER_PASS)" ]; then \
+		echo "Updating README for $(1)..."; \
 		docker run --rm -v $(ROOT_PATH):/data \
 			-e DOCKER_USER=$(DOCKER_USER) \
 			-e DOCKER_PASS=$(DOCKER_PASS) \
@@ -65,8 +65,6 @@ define push_readme_doc
 			--file /data/README.md \
 			--short "$(2)" \
 			$(DOCK_REGISTRY)/$(1); \
-	else \
-		echo "Skipping README push for $(1): DOCKER_USER/DOCKER_PASS not set"; \
 	fi
 endef
 
@@ -100,20 +98,20 @@ push-all: push-market push-authz push-frontend
 
 .PHONY: push-market
 push-market:
-	$(call push_multiarch_image,market,mcp-market,$(DOCK_REGISTRY))
 	$(call push_multiarch_image,market,mcp-market,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,market,mcp-market,$(DOCK_REGISTRY))
 	$(call push_readme_doc,mcp-market,MCP Market Service)
 
 .PHONY: push-authz
 push-authz:
-	$(call push_multiarch_image,authz,mcp-authz,$(DOCK_REGISTRY))
 	$(call push_multiarch_image,authz,mcp-authz,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,authz,mcp-authz,$(DOCK_REGISTRY))
 	$(call push_readme_doc,mcp-authz,MCP Authorization Service)
 
 .PHONY: push-frontend
 push-frontend:
-	$(call push_multiarch_image,frontend,mcp-web,$(DOCK_REGISTRY))
 	$(call push_multiarch_image,frontend,mcp-web,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,frontend,mcp-web,$(DOCK_REGISTRY))
 	$(call push_readme_doc,mcp-web,MCP Web Frontend)
 
 # Remaining Utility targets
