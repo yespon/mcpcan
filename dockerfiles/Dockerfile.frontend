@@ -10,9 +10,8 @@ RUN cd /app && make pnpm-build
 
 FROM node:25-alpine3.21
 
-# Set apk mirror
-RUN echo "https://mirrors.aliyun.com/alpine/v3.18/main/" > /etc/apk/repositories && \
-    echo "https://mirrors.aliyun.com/alpine/v3.18/community/" >> /etc/apk/repositories && \
+# Set apk mirror to aliyun
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
     apk add --no-cache bash curl xsel
 
