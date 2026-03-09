@@ -51,6 +51,8 @@ message FindGatewayLogRequest {
   int32 page = 8;
   // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
   string traceId = 9;
+  // @inject_tag: json:"toolName" form:"toolName" desc:"tool name"
+  string toolName = 10;
 }
 
 message FindGatewayLogResponse {
@@ -83,4 +85,6 @@ message GatewayLog {
   string log = 8;
   // @inject_tag: json:"traceId" form:"traceId" desc:"trace ID"
   string traceId = 9;
+  // @inject_tag: json:"toolName" form:"toolName" desc:"tool name"
+  string toolName = 10;
 }
