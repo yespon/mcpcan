@@ -1,3 +1,6 @@
+// @Deprecated
+// 此部分逻辑已迁移至 mcpcan-tools/mcp-sidecar 中实现，已弃用。
+// 该目录仅保留供参考。后续将清理。
 package main
 
 import (
