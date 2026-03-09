@@ -31,7 +31,19 @@ type Config struct {
 	// RunEnvironment configuration
 	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
-	DemoMaxInstances int `mapstructure:"demoMaxInstances"`
+	DemoMaxInstances int            `mapstructure:"demoMaxInstances"`
+	Init             InitUserConfig `mapstructure:"init"`
+}
+
+// InitUserConfig represents admin user initialization configuration
+type InitUserConfig struct {
+	AdminUsername        string `mapstructure:"admin_username"`
+	AdminPassword        string `mapstructure:"admin_password"`
+	AdminNickname        string `mapstructure:"admin_nickname"`
+	AdminRoleName        string `mapstructure:"admin_role_name"`
+	AdminRoleDescription string `mapstructure:"admin_role_description"`
+	AdminRoleLevel       int    `mapstructure:"admin_role_level"`
+	AdminDataScope       string `mapstructure:"admin_data_scope"`
 }
 
 var serviceName = "market"

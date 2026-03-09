@@ -49,6 +49,9 @@ type App struct {
 	// ginEngine Gin engine
 	ginEngine *gin.Engine
 
+	// bizApp business logic app
+	bizApp *biz.App
+
 	// shutdownCtx shutdown context
 	shutdownCtx    context.Context
 	shutdownCancel context.CancelFunc
@@ -84,6 +87,12 @@ func (a *App) Initialize() error {
 	// Initialize database
 	if err := a.loadMysql(); err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	// Initialize business application (includes migrated init service logic)
+	a.bizApp = biz.NewApp(a.config)
+	if err := a.bizApp.Initialize(context.Background()); err != nil {
+		return fmt.Errorf("failed to initialize business application: %w", err)
 	}
 
 	// Register enterprise plugins (no-op when enterprise features are disabled)
@@ -139,60 +148,58 @@ func (a *App) Initialize() error {
 func (a *App) loadMysql() error {
 	tableInitializers := []func() (string, error){
 		func() (string, error) {
-			mysql.NewMcpCodePackageRepository()
-			return (&model.McpCodePackage{}).TableName(), nil
+			repo := mysql.NewMcpCodePackageRepository()
+			return (&model.McpCodePackage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpEnvironmentRepository()
-			return (&model.McpEnvironment{}).TableName(), nil
+			repo := mysql.NewMcpEnvironmentRepository()
+			return (&model.McpEnvironment{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewGatewayLogRepository()
-			return (&model.GatewayLog{}).TableName(), nil
+			repo := mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpInstanceRepository()
-			return (&model.McpInstance{}).TableName(), nil
+			repo := mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpMigrationRepository()
-			return (&model.Migration{}).TableName(), nil
+			repo := mysql.NewMcpMigrationRepository()
+			return (&model.Migration{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpOpenapiPackageRepository()
-			return (&model.McpOpenapiPackage{}).TableName(), nil
+			repo := mysql.NewMcpOpenapiPackageRepository()
+			return (&model.McpOpenapiPackage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpTemplateRepository()
-			return (&model.McpTemplate{}).TableName(), nil
+			repo := mysql.NewMcpTemplateRepository()
+			return (&model.McpTemplate{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpToIntelligentTaskRepository()
-			return (&model.McpToIntelligentTask{}).TableName(), nil
+			repo := mysql.NewMcpToIntelligentTaskRepository()
+			return (&model.McpToIntelligentTask{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpToIntelligentTaskLogRepository()
-			return (&model.McpToIntelligentTaskLog{}).TableName(), nil
+			repo := mysql.NewMcpToIntelligentTaskLogRepository()
+			return (&model.McpToIntelligentTaskLog{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpTokenRepository()
-			return (&model.McpToken{}).TableName(), nil
+			repo := mysql.NewMcpTokenRepository()
+			return (&model.McpToken{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiSessionRepository()
-			return (&model.AiSession{}).TableName(), nil
+			repo := mysql.NewAiSessionRepository()
+			return (&model.AiSession{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiMessageRepository()
-			return (&model.AiMessage{}).TableName(), nil
+			repo := mysql.NewAiMessageRepository()
+			return (&model.AiMessage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiModelAccessRepository()
-			return (&model.AiModelAccess{}).TableName(), nil
+			repo := mysql.NewAiModelAccessRepository()
+			return (&model.AiModelAccess{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
-			// Not Kymo environment, initialize the table structure
 			if a.config.RunMode == common.RunModeKymo {
 				model.SetIntelligentAccessTableName("intelligent_access")
 				mod := &model.IntelligentAccess{}
@@ -204,6 +211,36 @@ func (a *App) loadMysql() error {
 				return mod.TableName(), repo.InitTable()
 			}
 		},
+	}
+
+	// Sys tables - only load when NOT in kymo mode
+	if a.config.RunMode != common.RunModeKymo {
+		tableInitializers = append(tableInitializers,
+			func() (string, error) {
+				repo := mysql.NewSysDeptRepository()
+				return (&model.SysDept{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRoleRepository()
+				return (&model.SysRole{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUserRepository()
+				return (&model.SysUser{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUsersRolesRepository()
+				return (&model.SysUsersRoles{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysMenuRepository()
+				return (&model.SysMenu{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRolesMenusRepository()
+				return (&model.SysRolesMenus{}).TableName(), repo.InitTable()
+			},
+		)
 	}
 
 	// Append enterprise table initializers (empty when enterprise features are disabled)

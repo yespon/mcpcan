@@ -1,7 +1,4 @@
-// @Deprecated
-// 此部分逻辑已迁移至 market 服务中实现，已弃用。
-// 验证通过后将清理。
-package app
+package biz
 
 import (
 	"context"
@@ -71,7 +68,7 @@ func (a *App) initMcpTemplateData(ctx context.Context) error {
 		return nil
 	}
 
-	log.Printf("Found %d template items in embedded JSON", len(items))
+	log.Printf("Found MCPTemplate %d template items in embedded JSON", len(items))
 
 	createdCount := 0
 	skippedCount := 0
@@ -190,7 +187,7 @@ func resolveOpenapiPackageID(ctx context.Context, openapiFileName string) (strin
 	if err != nil {
 		return "", err
 	}
-	log.Printf("Found openapi file '%s' with ID: %s", openapiFileName, openapiFileID)
+	log.Printf("Found MCPTemplate openapi file '%s' with ID: %s", openapiFileName, openapiFileID)
 	return openapiFileID, nil
 }
 
@@ -208,7 +205,7 @@ func resolveCodePackageID(ctx context.Context, packageName string, fallbackID st
 		return "", fmt.Errorf("failed to query code package '%s': %w", packageName, err)
 	}
 
-	log.Printf("Found existing package '%s' with ID: %s", packageName, codePackage.PackageID)
+	log.Printf("Found MCPTemplate existing package '%s' with ID: %s", packageName, codePackage.PackageID)
 	return codePackage.PackageID, nil
 }
 

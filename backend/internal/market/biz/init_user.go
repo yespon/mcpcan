@@ -1,7 +1,4 @@
-// @Deprecated
-// 此部分逻辑已迁移至 market 服务中实现，已弃用。
-// 验证通过后将清理。
-package app
+package biz
 
 import (
 	"context"
@@ -9,7 +6,7 @@ import (
 	"time"
 
 	"github.com/kymo-mcp/mcpcan/internal/authz/biz"
-	"github.com/kymo-mcp/mcpcan/internal/init/config"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 )
@@ -17,7 +14,7 @@ import (
 func (a *App) createAdminUser() (*model.SysUser, error) {
 	ctx := context.Background()
 	userBiz := biz.NewUserBiz()
-	initConfig := config.GetInitConfig()
+	initConfig := config.GetConfig()
 
 	// Prepare admin user parameters
 	now := time.Now()
@@ -67,7 +64,7 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to update admin password: %v", err)
 		}
-		a.adminUser = existingUser
+		a.AdminUser = existingUser
 		return existingUser, nil
 	}
 
@@ -102,7 +99,7 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 	}
 
 	fmt.Printf("Admin user created successfully with ID: %d\n", adminUser.UserID)
-	a.adminUser = adminUser
+	a.AdminUser = adminUser
 	return adminUser, nil
 }
 

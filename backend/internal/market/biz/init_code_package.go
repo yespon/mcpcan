@@ -1,7 +1,4 @@
-// @Deprecated
-// 此部分逻辑已迁移至 market 服务中实现，已弃用。
-// 验证通过后将清理。
-package app
+package biz
 
 import (
 	"context"
@@ -97,7 +94,7 @@ func (a *App) initCodePackage(ctx context.Context) error {
 				exists = true
 				logger.Debug("Code package already exists, skipping", zap.String("fileName", fileName))
 				skippedCount++
-				a.codePackageList = append(a.codePackageList, pkg)
+				a.CodePackageList = append(a.CodePackageList, pkg)
 				break
 			}
 		}
@@ -176,7 +173,7 @@ func (a *App) processCodePackageFile(ctx context.Context, filePath, fileName str
 		}
 		return fmt.Errorf("failed to save package to database: %w", err)
 	}
-	a.codePackageList = append(a.codePackageList, codePackage)
+	a.CodePackageList = append(a.CodePackageList, codePackage)
 	return nil
 }
 

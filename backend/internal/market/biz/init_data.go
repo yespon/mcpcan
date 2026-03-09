@@ -1,7 +1,4 @@
-// @Deprecated
-// 此部分逻辑已迁移至 market 服务中实现，已弃用。
-// 验证通过后将清理。
-package app
+package biz
 
 import (
 	"fmt"
