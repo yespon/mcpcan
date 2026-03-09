@@ -925,9 +925,8 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		EnvVars:       envVars,
 		Mounts:        mounts,
 		WorkingDir:    "/app",
-		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"),
 		Sidecar: &container.SidecarOptions{
-			ImageName:     "mcpcan-sidecar:latest",
+			ImageName:     "77kymo/mcp-sidecar:latest",
 			ContainerName: sidecarContainerName,
 			Port:          80, // mcpcan-sidecar default port
 			EnvVars: map[string]string{
@@ -936,7 +935,6 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 				"MCP_ROUTE_PREFIX": instancePath,
 			},
 			Labels:        traefikLabels,
-			Platform:      os.Getenv("MCP_HOSTING_PLATFORM"),
 		},
 	}
 
@@ -1113,7 +1111,7 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 	})
 
 	containerOptions := container.ContainerCreateOptions{
-		ImageName:     "cr.agentgateway.dev/agentgateway:0.11.1",
+		ImageName:     "77kymo/mcp-sidecar:latest",
 		ContainerName: containerName,
 		ServiceName:   serviceName,
 		Port:          80, // 容器内部监听 80
@@ -1122,7 +1120,6 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 		RestartPolicy: "Always",
 		Labels:        labels,
 		EnvVars:       map[string]string{"RUST_LOG": "debug"},
-		Platform:      "", 
 		ConfigContent: agentGatewayYAML,
 	}
 
