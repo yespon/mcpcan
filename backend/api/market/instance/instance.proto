@@ -214,6 +214,8 @@ message DetailResp {
   string containerLastMessage = 28;
   // @inject_tag: json:"openapiBaseUrl" desc:"Base access path"
   string openapiBaseUrl = 29;
+  // @inject_tag: json:"publicProxyPath" desc:"MCP public proxy service path"
+  string publicProxyPath = 30;
 }
 
 // EditRequest edit instance request
