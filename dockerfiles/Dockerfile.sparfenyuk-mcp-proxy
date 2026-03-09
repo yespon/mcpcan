@@ -1,3 +1,7 @@
+# @Deprecated
+# 这个服务已废弃，其功能已迁移到其他服务。
+# This service is deprecated and its logic has been migrated to other services.
+
 # 构建阶段
 FROM sparfenyuk-qm-mcp-server:latest as builder
 
