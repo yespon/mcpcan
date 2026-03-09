@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -926,7 +925,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		Mounts:        mounts,
 		WorkingDir:    "/app",
 		Sidecar: &container.SidecarOptions{
-			ImageName:     "77kymo/mcp-sidecar:latest",
+			ImageName:     common.GetSidecarImage(),
 			ContainerName: sidecarContainerName,
 			Port:          80, // mcpcan-sidecar default port
 			EnvVars: map[string]string{
@@ -1038,7 +1037,6 @@ EOF_STARTUP
 		Labels:        labels,
 		EnvVars:       envVars,
 		WorkingDir:    "/app",
-		Platform:      os.Getenv("MCP_HOSTING_PLATFORM"), // 支持通过环境变量指定平台，默认为空
 	}
 
 	return &containerOptions, nil
@@ -1111,7 +1109,7 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 	})
 
 	containerOptions := container.ContainerCreateOptions{
-		ImageName:     "77kymo/mcp-sidecar:latest",
+		ImageName:     common.GetSidecarImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
 		Port:          80, // 容器内部监听 80

@@ -142,22 +142,29 @@ func MarshalAndAssignConfig(config interface{}) (json.RawMessage, error) {
 	return json.RawMessage(b), nil
 }
 
+// GetImage returns image with mirror prefix or default registry (77kymo)
+func GetImage(name string) string {
+	mirror := os.Getenv("REGISTORY_IMAGE_MIRROR")
+	if mirror == "" {
+		mirror = "77kymo"
+	}
+	return fmt.Sprintf("%s/%s", mirror, name)
+}
+
 // mcp-hosting image 77kymo/mcp-hosting:latest
 // GetMcpHostingImage returns mcp-hosting image
 func GetMcpHostingImage() string {
-	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
-		return fmt.Sprintf("%s/mcp-hosting:latest", os.Getenv("REGISTORY_IMAGE_MIRROR"))
-	}
-	return "77kymo/mcp-hosting:latest"
+	return GetImage("mcp-hosting:latest")
+}
+
+// mcp-sidecar image 77kymo/mcp-sidecar:latest
+// GetSidecarImage returns mcp-sidecar image
+func GetSidecarImage() string {
+	return GetImage("mcp-sidecar:latest")
 }
 
 // openapi-to-mcp image 77kymo/openapi-to-mcp:latest
 // GetOpenapiToMcpImage returns openapi-to-mcp image
 func GetOpenapiToMcpImage() string {
-	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
-		return fmt.Sprintf("%s/openapi-to-mcp:latest", os.Getenv("REGISTORY_IMAGE_MIRROR"))
-	}
-	return "77kymo/openapi-to-mcp:latest"
+	return GetImage("openapi-to-mcp:latest")
 }
