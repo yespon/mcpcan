@@ -1,3 +1,4 @@
+// Deprecated: 旧的网关配置管理逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
 package config
 
 import (

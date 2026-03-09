@@ -1,3 +1,4 @@
+// Deprecated: 旧的网关日志处理逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
 package proxy
 
 import (
@@ -161,7 +162,7 @@ func InitGatewayLogQueue() {
 }
 
 // RecordGatewayLog builds a log record and enqueues it to be persisted.
-func RecordGatewayLog(traceID string, instanceID string, token string, usages []string, level log.Level, event model.Event, log *model.Log) error {
+func RecordGatewayLog(traceID string, instanceID string, toolName string, token string, usages []string, level log.Level, event model.Event, log *model.Log) error {
 	if GatewayLogQ == nil {
 		InitGatewayLogQueue()
 	}
@@ -173,6 +174,7 @@ func RecordGatewayLog(traceID string, instanceID string, token string, usages []
 	rec := &model.GatewayLog{
 		TraceID:    traceID,
 		InstanceID: instanceID,
+		ToolName:   toolName,
 		Token:      token,
 		Usages:     strings.TrimSpace(strings.Join(usages, ",")),
 		Level:      level,
@@ -212,7 +214,7 @@ func isAllowedEvent(e model.Event) bool {
 	return ok
 }
 
-func WriteMCPLog(traceID, instanceID string, token string, level log.Level, event model.Event, usages []string, msg string) {
+func WriteMCPLog(traceID, instanceID string, toolName string, token string, level log.Level, event model.Event, usages []string, msg string) {
 	if strings.TrimSpace(instanceID) == "" {
 		return
 	}
@@ -225,5 +227,5 @@ func WriteMCPLog(traceID, instanceID string, token string, level log.Level, even
 		Message: msg,
 		TS:      time.Now().Format(time.RFC3339Nano),
 	}
-	_ = RecordGatewayLog(traceID, instanceID, strings.TrimSpace(token), usages, level, event, log)
+	_ = RecordGatewayLog(traceID, instanceID, toolName, strings.TrimSpace(token), usages, level, event, log)
 }

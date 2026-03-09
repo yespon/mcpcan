@@ -1,3 +1,5 @@
+// Deprecated: 旧的网关代理逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
+// 此部分逻辑仅供参考，待新模式验证通过后将被清理。
 package proxy
 
 import (

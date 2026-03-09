@@ -1,3 +1,5 @@
+// Deprecated: 旧的网关服务逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
+// 此部分服务已不再维护，待新模式验证后将被清理。
 package app
 
 import (

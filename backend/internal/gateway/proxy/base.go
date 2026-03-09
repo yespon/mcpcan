@@ -1,3 +1,4 @@
+// Deprecated: 旧的网关基础工具逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
 package proxy
 
 import (
@@ -41,7 +42,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 			logger.Error("RequestAuth not found in context")
 			return
 		}
-		WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, xInstanceID, "", reqAuth.Token,
 			log.ErrorLevel, model.EventUpstreamConnInterrupted, reqAuth.Usages,
 			fmt.Sprintf("Proxy connection interrupted: %s", err.Error()))
 		// 对于连接中断，不需要向客户端发送错误响应
@@ -64,7 +65,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 		logger.Error("RequestAuth not found in context")
 		return
 	}
-	WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
+	WriteMCPLog(xTraceID, xInstanceID, "", reqAuth.Token,
 		log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
 		fmt.Sprintf("Proxy error: %s", msg))
 
@@ -81,7 +82,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	if EnableMCPErrorOnUpstreamFailure {
 		code := MapErrorToCode(err)
 		WriteMCPError(w, status, code, "Upstream error", msg)
-		WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, xInstanceID, "", reqAuth.Token,
 			log.ErrorLevel, model.EventUpstreamError, reqAuth.Usages,
 			fmt.Sprintf("Upstream error: %s", msg))
 		return

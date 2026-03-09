@@ -1,3 +1,5 @@
+// Deprecated: 旧的网关服务逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
+// 此部分服务已不再维护，待新模式验证后将被清理。
 package app
 
 import (
@@ -131,7 +133,7 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 		// Log the request with all collected fields, including the masked token
 		logger.Info("Request", logFields...)
 
-		proxy.WriteMCPLog(traceID, instanceID, token, golibLog.InfoLevel, model.EventRequest, nil, string(reqMsg))
+		proxy.WriteMCPLog(traceID, instanceID, "", token, golibLog.InfoLevel, model.EventRequest, []string{}, string(reqMsg))
 
 		c.Next()
 
@@ -160,7 +162,7 @@ func RequestResponseLoggingMiddleware() gin.HandlerFunc {
 			"latency":         latency,
 			"responseHeaders": respHeaders,
 		})
-		proxy.WriteMCPLog(traceID, instanceID, token, golibLog.InfoLevel, model.EventResponse, nil, string(respMsg))
+		proxy.WriteMCPLog(traceID, instanceID, "", token, golibLog.InfoLevel, model.EventResponse, []string{}, string(respMsg))
 	}
 }
 
