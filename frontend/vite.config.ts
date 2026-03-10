@@ -27,9 +27,9 @@ export default defineConfig({
         // Do not remove /api prefix
       },
       '/api': {
-        target: 'http://127.0.0.1:8080',
+        target: 'http://127.0.0.1:80',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/mcp-gateway': {
         target: 'http://127.0.0.1:80',
