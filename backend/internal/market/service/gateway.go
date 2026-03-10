@@ -228,6 +228,9 @@ func validateMcpTokenForInstance(c *gin.Context, instanceID string) (*model.McpT
 	req := c.Request
 	token := req.Header.Get("Authorization")
 	if token == "" {
+		token = req.Header.Get("X-Mcp-Authorization")
+	}
+	if token == "" {
 		token = req.Header.Get("API-Key")
 	}
 	if token == "" {
