@@ -29,6 +29,12 @@ type SecurityConfig struct {
 // SecurityMiddleware Security middleware, implementing anti-tamper and anti-replay attack
 func SecurityMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip security check for mcp-gateway prefix
+		if strings.HasPrefix(c.Request.URL.Path, common.GatewayRoutePrefix) {
+			c.Next()
+			return
+		}
+
 		config := &SecurityConfig{
 			SecretKey:    secret,
 			ReplayWindow: common.ReplayWindow,

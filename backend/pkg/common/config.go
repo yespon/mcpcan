@@ -17,8 +17,9 @@ const (
 
 // ServerConfig server configuration
 type ServerConfig struct {
-	GrpcPort int `mapstructure:"grpcPort"` // gRPC port
-	HttpPort int `mapstructure:"httpPort"` // HTTP port
+	GrpcPort 		 int 	`mapstructure:"grpcPort"` // gRPC port
+	HttpPort         int    `mapstructure:"httpPort"` // HTTP port
+	ServiceName      string `mapstructure:"serviceName"`
 }
 
 type StorageConfig struct {

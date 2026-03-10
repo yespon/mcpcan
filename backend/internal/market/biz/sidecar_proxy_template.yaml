@@ -11,6 +11,7 @@ binds:
       - routes:
           - backends:
               - mcp:
+                  instancePath: "{{INSTANCE_PATH}}"
                   prefixMode: "always"
                   targets:
                     - name: remote-mcp

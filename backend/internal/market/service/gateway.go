@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -281,6 +284,110 @@ func validateMcpTokenForInstance(c *gin.Context, instanceID string) (*model.McpT
 	}
 
 	return mcpToken, nil
+}
+
+
+// ProxyHandler handles direct MCP gateway requests, performing authentication and reverse proxying to sidecars.
+func (s *GatewayService) ProxyHandler(c *gin.Context) {
+	instanceID := c.Param("instanceID")
+	if instanceID == "" {
+		// Try to extract from path if param is not set (generic Any route)
+		uri := c.Request.URL.Path
+		parts := strings.Split(strings.Trim(uri, "/"), "/")
+		if len(parts) >= 2 {
+			instanceID = parts[1]
+		}
+	}
+
+	if instanceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing instance id"})
+		return
+	}
+
+	// 1. Get Instance Info
+	instance, err := mysql.McpInstanceRepo.FindByInstanceID(context.Background(), instanceID)
+	if err != nil || instance == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "instance not found"})
+		return
+	}
+
+	// 2. Perform Internal Authentication
+	var mcpToken *model.McpToken
+	if instance.EnabledToken {
+		mcpToken, err = validateMcpTokenForInstance(c, instanceID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed: " + err.Error()})
+			return
+		}
+	}
+
+	// 3. Prepare Target URL
+	targetBase := instance.ContainerServiceURL
+	if targetBase == "" {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "instance service URL not configured"})
+		return
+	}
+
+	targetURL, err := url.Parse(targetBase)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse target URL"})
+		return
+	}
+
+	// 4. Setup Reverse Proxy
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Scheme = targetURL.Scheme
+			req.URL.Host = targetURL.Host
+
+			// Keep original path but strip /mcp-gateway/<instanceID>
+			// Example: /mcp-gateway/xxx/sse -> /sse (or whatever targetURL.Path is + remaining)
+			prefix := fmt.Sprintf("/%s/%s", strings.Trim(common.GatewayRoutePrefix, "/"), instanceID)
+			remaining := strings.TrimPrefix(c.Request.URL.Path, prefix)
+			
+			// Join target path with remaining path
+			req.URL.Path = path.Join(targetURL.Path, remaining)
+			if strings.HasSuffix(c.Request.URL.Path, "/") && !strings.HasSuffix(req.URL.Path, "/") {
+				req.URL.Path += "/"
+			}
+			
+			req.URL.RawQuery = c.Request.URL.RawQuery
+			if targetURL.RawQuery != "" {
+				if req.URL.RawQuery == "" {
+					req.URL.RawQuery = targetURL.RawQuery
+				} else {
+					req.URL.RawQuery = req.URL.RawQuery + "&" + targetURL.RawQuery
+				}
+			}
+
+			// Add custom headers from token
+			if mcpToken != nil && len(mcpToken.Headers) > 0 {
+				var extraHeaders map[string]string
+				if err := json.Unmarshal(mcpToken.Headers, &extraHeaders); err == nil {
+					for k, v := range extraHeaders {
+						req.Header.Set(k, v)
+					}
+				}
+			}
+			
+			// Add MCP configuration headers
+			var mcpConfig *model.McpConfig
+			if instance.AccessType == model.AccessTypeProxy {
+				_, _, mcpConfig, _ = instance.GetSourceConfig()
+			}
+			if mcpConfig != nil && len(mcpConfig.Headers) > 0 {
+				for k, v := range mcpConfig.Headers {
+					req.Header.Set(k, v)
+				}
+			}
+
+			req.Header.Set("X-Mcp-Instance-Id", instanceID)
+			req.Host = targetURL.Host
+		},
+		FlushInterval: -1, // Crucial for SSE
+	}
+
+	proxy.ServeHTTP(c.Writer, c.Request)
 }
 
 // 供 strings.Trim 等函数容错使用

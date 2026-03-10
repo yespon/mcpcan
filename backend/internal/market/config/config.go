@@ -127,6 +127,11 @@ func Load() (*Config, error) {
 		config.DemoMaxInstances = 5
 	}
 
+	// Validate mandatory ServiceName
+	if strings.TrimSpace(config.Server.ServiceName) == "" {
+		return nil, fmt.Errorf("server.serviceName is required in config, but not found")
+	}
+
 	// Append Version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()

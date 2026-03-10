@@ -680,8 +680,11 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 // createDownloadLink creates download link
 // 使用固定的服务名（容器网络内的 DNS）和 HTTP 端口构建下载地址，
 // 供实例容器在同一 Docker 网络中访问 mcp-market 服务下载资源。
-func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
-	host := "host.docker.internal"
+func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) (string, error) {
+	host := config.GlobalConfig.Server.ServiceName
+	if host == "" {
+		return "", fmt.Errorf("server.serviceName config is empty")
+	}
 	port := config.GlobalConfig.Server.HttpPort
 	if port <= 0 {
 		port = 8080
@@ -690,7 +693,7 @@ func (cd *ContainerBiz) createDownloadLink(downloadLinkPath string) string {
 		host,
 		port,
 		strings.TrimPrefix(common.GetMarketRoutePrefix(), "/"),
-		strings.TrimPrefix(downloadLinkPath, "/"))
+		strings.TrimPrefix(downloadLinkPath, "/")), nil
 }
 
 // volumeMountFromPb converts pb volume mount to local structure
@@ -719,7 +722,10 @@ func (cd *ContainerBiz) generateCodePkgInstallScript(packageId string) (string, 
 	// ext := codePackage.PackageType
 
 	downloadLinkPath := fmt.Sprintf("/code/download/%s", packageId)
-	pkgLink := cd.createDownloadLink(downloadLinkPath)
+	pkgLink, err := cd.createDownloadLink(downloadLinkPath)
+	if err != nil {
+		return codepkgInstallScript, err
+	}
 	if codePackage == nil {
 		return codepkgInstallScript, fmt.Errorf("code package is nil")
 	}
@@ -901,7 +907,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	traefikLabels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMiddleware)] = instancePath
 	// 设置路由规则及中间件链 (Auth -> Strip)
 	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker", stripMiddleware)
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-gateway-forward-auth@file,%s@docker", stripMiddleware)
 	// 健壮性关键修复：router 显式指向 sidecar 容器的 service，防止 Traefik 将同 router 下多个容器的负载规则任意合并
 	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = sidecarContainerName
 	traefikLabels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", sidecarContainerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
@@ -977,12 +983,15 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-gateway-forward-auth@file"
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
-	downloadLink := cd.createDownloadLink(downloadLinkPath)
+	downloadLink, err := cd.createDownloadLink(downloadLinkPath)
+	if err != nil {
+		return nil, err
+	}
 
 	startupScript := fmt.Sprintf(`
 		# Create working directory
@@ -1097,7 +1106,7 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 
 	// 设置路由规则及中间件链
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("HostRegexp(`{host:.+}`) && PathPrefix(`%s`)", instancePath)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker,%s@docker", stripMiddleware, headersMiddlewareName)
+	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-gateway-forward-auth@file,%s@docker,%s@docker", stripMiddleware, headersMiddlewareName)
 	// 健壮性关键修复：router 显式指向本容器自身的 service (containerName)
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = containerName
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", containerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
