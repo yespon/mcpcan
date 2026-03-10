@@ -92,14 +92,8 @@
                 </SearchForm>
               </div>
             </div>
-            <RecycleScroller
-              class="scroller hide-scrollbar mt-4"
-              :items="showTokenList"
-              :item-size="140"
-              key-field="id"
-              v-slot="{ item: token, index }"
-            >
-              <div class="w-full">
+            <div class="mt-4">
+              <div v-for="(token, index) in showTokenList" :key="token.id" class="w-full mb-4">
                 <div class="flex items-center w-full">
                   <div class="mr-2 flex-shrink-0">
                     <el-checkbox
@@ -219,7 +213,7 @@
                   </div>
                 </div>
               </div>
-            </RecycleScroller>
+            </div>
           </div>
         </el-scrollbar>
       </el-col>
@@ -311,9 +305,6 @@ import SearchForm from '@/components/SearchForm/index.vue'
 import TokenForm from './components/token-form-list.vue'
 import BatchChangeHeader from './components/batch-change-header.vue'
 import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
-// @ts-expect-error - vue-virtual-scroller 缺少类型定义
-import { RecycleScroller } from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
@@ -788,9 +779,10 @@ const handleSaveTokens = async () => {
 const handleTokenList = async () => {
   dialogInfo.value.instanceInfo.loading = true
   try {
-    const { tokens } = await TokenAPI.list({
+    const res = await TokenAPI.list({
       instanceId: dialogInfo.value.instanceInfo.instanceId,
     })
+    const tokens = res.tokens || res.list || []
     // reverse the token list to show the latest created token on top
     tokenList.value = (tokens || [])
       .map((token: any) => ({

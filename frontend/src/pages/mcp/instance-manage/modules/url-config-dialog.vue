@@ -159,9 +159,10 @@ const handleCopy = async (type: string) => {
 const handleTokenList = async () => {
   dialogInfo.value.instanceInfo.loading = true
   try {
-    const { tokens } = await TokenAPI.list({
+    const res = await TokenAPI.list({
       instanceId: dialogInfo.value.instanceInfo.instanceId,
     })
+    const tokens = res.tokens || res.list || []
     // reverse the token list to show the latest created token on top
     tokenList.value = (tokens || [])
       .map((token: any) => ({
