@@ -96,18 +96,18 @@ func (s *InstanceService) EditHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Get original instance information
 	oriInstance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		common.GinError(c, i18nresp.CodeResourceNotFound, fmt.Sprintf("failed to get instance information: %s", err.Error()))
 		return
 	}
 	if oriInstance == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		common.GinError(c, i18nresp.CodeResourceNotFound, "instance does not exist")
 		return
 	}
 
@@ -247,13 +247,17 @@ func (s *InstanceService) DeleteHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Use InstanceService to handle request
 	result, err := biz.GInstanceBiz.DeleteInstance(req.InstanceId)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "not exist") {
+			common.GinError(c, i18nresp.CodeResourceNotFound, err.Error())
+			return
+		}
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
@@ -895,18 +899,18 @@ func (s *InstanceService) UpdateOpenapiHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Get original instance information
 	oriInstance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		common.GinError(c, i18nresp.CodeResourceNotFound, fmt.Sprintf("failed to get instance information: %s", err.Error()))
 		return
 	}
 	if oriInstance == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		common.GinError(c, i18nresp.CodeResourceNotFound, "instance does not exist")
 		return
 	}
 

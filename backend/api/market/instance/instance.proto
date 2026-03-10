@@ -220,7 +220,7 @@ message DetailResp {
 
 // EditRequest edit instance request
 message EditRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
   // @inject_tag: json:"name" form:"name" desc:"Instance name"
   string name = 2;
@@ -363,7 +363,7 @@ message ListResp {
 
 // RestartRequest restart instance request
 message RestartRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
 }
 
@@ -770,7 +770,7 @@ message CreateOpenapiRequest {
 
 // UpdateOpenapiRequest edit instance request
 message UpdateOpenapiRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
   // @inject_tag: json:"name" form:"name" desc:"Instance name"
   string name = 2;
