@@ -351,15 +351,16 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 
 	// Build response
 	resp := &instancepb.DetailResp{
-		InstanceId:     instance.InstanceID,
-		Name:           instance.InstanceName,
-		Status:         string(instance.Status),
-		AccessType:     pbAccessType,
-		McpProtocol:    pbMcpProtocol,
-		Notes:          instance.Notes,
-		IconPath:       instance.IconPath,
-		EnabledToken:   instance.EnabledToken,
-		OpenapiBaseUrl: instance.OpenapiBaseUrl,
+		InstanceId:      instance.InstanceID,
+		Name:            instance.InstanceName,
+		Status:          string(instance.Status),
+		AccessType:      pbAccessType,
+		McpProtocol:     pbMcpProtocol,
+		Notes:           instance.Notes,
+		IconPath:        instance.IconPath,
+		EnabledToken:    instance.EnabledToken,
+		OpenapiBaseUrl:  instance.OpenapiBaseUrl,
+		PublicProxyPath: instance.PublicProxyPath,
 	}
 
 	// Add specific fields based on access type

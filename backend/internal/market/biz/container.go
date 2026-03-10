@@ -904,7 +904,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker", stripMiddleware)
 	// 健壮性关键修复：router 显式指向 sidecar 容器的 service，防止 Traefik 将同 router 下多个容器的负载规则任意合并
 	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = sidecarContainerName
-	traefikLabels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", sidecarContainerName)] = "80"
+	traefikLabels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", sidecarContainerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
 
 	// 默认禁用主容器的 Traefik 直接发现（由 Sidecar 代劳）
 	labels["traefik.enable"] = "false"
@@ -916,7 +916,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		ImageName:     imgPms.image,
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          imgPms.port,
+		Port:          common.GetSidecarPort(),
 		Command:       imgPms.command,
 		CommandArgs:   imgPms.commandArgs,
 		RestartPolicy: "Always",
@@ -927,7 +927,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 		Sidecar: &container.SidecarOptions{
 			ImageName:     common.GetSidecarImage(),
 			ContainerName: sidecarContainerName,
-			Port:          80, // mcpcan-sidecar default port
+			Port:          common.GetSidecarPort(), // mcpcan-sidecar default port
 			EnvVars: map[string]string{
 				// 因为自研 proxy 支持 websocket 和所有请求透传，所以无需区分 sse，直接代理到 mcpBackend 的根或具体路径
 				"MCP_TARGET_URL":   fmt.Sprintf("http://%s:%d", containerName, imgPms.port),
@@ -942,14 +942,18 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 }
 
 // BuildOpenapiContainerOptions builds openapi container creation options
-func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, startupTimeout int32, runningTimeout int32, openapiBaseUrl string) (*container.ContainerCreateOptions, error) {
+func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, port int32, startupTimeout int32, runningTimeout int32, openapiBaseUrl string) (*container.ContainerCreateOptions, error) {
 	containerName := cd.generateContainerName(instanceID)
 	serviceName := cd.generateServiceName(instanceID)
+	
+	if port <= 0 {
+		port = common.GetMcpHostingPort()
+	}
 
 	// Set environment variables
 	envVars := make(map[string]string)
 	envVars["MCP_INSTANCE_ID"] = instanceID
-	envVars["MCP_PORT"] = fmt.Sprintf("%d", 8080)
+	envVars["MCP_PORT"] = fmt.Sprintf("%d", port)
 	envVars["NODE_ENV"] = "production"
 
 	// Set labels
@@ -974,7 +978,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	labels["traefik.enable"] = "true"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-auth@file"
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = "80"
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
@@ -988,7 +992,7 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 		cat > /app/agentgateway.yaml << 'EOF_PROXY'
 listeners:
   - name: local-ingress
-    address: "0.0.0.0:80"        # 向外部暴露 80 端口给 Traefik 请求
+    address: "0.0.0.0:%d"        # 向外部暴露端口给 Traefik 请求
 routes:
   - id: "local-route"
     backend_id: "local-backend"
@@ -997,7 +1001,7 @@ routes:
 backends:
   - id: "local-backend"
     servers:
-      - url: "http://127.0.0.1:8080" # 代理给真实的同容器 MCP 服务
+      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
 EOF_PROXY
 		# ========================================================
 
@@ -1016,21 +1020,21 @@ curl -f '%s' -o /app/run.yaml
 
 echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
 echo "[$(date)] Starting openapi-mcp: --base-url=%s"
-exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:8080 --base-url=%s run.yaml
+exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:%d --base-url=%s run.yaml
 EOF_STARTUP
 		# Set script execution permissions
 		chmod +x /app/init/startup.sh
 		
 		# Execute startup command script
 		exec /app/init/startup.sh
-	`, instancePath, downloadLink, openapiBaseUrl, openapiBaseUrl)
+	`, common.GetSidecarPort(), instancePath, port, downloadLink, openapiBaseUrl, port, openapiBaseUrl)
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          80,                     // Sidecar 监听 80 端口，由 Traefik Label 自动发现
+		Port:          common.GetSidecarPort(), // Sidecar 监听 80 端口，由 Traefik Label 自动发现
 		Command:       []string{"bash", "-c"}, // Use bash for process substitution
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
@@ -1096,7 +1100,7 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("mcp-auth@file,%s@docker,%s@docker", stripMiddleware, headersMiddlewareName)
 	// 健壮性关键修复：router 显式指向本容器自身的 service (containerName)
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = containerName
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", containerName)] = "80"
+	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", containerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
 
 	// 使用 embed 模板生成 agentgateway sidecar 配置（Proxy 模式）
 	// 模板基于已验证的 proxy-test.yaml 格式（无 protocol/match 字段，使用 sse 拆分字段）
@@ -1112,7 +1116,7 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 		ImageName:     common.GetSidecarImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          80, // 容器内部监听 80
+		Port:          common.GetSidecarPort(), // 容器内部监听 80
 		// 容器内部自带 Entrypoint，此处使用 -f 加载下发的配置文件
 		CommandArgs:   []string{"-f", "/ag-config.yaml"},
 		RestartPolicy: "Always",

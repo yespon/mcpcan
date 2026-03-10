@@ -168,7 +168,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 	}
 
 	instanceID := uuid.New().String()
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, common.GetMcpHostingPort(), 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
@@ -196,7 +196,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		TemplateID:             0,
 		EnabledToken:           req.EnabledToken,
 		ImgAddr:                containerOptions.ImageName,
-		Port:                   8080,
+		Port:                   common.GetMcpHostingPort(),
 		InitScript:             "",
 		Command:                containerOptions.CommandArgs[0],
 		EnvironmentVariables:   nil,
@@ -311,7 +311,7 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		}
 		instance.ContainerName = options.ContainerName
 		instance.ContainerServiceName = options.ServiceName
-		instance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ContainerName)
+		instance.ContainerServiceURL = fmt.Sprintf("http://%s:%d/", options.ContainerName, common.GetSidecarPort())
 		instance.EnvironmentID = uint(req.EnvironmentId)
 		// 路由协议转换为 SSE (经 sidecar 重写)
 		instance.ProxyProtocol = model.McpProtocolSSE
@@ -413,11 +413,13 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, "mcp")
+		// For Hosting, we use sidecar's port
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, common.GetSidecarPort(), "mcp")
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
+		// For Hosting, we use sidecar's port
+		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, common.GetSidecarPort(), strings.Trim(req.ServicePath, "/"))
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
@@ -1056,7 +1058,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to get openapi file information")
 	}
 
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, oriInstance.Port, 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
@@ -1182,11 +1184,13 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	case model.McpProtocolStdio:
 		ProxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, "mcp")
+		// For Hosting, we use sidecar's port
+		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), "mcp")
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		ProxyProtocol = oriInstance.McpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, req.ServicePath)
+		// For Hosting, we use sidecar's port
+		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), req.ServicePath)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", oriInstance.McpProtocol)
 	}
@@ -1349,12 +1353,12 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, mcpServerUrl string,
 		}
 	}
 
-	// 验证 mcpServerUrl 必须由前端/调用端提供
+	// Validate mcpServerUrl
 	if mcpServerUrl == "" {
 		return nil, fmt.Errorf("mcpServerUrl is required")
 	}
 
-	// 给该 mcp 实例创建对应的 http client
+	// Give the mcp instance its corresponding http client
 	var mcpClient *client.Client
 	mcpClient, err = BuildMcpClient(mcpInstance, mcpServerUrl, listToolsHeader)
 	if err != nil {

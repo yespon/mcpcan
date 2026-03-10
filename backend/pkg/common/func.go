@@ -168,3 +168,32 @@ func GetSidecarImage() string {
 func GetOpenapiToMcpImage() string {
 	return GetImage("openapi-to-mcp:latest")
 }
+
+// GetSidecarPort returns sidecar port from env or default 80
+func GetSidecarPort() int32 {
+	port := os.Getenv(SidecarServerPortEnv)
+	if port == "" {
+		return 80
+	}
+	var p int
+	fmt.Sscanf(port, "%d", &p)
+	if p == 0 {
+		return 80
+	}
+	return int32(p)
+}
+
+// GetMcpHostingPort returns mcp-hosting default port from env or default (depending on image/protocol)
+// Note: Hosting port is usually passed from request, but this getter provides a fallback or default for construction
+func GetMcpHostingPort() int32 {
+	port := os.Getenv(HostingServerPortEnv)
+	if port == "" {
+		return 8080 // Default for most hosting images
+	}
+	var p int
+	fmt.Sscanf(port, "%d", &p)
+	if p == 0 {
+		return 8080
+	}
+	return int32(p)
+}
