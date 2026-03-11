@@ -53,7 +53,7 @@
               link
               class="base-btn-link"
               v-auth="'mcpcan_working_environment:connect_test'"
-              @click="handleConnection(row)"
+              @click="handleConnection(row.id)"
             >
               {{ t('env.run.action.connection') }}
             </el-button>
