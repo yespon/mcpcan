@@ -121,46 +121,12 @@ func (biz *EnvironmentBiz) TestEnvironmentConnectivity(ctx context.Context, envi
 
 // testKubernetesConnectivity test Kubernetes connectivity
 func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, environment *model.McpEnvironment) (*mcp_environment.TestConnectivityResponse, error) {
-	// Create container runtime configuration
-	config := container.Config{
-		Runtime:    container.RuntimeKubernetes,
-		Namespace:  environment.Namespace,
-		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
-		Docker:     container.DockerConfig{Network: "bridge"}, // Default network configuration
-	}
-
-	// Create container runtime entry
-	entry, err := container.NewEntry(config)
+	// Use the dedicated ListNamespaces logic to verify connectivity
+	_, err := biz.ListNamespaces(ctx, environment.Config, model.McpEnvironmentKubernetes)
 	if err != nil {
 		return &mcp_environment.TestConnectivityResponse{
 			Success: false,
-			Message: "Kubernetes client initialization failed",
-		}, nil
-	}
-
-	// Check if it's Kubernetes runtime
-	if !entry.IsKubernetes() {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "runtime type error",
-		}, nil
-	}
-
-	// Get K8s entry
-	k8sRuntime := entry.GetK8sRuntime()
-	if k8sRuntime == nil {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "Kubernetes client acquisition failed",
-		}, nil
-	}
-
-	// Test connection - try to get node information
-	containerManager := entry.GetContainerManager()
-	if containerManager == nil {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "container manager acquisition failed",
+			Message: fmt.Sprintf("Kubernetes connection test failed: %v", err),
 		}, nil
 	}
 
@@ -208,6 +174,38 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 		return &mcp_environment.TestConnectivityResponse{
 			Success: false,
 			Message: "Docker container manager not initialized",
+		}, nil
+	}
+
+	// Actually test the connection by pinging the Docker client
+	runtime := entry.GetRuntime()
+	if runtime == nil {
+		return &mcp_environment.TestConnectivityResponse{
+			Success: false,
+			Message: "Docker runtime initialization failed",
+		}, nil
+	}
+
+	// Type assertion to get the DockerRuntime
+	if dockerRuntime, ok := runtime.(*container.DockerRuntime); ok {
+		cli := dockerRuntime.GetClient()
+		if cli == nil {
+			return &mcp_environment.TestConnectivityResponse{
+				Success: false,
+				Message: "docker client is not initialized (initialization failed earlier)",
+			}, nil
+		}
+		// Try to ping the docker engine
+		if _, err := cli.Ping(ctx); err != nil {
+			return &mcp_environment.TestConnectivityResponse{
+				Success: false,
+				Message: fmt.Sprintf("failed to connect to Docker engine: %v", err),
+			}, nil
+		}
+	} else {
+		return &mcp_environment.TestConnectivityResponse{
+			Success: false,
+			Message: "failed to cast to Docker runtime",
 		}, nil
 	}
 

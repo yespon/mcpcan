@@ -165,15 +165,31 @@ const handleViewDetail = (row: any) => {
  * Test of connention
  * @param id - env key
  */
-const handleConnection = async (id: string) => {
+const handleConnection = async (id: any) => {
+  // Ensure id is not an object (compatibility fix)
+  let targetId = id
+  if (typeof id === 'object' && id !== null && id.id) {
+    targetId = id.id
+  } else if (typeof id === 'object' && id !== null && id.ID) {
+    targetId = id.ID
+  }
+
+  if (typeof targetId === 'object') {
+    console.error('handleConnection received an object instead of ID:', targetId)
+    return
+  }
+
   try {
     load.value.status = true
-    load.value.text = t('env.run.load.connect')
-    await EnvAPI.testEnv(id)
+    load.value.text = t('env.run.action.connection')
+    await EnvAPI.testEnv(targetId)
     ElMessage({
       type: 'success',
       message: t('env.run.action.connectionSuccess'),
     })
+    tablePlus.value.initData()
+  } catch (error) {
+    console.error('Failed to test connection:', error)
   } finally {
     load.value.status = false
   }

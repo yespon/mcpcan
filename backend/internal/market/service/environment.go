@@ -128,7 +128,8 @@ func (s *EnvironmentService) TestConnectivityHandler(c *gin.Context) {
 
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, "invalid environment ID")
+		fmt.Printf("Error: Received invalid environment ID string: '%s'\n", idStr)
+		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("invalid environment ID: %s", idStr))
 		return
 	}
 
