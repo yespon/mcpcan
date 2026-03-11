@@ -385,6 +385,7 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 			}
 
 			req.Header.Set("X-Mcp-Instance-Id", instanceID)
+			req.Header.Set("X-Internal-Request", "true")
 			req.Host = targetURL.Host
 		},
 		FlushInterval: -1, // Crucial for SSE
