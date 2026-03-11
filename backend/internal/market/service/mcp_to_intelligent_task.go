@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kymo-mcp/mcpcan/api/authz/user_auth"
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
@@ -24,9 +25,11 @@ import (
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/postgres"
 	"github.com/kymo-mcp/mcpcan/pkg/dify"
+	"github.com/kymo-mcp/mcpcan/pkg/gomap"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/logger"
 	"github.com/kymo-mcp/mcpcan/pkg/n8n"
+	"github.com/kymo-mcp/mcpcan/pkg/utils"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"go.uber.org/zap"
@@ -65,6 +68,13 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 		common.GinError(c, i18nresp.CodeBadRequest, err.Error())
 		return
 	}
+
+	userInfo, err := utils.GetCurrentUser(c)
+	if err != nil {
+		common.GinError(c, i18nresp.CodeInternalError, err.Error())
+		return
+	}
+
 	// validate request
 	if req.Desc == "" || req.IntelligentAccessID == 0 || len(req.InsertIntelligentInfos) == 0 || len(req.McpInstanceIDs) == 0 {
 		common.GinError(c, i18nresp.CodeBadRequest, "invalid request")
@@ -124,6 +134,7 @@ func (s *McpToIntelligentTaskService) CreateHandler(c *gin.Context) {
 
 	task := &model.McpToIntelligentTask{
 		Desc:                   req.Desc,
+		Creator:                userInfo.UserId,
 		IntelligentAccessID:    req.IntelligentAccessID,
 		IntelligentAccessName:  intelligentAccess.AccessName,
 		InsertIntelligentInfos: insertInfos,
@@ -335,6 +346,8 @@ func ProcessMcpToIntelligentTask(id int64) {
 		logger.Error(fmt.Sprintf("failed to find mcp to intelligent task: %s", err.Error()), zap.Int64("taskId", id))
 		return
 	}
+
+	domain := task.Domain
 	// 从数据库中获取智能体访问信息
 	intelligentAccess, err := mysql.IntelligentAccessRepo.FindByID(context.Background(), task.IntelligentAccessID)
 	if err != nil {
@@ -468,6 +481,12 @@ func ProcessMcpToIntelligentTask(id int64) {
 					wg.Done()
 				}()
 
+				// 企业版数据权限 mysql 插件使用
+				if task.Creator != 0 {
+					gomap.Set(common.UserInfoContextKey, &user_auth.UserInfo{UserId: task.Creator})
+					defer gomap.Del(common.UserInfoContextKey)
+				}
+
 				// 获取任务最新状态，如果是取消则停止
 				searchTask, err := mysql.McpToIntelligentTaskRepo.FindByID(context.Background(), id)
 				if err != nil {
@@ -509,13 +528,13 @@ func ProcessMcpToIntelligentTask(id int64) {
 
 				// 根据不同的平台创建对应的mcp插件
 				if intelligentAccess.AccessType == iapb.IntelligentAccessType_COZE.String() {
-					err = createCozeTools(task.Domain, insertInfo, mcpInstance, userSpaces, task.Cookie)
+					err = createCozeTools(domain, insertInfo, mcpInstance, userSpaces, task.Cookie)
 				} else if intelligentAccess.AccessType == iapb.IntelligentAccessType_N8N.String() {
 					// 执行创建 n8n tools
-					err = createN8NTools(task.Domain, insertInfo, mcpInstance, userSpaces, intelligentAccess, n8nCookie)
+					err = createN8NTools(domain, insertInfo, mcpInstance, userSpaces, intelligentAccess, n8nCookie)
 				} else {
 					// 执行创建 dify tools
-					err = createDifyTools(task.Domain, insertInfo, mcpInstance, userSpaces, difyConn)
+					err = createDifyTools(domain, insertInfo, mcpInstance, userSpaces, difyConn)
 				}
 				if err != nil {
 					log := model.McpToIntelligentTaskLog{

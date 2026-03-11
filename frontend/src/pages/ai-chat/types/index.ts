@@ -30,12 +30,32 @@ export interface AIModel {
   allowedModels?: string[]
 }
 
+export interface ModelInfo {
+  id: string
+  name: string
+  description?: string
+  contextLength?: number
+  supportTools?: boolean
+  supportSystemPrompt?: boolean
+  supportTemperature?: boolean
+  supportThinking?: boolean
+  supportsVision?: boolean
+  imageMimeTypes?: string[] | null
+  maxImageSize?: number
+  maxImageCount?: number
+  supportsDocument?: boolean
+  documentMimeTypes?: string[] | null
+  maxDocumentSize?: number
+  maxDocumentCount?: number
+}
+
 export interface SupportedProvider {
   id: string
   name: string
   models: string[]
   baseUrl: string
   iconUrl?: string
+  modelInfos?: ModelInfo[]
 }
 
 export interface AiSession {

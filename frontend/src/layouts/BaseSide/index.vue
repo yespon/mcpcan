@@ -154,8 +154,8 @@ const menuMap: Record<string, { title: string; icon: string }> = {
   'mcpcan_rbac_manage:user': { title: t('sideMenu.userManage'), icon: 'MCP-yonghu' },
   'mcpcan_rbac_manage:dept': { title: t('sideMenu.departmentManage'), icon: 'MCP-zuzhibumen' },
   mcpcan_rbac_manage: { title: t('sideMenu.rbacManage'), icon: 'MCP-qita' },
-  mcpcan_model_manage: { title: '模型管理', icon: 'MCP-damoxing' },
-  mcpcan_ai_chat: { title: 'AI 聊天', icon: 'MCP-AIduihua' },
+  mcpcan_model_manage: { title: t('sideMenu.modelManage'), icon: 'MCP-damoxing' },
+  mcpcan_ai_chat: { title: t('sideMenu.aiChat'), icon: 'MCP-AIduihua' },
 }
 
 const menuList = shallowRef([
@@ -171,8 +171,8 @@ const menuList = shallowRef([
   { title: t('sideMenu.roleManage'), icon: 'MCP-jiaose', index: '/role-manage' },
   { title: t('sideMenu.userManage'), icon: 'MCP-yonghu', index: '/user-manage' },
   { title: t('sideMenu.departmentManage'), icon: 'MCP-zuzhibumen', index: '/department-manage' },
-  { title: '模型管理', icon: 'MCP-damoxing', index: '/model-manage' },
-  { title: 'AI 聊天', icon: 'MCP-AIduihua', index: '/ai-chat' },
+  { title: t('sideMenu.modelManage'), icon: 'MCP-damoxing', index: '/model-manage' },
+  { title: t('sideMenu.aiChat'), icon: 'MCP-AIduihua', index: '/ai-chat' },
 ])
 
 const handleToHome = () => {

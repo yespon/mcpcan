@@ -11,8 +11,10 @@ import type { ChatMessage, AIModel, AiSession, SupportedProvider } from '../type
 import { ElMessage } from 'element-plus'
 import baseConfig from '@/config/base_config.ts'
 import { Storage } from '@/utils/storage'
+import { useI18n } from 'vue-i18n'
 
 export function useChat(skipInit = false) {
+  const { t } = useI18n()
   const messages = ref<ChatMessage[]>([])
   const models = ref<AIModel[]>([])
   const mcpInstances = ref<InstanceResult[]>([])
@@ -69,7 +71,7 @@ export function useChat(skipInit = false) {
       }
     } catch (error) {
       console.error('Failed to fetch models:', error)
-      ElMessage.error('Failed to load AI models')
+      ElMessage.error(t('aiChat.failedToLoadModels'))
     }
   }
 
@@ -154,7 +156,7 @@ export function useChat(skipInit = false) {
       }
     } catch (error) {
       console.error('Failed to load session:', error)
-      ElMessage.error('Failed to load chat history')
+      ElMessage.error(t('aiChat.failedToLoadHistory'))
     }
   }
 
@@ -165,7 +167,7 @@ export function useChat(skipInit = false) {
 
       if (config && config.modelAccessID && config.modelName) {
         req = {
-          name: config.name || 'New Chat',
+          name: config.name || t('aiChat.newChat'),
           modelAccessID: config.modelAccessID,
           modelName: config.modelName,
           maxContext: config.maxContext || 10,
@@ -183,7 +185,7 @@ export function useChat(skipInit = false) {
         }
 
         if (!selectedModel) {
-          ElMessage.warning('Please select a model first')
+          ElMessage.warning(t('aiChat.pleaseSelectModel'))
           return
         }
 
@@ -192,7 +194,7 @@ export function useChat(skipInit = false) {
           currentTargetModel.value || selectedModel.description || selectedModel.name
 
         req = {
-          name: config && config.name ? config.name : 'New Chat',
+          name: config && config.name ? config.name : t('aiChat.newChat'),
           modelAccessID: parseInt(selectedModel.id),
           modelName: targetModel, // Use specific model
           systemPrompt: config?.systemPrompt,
@@ -225,7 +227,7 @@ export function useChat(skipInit = false) {
       }
     } catch (error) {
       console.error('Failed to create session:', error)
-      ElMessage.error('Failed to create new chat')
+      ElMessage.error(t('aiChat.failedToCreateChat'))
     }
   }
 
@@ -242,10 +244,10 @@ export function useChat(skipInit = false) {
           loadSession(sessions.value[0].id)
         }
       }
-      ElMessage.success('Chat deleted')
+      ElMessage.success(t('aiChat.chatDeleted'))
     } catch (error) {
       console.error('Failed to delete session:', error)
-      ElMessage.error('Failed to delete chat')
+      ElMessage.error(t('aiChat.failedToDeleteChat'))
     }
   }
 
@@ -260,10 +262,10 @@ export function useChat(skipInit = false) {
       if (currentSession.value?.id === id) {
         currentSession.value.name = name
       }
-      ElMessage.success('Session renamed')
+      ElMessage.success(t('aiChat.sessionRenamed'))
     } catch (error) {
       console.error('Failed to update session:', error)
-      ElMessage.error('Failed to rename session')
+      ElMessage.error(t('aiChat.failedToRenameSession'))
     }
   }
 
@@ -300,7 +302,7 @@ export function useChat(skipInit = false) {
       }
     } catch (e) {
       console.error('Failed to update session settings:', e)
-      ElMessage.error('Failed to update settings')
+      ElMessage.error(t('aiChat.failedToUpdateSettings'))
     }
   }
 
@@ -323,7 +325,7 @@ export function useChat(skipInit = false) {
       await createNewSession(
         {
           ...settings,
-          name: settings?.name || initialMessage || 'New Chat',
+          name: settings?.name || initialMessage || t('aiChat.newChat'),
         },
         true,
       )
@@ -382,7 +384,7 @@ export function useChat(skipInit = false) {
     }
 
     if (!currentSession.value) {
-      ElMessage.error('No active session')
+      ElMessage.error(t('aiChat.noActiveSession'))
       return
     }
 
@@ -405,7 +407,7 @@ export function useChat(skipInit = false) {
       // Upload file if exists
       if (file) {
         try {
-          const res = await uploadFile(file)
+          const res = await uploadFile(file, currentSession.value.id)
           if (res && res.url) {
             attachments.push({
               type: 'image',
@@ -433,8 +435,8 @@ export function useChat(skipInit = false) {
       )
     } catch (err: any) {
       console.error('Chat error:', err)
-      reactiveMsg.content += `\n[Error: ${err.message || 'Failed to get response'}]`
-      ElMessage.error('Failed to send message')
+      reactiveMsg.content += `\n[Error: ${err.message || t('aiChat.failedToGetResponse')}]`
+      ElMessage.error(t('aiChat.failedToSendMessage'))
     } finally {
       isStreaming.value = false
       reactiveMsg.isStreaming = false
@@ -590,42 +592,33 @@ export function useChat(skipInit = false) {
         allowedModels: (model as any).allowedModels || [],
       }
       await ChatAPI.createModelAccess(createReq)
-      ElMessage.success('Model added successfully')
+      ElMessage.success(t('aiChat.modelAddedSuccess'))
       // Refresh models
       await fetchModels()
     } catch (error) {
       console.error('Failed to add custom model:', error)
-      ElMessage.error('Failed to add custom model')
+      ElMessage.error(t('aiChat.failedToAddModel'))
     }
   }
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, sessionId: number) => {
     try {
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('file', file)
+      formData.append('sessionId', sessionId.toString())
       const res = await ChatAPI.uploadFile(formData)
-      // Adapt response for chat component expected format { url: string }
-      // The response structure is data: { path: "...", size: ..., mime: ... } but request.ts interceptor returns data directly.
-      // So res will be { path: "..." } or similar depending on interceptor.
-      // Wait, request.ts: "if (code === 0) { return data }".
-      // So if backend returns { code: 0, data: { path: "..." } }, then res is { path: "..." }.
-      // User says: "data": { "path": ... }.
-      // If the interceptor returns `response.data.data`, then res has `.path`.
 
-      const path = res.path || (res.data && res.data.path)
-
-      if (path) {
-        let fullUrl = path
-        // If path is relative, prepend base URL
+      // The new /ai/files/upload API returns { id, url, name } directly
+      if (res && res.url) {
+        let fullUrl = res.url
+        // If url is relative, prepend base URL
         if (!fullUrl.startsWith('http')) {
           const cleanPath = fullUrl.startsWith('/') ? fullUrl : `/${fullUrl}`
-          // Use window.location.origin as requested
           const baseUrl = window.location.origin
-          // Remove trailing slash from baseUrl if exists to avoid double slash
           const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
           fullUrl = `${cleanBase}${cleanPath}`
         }
-        return { url: fullUrl }
+        return { id: res.id, url: fullUrl, name: res.name }
       }
       return res // fallback
     } catch (error) {

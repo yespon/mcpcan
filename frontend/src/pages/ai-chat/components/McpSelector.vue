@@ -219,6 +219,7 @@ const mcpPage = ref(1)
 
 const manualConfig = ref('{}')
 const isManualEdit = ref(false)
+const isSyncingFromEditor = ref(false)
 
 const activeOptions = {
   active: {
@@ -243,12 +244,82 @@ const mergedMcpConfig = computed({
   set: (val) => {
     manualConfig.value = val
     emit('update:mcpConfig', val)
+    // Sync left-side selection from editor content
+    syncSelectionFromConfig(val)
   },
 })
+
+/**
+ * Parse the JSON config from the editor and sync the left-side checkbox selection.
+ * Reads `instanceId` from each server entry in `mcpServers` to determine which instances are selected.
+ */
+const syncSelectionFromConfig = (configStr: string) => {
+  if (isSyncingFromEditor.value) return
+  isSyncingFromEditor.value = true
+  try {
+    const conf = JSON.parse(configStr)
+    if (conf.mcpServers) {
+      const ids: string[] = []
+      const configKeys = Object.keys(conf.mcpServers)
+
+      for (const key of configKeys) {
+        const server = conf.mcpServers[key]
+        if (server.instanceId) {
+          ids.push(server.instanceId)
+          // Also sync token from config if present
+          if (server.headers?.Authorization) {
+            selectedTokens.value[server.instanceId] = server.headers.Authorization
+          }
+        }
+      }
+
+      // Fallback: for entries without instanceId, try matching accessType===1 instances by sourceConfig keys
+      const unmatchedKeys = configKeys.filter((k) => !conf.mcpServers[k].instanceId)
+      if (unmatchedKeys.length > 0 && props.mcpInstances) {
+        for (const inst of props.mcpInstances) {
+          if (ids.includes(inst.instanceId)) continue
+          if (inst.accessType === 1) {
+            try {
+              const source = JSON.parse((inst as any).sourceConfig || inst.mcpConfig || '{}')
+              if (source.mcpServers) {
+                const sourceKeys = Object.keys(source.mcpServers)
+                if (sourceKeys.some((k) => unmatchedKeys.includes(k))) {
+                  ids.push(inst.instanceId)
+                }
+              }
+            } catch (e) {}
+          } else {
+            // Try matching by serverKey pattern: mcp-{id前8位}
+            const generatedKey = `mcp-${inst.instanceId.slice(0, 8)}`
+            if (unmatchedKeys.includes(generatedKey)) {
+              ids.push(inst.instanceId)
+            }
+          }
+        }
+      }
+
+      // Only update if actually different to avoid unnecessary triggers
+      const sorted1 = [...ids].sort().join(',')
+      const sorted2 = [...selectedMcpIds.value].sort().join(',')
+      if (sorted1 !== sorted2) {
+        selectedMcpIds.value = ids
+      }
+    } else {
+      if (selectedMcpIds.value.length > 0) {
+        selectedMcpIds.value = []
+      }
+    }
+  } catch (e) {
+    // Invalid JSON, don't change selection
+  } finally {
+    isSyncingFromEditor.value = false
+  }
+}
 
 watch(
   selectedMcpIds,
   () => {
+    if (isSyncingFromEditor.value) return
     const val = generateMergedConfigFromSelection()
     manualConfig.value = val
     emit('update:mcpConfig', val)
@@ -270,7 +341,15 @@ const generateInstanceConfig = (instance: InstanceResult) => {
   if (instance.accessType === 1) {
     try {
       const source = (instance as any).sourceConfig || instance.mcpConfig
-      return JSON.parse(source || '{}')
+      const parsed = JSON.parse(source || '{}')
+      // Inject instanceId and instanceName into each server entry
+      if (parsed.mcpServers) {
+        for (const key of Object.keys(parsed.mcpServers)) {
+          parsed.mcpServers[key].instanceId = instance.instanceId
+          parsed.mcpServers[key].instanceName = instance.name || instance.instanceName
+        }
+      }
+      return parsed
     } catch (e) {
       return { mcpServers: {} }
     }
@@ -290,6 +369,8 @@ const generateInstanceConfig = (instance: InstanceResult) => {
   const serverConfig: any = {
     url: fullUrl,
     type: 'sse',
+    instanceId: instance.instanceId,
+    instanceName: instance.name || instance.instanceName,
   }
 
   if (instance.mcpProtocol === 1) {
@@ -419,15 +500,31 @@ const initMcpList = async () => {
         const existingServers = Object.keys(conf.mcpServers)
         const matchedIds: string[] = []
 
-        // Use a for...of loop to perform async operations if needed
+        // Build a set of instanceIds found in config for quick lookup
+        const configInstanceIds = new Set<string>()
+        for (const key of existingServers) {
+          const server = conf.mcpServers[key]
+          if (server.instanceId) {
+            configInstanceIds.add(server.instanceId)
+          }
+        }
+
         for (const inst of props.mcpInstances) {
           const generatedKey = `mcp-${inst.instanceId.slice(0, 8)}`
-          if (existingServers.includes(generatedKey)) {
+          // Match by instanceId field in config OR by serverKey pattern
+          const matchedByInstanceId = configInstanceIds.has(inst.instanceId)
+          const matchedByKey = existingServers.includes(generatedKey)
+
+          if (matchedByInstanceId || matchedByKey) {
             matchedIds.push(inst.instanceId)
 
             // Pre-load tokens and set selected token if enabled
             if (inst.enabledToken) {
-              const currentConfig = conf.mcpServers[generatedKey]
+              // Try to get token from config
+              const matchedKey = matchedByInstanceId
+                ? existingServers.find((k) => conf.mcpServers[k].instanceId === inst.instanceId)
+                : generatedKey
+              const currentConfig = matchedKey ? conf.mcpServers[matchedKey] : null
               if (currentConfig && currentConfig.headers && currentConfig.headers.Authorization) {
                 selectedTokens.value[inst.instanceId] = currentConfig.headers.Authorization
               }
@@ -457,7 +554,6 @@ const initMcpList = async () => {
               }
             }
           } else if (inst.accessType === 1) {
-            // ... existing accessType 1 logic ...
             try {
               const source = JSON.parse((inst as any).sourceConfig || inst.mcpConfig || '{}')
               if (source.mcpServers) {

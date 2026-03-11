@@ -136,6 +136,11 @@ func Load() (*Config, error) {
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
 
+	// If Market.Host is empty, fallback to top-level Domain
+	if strings.TrimSpace(config.Market.Host) == "" && config.Domain != "" {
+		config.Market.Host = config.Domain
+	}
+
 	GlobalConfig = &config
 
 	return &config, nil

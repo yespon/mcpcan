@@ -123,6 +123,7 @@
               :mcp-instances="mcpInstances"
               :mcp-loading="mcpLoading"
               :mcp-has-more="mcpHasMore"
+              :session-id="currentSession?.id"
               @send="handleSend"
               @add-model="addCustomModel"
               @save-settings="handleSaveSettings"
@@ -500,7 +501,7 @@ const handleRenameSession = async (session: AiSession) => {
       t('aiChat.enterNewName'),
       t('aiChat.renameSession'),
       {
-        confirmButtonText: 'OK',
+        confirmButtonText: t('aiChat.ok'),
         cancelButtonText: t('aiChat.cancel'),
         inputValue: session.name,
         inputPattern: /\S/,
