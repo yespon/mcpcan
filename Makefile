@@ -11,10 +11,14 @@ VERSION := $(shell cat $(ROOT_PATH)/VERSION 2>/dev/null || echo "v1.0.0")
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date +%Y%m%d%H%M%S)
 
-# Container registry
-IMAGE_REGISTRY ?= 77kymo
+# Industry Standard Registry Variables
+DOCK_REGISTRY=77kymo
+TENCENT_REGISTRY=ccr.ccs.tencentyun.com/itqm-private
 
-# Go build environment
+# Standard Multi-Platform Specification
+PLATFORMS=linux/amd64,linux/arm64
+
+# Go build environment (Local builds)
 GO_PROXY ?= https://goproxy.cn/
 GOARCH := $(shell go env GOARCH)
 GOOS := linux
@@ -23,21 +27,11 @@ GO_BUILD_ENV ?= GOPROXY=${GO_PROXY} GOOS=${GOOS} GOARCH=${GOARCH} CGO_ENABLED=${
 GO_VERSION := $(shell go version | awk '{print $$3}')
 
 # Build tags based on CodeMode
-GO_BUILD_TAGS :=
-ifeq ($(CodeMode),EnterpriseCode)
-    GO_BUILD_TAGS := -tags enterprise
-endif
-
-# Validate CodeMode
-# Strip CodeMode before validation
 CodeMode := $(strip $(CodeMode))
 ifeq ($(CodeMode),)
-    $(error CodeMode is required. Usage: make <target> CodeMode=OpenCode|EnterpriseCode)
-endif
-
-VALID_MODES := OpenCode EnterpriseCode
-ifeq ($(filter $(CodeMode),$(VALID_MODES)),)
-    $(error Invalid CodeMode '$(CodeMode)'. Allowed values: $(VALID_MODES))
+    # Defaulting to OpenCode if not specified for buildx sanity, 
+    # but still enforcing it for specific targets
+    CodeMode := OpenCode
 endif
 
 # Build flags module github.com/kymo-mcp/mcpcan
@@ -47,51 +41,95 @@ LDFLAGS := -X 'github.com/kymo-mcp/mcpcan/pkg/version.Version=${VERSION}' \
 		-X 'github.com/kymo-mcp/mcpcan/pkg/version.GoVersion=${GO_VERSION}' \
 		-X 'github.com/kymo-mcp/mcpcan/pkg/version.CodeMode=${CodeMode}'
 
-# Backend build targets
+# Multi-arch Build logic (Industry Standard)
+# Paras: 1-DockerfileSuffix, 2-ImageName, 3-Registry
+define push_multiarch_image
+	@echo "Building and pushing multi-arch image $(3)/$(2):$(VERSION) platforms: $(PLATFORMS)..."
+	docker buildx build --platform $(PLATFORMS) \
+		--build-arg CodeMode=$(CodeMode) \
+		-t $(3)/$(2):$(VERSION) \
+		-t $(3)/$(2):latest \
+		-f $(DOCKERFILES_PATH)/Dockerfile.$(1) \
+		--push .
+endef
+
+# README Push logic (Industry Standard)
+# Paras: 1-ImageName, 2-ShortDesc
+define push_readme_doc
+	@if [ -n "$(DOCKER_USER)" ] && [ -n "$(DOCKER_PASS)" ]; then \
+		echo "Updating README for $(1)..."; \
+		docker run --rm -v $(ROOT_PATH):/data \
+			-e DOCKER_USER=$(DOCKER_USER) \
+			-e DOCKER_PASS=$(DOCKER_PASS) \
+			chko/docker-pushrm:1 \
+			--file /data/README.md \
+			--short "$(2)" \
+			$(DOCK_REGISTRY)/$(1); \
+	fi
+endef
+
+# Backend build targets (Local)
 define go_build_service
 	@echo "---------- Start Go build $(1) ----------"
-	@echo "cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build $(GO_BUILD_TAGS) -ldflags \"$(LDFLAGS)\" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go"
-	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build $(GO_BUILD_TAGS) -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
+	@cd $(BACKEND_PATH) && $(GO_BUILD_ENV) go build -tags OpenCode -ldflags "$(LDFLAGS)" -o $(BACKEND_PATH)/bin/$(1) $(BACKEND_PATH)/cmd/$(1)/main.go
 	@echo "---------- End Go build $(1) ----------"
 endef
 
-# Docker build targets
-define build_docker_image
-	@echo "---------- Start Docker build $(1) ----------"
-	@echo "cd $(ROOT_PATH) && docker build --build-arg CodeMode=$(CodeMode) -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) ."
-	@cd $(ROOT_PATH) && docker build --build-arg CodeMode=$(CodeMode) -t $(IMAGE_REGISTRY)/$(2):$(VERSION) -f $(DOCKERFILES_PATH)/Dockerfile.$(1) .
-	@echo "---------- End Docker build $(1) ----------"
-endef
+.PHONY: pnpm-build
+pnpm-build:
+	@echo "---------- Start build frontend ----------"
+	@cd $(FRONTEND_PATH) && pnpm i && pnpm build
+	@echo "---------- End build frontend ----------"
 
-# Docker push targets
-define push_docker_image
-	@echo "---------- Start Docker push $(1) ----------"
-	@echo "docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)"
-	@docker push $(IMAGE_REGISTRY)/$(1):$(VERSION)
-	@echo "---------- End Docker push $(1) ----------"
-endef
+.PHONY: help
+help:
+	@echo "Usage: make [target]"
+	@echo "Targets:"
+	@echo "  push-all           - Build and push multi-arch images (Init, Market, Authz, Gateway, Web)"
+	@echo "  push-init          - Build and push multi-arch Init image"
+	@echo "  push-market        - Build and push multi-arch Market image"
+	@echo "  push-authz         - Build and push multi-arch Authz image"
+	@echo "  push-gateway       - Build and push multi-arch Gateway image"
+	@echo "  push-frontend      - Build and push multi-arch Frontend (Web) image"
+	@echo "  proto-buf          - Generate protobuf files"
+	@echo "  go-build-market    - Local Go build for market"
+	@echo "  clean              - Remove build artifacts"
 
-# Default target
-.PHONY: all
-all: help
+.PHONY: push-all
+push-all: push-init push-market push-authz push-gateway push-frontend
 
-.PHONY: print
-print:
-	@echo "---------- Project Configuration ----------"
-	@echo "ROOT_PATH: $(ROOT_PATH)"
-	@echo "BACKEND_PATH: $(BACKEND_PATH)"
-	@echo "FRONTEND_PATH: $(FRONTEND_PATH)"
-	@echo "DOCKERFILES_PATH: $(DOCKERFILES_PATH)"
-	@echo "VERSION: $(VERSION)"
-	@echo "COMMIT: $(COMMIT)"
-	@echo "BUILD_TIME: $(BUILD_TIME)"
-	@echo "GO_VERSION: $(GO_VERSION)"
-	@echo "CodeMode: $(CodeMode)"
-	@echo "IMAGE_REGISTRY: $(IMAGE_REGISTRY)"
-	@echo "GO_BUILD_ENV: $(GO_BUILD_ENV)"
-	@echo "-------------------------------------------"
+.PHONY: push-init
+push-init:
+	$(call push_multiarch_image,init,mcp-init,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,init,mcp-init,$(DOCK_REGISTRY))
+	$(call push_readme_doc,mcp-init,MCP Initialization Service)
 
-# Protocol buffer generation
+.PHONY: push-market
+push-market:
+	$(call push_multiarch_image,market,mcp-market,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,market,mcp-market,$(DOCK_REGISTRY))
+	$(call push_readme_doc,mcp-market,MCP Market Service)
+
+.PHONY: push-authz
+push-authz:
+	$(call push_multiarch_image,authz,mcp-authz,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,authz,mcp-authz,$(DOCK_REGISTRY))
+	$(call push_readme_doc,mcp-authz,MCP Authorization Service)
+
+.PHONY: push-gateway
+push-gateway:
+	$(call push_multiarch_image,gateway,mcp-gateway,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,gateway,mcp-gateway,$(DOCK_REGISTRY))
+	$(call push_readme_doc,mcp-gateway,MCP Gateway Service)
+
+.PHONY: push-frontend
+push-frontend:
+	$(call push_multiarch_image,frontend,mcp-web,$(TENCENT_REGISTRY))
+	$(call push_multiarch_image,frontend,mcp-web,$(DOCK_REGISTRY))
+	$(call push_readme_doc,mcp-web,MCP Web Frontend)
+
+# Remaining Utility targets
+
 .PHONY: proto-buf
 proto-buf:
 	@echo "---- Cleaning existing generated files ----"
@@ -105,60 +143,21 @@ proto-buf:
 	@if [ -n "$$(find $(BACKEND_PATH)/api -name '*.json' -type f)" ]; then \
 		swagger mixin $$(find $(BACKEND_PATH)/api -name '*.json' -type f) -o $(BACKEND_PATH)/api/merged.swagger.json; \
 		echo "Swagger files merged successfully"; \
-		ls -la $(BACKEND_PATH)/api/merged.swagger.json; \
 	else \
 		echo "No swagger JSON files found to merge"; \
 		touch $(BACKEND_PATH)/api/merged.swagger.json; \
 	fi
 
-.PHONY: init
-init:
-	@echo "---------- Initializing Git Hooks ----------"
-	@if [ -d ".git" ]; then \
-		git config core.hooksPath .githooks; \
-		echo "Git hooks path configured successfully."; \
-	else \
-		echo "Not a git repository. Skipping hook setup."; \
-	fi
-	@echo "-------------------------------------------"
-
-.PHONY: pnpm-build
-pnpm-build:
-	@echo "---------- Start build frontend ----------"
-	@echo "cd $(FRONTEND_PATH) && pnpm i && pnpm build"
-	@cd $(FRONTEND_PATH) && rm -rf node_modules && CI=true pnpm i && NODE_OPTIONS="--max-old-space-size=8192"&& pnpm build
-	@echo "---------- End build frontend ----------"
-
 .PHONY: go-mod-tidy
 go-mod-tidy:
-	@echo "---------- Start go mod tidy ----------"
-	@echo "cd $(BACKEND_PATH) && go mod tidy"
 	@cd $(BACKEND_PATH) && go mod tidy
-	@echo "---------- End go mod tidy ----------"
-
-.PHONY: export-go-build
-export-go-build:
-	@echo "---------- Extract go build artifacts ----------"
-	@# 1. Build intermediate stage image (no final image generated)
-	docker build --target builder -t temp-builder -f $(DOCKERFILES_PATH)/Dockerfile.export $(ROOT_PATH)
-	@# 2. Create temporary container (not started, only for file extraction)
-	docker create --name temp-container temp-builder
-	@# 3. Copy files from temporary container to local
-	mkdir -p $(ROOT_PATH)/backend/bin
-	docker cp temp-container:/app/backend/bin/. $(ROOT_PATH)/backend/bin/
-	rm -rf $(ROOT_PATH)/frontend/dist
-	docker cp temp-container:/app/frontend/dist $(ROOT_PATH)/frontend/dist
-	@# 4. Clean up temporary container
-	docker rm -f temp-container
-	docker rmi temp-builder
-	@echo "---------- Extraction complete, artifacts located at $(ROOT_PATH)/backend/bin and $(ROOT_PATH)/frontend/dist ----------"
 
 .PHONY: go-build-init
 go-build-init:
 	$(call go_build_service,init)
 
 .PHONY: go-build-market
-go-build-market: print
+go-build-market:
 	$(call go_build_service,market)
 
 .PHONY: go-build-authz
@@ -169,183 +168,13 @@ go-build-authz:
 go-build-gateway:
 	$(call go_build_service,gateway)
 
-.PHONY: go-build-all 
-go-build-all: proto-buf go-mod-tidy go-build-init go-build-market go-build-authz go-build-gateway
-
-# Frontend build targets
-
-# All build targets
-.PHONY: build-all
-build-all: go-build-all pnpm-build
-
-
-
-.PHONY: docker-build-init
-docker-build-init:
-	$(call build_docker_image,init,mcp-init)
-
-.PHONY: docker-build-market
-docker-build-market:
-	$(call build_docker_image,market,mcp-market)
-
-.PHONY: docker-build-openapi-to-mcp
-docker-build-openapi-to-mcp:
-	$(call build_docker_image,openapi-to-mcp,openapi-to-mcp)
-
-.PHONY: docker-build-authz
-docker-build-authz:
-	$(call build_docker_image,authz,mcp-authz)
-
-.PHONY: docker-build-gateway
-docker-build-gateway:
-	$(call build_docker_image,gateway,mcp-gateway)
-
-.PHONY: docker-build-frontend
-docker-build-frontend:
-	$(call build_docker_image,frontend,mcp-web)
-
-.PHONY: docker-build-backend
-docker-build-backend:
-	$(call build_docker_image,backend,mcp-backend)
-
-.PHONY: docker-build-all
-docker-build-all: export-go-build docker-build-init docker-build-market docker-build-openapi-to-mcp docker-build-authz docker-build-gateway docker-build-frontend
-
-.PHONY: docker-push-init
-docker-push-init:
-	$(call push_docker_image,mcp-init)
-
-.PHONY: docker-push-market
-docker-push-market:
-	$(call push_docker_image,mcp-market)
-
-.PHONY: docker-push-openapi-to-mcp
-docker-push-openapi-to-mcp:
-	$(call push_docker_image,openapi-to-mcp)
-
-.PHONY: docker-push-authz
-docker-push-authz:
-	$(call push_docker_image,mcp-authz)
-
-.PHONY: docker-push-gateway
-docker-push-gateway:
-	$(call push_docker_image,mcp-gateway)
-
-.PHONY: docker-push-frontend
-docker-push-frontend:
-	$(call push_docker_image,mcp-web)
-
-.PHONY: docker-push-backend
-docker-push-backend:
-	$(call push_docker_image,mcp-backend)
-
-.PHONY: docker-push-all
-docker-push-all: docker-push-init docker-push-market docker-push-openapi-to-mcp docker-push-authz docker-push-gateway docker-push-frontend
-
-# Docker build and push targets (using existing build and push steps)
-.PHONY: docker-build-push-init
-docker-build-push-init: docker-build-init docker-push-init
-
-.PHONY: docker-build-push-market
-docker-build-push-market: docker-build-market docker-push-market
-
-.PHONY: docker-build-push-openapi-to-mcp
-docker-build-push-openapi-to-mcp: docker-build-openapi-to-mcp docker-push-openapi-to-mcp
-
-.PHONY: docker-build-push-authz
-docker-build-push-authz: docker-build-authz docker-push-authz
-
-.PHONY: docker-build-push-gateway
-docker-build-push-gateway: docker-build-gateway docker-push-gateway
-
-.PHONY: docker-build-push-frontend
-docker-build-push-frontend: docker-build-frontend docker-push-frontend
-
-.PHONY: docker-build-push-backend
-docker-build-push-backend: docker-build-push-init docker-build-push-market docker-build-push-openapi-to-mcp docker-build-push-authz docker-build-push-gateway
-
-.PHONY: docker-build-push-all
-docker-build-push-all: docker-build-all docker-push-all
-
-# Clean targets
 .PHONY: clean
 clean:
-	@echo "Cleaning build artifacts..."
 	@rm -rf $(BACKEND_PATH)/bin/*
 	@rm -rf $(FRONTEND_PATH)/dist
-	@rm -rf $(FRONTEND_PATH)/node_modules/.cache
 
-# Test targets
-.PHONY: test-backend
-test-backend:
-	@echo "Running backend tests..."
-	@cd $(BACKEND_PATH) && go test ./...
-
-.PHONY: test-frontend
-test-frontend:
-	@echo "Running frontend tests..."
-	@cd $(FRONTEND_PATH) && pnpm test
-
-.PHONY: test-all
-test-all: test-backend test-frontend
-
-# Lint targets
-.PHONY: lint-backend
-lint-backend:
-	@echo "Linting backend code..."
-	@cd $(BACKEND_PATH) && golangci-lint run
-
-.PHONY: lint-frontend
-lint-frontend:
-	@echo "Linting frontend code..."
-	@cd $(FRONTEND_PATH) && pnpm lint
-
-.PHONY: lint-all
-lint-all: lint-backend lint-frontend
-
-# Help target
-.PHONY: help
-help:
-	@echo "Available targets:"
-	@echo ""
-	@echo "Build targets:"
-	@echo "  go-build-init         - Build init service binary [Go]"
-	@echo "  go-build-market       - Build market service binary [Go]"
-	@echo "  go-build-authz        - Build authz service binary [Go]"
-	@echo "  go-build-gateway      - Build gateway service binary [Go]"
-	@echo "  go-build-all          - Build all backend services [Go]"
-	@echo "  pnpm-build             - Build frontend application [Node]"
-	@echo "  build-all                  - Build all services and frontend [Go+Node]"
-	@echo ""
-	@echo "Docker targets: Services"
-	@echo "  docker-build-init          - Build init Docker image"
-	@echo "  docker-build-market        - Build market Docker image"
-	@echo "  docker-build-openapi-to-mcp- Build openapi-to-mcp Docker image"
-	@echo "  docker-build-authz         - Build authz Docker image"
-	@echo "  docker-build-gateway       - Build gateway Docker image"
-	@echo "  docker-build-frontend      - Build frontend Docker image"
-	@echo "  docker-build-all           - Build all Docker images"
-	@echo "  docker-push-init           - Push init Docker image"
-	@echo "  docker-push-market         - Push market Docker image"
-	@echo "  docker-push-openapi-to-mcp         - Push openapi-to-mcp Docker image"
-	@echo "  docker-push-authz          - Push authz Docker image"
-	@echo "  docker-push-gateway        - Push gateway Docker image"
-	@echo "  docker-push-frontend       - Push frontend Docker image"
-	@echo "  docker-push-all            - Push all Docker images"
-	@echo "  docker-build-push-init     - Build and push init Docker image"
-	@echo "  docker-build-push-market   - Build and push market Docker image"
-	@echo "  docker-build-push-openapi-to-mcp   - Build and push openapi-to-mcp Docker image"
-	@echo "  docker-build-push-authz    - Build and push authz Docker image"
-	@echo "  docker-build-push-gateway  - Build and push gateway Docker image"
-	@echo "  docker-build-push-frontend - Build and push frontend Docker image"
-	@echo "  docker-build-push-backend  - Build and push all backend services"
-	@echo "  docker-build-push-all      - Build and push all Docker images"
-	@echo ""
-	@echo "Utility targets:"
-	@echo "  proto-buf                  - Generate protobuf and swagger files"
-	@echo "  go mod tidy                - Tidy Go modules"
-	@echo "  clean                      - Clean build artifacts"
-	@echo "  test-all                   - Run all tests"
-	@echo "  lint-all                   - Run all linters"
-	@echo "  print                      - Print configuration"
-	@echo "  help                       - Show this help message"
+# @Deprecated / Removed targets marked as error to guide migration
+.PHONY: docker-build-init docker-build-gateway docker-build-sidecar
+docker-build-init docker-build-gateway docker-build-sidecar:
+	@echo "Error: This target is deprecated and has been migrated to mcpcan-tools or removed."
+	@exit 1

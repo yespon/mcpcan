@@ -7,7 +7,7 @@ ENV CodeMode=${CodeMode}
 # Work in /app and copy project sources (parent of dockerfiles/)
 WORKDIR /app
 
-COPY ../ /app
+COPY . /app
 
 RUN cd /app && make proto-buf go-mod-tidy go-build-market
 
