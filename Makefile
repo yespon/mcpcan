@@ -78,7 +78,7 @@ endef
 .PHONY: pnpm-build
 pnpm-build:
 	@echo "---------- Start build frontend ----------"
-	@cd $(FRONTEND_PATH) && pnpm i && pnpm build
+	@cd $(FRONTEND_PATH) && CI=true pnpm i && pnpm build
 	@echo "---------- End build frontend ----------"
 
 .PHONY: help
