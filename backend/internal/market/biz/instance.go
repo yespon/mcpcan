@@ -313,7 +313,7 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		}
 		instance.ContainerName = options.ContainerName
 		instance.ContainerServiceName = options.ServiceName
-		instance.ContainerServiceURL = fmt.Sprintf("http://%s:%d/", options.ContainerName, common.GetSidecarPort())
+		instance.ContainerServiceURL = fmt.Sprintf("http://%s:%d/", biz.getSidecarServiceName(options.ContainerName), common.GetSidecarPort())
 		instance.EnvironmentID = uint(req.EnvironmentId)
 		// 路由协议转换为 SSE (经 sidecar 重写)
 		instance.ProxyProtocol = model.McpProtocolSSE
@@ -413,18 +413,18 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	containerServiceURL := ""
 	// Hosting 模式下，market ProxyHandler 应将请求转发到 sidecar 容器（负责对外 SSE/HTTP 代理），
 	// 而非主容器本身（主容器不对外暴露接口）。
-	sidecarContainerName := containerOptions.ContainerName + "-sidecar"
+	sidecarServiceName := biz.getSidecarServiceName(containerOptions.ContainerName)
 	switch mcpProtocol {
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
 		// Stdio 模式：sidecar 将请求转换后转给主容器，外部统一走 sidecar
-		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarContainerName, common.GetSidecarPort())
+		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarServiceName, common.GetSidecarPort())
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
 		// SSE/StreamableHTTP 模式：sidecar 直接透传，path 由 sidecar 处理
-		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarContainerName, common.GetSidecarPort())
+		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarServiceName, common.GetSidecarPort())
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
@@ -1450,4 +1450,8 @@ func getDefaultToken(tokens []*model.McpToken) *model.McpToken {
 		}
 	}
 	return defaultTokens
+}
+
+func (biz *InstanceBiz) getSidecarServiceName(containerName string) string {
+	return containerName + common.SidecarContainerSuffix
 }

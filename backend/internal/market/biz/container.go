@@ -900,7 +900,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
 
 	traefikLabels := make(map[string]string)
-	sidecarContainerName := containerName + "-sidecar" // Sidecar 容器名，用于 Traefik service
+	sidecarContainerName := containerName + common.SidecarContainerSuffix // Sidecar 容器名，用于 Traefik service
 	traefikLabels["traefik.enable"] = "true"
 	// 动态添加针对该实例前缀的 StripPrefix 中间件
 	stripMiddleware := fmt.Sprintf("%s-strip", routerName)
