@@ -411,17 +411,20 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	proxyProtocol := mcpProtocol
 	publicProxyPath := ""
 	containerServiceURL := ""
+	// Hosting 模式下，market ProxyHandler 应将请求转发到 sidecar 容器（负责对外 SSE/HTTP 代理），
+	// 而非主容器本身（主容器不对外暴露接口）。
+	sidecarContainerName := containerOptions.ContainerName + "-sidecar"
 	switch mcpProtocol {
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		// For Hosting, we use sidecar's port
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, common.GetSidecarPort(), "mcp")
+		// Stdio 模式：sidecar 将请求转换后转给主容器，外部统一走 sidecar
+		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarContainerName, common.GetSidecarPort())
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		// For Hosting, we use sidecar's port
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, common.GetSidecarPort(), strings.Trim(req.ServicePath, "/"))
+		// SSE/StreamableHTTP 模式：sidecar 直接透传，path 由 sidecar 处理
+		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarContainerName, common.GetSidecarPort())
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
