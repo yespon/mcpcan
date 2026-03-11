@@ -72,3 +72,11 @@ backend/test/config.json
 /backend/enterprise/
 /backend/internal/market/app/enterprise_hooks.go
 .gitnexus
+
+# backend
+backend/.air.toml
+backend/data/
+backend/tmp/
+
+# frontend
+frontend/.pnpm-store/
