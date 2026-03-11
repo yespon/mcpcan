@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -1356,6 +1358,22 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, mcpServerUrl string,
 	// Validate mcpServerUrl
 	if mcpServerUrl == "" {
 		return nil, fmt.Errorf("mcpServerUrl is required")
+	}
+
+	// 将前端传来的外部地址（如 http://localhost/mcp-gateway/...）转换为容器内可访问的内部地址
+	// 仅对 PROXY/HOSTING 模式生效（即网关路径），DIRECT 模式的 URL 直接连接外部不做替换
+	internalBase := os.Getenv("MCP_INTERNAL_BASE_URL")
+	if internalBase != "" && mcpInstance.AccessType != model.AccessTypeDirect {
+		// 解析 URL，替换 scheme+host 为内部地址
+		if parsed, parseErr := url.Parse(mcpServerUrl); parseErr == nil {
+			internalParsed, internalErr := url.Parse(internalBase)
+			if internalErr == nil {
+				parsed.Scheme = internalParsed.Scheme
+				parsed.Host = internalParsed.Host
+				mcpServerUrl = parsed.String()
+				fmt.Printf("[DEBUG] getMcpClientInfo: normalized mcpServerUrl to %s\n", mcpServerUrl)
+			}
+		}
 	}
 
 	// Give the mcp instance its corresponding http client

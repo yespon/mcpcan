@@ -1,8 +1,6 @@
 module github.com/kymo-mcp/mcpcan
 
-go 1.24.4
-
-toolchain go1.24.13
+go 1.25.8
 
 // 本地开发时使用，将远程模块路径重定向到本地路径
 // 当代码推送到 GitHub 后，可以删除这行

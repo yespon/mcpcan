@@ -429,10 +429,14 @@ const toggleTokenSelection = (id: number) => {
 
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
-    const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].url
+    try {
+      const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
+      return mcpServers[Object.keys(mcpServers)[0]].url
+    } catch {
+      return ''
+    }
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${dialogInfo.value.instanceInfo.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}${dialogInfo.value.instanceInfo.publicProxyPath || ''}`
 })
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -449,10 +453,12 @@ const configToken = computed(() => {
 })
 // config Info
 const config = computed(() => {
-  // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
+  // 根据实际 URL 末尾推断协议类型，确保 URL 和 type 保持一致
+  const urlPath = configUrl.value || ''
+  const inferredType = urlPath.endsWith('/sse') ? 'sse' : 'streamable_http'
   if (dialogInfo.value.instanceInfo.enabledToken) {
     if (!tokenList.value) return JsonFormatter.format(`{}`, 4)
     if (dialogInfo.value.currentTokenIndex !== null && tokenList.value.length) {
@@ -461,7 +467,7 @@ const config = computed(() => {
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
-                      "type": "streamable_http",
+                      "type": "${inferredType}",
                       "headers": {
                             "Authorization": "${tokenList.value[dialogInfo.value.currentTokenIndex].token}"
                       }
@@ -476,7 +482,8 @@ const config = computed(() => {
     `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-              "url": "${configUrl.value}"
+              "url": "${configUrl.value}",
+              "type": "${inferredType}"
           }
       }
   }`,

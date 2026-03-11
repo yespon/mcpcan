@@ -54,12 +54,12 @@
 </template>
 
 <script setup lang="ts">
-import { Operation, CopyDocument, Link, Key, Edit } from '@element-plus/icons-vue'
-import { setClipboardData, timestampToDate } from '@/utils/system'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { AccessType, McpProtocol, TokenType, type InstanceResult } from '@/types'
+import { CopyDocument, Link, Key } from '@element-plus/icons-vue'
+import { setClipboardData } from '@/utils/system'
+import { ElMessage } from 'element-plus'
+import { AccessType, McpProtocol } from '@/types'
 import { JsonFormatter } from '@/utils/json'
-import { InstanceAPI, TokenAPI } from '@/api/mcp/instance'
+import { TokenAPI } from '@/api/mcp/instance'
 
 const { t } = useI18n()
 const dialogInfo = ref<any>({
@@ -85,11 +85,19 @@ const disabled = computed(() => {
 })
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
-    const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].url
+    try {
+      const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
+      return mcpServers[Object.keys(mcpServers)[0]].url
+    } catch {
+      return ''
+    }
   }
-  let publicPath = dialogInfo.value.instanceInfo.publicProxyPath
-  if (dialogInfo.value.pathType) {
+  let publicPath = dialogInfo.value.instanceInfo.publicProxyPath || ''
+  // 如果当前 pathType 与 publicProxyPath 末尾不一致（HOSTING 模式下 STDIO 实例可切换），则替换末尾路径段
+  if (
+    dialogInfo.value.instanceInfo.accessType === AccessType.HOSTING &&
+    dialogInfo.value.instanceInfo.mcpProtocol === McpProtocol.STDIO
+  ) {
     const lastSlashIndex = publicPath.lastIndexOf('/')
     if (lastSlashIndex !== -1) {
       publicPath =
@@ -97,7 +105,7 @@ const configUrl = computed(() => {
         (dialogInfo.value.pathType === 'sse' ? 'sse' : 'mcp')
     }
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${publicPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}${publicPath}`
 })
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -106,11 +114,13 @@ const configToken = computed(() => {
   }
   return `${tokenList.value[0].token}`
 })
-// config Info
 const config = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
+  // 根据实际 URL 末尾推断协议类型
+  const urlPath = configUrl.value || ''
+  const inferredType = urlPath.endsWith('/sse') ? 'sse' : 'streamable_http'
   if (dialogInfo.value.instanceInfo.enabledToken) {
     if (!tokenList.value) return JsonFormatter.format(`{}`, 4)
     if (tokenList.value.length) {
@@ -119,7 +129,7 @@ const config = computed(() => {
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
-                      "type": "${dialogInfo.value.pathType}",
+                      "type": "${inferredType}",
                       "headers": {
                             "Authorization": "${tokenList.value[0]?.token}"
                       }
@@ -134,7 +144,8 @@ const config = computed(() => {
     `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-              "url": "${configUrl.value}"
+              "url": "${configUrl.value}",
+              "type": "${inferredType}"
           }
       }
   }`,
@@ -177,8 +188,20 @@ const handleTokenList = async () => {
 
 const init = (instanceInfo: any) => {
   dialogInfo.value.instanceInfo = instanceInfo
-  dialogInfo.value.pathType =
-    instanceInfo.mcpProtocol === McpProtocol.STREAMABLE_HTTP ? 'steamable_http' : 'sse'
+  // 根据 proxyProtocol 或 mcpProtocol 决定默认显示的协议类型
+  const proxyProto = instanceInfo.proxyProtocol || instanceInfo.mcpProtocol
+  if (proxyProto === McpProtocol.SSE || proxyProto === 1) {
+    dialogInfo.value.pathType = 'sse'
+  } else {
+    dialogInfo.value.pathType = 'streamable_http'
+  }
+  // 如果 publicProxyPath 明确以 /sse 结尾，强制设为 sse
+  const proxyPath = instanceInfo.publicProxyPath || ''
+  if (proxyPath.endsWith('/sse')) {
+    dialogInfo.value.pathType = 'sse'
+  } else if (proxyPath.endsWith('/mcp')) {
+    dialogInfo.value.pathType = 'streamable_http'
+  }
   handleTokenList()
   dialogInfo.value.visible = true
 }

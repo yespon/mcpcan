@@ -278,25 +278,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Search,
-  Refresh,
-  VideoPlay,
-  ArrowRight,
-  ArrowDown,
-  DocumentCopy,
-} from '@element-plus/icons-vue'
+import { Search, VideoPlay, ArrowRight, ArrowDown, DocumentCopy } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useDebugToolsHooks } from './hooks/index.ts'
 import McpImage from '@/components/mcp-image/index.vue'
 import SchemaForm from './components/SchemaForm.vue'
-import {
-  generateDefaultValue,
-  isPropertyRequired,
-  resolveRef,
-  normalizeUnionType,
-} from '@/utils/schemaUtils'
-import { deBugAPI } from '@/api/mcp/instance.ts'
+import { generateDefaultValue, resolveRef, normalizeUnionType } from '@/utils/schemaUtils'
+import { deBugAPI, InstanceAPI, TokenAPI } from '@/api/mcp/instance.ts'
 import { AccessType } from '@/types'
 import { setClipboardData } from '@/utils/system'
 import { useRouterHooks } from '@/utils/url'
@@ -310,7 +298,6 @@ const {
   inputJson,
   outputResult,
   history,
-  route,
   loading,
   running,
   instanceId,
@@ -319,11 +306,17 @@ const {
 const layout = useLayout()
 const { jumpBack } = useRouterHooks()
 const configUrl = computed(() => {
-  if (instanceInfo.value.accessType === AccessType.DIRECT) {
-    const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].url
+  if (instanceInfo.value.accessType === AccessType.DIRECT && instanceInfo.value.sourceConfig) {
+    try {
+      const config = JSON.parse(instanceInfo.value.sourceConfig)
+      if (config.mcpServers) {
+        return config.mcpServers[Object.keys(config.mcpServers)[0]].url
+      }
+    } catch (e) {
+      console.error('Failed to parse sourceConfig', e)
+    }
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}${instanceInfo.value.publicProxyPath || ''}`
 })
 // Computed
 const filteredTools = computed(() => {
@@ -341,7 +334,7 @@ const parsedOutput = computed(() => {
   if (!outputResult.value) return null
   try {
     return JSON.parse(outputResult.value)
-  } catch (e) {
+  } catch {
     return null
   }
 })
@@ -356,9 +349,6 @@ const jsonError = computed(() => {
 })
 
 // Methods
-const formatTime = (ts: number) => {
-  return new Date(ts).toLocaleTimeString()
-}
 
 // 获取默认 token
 const getDefaultToken = () => {
@@ -379,12 +369,29 @@ const getDefaultToken = () => {
 const getTools = async () => {
   try {
     loading.value = true
+    // Fetch latest instance detail and tokens first
+    const detail = await InstanceAPI.detail({ instanceId: instanceId.value })
+    instanceInfo.value = { ...instanceInfo.value, ...detail }
+
+    // fetching the tokens for current instance
+    if (instanceInfo.value.enabledToken) {
+      const { list: tokens } = await TokenAPI.list({
+        instanceId: instanceId.value,
+        page: 1,
+        pageSize: 100,
+      })
+      instanceInfo.value.tokens = tokens || []
+    }
+
     const list = await deBugAPI.toolList({
       instanceId: instanceId.value || '',
       mcpServerUrl: configUrl.value,
       token: getDefaultToken(),
     })
     toolList.value = list || []
+  } catch (error: any) {
+    console.error('getTools error:', error)
+    ElMessage.error(error.message || 'Failed to fetch tools')
   } finally {
     loading.value = false
   }
@@ -420,7 +427,7 @@ const handleFormChange = () => {
 const handleJsonChange = (val: string) => {
   try {
     paramsForm.value = JSON.parse(val)
-  } catch (e) {
+  } catch {
     // Ignore parse errors while typing
   }
 }
@@ -456,18 +463,6 @@ const handleRunTool = async () => {
   } finally {
     running.value = false
   }
-}
-
-const restoreHistory = (item: any) => {
-  const tool = toolList.value.find((t) => t.name === item.tool)
-  if (tool) {
-    currentTool.value = tool
-    inputJson.value = item.params
-  }
-}
-
-const refreshInstance = () => {
-  getTools()
 }
 
 const clearOutput = () => {
