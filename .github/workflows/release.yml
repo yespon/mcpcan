@@ -1,10 +1,11 @@
 name: Auto Release
 
-# 触发条件：推送到主分支，且包含符合约定的提交
+# 触发条件：推送到主分支 或 手动触发
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   release:
@@ -20,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0 # 拉取完整提交历史，用于生成Release Notes
 
-      # 步骤2：读取VERSION文件
+      # 步骤2：读取VERSION文件，并检查Tag是否已存在
       - name: Read VERSION file
         id: version
         run: |
@@ -28,13 +29,21 @@ jobs:
             VERSION=$(cat VERSION | tr -d '\n\r' | xargs)
             echo "Read version from file: $VERSION"
             echo "tag=$VERSION" >> $GITHUB_OUTPUT
+            # 检查 tag 是否已存在（避免重复触发时重复创建）
+            if git ls-remote --tags origin "refs/tags/${VERSION}" | grep -q "${VERSION}"; then
+              echo "skip=true" >> $GITHUB_OUTPUT
+              echo "⚠️ Tag ${VERSION} already exists, skipping release creation."
+            else
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "❌ VERSION file not found"
             exit 1
           fi
 
-      # 步骤3：创建GitHub Release
+      # 步骤3：创建GitHub Release（仅在 tag 不存在时）
       - name: Create Release
+        if: steps.version.outputs.skip == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
