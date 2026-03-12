@@ -1,0 +1,189 @@
+{{- if .Values.infrastructure.mysql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-80"
+  labels:
+    app: mysql
+    {{- include "mcpcan.labels" . | nindent 4 }}
+data:
+  mysql.conf: |
+    [mysqld]
+    bind-address = 0.0.0.0
+    port = 3306
+    default-authentication-plugin = mysql_native_password
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_unicode_ci
+    max_connections = 200
+    innodb_buffer_pool_size = 256M
+    innodb_log_file_size = 64M
+    slow_query_log = 1
+    slow_query_log_file = /var/log/mysql/slow.log
+    long_query_time = 2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-scripts
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-80"
+  labels:
+    app: mysql
+    {{- include "mcpcan.labels" . | nindent 4 }}
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS {{ .Values.infrastructure.mysql.auth.database | default "mcp_market" }};
+    CREATE USER IF NOT EXISTS '{{ .Values.infrastructure.mysql.auth.username | default "mcp_user" }}'@'%' IDENTIFIED BY '{{ .Values.infrastructure.mysql.auth.password | default "mcp_password" }}';
+    GRANT ALL PRIVILEGES ON {{ .Values.infrastructure.mysql.auth.database | default "mcp_market" }}.* TO '{{ .Values.infrastructure.mysql.auth.username | default "mcp_user" }}'@'%';
+    FLUSH PRIVILEGES;
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mysql
+    {{- include "mcpcan.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-70"
+spec:
+  serviceName: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+        {{- include "mcpcan.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
+      containers:
+      - name: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+        image: {{ if .Values.global.cn }}{{ .Values.global.registryForMirrorCN }}{{ else }}{{ .Values.global.registry }}{{ end }}/{{ .Values.global.images.mysql }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.infrastructure.mysql.auth.rootPassword | default "root_password" | quote }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.infrastructure.mysql.auth.database | default "mcp_market" | quote }}
+        - name: MYSQL_USER
+          value: {{ .Values.infrastructure.mysql.auth.username | default "mcp_user" | quote }}
+        - name: MYSQL_PASSWORD
+          value: {{ .Values.infrastructure.mysql.auth.password | default "mcp_password" | quote }}
+        {{- if .Values.infrastructure.mysql.resources }}
+        resources:
+          {{- toYaml .Values.infrastructure.mysql.resources | nindent 10 }}
+        {{- end }}
+        livenessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - mysql
+            - -h
+            - localhost
+            - -u
+            - root
+            - -p{{ .Values.infrastructure.mysql.auth.rootPassword | default "root_password" }}
+            - -e
+            - "SELECT 1"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: mysql-config-volume
+          mountPath: /etc/mysql/conf.d
+          readOnly: true
+        - name: mysql-init-volume
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        {{- if .Values.infrastructure.mysql.hostPath.enabled }}
+        - name: {{ .Values.infrastructure.mysql.hostPath.name | default "mysql-data-hostpath" }}
+          mountPath: {{ .Values.global.mountStorage.mysqlPath | default "/var/lib/mysql" }}
+        {{- end }}
+      volumes:
+      - name: mysql-config-volume
+        configMap:
+          name: mysql-config
+      - name: mysql-init-volume
+        configMap:
+          name: mysql-init-scripts
+      {{- if .Values.infrastructure.mysql.hostPath.enabled }}
+      - name: {{ .Values.infrastructure.mysql.hostPath.name | default "mysql-data-hostpath" }}
+        hostPath:
+          path: {{ .Values.global.hostStorage.mysqlPath | default "/data/mcpcan/mysql" }}
+          type: {{ .Values.infrastructure.mysql.hostPath.type | default "DirectoryOrCreate" }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.infrastructure.mysql.service.name | default "mysql" }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/resource-policy": "keep"
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-70"
+  labels:
+    app: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructure.mysql.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.infrastructure.mysql.service.port | default 3306 }}
+    targetPort: {{ .Values.infrastructure.mysql.service.port | default 3306 }}
+    name: {{ .Values.infrastructure.mysql.service.name | default "mysql" }}
+  selector:
+    app: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+---
+{{- if .Values.infrastructure.mysql.service.enabledNodePort }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.infrastructure.mysql.service.name | default "mysql" }}-nodeport
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/resource-policy": "keep"
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-70"
+  labels:
+    app: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+    service-type: nodeport
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - port: {{ .Values.infrastructure.mysql.service.port | default 3306 }}
+    targetPort: {{ .Values.infrastructure.mysql.service.port | default 3306 }}
+    nodePort: {{ .Values.infrastructure.mysql.service.nodePort | default 31306 }}
+    name: {{ .Values.infrastructure.mysql.service.name | default "mysql" }}
+    protocol: TCP
+  selector:
+    app: {{ .Values.infrastructure.mysql.name | default "mysql" }}
+{{- end }}
+{{- end }}

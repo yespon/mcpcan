@@ -1,0 +1,93 @@
+{{- if .Values.services.gateway.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+    app.kubernetes.io/name: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/version: {{ .Values.global.version }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.services.gateway.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+        app.kubernetes.io/name: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/version: {{ .Values.global.version }}
+        {{- include "mcpcan.selectorLabels" . | nindent 8 }}
+      annotations:
+        mcpcan.io/version: {{ .Values.global.version }}
+        mcpcan.io/revision: "{{ .Release.Revision }}"
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+      - name: wait-deps
+        image: {{ if .Values.global.cn }}{{ .Values.global.registryForMirrorCN }}{{ else }}{{ .Values.global.registry }}{{ end }}/{{ .Values.global.images.busybox }}
+        command:
+        - sh
+        - -c
+        - >-
+          until nc -z {{ .Values.infrastructure.mysql.service.name | default "mysql" }} {{ .Values.infrastructure.mysql.service.port | default 3306 }}; do echo "waiting for mysql"; sleep 2; done;
+          until nc -z {{ .Values.infrastructure.redis.service.name | default "redis" }} {{ .Values.infrastructure.redis.service.port | default 6379 }}; do echo "waiting for redis"; sleep 2; done
+      containers:
+      - name: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+        image: {{ if .Values.global.cn }}{{ .Values.global.enterpriseRegistryForMirrorCN }}{{ else }}{{ .Values.global.enterpriseRegistry }}{{ end }}/{{ .Values.global.images.mcpGateway }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.services.gateway.service.port }}
+        ports:
+        - containerPort: {{ .Values.services.gateway.service.port }}
+          protocol: TCP
+        {{- end }}
+        {{- if .Values.services.gateway.resources }}
+        resources:
+          {{- toYaml .Values.services.gateway.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: "/app/config"
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mcp-config
+          items:
+          - key: "gateway.yaml"
+            path: "gateway.yaml"
+---
+{{- if .Values.services.gateway.service.port }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.gateway.service.name | default "mcp-gateway-svc" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.services.gateway.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.services.gateway.service.port }}
+    targetPort: {{ .Values.services.gateway.service.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.services.gateway.name | default "mcp-gateway" }}
+{{- end }}
+
+{{- end }}

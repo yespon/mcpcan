@@ -1,0 +1,50 @@
+name: Release
+
+# 触发条件：推送到主分支
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 授予创建Release/Tag的权限
+      pull-requests: read
+    
+    # 定义输出，供后续任务使用
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+
+    steps:
+      # 步骤1：检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 步骤2：读取版本信息
+      - name: Read version info
+        id: release
+        run: |
+          echo "tag=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      # 步骤3：创建GitHub Release并推送Tag
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Release ${{ steps.release.outputs.tag }}
+          body_path: .github/workflows/release.md # 使用指定文件作为 Release Note
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 在发布完成后触发Pages部署
+  deploy-pages:
+    needs: release
+    uses: ./.github/workflows/gh-pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: read

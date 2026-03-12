@@ -1,0 +1,17 @@
+apiVersion: v2
+name: mcpcan-deploy
+description: A Helm chart for MCPCan - Microservices Container Platform
+type: application
+version: v2.0-mcp-gateway-rebuild
+appVersion: v2.0-mcp-gateway-rebuild
+keywords:
+  - mcpcan
+  - microservices
+  - platform
+  - kubernetes
+home: https://github.com/Kymo-MCP/mcpcan
+sources:
+  - https://github.com/Kymo-MCP/mcpcan
+maintainers:
+  - name: MCPCan Team
+    email: opensource@kymo.cn

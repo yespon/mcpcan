@@ -1,0 +1,90 @@
+{{- if .Values.services.web.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.web.name | default "mcp-web" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.web.name | default "mcp-web" }}
+    app.kubernetes.io/name: {{ .Values.services.web.name | default "mcp-web" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: web
+    app.kubernetes.io/version: {{ .Values.global.version }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.services.web.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.web.name | default "mcp-web" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.web.name | default "mcp-web" }}
+        app.kubernetes.io/name: {{ .Values.services.web.name | default "mcp-web" }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: web
+        app.kubernetes.io/version: {{ .Values.global.version }}
+        {{- include "mcpcan.selectorLabels" . | nindent 8 }}
+      annotations:
+        mcpcan.io/version: {{ .Values.global.version }}
+        mcpcan.io/revision: "{{ .Release.Revision }}"
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
+      containers:
+      - name: {{ .Values.services.web.name | default "mcp-web" }}
+        image: {{ if .Values.global.cn }}{{ .Values.global.enterpriseRegistryForMirrorCN }}{{ else }}{{ .Values.global.enterpriseRegistry }}{{ end }}/{{ .Values.global.images.mcpWeb }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.services.web.service.port }}
+        ports:
+        - containerPort: {{ .Values.services.web.service.port }}
+          protocol: TCP
+        {{- end }}
+        {{- if .Values.services.web.resources }}
+        resources:
+          {{- toYaml .Values.services.web.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: data-volume
+          mountPath: "/app/static"
+        - name: config-volume
+          mountPath: "/app/env.js"
+          subPath: env.js
+      volumes:
+      - name: data-volume
+        hostPath:
+          path: {{ .Values.global.hostStorage.staticPath | default "/data/static" }}
+          type: DirectoryOrCreate
+      - name: config-volume
+        configMap:
+          name: mcp-config
+          items:
+          - key: env.js
+            path: env.js
+---
+{{- if .Values.services.web.service.port }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.web.service.name | default "mcp-web-svc" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.web.name | default "mcp-web" }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.services.web.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.services.web.service.port }}
+    targetPort: {{ .Values.services.web.service.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.services.web.name | default "mcp-web" }}
+{{- end }}
+
+{{- end }}

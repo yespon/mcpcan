@@ -1,0 +1,456 @@
+# =============================================================================
+# MCPCan Helm Chart Configuration
+# =============================================================================
+# This file contains all configurable values for the MCPCan deployment.
+# Modify these values according to your environment requirements.
+
+# =============================================================================
+# Global Configuration
+# =============================================================================
+# Global settings that apply to all components of the MCPCan system
+global:
+  cn: false
+  # Domain name for the application (optional)
+  # If not set, publicIP will be used for access
+  # Example: "mcpcan.example.com"
+  domain: ""
+
+  # Application version tag
+  # Used for image tags and deployment tracking
+  version: v2.0-mcp-gateway-rebuild
+
+  # Container registry URL
+  # All service images will be pulled from this registry
+  registry: 77kymo
+  # Container registry URL for enterprise images
+  enterpriseRegistry: 77kymo
+
+  # Container registry URL for mirror images in CN
+  # All service images will be pulled from this registry in CN
+  registryForMirrorCN: ccr.ccs.tencentyun.com/itqm-private
+  # Container registry URL for enterprise images
+  enterpriseRegistryForMirrorCN: ccr.ccs.tencentyun.com/itqm-private
+
+  # Image pull policy for all containers
+  # Options: Always, IfNotPresent, Never
+  imagePullPolicy: Always
+
+  imagePullSecrets: []
+  registryAuth:
+    enabled: false
+    createSecret: false
+    secretName: "mcpcan-registry-auth"
+    server: ""
+    username: ""
+    password: ""
+
+  # Used to override default image tags
+  enabledPreLoadImages: false
+
+  # Image tags for all services
+  images:
+    busybox: "busybox:1.36"
+    mysql: "mysql:8.0.30"
+    redis: "redis:6-alpine"
+    openapiToMcp: "openapi-to-mcp:v0.2.7"
+    mcpEntry: "mcp-entry:v3.5"
+    mcpHosting: "mcp-hosting:v4"
+    mcpInit: "mcp-init:v2.0-mcp-gateway-rebuild"
+    mcpMarket: "mcp-market:v2.0-mcp-gateway-rebuild"
+    mcpAuthz: "mcp-authz:v2.0-mcp-gateway-rebuild"
+    mcpGateway: "mcp-gateway:v2.0-mcp-gateway-rebuild"
+    mcpWeb: "mcp-web:v2.0-mcp-gateway-rebuild"
+
+  # Application secret key
+  # Used for JWT token signing and other cryptographic operations
+  # Change this in production environments
+  appSecret: "MrKuvLNn0hc1kHRbA6EqjSPj1ecrbPDE"
+
+  # Run mode for the application
+  # Options: Default: "prod"
+  # "demo": Enables demo features and lower resource requirements
+  # "prod": Production-ready configuration with full features
+  # "kymo": Kymo-specific configuration
+  runMode: "prod"
+
+  # Host storage configuration
+  # Defines where data is stored on the host system
+  hostStorage:
+    # Root directory for all MCPCan data
+    rootPath: /data/mcpcan
+    # Directory for static files (uploads, assets)
+    staticPath: /data/mcpcan/static
+    # Directory for code packages and artifacts
+    codePackagePath: /data/mcpcan/code-package
+    # Directory for MySQL data files
+    mysqlPath: /data/mcpcan/mysql
+    # Directory for Redis data files
+    redisPath: /data/mcpcan/redis
+
+  # Mount storage configuration
+  # Defines how storage is mounted inside containers
+  mountStorage:
+    # Root mount point inside containers
+    rootPath: /data/mcpcan
+    # Static files mount point
+    staticPath: /data/mcpcan/static
+    # Code packages mount point
+    codePackagePath: /data/mcpcan/code-package
+    # openapi mount point
+    openapiFilePath: /data/mcpcan/openapi-file
+    # MySQL data mount point (standard MySQL path)
+    mysqlPath: /var/lib/mysql
+    # Redis data mount point
+    redisPath: /data/redis
+
+  # The domain name path resolution rules can modify the apiPathRule and webPathRule path rules when there is no conflict.
+  # However, the /mcp-gateway path resolution rule is fixed.
+  # It is specially used for mcp traffic proxy forwarding, cannot be modified, and this path is occupied compulsorily.
+  # web path rule
+  webPathRule: /
+  # api path rule
+  apiPathRule: /api
+  # mcp-gateway path rule : /mcp-gateway (This rule is bound to the container name, must exist, and cannot be modified.)
+
+  # codeUploadMaxFileSize: 100MB (default)
+  codeUploadMaxFileSize: 100
+
+# =============================================================================
+# Kubernetes Access Configuration
+# =============================================================================
+kubeAccess:
+  # Service account name used for image pull job
+  serviceAccountName: mcpcan-user
+  # Cluster role binding name used for image pull job
+  clusterRoleBindingName: mcpcan-user-cluster-role-binding
+  # Cluster role name used for image pull job
+  clusterRoleName: mcpcan-user-cluster-role
+
+# =============================================================================
+# Infrastructure Configuration
+# =============================================================================
+# Configuration for backend infrastructure services (databases, caches, etc.)
+infrastructure:
+  # MySQL Database Configuration
+  mysql:
+    # Enable/disable MySQL deployment
+    enabled: true
+
+    # Database authentication settings
+    auth:
+      # Root user password for MySQL
+      # Change this in production environments
+      rootPassword: dev-root-password
+      # Default database name to create
+      database: mcp_dev
+      # Application database username
+      username: mcp_user
+      # Application database password
+      password: dev-password
+
+    # MySQL service name (used for internal DNS resolution)
+    name: mysql
+
+    # Kubernetes service configuration
+    service:
+      # Service name for MySQL
+      name: mysql-svc
+      # MySQL port number
+      port: 3306
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+      # Enable NodePort for external access
+      enabledNodePort: true
+      # NodePort number for external access
+      nodePort: 31306
+
+    # Host path volume configuration
+    hostPath:
+      # Enable host path volume for data persistence
+      enabled: true
+      # Volume name
+      name: mysql-hostpath
+      # Directory creation type
+      type: DirectoryOrCreate
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Redis Cache Configuration
+  redis:
+    # Enable/disable Redis deployment
+    enabled: true
+
+    # Redis authentication settings
+    auth:
+      # Redis password for authentication
+      # Change this in production environments
+      password: dev-redis-password
+      # Default Redis database number
+      db: 0
+
+    # Redis service name (used for internal DNS resolution)
+    name: redis
+
+    # Kubernetes service configuration
+    service:
+      # Service name for Redis
+      name: redis-svc
+      # Redis port number
+      port: 6379
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+      # Enable NodePort for external access
+      enabledNodePort: true
+      # NodePort number for external access
+      nodePort: 31379
+
+    # Host path volume configuration
+    hostPath:
+      # Enable host path volume for data persistence
+      enabled: true
+      # Volume name
+      name: redis-hostpath
+      # Directory creation type
+      type: DirectoryOrCreate
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+# =============================================================================
+# Services Configuration
+# =============================================================================
+# Configuration for MCPCan application services
+services:
+  # entry service
+  entry:
+    # Enable/disable entry service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-entry
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-entry-svc
+      # Service port number
+      port: 80
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Web Frontend Service
+  web:
+    # Enable/disable web service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-web
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-web-svc
+      # Service port number
+      port: 3000
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+
+    # Ingress configuration for external access (Removed, all ingress contracted to mcp-entry)
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Market Service (Code Package Management)
+  market:
+    # Enable/disable market service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-market
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-market-svc
+      # Service port number
+      port: 8080
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+
+    # Ingress configuration for external access (Removed, all ingress contracted to mcp-entry)
+
+    # ConfigMap configuration (currently disabled)
+    config:
+      enabled: false
+
+    # Persistent volume configuration (currently disabled)
+    persistence:
+      enabled: false
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Authorization Service
+  authz:
+    # Enable/disable authorization service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-authz
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-authz-svc
+      # Service port number
+      port: 8081
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+
+    # Ingress configuration for external access (Removed, all ingress contracted to mcp-entry)
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Gateway Service (API Gateway)
+  gateway:
+    # Enable/disable gateway service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-gateway
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-gateway-svc
+      # Service port number
+      port: 8082
+      # Service type (ClusterIP for internal access)
+      type: ClusterIP
+
+    # Ingress configuration for external access (Removed, all ingress contracted to mcp-entry)
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Initialization Service
+  init:
+    # Enable/disable initialization service deployment
+    enabled: true
+    # Service name for Kubernetes resources
+    name: mcp-init
+
+    # Login user credentials for initialization
+    loginUser:
+      username: admin
+      password: admin123
+
+    # Number of pod replicas
+    replicas: 1
+
+    # Kubernetes service configuration
+    service:
+      # Service name for internal DNS resolution
+      name: mcp-init-svc
+      # Service port number
+      port: 8083
+      # Service type (ClusterIP for internal access)
+      type: "ClusterIP"
+
+    # Resource limits and requests
+    resources:
+      # Minimum guaranteed resources
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+# Global ingress settings for external access to services
+ingress:
+  # Enable/disable ingress controller usage
+  enabled: true
+  # Ingress class name (nginx for NGINX Ingress Controller)
+  className: nginx
+
+  # Global ingress annotations
+  annotations:
+    # Enable regex support for path matching
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+    # CORS (Cross-Origin Resource Sharing) configuration
+    # Enable CORS support
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    # Allow requests from any origin
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    # Allowed HTTP methods
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    # Allowed request headers
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,API-Key,X-API-Key,X-Auth-Key,X-Forwarded-For,X-Real-IP,Accept-Language,X-Trace-ID,X-Instance-ID"
+    # Headers exposed to the client
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range,Mcp-Session-Id,Date,Set-Cookie,Location,Content-Type,Connection,Transfer-Encoding,X-Accel-Buffering,X-Trace-ID,X-Instance-ID"
+    # Allow credentials in CORS requests
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+  # TLS/SSL configuration
+  tls:
+    # create a new secret for TLS certificate
+    createSecret: true
+    # Enable/disable TLS encryption
+    enabled: false
+    # Kubernetes secret name containing TLS certificate
+    secretName: "domain-tls"
+    # TLS certificate content (PEM format)
+    # Base64 encoded certificate data
+    crt: |
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----
+    # TLS private key content (PEM format)
+    # Base64 encoded private key data
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      ...
+      -----END PRIVATE KEY-----
+
+#  kubernetes.io/hostname: "docker-desktop"\
+nodeSelector: {}
