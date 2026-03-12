@@ -49,6 +49,7 @@ type InitUserConfig struct {
 	AdminRoleDescription string `mapstructure:"admin_role_description"`
 	AdminRoleLevel       int    `mapstructure:"admin_role_level"`
 	AdminDataScope       string `mapstructure:"admin_data_scope"`
+	AdminDeptName        string `mapstructure:"admin_dept_name"`
 }
 
 var serviceName = "market"
@@ -140,7 +141,13 @@ func Load() (*Config, error) {
 	// Append Version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
-	config.CodeMode = common.CodeMode(config.VersionInfo.CodeMode)
+
+	// Prioritize CodeMode from environment variable for runtime switching (Single Image strategy)
+	if envCodeMode := os.Getenv("CODE_MODE"); envCodeMode != "" {
+		config.CodeMode = common.CodeMode(envCodeMode)
+	} else {
+		config.CodeMode = common.CodeMode(config.VersionInfo.CodeMode)
+	}
 
 	// If Market.Host is empty, fallback to top-level Domain
 	if strings.TrimSpace(config.Market.Host) == "" && config.Domain != "" {

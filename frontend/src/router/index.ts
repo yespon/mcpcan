@@ -209,6 +209,14 @@ const router = createRouter({
           component: () => import('../pages/login/user-center.vue'),
         },
         {
+          path: '/auth-manage',
+          name: 'authManage',
+          redirect: '/user-manage',
+          meta: {
+            isEnterprise: true,
+          },
+        },
+        {
           path: '/user-manage',
           name: 'userManage',
           meta: {
@@ -242,6 +250,7 @@ const router = createRouter({
           path: '/user-with-role',
           name: 'userWithRole',
           meta: {
+            title: 'userWithRole',
             isEnterprise: true,
           },
           component: () => import('../enterprise.ee/user-manage/user-with-role.vue'),

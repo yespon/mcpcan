@@ -372,6 +372,15 @@ export const useUserStore = defineStore('user', () => {
       return Promise.resolve({ menus: openCodeMenus, auths: allAuths.value })
     }
 
+    // 企业版模式：如果当前缓存中只有开源版菜单（即没有 rbac 相关的菜单），强制刷新
+    const hasRbacMenu = (allMenus.value || []).some((m: any) =>
+      String(m.permission).includes('rbac_manage'),
+    )
+
+    if (hasRbacMenu && allMenus.value.length > 0 && allAuths.value.permissions) {
+      return Promise.resolve({ menus: allMenus.value, auths: allAuths.value })
+    }
+
     return Promise.all([getMenus(), getRoleAuth()]).then(([menus, auths]) => {
       return { menus, auths }
     })

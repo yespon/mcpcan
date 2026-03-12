@@ -96,7 +96,7 @@ func (a *App) Initialize() error {
 	}
 
 	// Register enterprise plugins (no-op when enterprise features are disabled)
-	if err := registerEnterprisePlugin(); err != nil {
+	if err := a.registerEnterprisePlugin(); err != nil {
 		return err
 	}
 
@@ -244,7 +244,7 @@ func (a *App) loadMysql() error {
 	}
 
 	// Append enterprise table initializers (empty when enterprise features are disabled)
-	tableInitializers = append(tableInitializers, enterpriseTableInitializers()...)
+	tableInitializers = append(tableInitializers, a.enterpriseTableInitializers()...)
 
 	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
@@ -495,7 +495,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
 
 	// Register enterprise routes (no-op when enterprise features are disabled)
-	registerEnterpriseRoutes(a.ginEngine, routerPrefix)
+	a.registerEnterpriseRoutes(a.ginEngine, routerPrefix)
 
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {

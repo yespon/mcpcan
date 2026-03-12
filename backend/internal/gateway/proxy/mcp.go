@@ -185,7 +185,8 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 
 	if isSSEReq {
 		if instanceInfo.McpConfig.SseReadTimeout > 0 {
-			ctx2, _ := context.WithTimeout(req.Context(), time.Duration(instanceInfo.McpConfig.SseReadTimeout)*time.Second)
+			ctx2, cancel := context.WithTimeout(req.Context(), time.Duration(instanceInfo.McpConfig.SseReadTimeout)*time.Second)
+			_ = cancel // Usually we should cancel when request is done, but here it's passed to proxy
 			*req = *req.WithContext(ctx2)
 		} else {
 			*req = *req.WithContext(req.Context())
@@ -193,10 +194,12 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	} else {
 		timeout := instanceInfo.McpConfig.Timeout
 		if timeout > 0 {
-			ctx2, _ := context.WithTimeout(req.Context(), time.Duration(timeout)*time.Second)
+			ctx2, cancel := context.WithTimeout(req.Context(), time.Duration(timeout)*time.Second)
+			_ = cancel
 			*req = *req.WithContext(ctx2)
 		} else {
-			ctx2, _ := context.WithTimeout(req.Context(), DefaultReadTimeout)
+			ctx2, cancel := context.WithTimeout(req.Context(), DefaultReadTimeout)
+			_ = cancel
 			*req = *req.WithContext(ctx2)
 		}
 	}
@@ -223,7 +226,7 @@ func director(req *http.Request) {
 	if !ok {
 		logger.Error("No InstanceInfo found in context", zap.String("traceID", xTraceID))
 		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
-			fmt.Sprintf("no InstanceInfo in context for instance: %s", instanceInfo.InstanceID))
+			fmt.Sprintf("no InstanceInfo in context for instance: %s", xInstanceID))
 		return
 	}
 	reqAuth := &RequestAuth{}

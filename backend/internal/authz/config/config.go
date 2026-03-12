@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/version"
@@ -20,6 +21,8 @@ type Config struct {
 	Database    common.DatabaseConfig `mapstructure:"database"`
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
+	// CodeMode indicates whether it is OpenCode or EnterpriseCode
+	CodeMode common.CodeMode `mapstructure:"-"`
 }
 
 // JWTConfig JWT configuration
@@ -72,6 +75,13 @@ func Load() error {
 	// Append version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
+
+	// Prioritize CodeMode from environment variable for runtime switching (Single Image strategy)
+	if envCodeMode := os.Getenv("CODE_MODE"); envCodeMode != "" {
+		config.CodeMode = common.CodeMode(envCodeMode)
+	} else {
+		config.CodeMode = common.CodeMode(config.VersionInfo.CodeMode)
+	}
 
 	GlobalConfig = &config
 

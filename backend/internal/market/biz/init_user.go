@@ -24,6 +24,7 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 	roleName := initConfig.Init.AdminRoleName
 	level := initConfig.Init.AdminRoleLevel
 	dataScope := initConfig.Init.AdminDataScope
+	deptName := initConfig.Init.AdminDeptName
 	if roleName == "" {
 		roleName = username
 	}
@@ -32,6 +33,9 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 	}
 	if dataScope == "" {
 		dataScope = string(model.DataScopeAll)
+	}
+	if deptName == "" {
+		deptName = "总部"
 	}
 	isAdmin := true
 	enabled := true
@@ -44,6 +48,12 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 		Source:     stringPtr("PLATFORM"),
 		CreateTime: &now,
 		UpdateTime: &now,
+	}
+
+	adminDept := &model.SysDept{
+		Name:    deptName,
+		Enabled: 1,
+		Source:  model.DeptSourcePlatform,
 	}
 
 	adminRole := &model.SysRole{
@@ -64,6 +74,16 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to update admin password: %v", err)
 		}
+		
+		// Ensure admin dept is created and linked
+		adminDept, _ = createAdminDept(ctx, adminDept)
+		if adminDept != nil {
+			if existingUser.DeptID == nil || *existingUser.DeptID == 0 {
+				existingUser.DeptID = &adminDept.DeptID
+				_ = mysql.SysUserRepo.Update(ctx, existingUser)
+			}
+		}
+		
 		a.AdminUser = existingUser
 		return existingUser, nil
 	}
@@ -73,6 +93,13 @@ func (a *App) createAdminUser() (*model.SysUser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create admin role: %v", err)
 	}
+
+	// Create admin dept
+	adminDept, err = createAdminDept(ctx, adminDept)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create admin dept: %v", err)
+	}
+	adminUser.DeptID = &adminDept.DeptID
 
 	// Create user
 	err = userBiz.CreateUser(ctx, adminUser)
@@ -118,6 +145,23 @@ func createAdminRole(ctx context.Context, adminRole *model.SysRole) (*model.SysR
 
 	fmt.Printf("Admin role created successfully with ID: %d\n", adminRole.RoleID)
 	return adminRole, nil
+}
+
+func createAdminDept(ctx context.Context, adminDept *model.SysDept) (*model.SysDept, error) {
+	// Check if admin dept already exists
+	existingDept, err := mysql.SysDeptRepo.FindByName(ctx, adminDept.Name)
+	if err == nil && existingDept != nil {
+		return existingDept, nil
+	}
+
+	// Create dept
+	err = mysql.SysDeptRepo.Create(ctx, adminDept)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create admin dept: %v", err)
+	}
+
+	fmt.Printf("Admin dept created successfully with ID: %d\n", adminDept.DeptID)
+	return adminDept, nil
 }
 
 func stringPtr(s string) *string {

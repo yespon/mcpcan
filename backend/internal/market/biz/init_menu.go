@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	"github.com/kymo-mcp/mcpcan/pkg/menu"
-	"github.com/kymo-mcp/mcpcan/pkg/version"
 )
 
 func (a *App) createAdminRoleMenus(adminUser *model.SysUser) error {
@@ -21,7 +18,7 @@ func (a *App) createAdminRoleMenus(adminUser *model.SysUser) error {
 		return fmt.Errorf("admin role not found")
 	}
 
-	menus := menu.GetMenus(common.CodeMode(version.CodeMode))
+	menus := menu.GetMenus(a.config.CodeMode)
 
 	menuList, _, err := mysql.SysMenuRepo.FindWithPagination(context.Background(), 1, 9999, "")
 	if err != nil {
