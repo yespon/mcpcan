@@ -168,7 +168,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 		var authErr error
 		reqAuth, authErr = validateMcpTokenForInstance(req, instanceId)
 		if authErr != nil {
-			WriteMCPLog(xTraceID, instanceId, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceId, "", reqAuth.Token,
 				golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
 				fmt.Sprintf("failed to valid token: %v for instance: %s", authErr.Error(), instanceId))
 			return fmt.Errorf("failed to valid token: %v", authErr.Error())

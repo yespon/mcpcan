@@ -27,7 +27,10 @@ type Config struct {
 	Market      common.MarketConfig   `mapstructure:"market"`
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
-	Storage     common.StorageConfig  `mapstructure:"storage"`
+	// Storage configuration
+	Storage common.StorageConfig `mapstructure:"storage"`
+	// Global Domain
+	Domain string `mapstructure:"domain"`
 	// RunEnvironment configuration
 	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode

@@ -58,10 +58,10 @@ services:
   mcp-market:
     build:
       context: ../../
-      dockerfile: ./mcpcan-deploy/docker-compose/Dockerfile.go.dev
+      dockerfile: ./deploy/docker-compose/Dockerfile.go.dev
     container_name: mcp-market-dev
     volumes:
-      - ../../mcpcan/backend:/app:cached
+      - ../../backend:/app:cached
       - ./air.market.toml:/app/.air.toml:ro
       - ./config/market.yaml:/app/config/market.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -94,10 +94,10 @@ services:
   mcp-authz:
     build:
       context: ../../
-      dockerfile: ./mcpcan-deploy/docker-compose/Dockerfile.go.dev
+      dockerfile: ./deploy/docker-compose/Dockerfile.go.dev
     container_name: mcp-authz-dev
     volumes:
-      - ../../mcpcan/backend:/app:cached
+      - ../../backend:/app:cached
       - ./air.authz.toml:/app/.air.toml:ro
       - ./config/authz.yaml:/app/config/authz.yaml:ro
       - ${HOST_DATA_PATH:-./data/mcpcan}:/data/mcpcan
@@ -128,10 +128,10 @@ services:
   mcp-web:
     build:
       context: ../../
-      dockerfile: ./mcpcan-deploy/docker-compose/Dockerfile.web.dev
+      dockerfile: ./deploy/docker-compose/Dockerfile.web.dev
     container_name: mcp-web-dev
     volumes:
-      - ../../mcpcan/frontend:/app:cached
+      - ../../frontend:/app:cached
       - /app/node_modules # 关键：使用匿名卷隔离 node_modules
       - ./config/env.js:/app/public/env.js:ro
     ports:
