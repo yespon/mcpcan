@@ -43,6 +43,8 @@
             <template #label>{{ t('mcp.instance.formData.mcpServers') }}</template>
             <MonacoEditor v-model="pageInfo.formData.mcpServers" language="json" height="200px" />
           </el-form-item>
+          <!-- Headers 配置：紧跟 mcpServers 下方，创建/编辑均展示 -->
+          <InstanceHeaders v-model:headers="pageInfo.formData.headers" />
         </el-col>
         <el-col :span="6">
           <div
@@ -58,8 +60,8 @@
 <script setup lang="ts">
 import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
-import { JsonFormatter } from '@/utils/json'
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus'
+import InstanceHeaders from './instance-headers.vue'
+import { ElMessage } from 'element-plus'
 import { InstanceAPI } from '@/api/mcp/instance'
 import { AccessType } from '@/types/instance.ts'
 import { TemplateAPI } from '@/api/mcp/template'
@@ -68,7 +70,7 @@ import { type InstanceResult } from '@/types/index.ts'
 import { cloneDeep } from 'lodash-es'
 
 const { t } = useI18n()
-const { query, pageInfo, placeholderServer, jumpToPage } = useInstanceFormHooks()
+const { query, pageInfo, jumpToPage } = useInstanceFormHooks()
 const baseInfo = ref()
 const protocolOptions = [
   { label: 'SSE', value: 1 },
@@ -85,15 +87,12 @@ const handleConfirm = async () => {
     if (valid) {
       try {
         pageInfo.value.loading = true
-        if (!pageInfo.value.formData.instanceId) {
-          if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
-            pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
-              pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
-                header.key,
-                header.value,
-              ]),
-            )
-          }
+        if (Array.isArray(pageInfo.value.formData.headers)) {
+          pageInfo.value.formData.headers = Object.fromEntries(
+            pageInfo.value.formData.headers
+              .filter((header: any) => header.key?.trim())
+              .map((header: any) => [header.key, header.value]),
+          )
         }
         const { instanceId } = await (
           pageInfo.value.formData.instanceId ? InstanceAPI.edit : InstanceAPI.create

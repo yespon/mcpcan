@@ -149,10 +149,9 @@ func (s *GatewayService) AuthHandler(c *gin.Context) {
 		token = c.Query("token")
 	}
 
-	// 4.2 校验 Token 并加载自定义透传 Header (优先级最高)
+	// 4.2 校验 Token
 	if instanceInfo.EnabledToken {
-		mcpToken, errToken := validateMcpTokenForInstance(c, instanceID)
-		if errToken != nil {
+		if _, errToken := validateMcpTokenForInstance(c, instanceID); errToken != nil {
 			logger.Warn("Gateway auth failed: token validation failed", append(logFields, zap.Error(errToken))...)
 			
 			// 记录失败日志到数据库
@@ -179,20 +178,19 @@ func (s *GatewayService) AuthHandler(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token validation failed"})
 			return
 		}
-
-		// 加载自定义透传 Header (如果存在同名，会覆盖之前加载的 MCP 配置 Header)
-		if mcpToken != nil && len(mcpToken.Headers) > 0 {
-			var extraHeaders map[string]string
-			if err := json.Unmarshal(mcpToken.Headers, &extraHeaders); err == nil {
-				for k, v := range extraHeaders {
-					finalHeaders[k] = v
-				}
-			} else {
-				logger.Warn("Gateway auth: failed to unmarshal mcp token extra headers", append(logFields, zap.Error(err))...)
-			}
-		}
 	}
 
+	// 4.3 加载实例级自定义透传 Header (优先级最高，覆盖 MCP 配置 Header)
+	if len(instanceInfo.Headers) > 0 {
+		var extraHeaders map[string]string
+		if err := json.Unmarshal(instanceInfo.Headers, &extraHeaders); err == nil {
+			for k, v := range extraHeaders {
+				finalHeaders[k] = v
+			}
+		} else {
+			logger.Warn("Gateway auth: failed to unmarshal instance extra headers", append(logFields, zap.Error(err))...)
+		}
+	}
 	// 5. 将最终确定的 Header 注入 Auth response，由 Traefik 透传给 Sidecar/Upstream
 	for k, v := range finalHeaders {
 		c.Header(k, v)
@@ -315,10 +313,8 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 	}
 
 	// 2. Perform Internal Authentication
-	var mcpToken *model.McpToken
 	if instance.EnabledToken {
-		mcpToken, err = validateMcpTokenForInstance(c, instanceID)
-		if err != nil {
+		if _, err = validateMcpTokenForInstance(c, instanceID); err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication failed: " + err.Error()})
 			return
 		}
@@ -363,10 +359,10 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 				}
 			}
 
-			// Add custom headers from token
-			if mcpToken != nil && len(mcpToken.Headers) > 0 {
+			// Add custom headers from instance level (highest priority after MCP config headers)
+			if len(instance.Headers) > 0 {
 				var extraHeaders map[string]string
-				if err := json.Unmarshal(mcpToken.Headers, &extraHeaders); err == nil {
+				if err := json.Unmarshal(instance.Headers, &extraHeaders); err == nil {
 					for k, v := range extraHeaders {
 						req.Header.Set(k, v)
 					}

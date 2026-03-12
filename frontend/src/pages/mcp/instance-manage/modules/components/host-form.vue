@@ -47,6 +47,9 @@
               :height="locale === 'en' ? '600px' : '300px'"
             />
           </el-form-item>
+          <!-- Headers 配置：STDIO 协议下紧跟 mcpServers -->
+          <InstanceHeaders v-model:headers="pageInfo.formData.headers" />
+          <div class="flex-1 tip tip-primary my-2 line-height-[18px]" v-html="headerContentTips"></div>
         </el-col>
         <el-col :span="6">
           <div
@@ -332,6 +335,11 @@
           </el-radio-button>
         </el-radio-group>
       </el-form-item>
+      <!-- Headers 配置：非 STDIO 协议时，显示在访问 URL 下方 -->
+      <template v-if="pageInfo.formData.mcpProtocol !== 3">
+        <InstanceHeaders v-model:headers="pageInfo.formData.headers" />
+        <div class="flex-1 tip tip-primary my-2 line-height-[18px]" v-html="headerContentTips"></div>
+      </template>
       <!-- 环境默认 -->
       <el-form-item
         v-show="false"
@@ -625,31 +633,7 @@
             </el-button>
           </el-form-item>
         </el-collapse-item>
-        <el-collapse-item v-if="!pageInfo.formData.instanceId" name="3">
-          <template #title>
-            <div>
-              <div class="mr-1 font-bold">{{ t('mcp.instance.hostingForm.headerTitle') }}</div>
-              <Transition name="tip-fade">
-                <div
-                  v-show="currentOpenCollapse !== '3'"
-                  class="flex-1 tip tip-primary my-2 line-height-[18px]"
-                  style="margin-left: -16px"
-                  v-html="headerTitleTips"
-                ></div>
-              </Transition>
-            </div>
-          </template>
-          <div>
-            <TokenForm ref="tokenForm" :formData="pageInfo.formData.tokens[0]"></TokenForm>
-          </div>
-          <Transition name="tip-fade">
-            <div
-              v-show="currentOpenCollapse === '3'"
-              class="flex-1 tip tip-primary my-2 line-height-[18px]"
-              v-html="headerContentTips"
-            ></div>
-          </Transition>
-        </el-collapse-item>
+        <!-- Headers 配置已移至 mcpServers 下方（非 STDIO 协议时展示） -->
       </el-collapse>
     </el-form>
   </div>
@@ -748,7 +732,7 @@ import { useInstanceFormHooks } from '../../hooks/form-instance.ts'
 import Upload from '@/components/upload/index.vue'
 import McpButton from '@/components/mcp-button/index.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import TokenForm from './token-form.vue'
+import InstanceHeaders from './instance-headers.vue'
 import zipLogo from '@/assets/logo/zip.png'
 import { AccessType, InstanceData, McpProtocol, NodeVisible } from '@/types/instance'
 import {
@@ -964,11 +948,7 @@ const buildNotes = computed(() => {
   `
 })
 
-const headerTitleTips = computed(() => {
-  return locale.value === 'en'
-    ? `If this field is left empty, headers from the client will be passed through to the MCP service by default. If the MCPServers configuration defines header parameters, precedence is: MCPServers configuration headers > client request headers.`
-    : `此项不配置时：默认透传来自客户端的Headers到MCP服务中。如果MCPServers配置中存在Header参数，优先级为：MCPServers配置中Header > 客户端的Headers`
-})
+
 
 const headerContentTips = computed(() => {
   return locale.value === 'en'
@@ -1139,15 +1119,12 @@ const handleConfirm = async () => {
     if (valid) {
       try {
         pageInfo.value.loading = true
-        if (!pageInfo.value.formData.instanceId) {
-          if (Array.isArray(pageInfo.value.formData.tokens[0].headers)) {
-            pageInfo.value.formData.tokens[0].headers = Object.fromEntries(
-              pageInfo.value.formData.tokens[0].headers?.map((header: any) => [
-                header.key,
-                header.value,
-              ]),
-            )
-          }
+        if (Array.isArray(pageInfo.value.formData.headers)) {
+          pageInfo.value.formData.headers = Object.fromEntries(
+            pageInfo.value.formData.headers
+              .filter((header: any) => header.key?.trim())
+              .map((header: any) => [header.key, header.value]),
+          )
         }
         const { instanceId } = await (
           pageInfo.value.formData.instanceId ? InstanceAPI.edit : InstanceAPI.create

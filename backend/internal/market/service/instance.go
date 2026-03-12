@@ -367,6 +367,14 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 		PublicProxyPath: instance.PublicProxyPath,
 	}
 
+	// 填充实例级 headers（通用：所有接入类型都需要回填）
+	if len(instance.Headers) > 0 {
+		headersMap := make(map[string]string)
+		if err := json.Unmarshal(instance.Headers, &headersMap); err == nil {
+			resp.Headers = headersMap
+		}
+	}
+
 	// Add specific fields based on access type
 	switch instance.AccessType {
 	case model.AccessTypeHosting:

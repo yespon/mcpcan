@@ -129,6 +129,11 @@ func (biz *InstanceBiz) createInstanceDirectMode(ctx context.Context, req *insta
 		EnvironmentID: uint(req.EnvironmentId),
 		EnabledToken:  req.EnabledToken,
 	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
+	}
 
 	// Save instance to database
 	if err := biz.CreateInstanceRecord(ctx, instance); err != nil {
@@ -219,6 +224,11 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		ProxyProtocol:          model.McpProtocolStreamableHttp,
 		OpenapiBaseUrl:         req.OpenapiBaseUrl,
 	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
+	}
 
 	if len(req.Tokens) > 0 {
 		// add instance id to tokens
@@ -299,6 +309,11 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		PublicProxyPath: publicProxyPath,
 		ProxyProtocol:   proxyProtocol,
 		EnvironmentID:   uint(req.EnvironmentId),
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
 	}
 
 	// 如果指定了环境，我们需要启动翻译代理 Sidecar，以此支持完整的代理鉴权及多重协议（如 stdio / http）的转发
@@ -461,6 +476,11 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 		IconPath:               req.IconPath,
 		PublicProxyPath:        publicProxyPath,
 		ProxyProtocol:          proxyProtocol,
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
 	}
 	if len(req.Tokens) > 0 {
 		// add instance id to tokens
@@ -749,17 +769,12 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 		if req.Token != "" && req.Token != r.Token {
 			continue
 		}
-		var headers map[string]string
 		var usages []string
-		_ = json.Unmarshal(r.Headers, &headers)
 		_ = json.Unmarshal(r.Usages, &usages)
 		if len(req.Usages) > 0 {
 			if !usageIntersect(usages, req.Usages) {
 				continue
 			}
-		}
-		if headers == nil {
-			headers = make(map[string]string)
 		}
 		list = append(list, &instancepb.McpToken{
 			Id:         int64(r.ID),
@@ -769,7 +784,6 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 			PublishAt:  r.PublishAt,
 			Usages:     usages,
 			Enabled:    r.Enabled,
-			Headers:    headers,
 		})
 	}
 
@@ -818,7 +832,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		if t.InstanceId == "" {
 			return fmt.Errorf("missing required field: instanceId")
 		}
-		headersBytes, _ := json.Marshal(t.Headers)
 		usagesBytes, _ := json.Marshal(t.Usages)
 		publishAt := t.PublishAt
 		if publishAt == 0 {
@@ -849,7 +862,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 			existing.InstanceID = t.InstanceId
 			existing.Token = t.Token
 			existing.Enabled = t.Enabled
-			existing.Headers = json.RawMessage(headersBytes)
 			existing.Usages = json.RawMessage(usagesBytes)
 			existing.ExpireAt = t.ExpireAt
 			existing.PublishAt = publishAt
@@ -862,7 +874,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 				InstanceID: t.InstanceId,
 				Token:      t.Token,
 				Enabled:    t.Enabled,
-				Headers:    json.RawMessage(headersBytes),
 				Usages:     json.RawMessage(usagesBytes),
 				ExpireAt:   t.ExpireAt,
 				PublishAt:  publishAt,
@@ -923,6 +934,14 @@ func (biz *InstanceBiz) UpdateInstanceForDirect(ctx context.Context, req *instan
 	}
 	oriInstance.IconPath = req.IconPath
 
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil // allowed to clear headers
+	}
+
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
 	if err != nil {
@@ -982,6 +1001,14 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.Notes = req.Notes
 	}
 	oriInstance.IconPath = req.IconPath
+
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
 
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
@@ -1094,6 +1121,14 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 	oriInstance.ContainerIsReady = false
 	oriInstance.IconPath = req.IconPath
 	oriInstance.OpenapiBaseUrl = req.OpenapiBaseUrl
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
+
 	if req.ChooseOpenapiFileID != oriInstance.PackageID {
 		oriInstance.PackageID = req.ChooseOpenapiFileID
 	}
@@ -1221,6 +1256,14 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.PublicProxyPath = publicProxyPath
 	oriInstance.ProxyProtocol = ProxyProtocol
 	oriInstance.IconPath = req.IconPath
+
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)

@@ -122,6 +122,7 @@ type McpInstance struct {
 	TargetConfig           json.RawMessage `gorm:"type:json;comment:MCP 目标服务配置 (JSON格式)" json:"targetConfig"`
 	IconPath               string          `gorm:"size:100;not null;default:'';comment:MCP 图标路径" json:"iconPath"`
 	OpenapiBaseUrl         string          `gorm:"size:500;not null;default:'';comment:MCP 访问基础路径" json:"openapiBaseUrl"`
+	Headers                json.RawMessage `gorm:"type:json;comment:MCP 实例级 Headers (JSON格式)" json:"headers"`
 	CreatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:创建时间" json:"createdAt"`
 	UpdatedAt              time.Time       `gorm:"type:timestamp(3);not null;comment:更新时间" json:"updatedAt"`
 }

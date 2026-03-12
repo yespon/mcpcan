@@ -13,6 +13,11 @@ export default defineConfig({
     open: false,
     host: '0.0.0.0',
     port: 3000,
+    watch: {
+      // macOS + Docker Desktop volume 挂载时 inotify 失效，需要开启轮询
+      usePolling: true,
+      interval: 1000,
+    },
     proxy: {
       '/api/authz': {
         target: 'http://mcp-entry',

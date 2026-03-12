@@ -112,6 +112,7 @@ export interface InstanceForm {
   iconPath: string
   servicePath: string
   enabledToken: boolean
+  headers?: { [key: string]: string } | null
 }
 
 // creat-instance-form
@@ -144,7 +145,6 @@ export interface InstanceResult extends InstanceForm {
     token: string
     expireAt: number
     publishAt: number
-    headers: { [key: string]: string }
     usages: string[]
     tokenType: TokenType | null
   }>

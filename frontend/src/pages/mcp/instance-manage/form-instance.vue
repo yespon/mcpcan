@@ -147,6 +147,12 @@ const handleGetDetail = async () => {
         }))
       : []
     formData.volumeMounts = data.volumeMounts || []
+    // 将 headers 对象转换为 [{key, value}] 数组供 InstanceHeaders 组件使用
+    if (data.headers && typeof data.headers === 'object' && !Array.isArray(data.headers)) {
+      formData.headers = Object.keys(data.headers).map((k) => ({ key: k, value: data.headers[k] }))
+    } else {
+      formData.headers = Array.isArray(data.headers) ? data.headers : []
+    }
     return formData
   } finally {
     pageInfo.value.loading = false
