@@ -36,6 +36,8 @@ type Config struct {
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
 	DemoMaxInstances int            `mapstructure:"demoMaxInstances"`
 	Init             InitUserConfig `mapstructure:"init"`
+	// CodeMode indicates whether it is OpenCode or EnterpriseCode
+	CodeMode common.CodeMode `mapstructure:"-"`
 }
 
 // InitUserConfig represents admin user initialization configuration
@@ -138,6 +140,7 @@ func Load() (*Config, error) {
 	// Append Version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
+	config.CodeMode = common.CodeMode(config.VersionInfo.CodeMode)
 
 	// If Market.Host is empty, fallback to top-level Domain
 	if strings.TrimSpace(config.Market.Host) == "" && config.Domain != "" {
