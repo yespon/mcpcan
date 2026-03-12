@@ -91,6 +91,7 @@ help:
 	@echo "  push-frontend      - Build and push multi-arch Frontend (Web) image"
 	@echo "  proto-buf          - Generate protobuf files"
 	@echo "  go-build-market    - Local Go build for market"
+	@echo "  sync-docs          - Sync documentation from tools submodule"
 	@echo "  clean              - Remove build artifacts"
 
 .PHONY: push-all
@@ -150,6 +151,20 @@ go-build-authz:
 clean:
 	@rm -rf $(BACKEND_PATH)/bin/*
 	@rm -rf $(FRONTEND_PATH)/dist
+
+.PHONY: sync-docs
+sync-docs:
+	@echo "---------- Syncing Documentation ----------"
+	@mkdir -p $(ROOT_PATH)/docs/zh $(ROOT_PATH)/docs/en
+	@if [ -d "../mcpcan-tools/mcpcan-platform-docs/zh/guide" ]; then \
+		cp -r ../mcpcan-tools/mcpcan-platform-docs/zh/guide $(ROOT_PATH)/docs/zh/; \
+		echo "Synced zh/guide to docs/zh/"; \
+	fi
+	@if [ -d "../mcpcan-tools/mcpcan-platform-docs/en/guide" ]; then \
+		cp -r ../mcpcan-tools/mcpcan-platform-docs/en/guide $(ROOT_PATH)/docs/en/; \
+		echo "Synced en/guide to docs/en/"; \
+	fi
+	@echo "---------- Sync Completed ----------"
 
 # @Deprecated / Removed targets marked as error to guide migration
 .PHONY: docker-build-init docker-build-gateway docker-build-sidecar
