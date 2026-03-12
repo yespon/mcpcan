@@ -335,7 +335,7 @@ func (b *AiSessionBiz) Chat(ctx context.Context, req *pb.ChatRequest) (<-chan ll
 		}
 
 		// Image parts
-		// attach.Url 是存入 DB 的相对路径（如 /static/uploads/chat/xxx.png）
+		// attach.Url 是存入 DB 的相对路径（如 /static/images/chat/xxx.png）
 		// 发给 AI 模型时需拼接完整域名，确保模型能通过网络访问该图片
 		for _, attach := range req.Attachments {
 			if strings.HasPrefix(attach.Type, "image") || attach.Type == "image" {
