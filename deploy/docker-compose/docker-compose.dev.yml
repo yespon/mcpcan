@@ -134,6 +134,7 @@ services:
       - ../../frontend:/app:cached
       - /app/node_modules # 关键：使用匿名卷隔离 node_modules
       - ./config/env.js:/app/public/env.js:ro
+      - ${HOST_DATA_PATH:-./data/mcpcan}/static/uploads:/app/public/static/uploads # 挂载动态上传目录，不遮蔽 system 目录
     ports:
       - "3000:3000"
     environment:

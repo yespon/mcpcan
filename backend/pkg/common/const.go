@@ -38,7 +38,7 @@ const (
 	// Avatar upload path
 	AvatarPath = "/avatar"
 	// Image upload path
-	ImagesPath = "/images"
+	ImagesPath = "/uploads"
 	// Static resource access path prefix
 	StaticPrefix = "/static"
 

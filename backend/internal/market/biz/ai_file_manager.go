@@ -13,13 +13,13 @@ import (
 )
 
 // ChatImageSubDir 图片聊天文件存放的子目录（相对于 staticPath）
-const ChatImageSubDir = "images/chat"
+const ChatImageSubDir = "uploads/chat"
 
 // ChatImageURLPrefix 静态文件对外访问的 URL 前缀
-const ChatImageURLPrefix = "/static/images/chat"
+const ChatImageURLPrefix = "/static/uploads/chat"
 
 type AiFileManager struct {
-	// uploadDir 是处理后的实际存储路径（staticPath + images/chat）
+	// uploadDir 是处理后的实际存储路径（staticPath + uploads/chat）
 	uploadDir string
 }
 
@@ -45,7 +45,7 @@ func NewAiFileManager(staticPath string) *AiFileManager {
 //   - header:    multipart 文件头（用于获取原始文件名）
 //
 // 返回:
-//   - RelativePath: /static/images/chat/{sessionId}-{filename}  —— 存入数据库及返回给前端的值
+//   - RelativePath: /static/uploads/chat/{sessionId}-{filename}  —— 存入数据库及返回给前端的值
 func (m *AiFileManager) UploadChatImage(
 	_ context.Context,
 	sessionId int64,
@@ -76,7 +76,7 @@ func (m *AiFileManager) UploadChatImage(
 	}
 
 	// 4. 构造相对路径（存数据库/返回给前端）
-	// 格式: /static/images/chat/{sessionId}-{filename}
+	// 格式: /static/uploads/chat/{sessionId}-{filename}
 	relativePath := fmt.Sprintf("%s/%s", ChatImageURLPrefix, newFileName)
 	relativePath = strings.ReplaceAll(relativePath, "\\", "/")
 
@@ -89,12 +89,12 @@ func (m *AiFileManager) UploadChatImage(
 
 // DeleteFiles 根据相对路径删除文件
 //
-// 支持格式: /static/images/chat/{filename}
+// 支持格式: /static/uploads/chat/{filename}
 func (m *AiFileManager) DeleteFiles(files []string) error {
 	for _, file := range files {
 		var relPath string
 		if strings.HasPrefix(file, ChatImageURLPrefix) {
-			// /static/images/chat/filename -> images/chat/filename
+			// /static/uploads/chat/filename -> uploads/chat/filename
 			relPath = strings.TrimPrefix(file, "/static/")
 		} else if strings.HasPrefix(file, "/files/chat-files/") {
 			// 兼容旧路径格式
