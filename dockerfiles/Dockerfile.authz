@@ -1,4 +1,3 @@
-# Runtime stage
 # Builder stage
 FROM 77kymo/builder:latest AS builder
 ARG CodeMode

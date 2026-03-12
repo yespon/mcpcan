@@ -17,14 +17,7 @@ TENCENT_REGISTRY=ccr.ccs.tencentyun.com/itqm-private
 
 # Standard Multi-Platform Specification
 PLATFORMS=linux/amd64,linux/arm64
-# Industry Standard Registry Variables
-DOCK_REGISTRY=77kymo
-TENCENT_REGISTRY=ccr.ccs.tencentyun.com/itqm-private
 
-# Standard Multi-Platform Specification
-PLATFORMS=linux/amd64,linux/arm64
-
-# Go build environment (Local builds)
 # Go build environment (Local builds)
 GO_PROXY ?= https://goproxy.cn/
 GOARCH := $(shell go env GOARCH)
@@ -36,9 +29,6 @@ GO_VERSION := $(shell go version | awk '{print $$3}')
 # Build tags based on CodeMode
 CodeMode := $(strip $(CodeMode))
 ifeq ($(CodeMode),)
-    # Defaulting to OpenCode if not specified for buildx sanity, 
-    # but still enforcing it for specific targets
-    CodeMode := OpenCode
     # Defaulting to OpenCode if not specified for buildx sanity, 
     # but still enforcing it for specific targets
     CodeMode := OpenCode
@@ -149,7 +139,6 @@ go-mod-tidy:
 	@cd $(BACKEND_PATH) && go mod tidy
 
 .PHONY: go-build-market
-go-build-market:
 go-build-market:
 	$(call go_build_service,market)
 
