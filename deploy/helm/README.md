@@ -33,8 +33,8 @@ MCPCan (Microservices Container Platform) is a comprehensive microservices platf
 ### Quick Start
 
 ```bash
-# Add the MCPCan Helm repository (if available)
-helm repo add mcpcan https://kymo-mcp.github.io/mcpcan-deploy/
+# Add the MCPCan Helm repository
+helm repo add mcpcan https://kymo-mcp.github.io/mcpcan/deploy/
 
 # Update repository
 helm repo update
@@ -509,7 +509,7 @@ We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md
 
 ```bash
 # Clone the repository
-git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
+git clone https://github.com/Kymo-MCP/mcpcan.git
 
 # Navigate to helm directory
 cd mcpcan-deploy/helm
@@ -532,9 +532,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](../LIC
 ## Support
 
 - **Documentation**: [GitHub Wiki](https://github.com/Kymo-MCP/mcpcan/wiki)
-- **Issues**: [GitHub Issues](https://github.com/Kymo-MCP/mcpcan-deploy/issues)
+- **Issues**: [GitHub Issues](https://github.com/Kymo-MCP/mcpcan/issues)
 - **Email**: opensource@kymo.cn
 
 ---
 
-**Note**: This chart is designed for Kubernetes environments. For Docker Compose deployment, please refer to the main repository documentation.# Test trigger
+**Note**: This chart is designed for Kubernetes environments. For Docker Compose deployment, please refer to the documentation in this same directory.

@@ -351,9 +351,6 @@
                 <a href="https://github.com/Kymo-MCP/mcpcan" target="_blank" class="hero-link">
                     📦 Main Repository
                 </a>
-                <a href="https://github.com/Kymo-MCP/mcpcan-deploy" target="_blank" class="hero-link">
-                    🚀 Deployment Repository
-                </a>
             </div>
         </section>
 
@@ -389,8 +386,8 @@
                     
                     <div class="code-block" style="background: rgba(0,0,0,0.3);">
                         <pre># 1. Clone the repository
-git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy
+git clone https://github.com/Kymo-MCP/mcpcan.git
+cd mcpcan/deploy
 
 # 2. Run the fast installation script
 # Standard Installation (International Network)
@@ -434,7 +431,7 @@ helm upgrade --install mcpcan ./helm -f helm/values-custom.yaml \
                 <p>Best for standard production deployments using versioned charts.</p>
                 <div class="code-block">
                     <pre># 1. Add Repository
-helm repo add mcpcan https://kymo-mcp.github.io/mcpcan-deploy/
+helm repo add mcpcan https://kymo-mcp.github.io/mcpcan/deploy/
 helm repo update
 
 # 2. Install Chart
@@ -587,8 +584,8 @@ kubectl port-forward svc/mcp-web-svc 3000:3000 -n mcpcan</pre>
                     <div class="card">
                         <h3>📚 Resources</h3>
                         <ul>
-                            <li><a href="https://github.com/Kymo-MCP/mcpcan-deploy" target="_blank">GitHub Repository</a></li>
-                            <li><a href="https://kymo-mcp.github.io/mcpcan-deploy/" target="_blank">Helm Chart Repository</a></li>
+                            <li><a href="https://github.com/Kymo-MCP/mcpcan" target="_blank">GitHub Repository</a></li>
+                            <li><a href="https://kymo-mcp.github.io/mcpcan/deploy/" target="_blank">Helm Chart Repository</a></li>
                             <li><a href="https://www.mcpcan.com/docs/en/guide/welcome" target="_blank">Documentation</a></li>
                         </ul>
                     </div>

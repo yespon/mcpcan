@@ -17,15 +17,9 @@ This guide provides two installation paths for deploying the MCPCAN platform:
 
 ## 2. Get the Deployment Repository
 
-Choose a source based on your network environment:
-
 ```bash
-# GitHub (global)
+# Clone the main repository
 git clone https://github.com/Kymo-MCP/mcpcan.git
-cd mcpcan/deploy
-
-# Gitee (recommended in China)
-git clone https://gitee.com/kymomcp/mcpcan-deploy.git
 cd mcpcan/deploy
 ```
 

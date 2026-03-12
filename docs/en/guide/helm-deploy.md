@@ -6,13 +6,13 @@ This document provides a detailed deployment guide for professional users who ha
 
 ## 0. Environment Preparation (Optional)
 
-If you have a new, clean server, or if a Kubernetes environment is not installed, you can first use the one-click script from the `mcpcan-deploy` repository to prepare the basic environment.
+If you have a new, clean server, or if a Kubernetes environment is not installed, you can first use the one-click script from the `deploy` directory in the main repository to prepare the basic environment.
 
 ```bash
-# Clone the deployment repository
+# Clone the repository
 git clone https://github.com/Kymo-MCP/mcpcan.git
 
-# Navigate to the repository directory
+# Navigate to the deploy directory
 cd mcpcan/deploy
 
 # Execute the installation script (if you are in mainland China, it is recommended to add the --cn parameter)
@@ -84,10 +84,10 @@ This method is recommended if you need to deeply customize `values.yaml`, such a
 **Step 1: Get the Helm Chart**
 
 ```bash
-# Clone the deployment repository
+# Get the code
 git clone https://github.com/Kymo-MCP/mcpcan.git
 
-# Navigate to the repository directory
+# Navigate to the deploy directory
 cd mcpcan/deploy
 ```
 
@@ -243,7 +243,7 @@ When you need to update the configuration or upgrade the platform version, use t
 
 - **Method 2: Upgrading via Local Chart**
 
-  1.  Navigate to the `mcpcan-deploy` directory and pull the latest code:
+  1.  Navigate to the `deploy` directory and pull the latest code from the main repository:
       ```bash
       git pull
       ```

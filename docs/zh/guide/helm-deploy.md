@@ -6,13 +6,11 @@
 
 ## 0. 环境准备 (可选)
 
-如果您的服务器是全新的、干净的，或者没有安装 Kubernetes 环境，您可以先通过 `mcpcan-deploy` 仓库中的一键化脚本来准备基础环境。
+如果您的服务器是全新的、干净的，或者没有安装 Kubernetes 环境，您可以先通过主仓库 `deploy` 目录中的一键化脚本来准备基础环境。
 
 ```bash
-# 克隆部署仓库
+# 获取代码
 git clone https://github.com/Kymo-MCP/mcpcan.git
-
-# 进入仓库目录
 cd mcpcan/deploy
 
 # 执行安装脚本 (如果在中国大陆地区，建议添加 --cn 参数)
@@ -84,7 +82,7 @@ helm install mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
 **第一步：获取 Helm Chart**
 
 ```bash
-# 克隆部署仓库
+# 获取代码
 git clone https://github.com/Kymo-MCP/mcpcan.git
 
 # 进入仓库目录
@@ -243,7 +241,7 @@ kubectl get pods -n mcpcan
 
 - **方式二：通过本地 Chart 升级**
 
-  1.  进入 `mcpcan-deploy` 目录，并拉取最新的代码：
+  1.  进入 `deploy` 目录，并从主仓库拉取最新的代码：
       ```bash
       git pull
       ```

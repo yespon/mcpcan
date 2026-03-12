@@ -14,7 +14,7 @@ MCPCAN uses containers for flexible deployment of MCP services, resolving potent
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql" alt="MySQL"/>
   <img src="https://img.shields.io/badge/Kubernetes-1.28-326ce5?style=for-the-badge&logo=kubernetes" alt="Kubernetes"/>
-  <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge" alt="Apache 2.0"/>
+  <img src="https://img.shields.io/badge/License-Sustainable%20Use-orange?style=for-the-badge" alt="Sustainable Use License"/>
 </div>
 <p align="center">
    <strong>English</strong> | <a href="./README_CN.md">中文版</a> <br>
@@ -66,12 +66,8 @@ For detailed deployment instructions, please refer to our [Deployment Guide](htt
 ### 1. Get Deployment Repository
 
 ```bash
-# GitHub (International)
+# Recommended: GitHub (Main Repository)
 git clone https://github.com/Kymo-MCP/mcpcan.git
-cd mcpcan/deploy/docker-compose/
-
-# Gitee (Recommended for China)
-git clone https://gitee.com/kymomcp/mcpcan-deploy.git
 cd mcpcan/deploy/docker-compose/
 ```
 
@@ -105,38 +101,40 @@ Suitable for Kubernetes environment deployment, please refer to [Helm Deployment
 
 ## 🚀 Components
 
-MCPCan consists of multiple key components, which collectively form the functional framework of MCPCan, providing users with comprehensive MCP service management capabilities.
+MCPCan adopts a microservices architecture, consisting of the following core components:
 
-| Project                                | Status                                                      | Description                                |
-| -------------------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
-| [MCPCan-Web](frontend/)                | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan Web UI (Vue.js Frontend)            |
-| [MCPCan-Backend](backend/)             | ![Status](https://img.shields.io/badge/status-active-green) | MCPCan Backend Services (Go Microservices) |
-| [MCPCan-Gateway](backend/cmd/gateway/) | ![Status](https://img.shields.io/badge/status-active-green) | MCP Gateway Service                        |
-| [MCPCan-Market](backend/cmd/market/)   | ![Status](https://img.shields.io/badge/status-active-green) | MCP Service Marketplace                    |
-| [MCPCan-Authz](backend/cmd/authz/)     | ![Status](https://img.shields.io/badge/status-active-green) | Authentication and Authorization Service   |
+| Component Name                         | Directory Path              | Functional Description               |
+| -------------------------------------- | --------------------------- | ------------------------------------ |
+| **MCPCan-Web**                         | `frontend/`                 | Management UI based on Vue 3         |
+| **MCP-Market**                         | `backend/cmd/market/`       | Core business: Marketplace & Instance management |
+| **MCP-Gateway**                        | `backend/cmd/gateway/`      | Unified gateway routing, auth & SSE handling |
+| **MCP-Authz**                          | `backend/cmd/authz/`        | RBAC, User & Dept management         |
+| **MCP-Sidecar**                        | `backend/cmd/mcp-sidecar/`  | Proxy & protocol conversion for MCP runs |
+| **MCP-Init**                           | `backend/cmd/init/`         | System initialization & data seeding |
 
 ## 🐧 Technology Stack
 
 ### 🐧 Frontend
 
-- **Framework**: Vue.js 3.5+ (Composition API)
-- **Language**: TypeScript
-- **Styling**: UnoCSS, SCSS
+- **Framework**: Vue 3.5.x (Composition API)
+- **Build Tool**: Vite 7.0
 - **UI Components**: Element Plus
-- **State Management**: Pinia
-- **Build Tool**: Vite
+- **State Management**: Pinia 3.0
+- **Styling**: UnoCSS, SCSS
+- **Editor**: Monaco Editor, Markdown-it
 
 ### 🐧 Backend
 
-- **Language**: Go 1.24.2+
-- **Framework**: Gin, gRPC
-- **Database**: MySQL, Redis
-- **Containerization Tools**: Docker, Kubernetes
+- **Language**: Go 1.25.x
+- **Web Framework**: Gin, gRPC (grpc-gateway)
+- **Data Storage**: MySQL (GORM), Redis (Cache/Token)
+- **Core Libraries**: LangChainGo, MCP-Go, Docker SDK, Client-go
+- **Ops & Deployment**: Traefik (Edge Gateway), Docker Compose, Helm (Kubernetes)
 
-## 🐧 Third-party Projects
+## 🐧 Related Projects
 
-- [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan) - Official Helm Charts source repository for MCPCan
-- [MCPCan Helm Charts](https://kymo-mcp.github.io/deploy/) - Official Helm charts repository for MCPCan
+- [MCPCan Helm Charts](https://kymo-mcp.github.io/deploy/) - Official Helm charts index for MCPCan
+- [Deployment Guide](docs/en/guide/install.md) - Detailed deployment and configuration guide
 
 ## 💝 Contributing Guide
 
@@ -156,9 +154,7 @@ If you discover a security vulnerability, please refer to our [Security Policy](
 
 Copyright (c) 2024-2025 MCPCan Team, All rights reserved.
 
-This software is licensed under the Apache License Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
+Licensed under the **Sustainable Use License**. Portions of this software (specifically Enterprise features in `.ee` folders) are subject to the **Enterprise License** (LICENSE_EE.md). 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 

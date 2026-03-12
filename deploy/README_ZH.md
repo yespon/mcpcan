@@ -8,7 +8,6 @@
 - 📚 [文档 (Documentation)](https://www.mcpcan.com/docs/en/guide/welcome)
 - 🎮 [在线演示 (Live Demo)](http://demo.mcpcan.com)
 - 📦 [主仓库 (Main Repository)](https://github.com/Kymo-MCP/mcpcan)
-- 🚀 [部署仓库 (Deployment Repository)](https://github.com/Kymo-MCP/mcpcan-deploy)
 
 ## 目录
 
@@ -43,13 +42,9 @@
 #### 1. 获取代码
 
 ```bash
-# GitHub (国际网络)
-git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose
-
-# Gitee (中国网络推荐)
-git clone https://gitee.com/kymomcp/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose
+# 获取主仓库代码
+git clone https://github.com/Kymo-MCP/mcpcan.git
+cd mcpcan/deploy/docker-compose
 ```
 
 #### 2. 准备工作
@@ -236,4 +231,4 @@ cd ..
 
 成功后脚本会校验 Helm 发布状态并打印访问地址。
 
-更多 Helm 自定义配置和详细说明，请查看 [Helm Chart 仓库](https://kymo-mcp.github.io/mcpcan-deploy/)。
+更多 Helm 自定义配置和详细说明，请查看 [Helm Chart 目录](./helm/)。

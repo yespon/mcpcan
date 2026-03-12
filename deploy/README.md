@@ -8,7 +8,6 @@ This document provides detailed instructions for deploying the MCPCan system usi
 - 📚 [Documentation](https://www.mcpcan.com/docs/en/guide/welcome)
 - 🎮 [Live Demo](http://demo.mcpcan.com)
 - 📦 [Main Repository](https://github.com/Kymo-MCP/mcpcan)
-- 🚀 [Deployment Repository](https://github.com/Kymo-MCP/mcpcan-deploy)
 
 ## Table of Contents
 
@@ -43,13 +42,9 @@ Before starting, please ensure your environment meets the following requirements
 #### 1. Get Code
 
 ```bash
-# GitHub (International Network)
-git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose
-
-# Gitee (Recommended for China Network)
-git clone https://gitee.com/kymomcp/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose
+# Clone the main repository
+git clone https://github.com/Kymo-MCP/mcpcan.git
+cd mcpcan/deploy/docker-compose
 ```
 
 #### 2. Preparation
@@ -237,4 +232,4 @@ cd ..
 
 Upon success, the script verifies the Helm release status and prints the access URL.
 
-For more Helm custom configurations and detailed instructions, please view the [Helm Chart Repository](https://kymo-mcp.github.io/mcpcan-deploy/).
+For more Helm custom configurations and detailed instructions, please view the [Helm Chart Directory](./helm/).

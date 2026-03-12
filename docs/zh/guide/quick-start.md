@@ -17,15 +17,9 @@
 
 ## 2. 获取部署仓库
 
-根据网络环境选择拉取源：
-
 ```bash
-# GitHub（国际网络）
+# 获取主仓库代码
 git clone https://github.com/Kymo-MCP/mcpcan.git
-cd mcpcan/deploy
-
-# Gitee（中国网络推荐）
-git clone https://gitee.com/kymomcp/mcpcan-deploy.git
 cd mcpcan/deploy
 ```
 

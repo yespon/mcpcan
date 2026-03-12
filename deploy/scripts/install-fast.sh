@@ -54,16 +54,17 @@ install_environment() {
 }
 
 clone_repo_if_needed() {
-  local repo_url="https://github.com/Kymo-MCP/mcpcan-deploy.git"
   if [ -d "$ROOT_DIR/helm" ]; then
     log "Repository already present at $ROOT_DIR"
     REPO_DIR="$ROOT_DIR"
     return
   fi
-  REPO_DIR="$PWD/mcpcan-deploy"
-  log "Cloning repository $repo_url into $REPO_DIR"
+  local repo_url="https://github.com/Kymo-MCP/mcpcan.git"
+  REPO_DIR="$PWD/mcpcan"
+  log "Cloning main repository from $repo_url into $REPO_DIR"
   if command -v git >/dev/null 2>&1; then
     git clone "$repo_url" "$REPO_DIR"
+    REPO_DIR="$REPO_DIR/deploy"
   else
     err "git is required to clone repository"
     exit 1
