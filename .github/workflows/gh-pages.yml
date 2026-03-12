@@ -1,0 +1,116 @@
+name: GitHub-Pages
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          path: 'src'
+          ref: ${{ github.ref_name }}
+
+      - name: Checkout Pages Branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: 'pages'
+          fetch-depth: 0
+        continue-on-error: true # It's okay if the branch doesn't exist yet
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Package and Index Helm Chart
+        run: |
+          # Define variables
+          CHART_PATH="src/deploy/helm"
+          OUTPUT_DIR="_site"
+          REPO_URL="https://kymo-mcp.github.io/mcpcan/"
+          
+          # Create output directory
+          mkdir -p $OUTPUT_DIR
+          
+          # Copy existing packages and index from pages branch if available
+          if [ -d "pages" ] && [ -f "pages/index.yaml" ]; then
+            echo "📋 Found existing pages branch, copying existing artifacts..."
+            # Copy all .tgz files
+            cp pages/*.tgz $OUTPUT_DIR/ 2>/dev/null || true
+            # Copy index.yaml for merging
+            cp pages/index.yaml $OUTPUT_DIR/index.yaml.old
+            echo "✅ Existing artifacts copied."
+          else
+            echo "⚠️ No existing pages branch or index.yaml found. Starting fresh."
+          fi
+          
+          # Verify Helm chart structure
+          echo "🔍 Verifying Helm chart structure..."
+          helm lint $CHART_PATH
+          
+          # Package Helm chart
+          echo "📦 Packaging Helm chart..."
+          helm package $CHART_PATH --destination $OUTPUT_DIR/
+          
+          # Generate repository index
+          echo "📋 Generating repository index..."
+          if [ -f "$OUTPUT_DIR/index.yaml.old" ]; then
+            echo "🔄 Merging with existing index..."
+            helm repo index $OUTPUT_DIR/ --url $REPO_URL --merge $OUTPUT_DIR/index.yaml.old
+          else
+            echo "🆕 Creating new index..."
+            helm repo index $OUTPUT_DIR/ --url $REPO_URL
+          fi
+          
+          # Remove backup index
+          rm -f $OUTPUT_DIR/index.yaml.old
+          
+          # Copy homepage
+          echo "🏠 Copying homepage..."
+          cp src/deploy/index.html $OUTPUT_DIR/
+          
+          # Disable Jekyll
+          touch $OUTPUT_DIR/.nojekyll
+          
+          # Set proper permissions
+          chmod -R 755 $OUTPUT_DIR/
+          
+          echo "📦 Build completed successfully!"
+          echo "📁 Final directory structure:"
+          ls -la $OUTPUT_DIR/
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Summary
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Helm Repository: ${{ steps.deployment.outputs.page_url }}"
+          echo "📋 Add repository: helm repo add mcpcan ${{ steps.deployment.outputs.page_url }}"
