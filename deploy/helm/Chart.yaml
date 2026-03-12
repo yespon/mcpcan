@@ -2,8 +2,8 @@ apiVersion: v2
 name: mcpcan-deploy
 description: A Helm chart for MCPCan - Microservices Container Platform
 type: application
-version: v2.0-mcp-gateway-rebuild
-appVersion: v2.0-mcp-gateway-rebuild
+version: v2.1
+appVersion: v2.1
 keywords:
   - mcpcan
   - microservices

@@ -1,6 +1,6 @@
 {
   "name": "qm_mcp_market_admin",
-  "version": "v2.0-mcp-gateway-rebuild",
+  "version": "v2.1",
   "private": true,
   "type": "module",
   "engines": {
