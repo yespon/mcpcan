@@ -67,12 +67,12 @@ For detailed deployment instructions, please refer to our [Deployment Guide](htt
 
 ```bash
 # GitHub (International)
-git clone https://github.com/Kymo-MCP/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose/
+git clone https://github.com/Kymo-MCP/mcpcan.git
+cd mcpcan/deploy/docker-compose/
 
 # Gitee (Recommended for China)
 git clone https://gitee.com/kymomcp/mcpcan-deploy.git
-cd mcpcan-deploy/docker-compose/
+cd mcpcan/deploy/docker-compose/
 ```
 
 ### 2. Start Services
@@ -101,7 +101,7 @@ After successful installation, access `http://localhost` (or `http://<Your Publi
 
 **Helm Installation**
 
-Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://kymo-mcp.github.io/mcpcan-deploy/).
+Suitable for Kubernetes environment deployment, please refer to [Helm Deployment Guide](https://kymo-mcp.github.io/deploy/).
 
 ## 🚀 Components
 
@@ -135,8 +135,8 @@ MCPCan consists of multiple key components, which collectively form the function
 
 ## 🐧 Third-party Projects
 
-- [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan-deploy) - Official Helm Charts source repository for MCPCan
-- [MCPCan Helm Charts](https://kymo-mcp.github.io/mcpcan-deploy/) - Official Helm charts repository for MCPCan
+- [mcpcan-deploy](https://github.com/Kymo-MCP/mcpcan) - Official Helm Charts source repository for MCPCan
+- [MCPCan Helm Charts](https://kymo-mcp.github.io/deploy/) - Official Helm charts repository for MCPCan
 
 ## 💝 Contributing Guide
 
@@ -164,7 +164,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## 👥 Community & Support
 
-- 📖 [Documentation](https://kymo-mcp.github.io/mcpcan-deploy/)
+- 📖 [Documentation](https://kymo-mcp.github.io/deploy/)
 - 💬 [Discord Community](https://discord.com/channels/1428637640856571995/1428637896532820038)
 - 🐛 [Issue Tracker](https://github.com/Kymo-MCP/mcpcan/issues)
 - 📧 [Mailing List](mailto:opensource@kymo.cn)
