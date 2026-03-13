@@ -512,7 +512,7 @@ We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md
 git clone https://github.com/Kymo-MCP/mcpcan.git
 
 # Navigate to helm directory
-cd mcpcan-deploy/helm
+cd mcpcan/deploy/helm
 
 # Validate the chart
 helm lint .
@@ -523,7 +523,7 @@ helm install test-release . --dry-run --debug
 
 ### Reporting Issues
 
-Please report issues on our [GitHub Issues](https://github.com/Kymo-MCP/mcpcan-deploy/issues) page.
+Please report issues on our [GitHub Issues](https://github.com/Kymo-MCP/mcpcan/issues) page.
 
 ## License
 

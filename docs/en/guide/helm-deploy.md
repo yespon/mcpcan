@@ -55,7 +55,7 @@ For ease of management and future upgrades, we recommend that you download the d
 
 ```bash
 # Download the default configuration from the Helm repository
-helm show values mcpcan/mcpcan-deploy > values-custom.yaml
+helm show values mcpcan/mcpcan > values-custom.yaml
 ```
 
 Open `values-custom.yaml` with your favorite editor and modify it according to the **"Core Configuration Details"** in the next section.
@@ -65,14 +65,14 @@ Open `values-custom.yaml` with your favorite editor and modify it according to t
 Use the custom configuration file `values-custom.yaml` to perform the installation.
 
 ```bash
-helm install mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+helm install mcpcan mcpcan/mcpcan -f values-custom.yaml \
   --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
 > **Tip**: For sensitive information such as passwords, you can still use the `--set` parameter to override values in `values-custom.yaml` from the command line, avoiding storing passwords in plain text in the file.
 >
 > ```bash
-> helm install mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+> helm install mcpcan mcpcan/mcpcan -f values-custom.yaml \
 >   --set services.init.loginUser.password="YourAdminPassword" \
 >   --namespace mcpcan --create-namespace --timeout 600s --wait
 > ```
@@ -237,7 +237,7 @@ When you need to update the configuration or upgrade the platform version, use t
   2.  Modify your `values-custom.yaml` file.
   3.  Execute the upgrade command:
       ```bash
-      helm upgrade mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+      helm upgrade mcpcan mcpcan/mcpcan -f values-custom.yaml \
         -n mcpcan --timeout 600s --wait
       ```
 

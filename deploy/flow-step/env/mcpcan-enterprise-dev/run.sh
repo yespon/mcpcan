@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Resolve Project Root Directory
-# Ensure we are in the mcpcan-deploy root directory regardless of where the script is called from
+# Ensure we are in the deploy root directory regardless of where the script is called from
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Navigate 3 levels up: dev -> env -> flow-step -> mcpcan-deploy
+# Navigate 3 levels up: dev -> env -> flow-step -> deploy
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 if [ ! -d "$PROJECT_ROOT/helm" ]; then

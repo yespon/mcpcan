@@ -66,7 +66,7 @@ For detailed deployment instructions, please refer to our [Deployment Guide](htt
 ### 1. Get Deployment Repository
 
 ```bash
-# Recommended: GitHub (Main Repository)
+# Recommended: GitHub
 git clone https://github.com/Kymo-MCP/mcpcan.git
 cd mcpcan/deploy/docker-compose/
 ```
@@ -107,10 +107,7 @@ MCPCan adopts a microservices architecture, consisting of the following core com
 | -------------------------------------- | --------------------------- | ------------------------------------ |
 | **MCPCan-Web**                         | `frontend/`                 | Management UI based on Vue 3         |
 | **MCP-Market**                         | `backend/cmd/market/`       | Core business: Marketplace & Instance management |
-| **MCP-Gateway**                        | `backend/cmd/gateway/`      | Unified gateway routing, auth & SSE handling |
 | **MCP-Authz**                          | `backend/cmd/authz/`        | RBAC, User & Dept management         |
-| **MCP-Sidecar**                        | `backend/cmd/mcp-sidecar/`  | Proxy & protocol conversion for MCP runs |
-| **MCP-Init**                           | `backend/cmd/init/`         | System initialization & data seeding |
 
 ## 🐧 Technology Stack
 

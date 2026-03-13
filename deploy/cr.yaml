@@ -3,7 +3,7 @@
 
 # Owner and repository name
 owner: Kymo-MCP
-repo: mcpcan-deploy
+repo: mcpcan
 
 # GitHub Pages configuration
 pages-branch: gh-pages
@@ -11,7 +11,7 @@ pages-index-path: index.yaml
 
 # Chart configuration
 charts-dir: helm
-charts-repo-url: https://kymo-mcp.github.io/mcpcan-deploy
+charts-repo-url: https://kymo-mcp.github.io/deploy/
 
 # Package configuration
 package-path: .cr-release-packages

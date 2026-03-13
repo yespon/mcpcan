@@ -53,7 +53,7 @@ helm repo update
 
 ```bash
 # 从 Helm 仓库下载默认配置
-helm show values mcpcan/mcpcan-deploy > values-custom.yaml
+helm show values mcpcan/mcpcan > values-custom.yaml
 ```
 
 使用您喜欢的编辑器打开 `values-custom.yaml` 并根据下一章节的**《核心配置详解》**进行修改。
@@ -63,14 +63,14 @@ helm show values mcpcan/mcpcan-deploy > values-custom.yaml
 使用自定义配置文件 `values-custom.yaml` 来执行安装。
 
 ```bash
-helm install mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+helm install mcpcan mcpcan/mcpcan -f values-custom.yaml \
   --namespace mcpcan --create-namespace --timeout 600s --wait
 ```
 
 > **提示**：对于密码等敏感信息，您仍然可以使用 `--set` 参数在命令行中覆盖 `values-custom.yaml` 中的值，避免将密码明文存储在文件中。
 >
 > ```bash
-> helm install mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+> helm install mcpcan mcpcan/mcpcan -f values-custom.yaml \
 >   --set services.init.loginUser.password="YourAdminPassword" \
 >   --namespace mcpcan --create-namespace --timeout 600s --wait
 > ```
@@ -235,7 +235,7 @@ kubectl get pods -n mcpcan
   2.  修改您的 `values-custom.yaml` 文件。
   3.  执行升级命令：
       ```bash
-      helm upgrade mcpcan mcpcan/mcpcan-deploy -f values-custom.yaml \
+      helm upgrade mcpcan mcpcan/mcpcan -f values-custom.yaml \
         -n mcpcan --timeout 600s --wait
       ```
 
