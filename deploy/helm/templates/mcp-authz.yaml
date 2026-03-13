@@ -38,7 +38,7 @@ spec:
       {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
       initContainers:
       - name: wait-deps
-        image: {{ .Values.global.images.busybox }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
         command:
         - sh
         - -c

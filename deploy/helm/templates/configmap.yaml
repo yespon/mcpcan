@@ -150,7 +150,7 @@ data:
   market.yaml: |-
     runMode: {{ .Values.global.runMode }}
     server:
-      serviceName: {{ .Values.services.market.name | default "mcp-market" }}
+      serviceName: {{ .Values.services.market.service.name | default "mcp-market-svc" }}
       httpPort: {{ .Values.services.market.service.port }}
     secret: {{ .Values.global.appSecret }}
     runEnvironment:

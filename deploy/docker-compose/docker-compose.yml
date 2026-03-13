@@ -49,7 +49,7 @@ services:
       timeout: 5s
       retries: 5
 
-  mcp-entry:
+  mcp-entry-svc:
     image: traefik:v3.6.9
     container_name: ${MCP_ENTRY_SERVICE_NAME}
     environment:
@@ -71,14 +71,14 @@ services:
     command: >
       traefik
     depends_on:
-      mcp-market:
+      mcp-market-svc:
         condition: service_healthy
-      mcp-authz:
+      mcp-authz-svc:
         condition: service_healthy
-      mcp-web:
+      mcp-web-svc:
         condition: service_started
 
-  mcp-authz:
+  mcp-authz-svc:
     image: ${REGISTRY_PREFIX}/mcp-authz:${VERSION}
     container_name: ${MCP_AUTHZ_SERVICE_NAME}
     restart: always
@@ -107,10 +107,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      mcp-market:
+      mcp-market-svc:
         condition: service_healthy
 
-  mcp-market:
+  mcp-market-svc:
     image: ${REGISTRY_PREFIX}/mcp-market:${VERSION}
     container_name: ${MCP_MARKET_SERVICE_NAME}
     restart: always
@@ -143,7 +143,7 @@ services:
       redis:
         condition: service_healthy
 
-  mcp-web:
+  mcp-web-svc:
     image: ${REGISTRY_PREFIX}/mcp-web:${VERSION}
     container_name: ${MCP_WEB_SERVICE_NAME}
     restart: always
@@ -157,9 +157,9 @@ services:
     expose:
       - "${MCP_WEB_SERVICE_PORT}"
     depends_on:
-      mcp-authz:
+      mcp-authz-svc:
         condition: service_healthy
-      mcp-market:
+      mcp-market-svc:
         condition: service_healthy
 
 networks:

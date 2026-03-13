@@ -55,7 +55,7 @@ services:
       retries: 5
 
   # Market 服务：使用热加载
-  mcp-market:
+  mcp-market-svc:
     build:
       context: ../../
       dockerfile: ./deploy/docker-compose/Dockerfile.go.dev
@@ -72,7 +72,7 @@ services:
       - GOPROXY=https://goproxy.cn,direct
       - GO111MODULE=on
       - CODE_MODE=OpenCode
-      - MCP_INTERNAL_BASE_URL=http://mcp-entry
+      - MCP_INTERNAL_BASE_URL=http://mcp-entry-svc
     ports:
       - "8080:8080"
       - "2345:2345"
@@ -83,7 +83,7 @@ services:
     networks:
       mcpcan-network:
         aliases:
-          - mcp-market
+          - mcp-market-svc
           - market-service
     depends_on:
       mysql:
@@ -92,7 +92,7 @@ services:
         condition: service_healthy
 
   # Authz 服务：使用热加载
-  mcp-authz:
+  mcp-authz-svc:
     build:
       context: ../../
       dockerfile: ./deploy/docker-compose/Dockerfile.go.dev
@@ -118,7 +118,7 @@ services:
     networks:
       mcpcan-network:
         aliases:
-          - mcp-authz
+          - mcp-authz-svc
           - authz-service
     depends_on:
       mysql:
@@ -127,7 +127,7 @@ services:
         condition: service_healthy
 
   # Frontend 服务：使用热加载
-  mcp-web:
+  mcp-web-svc:
     build:
       context: ../../
       dockerfile: ./deploy/docker-compose/Dockerfile.web.dev
@@ -146,11 +146,11 @@ services:
     networks:
       mcpcan-network:
         aliases:
-          - mcp-web
+          - mcp-web-svc
           - web-service
 
   # Gateway / Entry (Traefik) - 重要：从这里访问 http://localhost
-  mcp-entry:
+  mcp-entry-svc:
     image: traefik:v3.6.9
     container_name: mcp-entry-dev
     environment:
@@ -170,9 +170,9 @@ services:
       - mcpcan-network
     command: traefik
     depends_on:
-      - mcp-web
-      - mcp-market
-      - mcp-authz
+      - mcp-web-svc
+      - mcp-market-svc
+      - mcp-authz-svc
 
 networks:
   mcpcan-network:

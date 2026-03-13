@@ -16,8 +16,12 @@ global:
   # Application version tag
   version: v2.1
 
-  # Container registry URL (统一使用 77kymo，不再区分企业版/CN 镜像源)
-  registry: 77kymo
+  # Container registry for all images (unified: itqm-private CCR is accessible from CN servers)
+  registry: ccr.ccs.tencentyun.com/itqm-private
+
+  # Public registry URL for Docker Hub (used for external release / 77kymo)
+  # Note: docker.io is blocked on CN servers, do not use for K8s deployments
+  publicRegistry: 77kymo
 
   # Image pull policy for all containers
   # Options: Always, IfNotPresent, Never
@@ -37,14 +41,14 @@ global:
 
   # Image tags for all services
   images:
-    # 基础设施镜像：直接从 Docker Hub 拉取，不加私有仓库前缀
-    busybox: "docker.io/library/busybox:1.36"
-    mysql: "docker.io/library/mysql:8.0.30"
-    redis: "docker.io/library/redis:6-alpine"
-    # 业务镜像：从 registry (77kymo) 拉取
-    openapiToMcp: "openapi-to-mcp:v0.2.7"
+    # 基础设施镜像：走腾讯 CCR (itqm-private)，国内服务器可直接拉取
+    busybox: "busybox:1.36"
+    mysql: "mysql:8.0.30"
+    redis: "redis:6-alpine"
     mcpEntry: "mcp-entry:v3.5"
     mcpHosting: "mcp-hosting:v4"
+    openapiToMcp: "openapi-to-mcp:v0.2.7"
+    # 自研业务镜像：走 77kymo (Docker Hub)
     mcpMarket: "mcp-market:v2.1"
     mcpAuthz: "mcp-authz:v2.1"
     mcpWeb: "mcp-web:v2.1"

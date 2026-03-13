@@ -40,7 +40,7 @@ spec:
       {{- end }}
       containers:
       - name: exec
-        image: {{ .Values.global.images.busybox }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         command:
         - sh
