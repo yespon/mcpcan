@@ -31,16 +31,16 @@ spec:
       initContainers:
       {{- range $name, $img := .Values.global.images }}
       - name: preload-{{ lower $name }}
-        image: {{ if $.Values.global.cn }}{{ $.Values.global.registryForMirrorCN }}{{ else }}{{ $.Values.global.registry }}{{ end }}/{{ $img }}
+        image: {{ $.Values.global.registry }}/{{ $img }}
         imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
         command:
         - /bin/sh
         - -c
-        - echo preload {{ if $.Values.global.cn }}{{ $.Values.global.registryForMirrorCN }}{{ else }}{{ $.Values.global.registry }}{{ end }}/{{ $img }}
+        - echo preload {{ $.Values.global.registry }}/{{ $img }}
       {{- end }}
       containers:
       - name: exec
-        image: {{ if .Values.global.cn }}{{ .Values.global.registryForMirrorCN }}{{ else }}{{ .Values.global.registry }}{{ end }}/{{ .Values.global.images.busybox }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         command:
         - sh

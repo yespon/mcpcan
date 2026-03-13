@@ -73,7 +73,7 @@ spec:
       {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
       containers:
       - name: {{ .Values.infrastructure.mysql.name | default "mysql" }}
-        image: {{ if .Values.global.cn }}{{ .Values.global.registryForMirrorCN }}{{ else }}{{ .Values.global.registry }}{{ end }}/{{ .Values.global.images.mysql }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.mysql }}
         imagePullPolicy: {{ .Values.global.imagePullPolicy }}
         ports:
         - containerPort: 3306
