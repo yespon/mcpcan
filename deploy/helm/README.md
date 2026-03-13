@@ -137,25 +137,7 @@ The following table lists the configurable parameters and their default values:
 | `services.authz.ingress.enabled` | Enable ingress               | `true`            |
 | `services.authz.ingress.path`    | Ingress path                 | `/api/authz/(.*)` |
 
-#### Gateway Service
 
-| Parameter                          | Description            | Default        |
-| ---------------------------------- | ---------------------- | -------------- |
-| `services.gateway.enabled`         | Enable gateway service | `true`         |
-| `services.gateway.replicas`        | Number of replicas     | `1`            |
-| `services.gateway.service.port`    | Service port           | `8082`         |
-| `services.gateway.ingress.enabled` | Enable ingress         | `true`         |
-| `services.gateway.ingress.path`    | Ingress path           | `/mcp-gateway` |
-
-#### Initialization Service
-
-| Parameter                           | Description                   | Default            |
-| ----------------------------------- | ----------------------------- | ------------------ |
-| `services.init.enabled`             | Enable initialization service | `true`             |
-| `services.init.replicas`            | Number of replicas            | `1`                |
-| `services.init.service.port`        | Service port                  | `8083`             |
-| `services.init.k8sHostPath.enabled` | Enable K8s host path          | `true`             |
-| `services.init.k8sHostPath.path`    | K8s config path               | `/etc/rancher/k3s` |
 
 ### Ingress Configuration
 
@@ -180,8 +162,6 @@ MCPCan consists of the following components:
 - **Web Frontend**: Vue.js-based user interface (Port: 3000)
 - **Market Service**: Code package management and marketplace (Port: 8080)
 - **Authorization Service**: User authentication and authorization (Port: 8081)
-- **Gateway Service**: API gateway and routing (Port: 8082)
-- **Initialization Service**: System initialization and configuration (Port: 8083)
 
 ### Supporting Components
 
@@ -218,7 +198,6 @@ After installation, you can access MCPCan through:
 - **Web Interface**: `/`
 - **Market API**: `/api/market/*`
 - **Authorization API**: `/api/authz/*`
-- **Gateway API**: `/mcp-gateway`
 
 ### Database Access
 
@@ -356,8 +335,6 @@ services:
   market:
     replicas: 2
   authz:
-    replicas: 2
-  gateway:
     replicas: 2
 
 infrastructure:

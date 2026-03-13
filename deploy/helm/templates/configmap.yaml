@@ -59,7 +59,7 @@ data:
           forwardAuth:
             address: "http://{{ .Values.services.authz.service.name }}:{{ .Values.services.authz.service.port }}/authz/validate"
             trustForwardHeader: true
-            authResponseHeaders: ["X-Consum-User-Id", "X-Custom-User-Info"]
+            authResponseHeaders: ["X-Consum-User-Id", "X-Custom-User-Info", "X-Trace-Id"]
       serversTransports:
         https-skip-verify-transport:
           insecureSkipVerify: true
@@ -92,10 +92,12 @@ data:
           middlewares:
             - "strip-api-prefix"
             - "external-auth"
-        mcp-gateway-router:
+        mcp-gateway:
           rule: "PathPrefix(`/mcp-gateway`)"
-          service: "mcp-gateway-service"
+          service: "market-service"
           entryPoints: ["web"]
+          middlewares: []
+          priority: 1000
         web-router:
           rule: "PathPrefix(`{{ .Values.global.webPathRule }}`)"
           service: "web-service"
@@ -112,39 +114,16 @@ data:
           loadBalancer:
             servers:
               - url: "http://{{ .Values.services.market.service.name }}:{{ .Values.services.market.service.port }}"
-        mcp-gateway-service:
-          loadBalancer:
-            servers:
-              - url: "http://{{ .Values.services.gateway.service.name }}:{{ .Values.services.gateway.service.port }}"
         web-service:
           loadBalancer:
             servers:
               - url: "http://{{ .Values.services.web.service.name }}:{{ .Values.services.web.service.port }}"
 {{- end }}
-{{- if .Values.services.gateway.enabled }}
-  gateway.yaml: |-
-    server:
-      httpPort: {{ .Values.services.gateway.service.port }}
-    database:
-      mysql:
-        host: {{ .Values.infrastructure.mysql.service.name }}
-        port: {{ .Values.infrastructure.mysql.service.port }}
-        database: {{ .Values.infrastructure.mysql.auth.database }}
-        username: {{ .Values.infrastructure.mysql.auth.username }}
-        password: {{ .Values.infrastructure.mysql.auth.password }}
-      redis:
-        host: {{ .Values.infrastructure.redis.service.name }}
-        port: {{ .Values.infrastructure.redis.service.port }}
-        password: {{ .Values.infrastructure.redis.auth.password }}
-        db: {{ .Values.infrastructure.redis.auth.db }}
-    log:
-      level: debug
-      format: json
-{{- end }}
 {{- if .Values.services.authz.enabled }}
   authz.yaml: |-
     runMode: {{ .Values.global.runMode }}
     server:
+      serviceName: {{ .Values.services.authz.name | default "mcp-authz" }}
       httpPort: {{ .Values.services.authz.service.port }}
     secret: {{ .Values.global.appSecret }}
     database:
@@ -171,6 +150,7 @@ data:
   market.yaml: |-
     runMode: {{ .Values.global.runMode }}
     server:
+      serviceName: {{ .Values.services.market.name | default "mcp-market" }}
       httpPort: {{ .Values.services.market.service.port }}
     secret: {{ .Values.global.appSecret }}
     runEnvironment:
@@ -210,10 +190,6 @@ data:
       codePath: {{ .Values.global.mountStorage.codePackagePath }}
       staticPath: {{ .Values.global.mountStorage.staticPath }}
       openapiFilePath: {{ .Values.global.mountStorage.openapiFilePath }}
-{{- end }}
-{{- if .Values.services.init.enabled }}
-  init.yaml: |-
-    runMode: {{ .Values.global.runMode }}
     init:
       admin_username: {{ .Values.services.init.loginUser.username }}
       admin_password: {{ .Values.services.init.loginUser.password }}
@@ -222,24 +198,4 @@ data:
       admin_role_description: admin role
       admin_role_level: 1
       admin_data_scope: all
-    database:
-      mysql:
-        host: {{ .Values.infrastructure.mysql.service.name }}
-        port: {{ .Values.infrastructure.mysql.service.port }}
-        database: {{ .Values.infrastructure.mysql.auth.database }}
-        username: {{ .Values.infrastructure.mysql.auth.username }}
-        password: {{ .Values.infrastructure.mysql.auth.password }}
-      redis:
-        host: {{ .Values.infrastructure.redis.service.name }}
-        port: {{ .Values.infrastructure.redis.service.port }}
-        password: {{ .Values.infrastructure.redis.auth.password }}
-        db: {{ .Values.infrastructure.redis.auth.db }}
-    storage:
-      rootPath: {{ .Values.global.mountStorage.rootPath }}
-      codePath: {{ .Values.global.mountStorage.codePackagePath }}
-      openapiFilePath: {{ .Values.global.mountStorage.openapiFilePath }}
-      staticPath: {{ .Values.global.mountStorage.staticPath }}
-    log:
-      level: debug
-      format: json
 {{- end }}

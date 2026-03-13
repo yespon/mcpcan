@@ -55,10 +55,8 @@ global:
     openapiToMcp: "openapi-to-mcp:v0.2.7"
     mcpEntry: "mcp-entry:v3.5"
     mcpHosting: "mcp-hosting:v4"
-    mcpInit: "mcp-init:v2.1"
     mcpMarket: "mcp-market:v2.1"
     mcpAuthz: "mcp-authz:v2.1"
-    mcpGateway: "mcp-gateway:v2.1"
     mcpWeb: "mcp-web:v2.1"
 
   # Application secret key
@@ -344,63 +342,11 @@ services:
         memory: "64Mi"
         cpu: "64m"
 
-  # Gateway Service (API Gateway)
-  gateway:
-    # Enable/disable gateway service deployment
-    enabled: true
-    # Service name for Kubernetes resources
-    name: mcp-gateway
-    # Number of pod replicas
-    replicas: 1
-
-    # Kubernetes service configuration
-    service:
-      # Service name for internal DNS resolution
-      name: mcp-gateway-svc
-      # Service port number
-      port: 8082
-      # Service type (ClusterIP for internal access)
-      type: ClusterIP
-
-    # Ingress configuration for external access (Removed, all ingress contracted to mcp-entry)
-
-    # Resource limits and requests
-    resources:
-      # Minimum guaranteed resources
-      requests:
-        memory: "64Mi"
-        cpu: "64m"
-
-  # Initialization Service
+  # Initialization User config (used by Market service)
   init:
-    # Enable/disable initialization service deployment
-    enabled: true
-    # Service name for Kubernetes resources
-    name: mcp-init
-
-    # Login user credentials for initialization
     loginUser:
       username: admin
       password: admin123
-
-    # Number of pod replicas
-    replicas: 1
-
-    # Kubernetes service configuration
-    service:
-      # Service name for internal DNS resolution
-      name: mcp-init-svc
-      # Service port number
-      port: 8083
-      # Service type (ClusterIP for internal access)
-      type: "ClusterIP"
-
-    # Resource limits and requests
-    resources:
-      # Minimum guaranteed resources
-      requests:
-        memory: "64Mi"
-        cpu: "64m"
 # =============================================================================
 # Ingress Configuration
 # =============================================================================
