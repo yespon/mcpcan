@@ -13,29 +13,65 @@ Portions of this software are licensed as follows:
 
 Version 1.0
 
-### 1. 接受条款 (Acceptance)
-使用本软件即表示您同意以下所有条款。
+### Acceptance
 
-### 2. 版权许可 (Copyright License)
-许可人授予您非独占、全球性、不可转让的许可，允许您使用、复制、修改及分发本软件，但必须遵守以下限制。
+By using the software, you agree to all of the terms and conditions below.
 
-### 3. 使用限制 (Limitations)
-- **非商业用途**：本软件仅限用于您的内部业务、个人研究或非商业用途。
-- **禁止商业化/SaaS化**：您不得将本软件作为付费服务（如 SaaS、PaaS 或托管服务）提供给第三方。
-- **禁止二次销售**：您不得直接销售本软件或其衍生作品。
-- **禁止形成竞争**：任何基于本软件的二次开发仅限企业内部使用，不得以任何形式与许可人形成业务竞争。
-- **保留声明**：您不得删除或修改软件中的任何版权、许可或其他所有权声明。
+### Copyright License
 
-### 4. 专利许可 (Patents)
-许可人授予您在本许可范围内的专利许可。如果您对许可人提起专利侵权诉讼，本许可将立即终止。
+The licensor grants you a non-exclusive, royalty-free, worldwide, non-sublicensable, non-transferable license to use, copy, distribute, make available, and prepare derivative works of the software, in each case subject to the limitations below.
 
-### 5. 终止 (Termination)
-违反本条款将导致许可自动终止。如果您在收到通知后 30 天内停止违约行为，许可可追溯恢复。
+### Limitations
 
-### 6. 免责声明 (No Liability)
-本软件按“原样”提供，不提供任何明示或暗示的担保。许可人不对因使用本软件产生的任何损害负责。
+You may use or modify the software only for your own internal business purposes or for non-commercial or personal use. You may distribute the software or provide it to others only if you do so free of charge for non-commercial purposes. You may not alter, remove, or obscure any licensing, copyright, or other notices of the licensor in the software. Any use of the licensor’s trademarks is subject to applicable law.
 
-### 7. 定义 (Definitions)
-- **许可人 (Licensor)**：提供本条款的实体。
-- **软件 (Software)**：许可人提供的源代码、文档及其任何部分。
-- **您 (You)**：同意本条款的个人或实体。
+### Patents
+
+The licensor grants you a license, under any patent claims the licensor can license, or becomes able to license, to make, have made, use, sell, offer for sale, import and have imported the software, in each case subject to the limitations and conditions in this license. This license does not cover any patent claims that you cause to be infringed by modifications or additions to the software. If you or your company make any written claim that the software infringes or contributes to infringement of any patent, your patent license for the software granted under these terms ends immediately. If your company makes such a claim, your patent license ends immediately for work on behalf of your company.
+
+### Notices
+
+You must ensure that anyone who gets a copy of any part of the software from you also gets a copy of these terms. If you modify the software, you must include in any modified copies of the software a prominent notice stating that you have modified the software.
+
+### No Other Rights
+
+These terms do not imply any licenses other than those expressly granted in these terms.
+
+### Termination
+
+If you use the software in violation of these terms, such use is not licensed, and your license will automatically terminate. If the licensor provides you with a notice of your violation, and you cease all violation of this license no later than 30 days after you receive that notice, your license will be reinstated retroactively. However, if you violate these terms after such reinstatement, any additional violation of these terms will cause your license to terminate automatically and permanently.
+
+### No Liability
+
+As far as the law allows, the software comes as is, without any warranty or condition, and the licensor will not be liable to you for any damages arising out of these terms or the use or nature of the software, under any kind of legal claim.
+
+### Definitions
+
+The “licensor” is the entity offering these terms.
+
+The “software” is the software the licensor makes available under these terms, including any portion of it.
+
+“You” refers to the individual or entity agreeing to these terms.
+
+“Your company” is any legal entity, sole proprietorship, or other kind of organization that you work for, plus all organizations that have control over, are under the control of, or are under common control with that organization. Control means ownership of substantially all the assets of an entity, or the power to direct its management and policies by vote, contract, or otherwise. Control can be direct or indirect.
+
+“Your license” is the license granted to you for the software under these terms.
+
+“Use” means anything you do with the software requiring your license.
+
+“Trademark” means trademarks, service marks, and similar rights.
+
+---
+
+> **附：中文协议摘要说明 (仅供参考理解，不具备法律效力，实际以英文版为准)**  
+> 
+> **支持的用途：**  
+> - 允许企业在内部业务场景中使用或修改本软件代码。
+> - 允许学术、科研及个人非商业场景下自由使用和修改。
+> 
+> **限制的用途：**  
+> - **商业化限制**：禁止将本软件直接打包进行售卖，或作为盈利性的在线平台服务（如 SaaS/PaaS 平台）提供给第三方。
+> - **分发限制**：如需分发本软件及衍生代码，必须保持免费且仅限非商业目的，并保留原始版权与许可声明。  
+> 
+> *(注：对于包含 `ee` 或 `.ee.` 命名的企业级特性源码目录，其不在此“可持续使用协议”授权范围内，商业使用需另行获取 Enterprise License 获取合法授权。)*
+
