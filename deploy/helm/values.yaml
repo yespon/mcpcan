@@ -37,9 +37,11 @@ global:
 
   # Image tags for all services
   images:
-    busybox: "busybox:1.36"
-    mysql: "mysql:8.0.30"
-    redis: "redis:6-alpine"
+    # 基础设施镜像：直接从 Docker Hub 拉取，不加私有仓库前缀
+    busybox: "docker.io/library/busybox:1.36"
+    mysql: "docker.io/library/mysql:8.0.30"
+    redis: "docker.io/library/redis:6-alpine"
+    # 业务镜像：从 registry (77kymo) 拉取
     openapiToMcp: "openapi-to-mcp:v0.2.7"
     mcpEntry: "mcp-entry:v3.5"
     mcpHosting: "mcp-hosting:v4"

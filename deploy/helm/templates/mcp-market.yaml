@@ -39,7 +39,7 @@ spec:
       serviceAccountName: {{ .Values.kubeAccess.serviceAccountName | default "mcpcan-user" }}
       initContainers:
       - name: wait-deps
-        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
+        image: {{ .Values.global.images.busybox }}
         command:
         - sh
         - -c
