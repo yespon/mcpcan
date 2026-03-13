@@ -58,6 +58,8 @@ spec:
         env:
         - name: REGISTORY_IMAGE_MIRROR
           value: {{ if .Values.global.cn }}{{ .Values.global.registryForMirrorCN }}{{ else }}{{ .Values.global.registry }}{{ end }}
+        - name: CODE_MODE
+          value: {{ .Values.global.codeMode | default "OpenCode" }}
         {{- if .Values.services.market.resources }}
         resources:
           {{- toYaml .Values.services.market.resources | nindent 10 }}

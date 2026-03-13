@@ -54,6 +54,9 @@ spec:
         - containerPort: {{ .Values.services.authz.service.port }}
           protocol: TCP
         {{- end }}
+        env:
+        - name: CODE_MODE
+          value: {{ .Values.global.codeMode | default "OpenCode" }}
         {{- if .Values.services.authz.resources }}
         resources:
           {{- toYaml .Values.services.authz.resources | nindent 10 }}

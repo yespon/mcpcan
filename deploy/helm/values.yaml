@@ -71,6 +71,11 @@ global:
   # "kymo": Kymo-specific configuration
   runMode: "prod"
 
+  # Code operation mode for services
+  # Options: "OpenCode" (open source mode), "ClosedCode" (enterprise mode)
+  # This value is pinned to OpenCode for mcp-dev namespace, do not change.
+  codeMode: "OpenCode"
+
   # Host storage configuration
   # Defines where data is stored on the host system
   hostStorage:
