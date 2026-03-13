@@ -130,6 +130,9 @@ type ContainerManager interface {
 	GetWarningEvents(ctx context.Context, containerName string) ([]ContainerEvent, error)
 	// GetLogs gets container logs
 	GetLogs(ctx context.Context, containerName string, lines int64) (string, error)
+	// ListByLabel lists all containers/deployments that have ALL of the given labels set to the given values.
+	// Used by orphan cleanup to find containers that have drifted out of system control.
+	ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error)
 }
 
 // VolumeInfo volume information

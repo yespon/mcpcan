@@ -193,16 +193,22 @@ func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*Container
 	}
 
 	message := ""
-	// 2. Delete container
+	// 2. Delete container — 幂等：不存在视为已删除成功
 	if err = entry.GetContainerManager().Delete(cd.ctx, instance.ContainerName); err != nil {
-		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure)+": %v \n", err)
+		if !isNotFoundMsg(err) {
+			return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeDeleteContainerFailure), err)
+		}
+		message += "container not found, treated as deleted \n"
 	} else {
 		message += i18n.FormatWithContext(cd.ctx, i18n.CodeContainerDeleteSuccess) + " \n"
 	}
 
-	// 3. Delete service
+	// 3. Delete service — 幂等：不存在视为已删除成功
 	if err = entry.GetServiceManager().Delete(cd.ctx, instance.ContainerServiceName); err != nil {
-		message += fmt.Sprintf(i18n.FormatWithContext(cd.ctx, i18n.CodeServiceDeleteFailure)+": %v", err.Error())
+		if !isNotFoundMsg(err) {
+			return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(cd.ctx, i18n.CodeServiceDeleteFailure), err)
+		}
+		message += "service not found, treated as deleted \n"
 	} else {
 		message += i18n.FormatWithContext(cd.ctx, i18n.CodeServiceDeleteSuccess) + " \n"
 	}
@@ -213,6 +219,15 @@ func (cd *ContainerBiz) DeleteContainer(instance *model.McpInstance) (*Container
 		Message:       message,
 	}
 	return resp, nil
+}
+
+// isNotFoundMsg checks whether an error represents a "not found" resource (idempotent delete helper).
+func isNotFoundMsg(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "not found") || strings.Contains(msg, "notfound")
 }
 
 // GetContainerStatus get detailed container status information, including container exception detection and service probing

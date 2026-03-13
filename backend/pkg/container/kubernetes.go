@@ -379,6 +379,32 @@ func (kcm *KubernetesContainerManager) GetWarningEvents(ctx context.Context, con
 	return warnings, nil
 }
 
+// ListByLabel lists all Deployments in the namespace that match ALL of the given labels.
+func (kcm *KubernetesContainerManager) ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error) {
+	// Build label selector string, e.g. "managed-by=mcpcan"
+	var parts []string
+	for k, v := range labels {
+		parts = append(parts, k+"="+v)
+	}
+	selector := strings.Join(parts, ",")
+
+	deployments, err := kcm.Entry.Client.Deployment().ListByLabelSelector(selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Deployments by label: %w", err)
+	}
+
+	var result []ContainerInfo
+	for _, d := range deployments {
+		result = append(result, ContainerInfo{
+			Name:      d.Name,
+			Status:    "unknown",
+			Labels:    d.Labels,
+			CreatedAt: d.CreationTimestamp.Format(time.RFC3339),
+		})
+	}
+	return result, nil
+}
+
 // KubernetesServiceManager Kubernetes service manager implementation
 type KubernetesServiceManager struct {
 	Entry *k8s.Entry

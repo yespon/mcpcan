@@ -84,6 +84,38 @@ func (tm *TaskManagerImpl) SetupGlobalTasks(ctx context.Context) error {
 		zap.String("task_name", task.GetName()),
 		zap.String("cron_expr", "*/30 * * * * *"))
 
+	// ---------------------------------------------------------------
+	// Register orphan container cleanup task — runs every 5 minutes.
+	// It enumerates all runtime environments, lists containers with
+	// the "managed-by=mcpcan" label, and deletes any that are not
+	// tracked by an active DB instance record.
+	// ---------------------------------------------------------------
+	orphanCleanup := NewOrphanCleanup(tm.instanceRepo, tm.logger)
+	orphanFunc := func(ctx context.Context) error {
+		return orphanCleanup.Run(ctx)
+	}
+	orphanTask, err := scheduler.NewCronTask(
+		"orphan_container_cleanup",
+		"orphan container cleanup task",
+		"0 */5 * * * *", // execute every 5 minutes
+		"orphan_cleanup",
+		orphanFunc,
+	)
+	if err != nil {
+		tm.logger.Error("failed to create orphan container cleanup task", zap.Error(err))
+		return fmt.Errorf("failed to create orphan cleanup task: %w", err)
+	}
+	if err := tm.scheduler.AddTask(orphanTask); err != nil {
+		tm.logger.Error("failed to add orphan container cleanup task",
+			zap.String("task_id", orphanTask.GetID()),
+			zap.Error(err))
+		return fmt.Errorf("failed to add orphan cleanup task: %w", err)
+	}
+
+	tm.logger.Info("orphan container cleanup task set up successfully",
+		zap.String("task_id", orphanTask.GetID()),
+		zap.String("cron_expr", "0 */5 * * * *"))
+
 	return nil
 }
 

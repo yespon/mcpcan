@@ -725,6 +725,46 @@ func (dcm *DockerContainerManager) GetWarningEvents(ctx context.Context, contain
 	return events, nil
 }
 
+// ListByLabel lists all Docker containers that match ALL of the given labels.
+// Only returns main containers (excludes sidecar containers which have "-sidecar" suffix).
+func (dcm *DockerContainerManager) ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error) {
+	args := []string{"ps", "-a", "--format", "{{json .}}"}
+	for k, v := range labels {
+		args = append(args, "--filter", fmt.Sprintf("label=%s=%s", k, v))
+	}
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Docker containers by label: %w", err)
+	}
+
+	var result []ContainerInfo
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if line == "" {
+			continue
+		}
+		var m map[string]interface{}
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		name, _ := m["Names"].(string)
+		name = strings.TrimPrefix(name, "/")
+		// Exclude sidecar containers — they are not independently tracked
+		if strings.HasSuffix(name, "-sidecar") {
+			continue
+		}
+		result = append(result, ContainerInfo{
+			Name:   name,
+			Status: fmt.Sprintf("%v", m["Status"]),
+		})
+	}
+	return result, nil
+}
+
 
 // DockerServiceManager Docker service manager implementation (Docker doesn't have native service concept, using network aliases to simulate)
 type DockerServiceManager struct {

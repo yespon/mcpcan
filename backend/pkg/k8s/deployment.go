@@ -193,6 +193,16 @@ func (dm *DeploymentManager) Get(deploymentName string) (*appsv1.Deployment, err
 		context.Background(), deploymentName, metav1.GetOptions{})
 }
 
+// ListByLabelSelector 通过 label selector 列出所有匹配的 Deployment，如 "managed-by=mcpcan"
+func (dm *DeploymentManager) ListByLabelSelector(selector string) ([]appsv1.Deployment, error) {
+	list, err := dm.client.clientset.AppsV1().Deployments(dm.client.namespace).List(
+		context.Background(), metav1.ListOptions{LabelSelector: selector})
+	if err != nil {
+		return nil, err
+	}
+	return list.Items, nil
+}
+
 // Scale 设置 Deployment 副本数
 func (dm *DeploymentManager) Scale(deploymentName string, replicas int32) error {
 	// 获取当前 Deployment

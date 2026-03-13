@@ -16,6 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// orphanRecreateThreshold is the number of consecutive GetInfo failures before
+// we consider the container truly gone and trigger a recreate.
+const orphanRecreateThreshold = 3
+
 // ContainerMonitorImpl container monitoring implementation
 type ContainerMonitorImpl struct {
 	// instanceRepo instance database operations
@@ -26,6 +30,10 @@ type ContainerMonitorImpl struct {
 
 	// maxConcurrency maximum concurrent check count
 	maxConcurrency int
+
+	// failureCount tracks consecutive GetInfo failures per instance (in-memory, resets on restart)
+	failureCount   map[string]int
+	failureCountMu sync.Mutex
 }
 
 // NewContainerMonitor creates a new container monitor
@@ -37,6 +45,7 @@ func NewContainerMonitor(
 		instanceRepo:   instanceRepo,
 		logger:         logger,
 		maxConcurrency: 10,
+		failureCount:   make(map[string]int),
 	}
 }
 
@@ -151,14 +160,43 @@ func (cm *ContainerMonitorImpl) checkContainerStatus(ctx context.Context, instan
 	// Get container detailed information
 	containerInfo, err := containerManager.GetInfo(ctx, instance.ContainerName)
 	if err != nil {
-		// Scenario 4: Container does not exist, recreate and set status to creating
-		cm.logger.Warn("Container does not exist, preparing to recreate",
+		// D: Backoff protection — only recreate after reaching consecutive failure threshold.
+		// This prevents transient network errors / API timeouts from triggering spurious recreations.
+		cm.failureCountMu.Lock()
+		cm.failureCount[instance.InstanceID]++
+		count := cm.failureCount[instance.InstanceID]
+		cm.failureCountMu.Unlock()
+
+		cm.logger.Warn("GetInfo failed for container",
 			zap.String("instance_id", instance.InstanceID),
 			zap.String("container_name", instance.ContainerName),
+			zap.Int("consecutive_failures", count),
+			zap.Int("threshold", orphanRecreateThreshold),
 			zap.Error(err))
 
-		return cm.recreateContainerWithStatus(ctx, instance, containerCreateOptions, model.ContainerStatusPending, "Container does not exist, recreating")
+		if count < orphanRecreateThreshold {
+			// Not yet at threshold — skip this cycle, try again next time
+			return nil
+		}
+
+		// Threshold reached — treat as truly gone, reset counter and trigger recreate
+		cm.failureCountMu.Lock()
+		delete(cm.failureCount, instance.InstanceID)
+		cm.failureCountMu.Unlock()
+
+		cm.logger.Warn("Container does not exist after consecutive failures, preparing to recreate",
+			zap.String("instance_id", instance.InstanceID),
+			zap.String("container_name", instance.ContainerName),
+			zap.Int("failures", count))
+
+		return cm.recreateContainerWithStatus(ctx, instance, containerCreateOptions,
+			model.ContainerStatusPending, "Container does not exist, recreating")
 	}
+
+	// GetInfo succeeded — reset failure counter
+	cm.failureCountMu.Lock()
+	delete(cm.failureCount, instance.InstanceID)
+	cm.failureCountMu.Unlock()
 
 	// Parse container creation time (RFC3339 format or Docker format)
 	containerCreatedAt, err := time.Parse(time.RFC3339, containerInfo.CreatedAt)
@@ -306,15 +344,16 @@ func (cm *ContainerMonitorImpl) checkContainerStatus(ctx context.Context, instan
 	return nil
 }
 
-// cleanupAndUpdateStatus cleans up container and service, and updates status to startup timeout stop
+// cleanupAndUpdateStatus cleans up container and service, and updates status to startup timeout stop.
+// Even if delete fails, DB status is updated — the orphan cleanup task will handle the residual container.
 func (cm *ContainerMonitorImpl) cleanupAndUpdateStatus(ctx context.Context, instance *model.McpInstance, message string) error {
 	// Use Biz layer to delete container and service
 	_, err := biz.GContainerBiz.DeleteContainer(instance)
 	if err != nil {
-		cm.logger.Warn("Failed to cleanup container resources",
+		cm.logger.Warn("Failed to cleanup container resources — orphan cleanup will handle it",
 			zap.String("instance_id", instance.InstanceID),
 			zap.Error(err))
-		// Continue to update status even if cleanup failed
+		// Continue to update DB status regardless of cleanup failure
 	}
 
 	instance.ContainerIsReady = false
