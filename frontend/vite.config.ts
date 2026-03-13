@@ -16,19 +16,19 @@ export default defineConfig({
     watch: {
       // macOS + Docker Desktop volume 挂载时 inotify 失效，需要开启轮询
       usePolling: true,
-      interval: 1000,
+      interval: 500,
     },
     proxy: {
       '/api/authz': {
-        target: 'http://mcp-entry',
+        target: 'http://mcp-entry-svc',
         changeOrigin: true,
       },
       '/api': {
-        target: 'http://mcp-entry',
+        target: 'http://mcp-entry-svc',
         changeOrigin: true,
       },
       '/mcp-gateway': {
-        target: 'http://mcp-entry',
+        target: 'http://mcp-entry-svc',
         changeOrigin: true,
       },
     },

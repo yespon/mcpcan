@@ -284,10 +284,11 @@ import { useDebugToolsHooks } from './hooks/index.ts'
 import McpImage from '@/components/mcp-image/index.vue'
 import SchemaForm from './components/SchemaForm.vue'
 import { generateDefaultValue, resolveRef, normalizeUnionType } from '@/utils/schemaUtils'
-import { deBugAPI, InstanceAPI, TokenAPI } from '@/api/mcp/instance.ts'
+import { InstanceAPI, TokenAPI } from '@/api/mcp/instance.ts'
 import { AccessType } from '@/types'
 import { setClipboardData } from '@/utils/system'
 import { useRouterHooks } from '@/utils/url'
+import { mcpListTools, mcpCallTool } from '@/utils/mcp-client'
 
 const {
   activeOptions,
@@ -350,45 +351,48 @@ const jsonError = computed(() => {
 
 // Methods
 
-// 获取默认 token
+// 获取默认 token（始终从 token 列表取 usages 包含 default 的，mcp-gateway 需要鉴权）
 const getDefaultToken = () => {
-  if (
-    instanceInfo.value.enabledToken &&
-    instanceInfo.value.tokens &&
-    instanceInfo.value.tokens.length > 0
-  ) {
-    const defaultTokenObj = instanceInfo.value.tokens.find(
-      (t: any) => t.usages && t.usages.includes('default'),
-    )
-    return defaultTokenObj ? defaultTokenObj.token : ''
+  const tokens = instanceInfo.value.tokens
+  if (!tokens || tokens.length === 0) {
+    console.warn('[debug] token list empty, no auth will be sent')
+    return ''
   }
-  return ''
+  // 优先取 usages 包含 'default' 的
+  const defaultTokenObj = tokens.find((t: any) => t.usages && t.usages.includes('default'))
+  if (defaultTokenObj) {
+    console.log('[debug] using default-usage token:', defaultTokenObj.token?.slice(0, 8) + '...')
+    return defaultTokenObj.token
+  }
+  // fallback：取第一个（不限制 enabled 状态）
+  const first = tokens[0]
+  console.log('[debug] using first token (fallback):', first.token?.slice(0, 8) + '...')
+  return first.token || ''
 }
 
 // handle get tool list
 const getTools = async () => {
   try {
     loading.value = true
-    // Fetch latest instance detail and tokens first
+    // 获取最新实例详情
     const detail = await InstanceAPI.detail({ instanceId: instanceId.value })
     instanceInfo.value = { ...instanceInfo.value, ...detail }
 
-    // fetching the tokens for current instance
-    if (instanceInfo.value.enabledToken) {
-      const { list: tokens } = await TokenAPI.list({
-        instanceId: instanceId.value,
-        page: 1,
-        pageSize: 100,
-      })
-      instanceInfo.value.tokens = tokens || []
-    }
-
-    const list = await deBugAPI.toolList({
-      instanceId: instanceId.value || '',
-      mcpServerUrl: configUrl.value,
-      token: getDefaultToken(),
+    // 始终获取 token 列表（mcp-gateway 鉴权需要，不受 enabledToken 控制）
+    const { tokens } = await TokenAPI.list({
+      instanceId: instanceId.value,
+      page: 1,
+      pageSize: 100,
     })
-    toolList.value = list || []
+    instanceInfo.value.tokens = tokens || []
+    console.log('[debug] fetched tokens:', tokens?.length, tokens)
+
+    const token = getDefaultToken()
+    console.log('[debug] mcpListTools url:', configUrl.value, 'token:', token ? '✓' : '✗ empty')
+
+    // 直接通过 MCP 协议获取工具列表（前端直连，无需后端中转）
+    const tools = await mcpListTools(configUrl.value, token || undefined)
+    toolList.value = tools || []
   } catch (error: any) {
     console.error('getTools error:', error)
     ElMessage.error(error.message || 'Failed to fetch tools')
@@ -396,6 +400,7 @@ const getTools = async () => {
     loading.value = false
   }
 }
+
 
 const paramsForm = ref<Record<string, any>>({})
 const jsonMode = ref(false)
@@ -437,13 +442,14 @@ const handleRunTool = async () => {
   try {
     running.value = true
     const params = JSON.parse(inputJson.value)
-    const data = await deBugAPI.toolCall({
-      instanceId: instanceId.value || '',
-      toolName: currentTool.value.name,
-      mcpServerUrl: configUrl.value,
-      token: getDefaultToken(),
-      arguments: JSON.stringify(params),
-    })
+
+    // 直接通过 MCP 协议调用工具（前端直连，无需后端中转）
+    const data = await mcpCallTool(
+      configUrl.value,
+      currentTool.value.name,
+      params,
+      getDefaultToken() || undefined,
+    )
 
     const displayOutput = {
       tool: currentTool.value.name,
@@ -451,15 +457,14 @@ const handleRunTool = async () => {
       result: normalizeUnionType(data),
     }
     outputResult.value = JSON.stringify(displayOutput, null, 2)
-    // Add to history
     history.value.unshift({
       tool: currentTool.value.name,
       arguments: inputJson.value,
       timestamp: Date.now(),
       status: data.isError ? 'error' : 'success',
     })
-  } catch (err) {
-    outputResult.value = JSON.stringify({ error: 'Execution Failed', details: err }, null, 2)
+  } catch (err: any) {
+    outputResult.value = JSON.stringify({ error: 'Execution Failed', details: err?.message || err }, null, 2)
   } finally {
     running.value = false
   }

@@ -14,7 +14,7 @@ http:
     # External Authentication Middleware (Forward Auth)
     external-auth:
       forwardAuth:
-        address: "http://mcp-authz:8081/authz/validate"
+        address: "http://mcp-authz-svc:8081/authz/validate"
         trustForwardHeader: true
         authRequestHeaders:
           - "Authorization"
@@ -108,8 +108,7 @@ http:
       rule: "PathPrefix(`/`)"
       service: "web-service"
       entryPoints: ["web"]
-      middlewares:
-        - "strip-web-prefix"
+      middlewares: []
       priority: 1 # Lower priority
 
   services:
@@ -117,16 +116,16 @@ http:
     authz-service:
       loadBalancer:
         servers:
-          - url: "http://mcp-authz:8081"
+          - url: "http://mcp-authz-svc:8081"
 
     # Market Service Definition
     market-service:
       loadBalancer:
         servers:
-          - url: "http://mcp-market:8080"
+          - url: "http://mcp-market-svc:8080"
 
     # Web Service Definition
     web-service:
       loadBalancer:
         servers:
-          - url: "http://mcp-web:3000"
+          - url: "http://mcp-web-svc:3000"
