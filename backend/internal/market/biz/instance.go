@@ -328,7 +328,7 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		}
 		instance.ContainerName = options.ContainerName
 		instance.ContainerServiceName = options.ServiceName
-		instance.ContainerServiceURL = fmt.Sprintf("http://%s:%d/", biz.getSidecarServiceName(options.ContainerName), common.GetSidecarPort())
+		instance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
 		instance.EnvironmentID = uint(req.EnvironmentId)
 		// 路由协议转换为 SSE (经 sidecar 重写)
 		instance.ProxyProtocol = model.McpProtocolSSE
@@ -426,20 +426,15 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	proxyProtocol := mcpProtocol
 	publicProxyPath := ""
 	containerServiceURL := ""
-	// Hosting 模式下，market ProxyHandler 应将请求转发到 sidecar 容器（负责对外 SSE/HTTP 代理），
-	// 而非主容器本身（主容器不对外暴露接口）。
-	sidecarServiceName := biz.getSidecarServiceName(containerOptions.ContainerName)
 	switch mcpProtocol {
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		// Stdio 模式：sidecar 将请求转换后转给主容器，外部统一走 sidecar
-		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarServiceName, common.GetSidecarPort())
+		containerServiceURL = biz.getContainerServiceURL(containerOptions.ContainerName, containerOptions.ServiceName)
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		// SSE/StreamableHTTP 模式：sidecar 直接透传，path 由 sidecar 处理
-		containerServiceURL = fmt.Sprintf("http://%s:%d/", sidecarServiceName, common.GetSidecarPort())
+		containerServiceURL = biz.getContainerServiceURL(containerOptions.ContainerName, containerOptions.ServiceName)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
@@ -1046,7 +1041,7 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 			}
 			oriInstance.ContainerName = options.ContainerName
 			oriInstance.ContainerServiceName = options.ServiceName
-			oriInstance.ContainerServiceURL = fmt.Sprintf("http://%s:80/", options.ContainerName)
+			oriInstance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
 		}
 	}
 
@@ -1497,4 +1492,20 @@ func getDefaultToken(tokens []*model.McpToken) *model.McpToken {
 
 func (biz *InstanceBiz) getSidecarServiceName(containerName string) string {
 	return containerName + common.SidecarContainerSuffix
+}
+
+// getContainerServiceURL 返回容器服务地址。
+// 在 k8s 模式下，serviceName 与 containerName 不同（如 mcp-instance-xx-service vs mcp-instance-xx-container），
+// 直接使用 serviceName（即 k8s Service DNS）。
+// 在 docker 模式下，serviceName == containerName，使用 sidecar 容器名。
+func (biz *InstanceBiz) getContainerServiceURL(containerName, serviceName string) string {
+	var host string
+	if serviceName != "" && serviceName != containerName {
+		// k8s 模式：Service 名已是正确的 k8s Service DNS
+		host = serviceName
+	} else {
+		// docker 模式：sidecar 是独立容器，用 containerName-sidecar
+		host = biz.getSidecarServiceName(containerName)
+	}
+	return fmt.Sprintf("http://%s:%d/", host, common.GetSidecarPort())
 }

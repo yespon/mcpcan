@@ -112,6 +112,12 @@ func (kcm *KubernetesContainerManager) Create(ctx context.Context, options Conta
 
 	// Set sidecar config
 	if options.Sidecar != nil {
+		// In Kubernetes, the sidecar and main container are deployed within the same Pod.
+		// Map the target URL to use localhost instead of querying DNS for the container hostname.
+		if targetUrl, ok := options.Sidecar.EnvVars["MCP_TARGET_URL"]; ok {
+			options.Sidecar.EnvVars["MCP_TARGET_URL"] = strings.Replace(targetUrl, options.ContainerName, "localhost", 1)
+		}
+
 		deploymentOptions.Sidecar = &k8s.SidecarOptions{
 			ImageName:     options.Sidecar.ImageName,
 			ContainerName: options.Sidecar.ContainerName,

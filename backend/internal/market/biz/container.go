@@ -938,6 +938,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 				// 因为自研 proxy 支持 websocket 和所有请求透传，所以无需区分 sse，直接代理到 mcpBackend 的根或具体路径
 				"MCP_TARGET_URL":   fmt.Sprintf("http://%s:%d", containerName, imgPms.port),
 				"MCP_ROUTE_PREFIX": instancePath,
+				"PORT":             fmt.Sprintf("%d", common.GetSidecarPort()),
 			},
 			Labels:        traefikLabels,
 		},

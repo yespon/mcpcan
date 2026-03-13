@@ -169,16 +169,16 @@ func GetOpenapiToMcpImage() string {
 	return GetImage("openapi-to-mcp:latest")
 }
 
-// GetSidecarPort returns sidecar port from env or default 80
+// GetSidecarPort returns sidecar port from env or default 61180
 func GetSidecarPort() int32 {
 	port := os.Getenv(SidecarServerPortEnv)
 	if port == "" {
-		return 80
+		return 61180
 	}
 	var p int
 	fmt.Sscanf(port, "%d", &p)
 	if p == 0 {
-		return 80
+		return 61180
 	}
 	return int32(p)
 }
