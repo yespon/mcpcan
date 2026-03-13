@@ -44,7 +44,8 @@ spec:
         - -c
         - >-
           until nc -z {{ .Values.infrastructure.mysql.service.name | default "mysql" }} {{ .Values.infrastructure.mysql.service.port | default 3306 }}; do echo "waiting for mysql"; sleep 2; done;
-          until nc -z {{ .Values.infrastructure.redis.service.name | default "redis" }} {{ .Values.infrastructure.redis.service.port | default 6379 }}; do echo "waiting for redis"; sleep 2; done
+          until nc -z {{ .Values.infrastructure.redis.service.name | default "redis" }} {{ .Values.infrastructure.redis.service.port | default 6379 }}; do echo "waiting for redis"; sleep 2; done;
+          until wget -qO- http://{{ .Values.services.market.service.name | default "mcp-market-svc" }}:{{ .Values.services.market.service.port | default 8080 }}/health >/dev/null 2>&1; do echo "waiting for mcp-market"; sleep 3; done
       containers:
       - name: {{ .Values.services.authz.name | default "mcp-authz" }}
         image: {{ .Values.global.registry }}/{{ .Values.global.images.mcpAuthz }}
