@@ -1,18 +1,29 @@
 FROM 77kymo/builder:latest AS builder
 ARG CodeMode
 ENV CodeMode=${CodeMode}
-# Work in /app and copy project sources (parent of dockerfiles/)
-WORKDIR /app
+# Work in frontend directory
+WORKDIR /app/frontend
 
-COPY . /app
+# Copy only dependency files first to leverage caching
+COPY frontend/package.json ./
+# If pnpm-lock.yaml exists in frontend, copy it
+COPY frontend/pnpm-lock.yaml ./
 
-RUN cd /app && make pnpm-build
+# Install dependencies (leverage cache)
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm && \
+    pnpm i
+
+# Copy the rest of the frontend source
+COPY frontend/ ./
+
+# Build frontend (this will use the pnpm build script)
+RUN pnpm build
 
 FROM node:25-alpine3.21
 
-# Set apk mirror
-RUN echo "https://mirrors.aliyun.com/alpine/v3.18/main/" > /etc/apk/repositories && \
-    echo "https://mirrors.aliyun.com/alpine/v3.18/community/" >> /etc/apk/repositories && \
+# Set apk mirror to aliyun
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update && \
     apk add --no-cache bash curl xsel
 

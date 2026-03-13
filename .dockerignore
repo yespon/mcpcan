@@ -1,0 +1,33 @@
+.git
+.gitignore
+.dockerignore
+.vscode
+.idea
+.agent
+.cursorrules
+
+# Backend
+backend/bin
+backend/vendor
+backend/test/go-test
+backend/test/e2e
+backend/test/config.json
+backend/enterprise
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.next
+frontend/.output
+frontend/build
+
+# Cache
+.cache
+**/node_modules
+**/dist
+**/bin
+
+# Logs and Data
+logs
+data
+*.log

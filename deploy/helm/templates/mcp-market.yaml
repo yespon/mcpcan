@@ -1,0 +1,115 @@
+{{- if .Values.services.market.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.market.name | default "mcp-market" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.market.name | default "mcp-market" }}
+    app.kubernetes.io/name: {{ .Values.services.market.name | default "mcp-market" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: market
+    app.kubernetes.io/version: {{ .Values.global.version }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.services.market.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.market.name | default "mcp-market" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.market.name | default "mcp-market" }}
+        app.kubernetes.io/name: {{ .Values.services.market.name | default "mcp-market" }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: market
+        app.kubernetes.io/version: {{ .Values.global.version }}
+        {{- include "mcpcan.selectorLabels" . | nindent 8 }}
+      annotations:
+        mcpcan.io/version: {{ .Values.global.version }}
+        mcpcan.io/revision: "{{ .Release.Revision }}"
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ .Values.kubeAccess.serviceAccountName | default "mcpcan-user" }}
+      initContainers:
+      - name: wait-deps
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
+        command:
+        - sh
+        - -c
+        - >-
+          until nc -z {{ .Values.infrastructure.mysql.service.name | default "mysql" }} {{ .Values.infrastructure.mysql.service.port | default 3306 }}; do echo "waiting for mysql"; sleep 2; done;
+          until nc -z {{ .Values.infrastructure.redis.service.name | default "redis" }} {{ .Values.infrastructure.redis.service.port | default 6379 }}; do echo "waiting for redis"; sleep 2; done
+      containers:
+      - name: {{ .Values.services.market.name | default "mcp-market" }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.mcpMarket }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.services.market.service.port }}
+        ports:
+        - containerPort: {{ .Values.services.market.service.port }}
+          protocol: TCP
+        {{- end }}
+        env:
+        - name: REGISTORY_IMAGE_MIRROR
+          value: {{ .Values.global.registry }}
+        - name: CODE_MODE
+          value: {{ .Values.global.codeMode | default "OpenCode" }}
+        {{- if .Values.services.market.resources }}
+        resources:
+          {{- toYaml .Values.services.market.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: "/app/config"
+          readOnly: true
+        - name: data-volume
+          mountPath: {{ .Values.global.mountStorage.rootPath | default "/data/mcpcan" }}
+        - name: kubeconfig
+          mountPath: "/etc/kube/kubeconfig.yaml"
+          subPath: "kubeconfig.yaml"
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mcp-config
+          items:
+          - key: "market.yaml"
+            path: "market.yaml"
+      - name: data-volume
+        hostPath:
+          path: {{ .Values.global.hostStorage.rootPath | default "/data/mcpcan" }}
+          type: DirectoryOrCreate
+      - name: kubeconfig
+        configMap:
+          name: mcp-kubeconfig
+          items:
+          - key: "kubeconfig.yaml"
+            path: "kubeconfig.yaml"
+---
+{{- if .Values.services.market.service.port }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.market.service.name | default "mcp-market-svc" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.market.name | default "mcp-market" }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.services.market.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.services.market.service.port }}
+    targetPort: {{ .Values.services.market.service.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.services.market.name | default "mcp-market" }}
+{{- end }}
+
+{{- end }}

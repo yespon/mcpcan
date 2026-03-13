@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	pb "github.com/kymo-mcp/mcpcan/api/authz/menu"
+	"github.com/kymo-mcp/mcpcan/internal/authz/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
 	"github.com/kymo-mcp/mcpcan/pkg/database/repository/mysql"
 	i18nresp "github.com/kymo-mcp/mcpcan/pkg/i18n"
 	"github.com/kymo-mcp/mcpcan/pkg/menu"
-	"github.com/kymo-mcp/mcpcan/pkg/version"
 )
 
 // MenuService menu HTTP service
@@ -41,7 +41,7 @@ func (s *MenuService) GetMenuTree(c *gin.Context) {
 		}
 	}
 
-	menuTree := menu.GetMenus(common.CodeMode(version.CodeMode))
+	menuTree := menu.GetMenus(config.GlobalConfig.CodeMode)
 	filteredTree := filterMenuTree(menuTree, permissionKey)
 
 	common.GinSuccess(c, filteredTree)

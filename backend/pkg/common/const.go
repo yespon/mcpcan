@@ -60,6 +60,11 @@ const (
 	GatewayServerPrefix = "MCP_GATEWAY_SERVER_PREFIX"
 	GatewayRoutePrefix  = "/mcp-gateway"
 
+	SidecarServerPortEnv = "MCP_SIDECAR_SERVER_PORT"
+	HostingServerPortEnv = "MCP_HOSTING_SERVER_PORT"
+
+	SidecarContainerSuffix = "-sidecar"
+
 	EnvironmentDefaultName = "Default-Kubernetes-Env"
 
 	UserInfoHeaderKey  = "X-Custom-User-Info"

@@ -4,6 +4,9 @@ import { useUserStore } from '@/stores/modules/user-store.ts'
 const applyAuth = (el: HTMLElement, value?: string) => {
   if (!value) return
 
+  const appConfig = (window as any).__APP_CONFIG__ || {}
+  if (appConfig.CodeMode === 'OpenCode') return
+
   const { currentBtnAuths } = storeToRefs(useUserStore())
   const permissions = value
     .split(',')

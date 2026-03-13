@@ -49,6 +49,9 @@ type App struct {
 	// ginEngine Gin engine
 	ginEngine *gin.Engine
 
+	// bizApp business logic app
+	bizApp *biz.App
+
 	// shutdownCtx shutdown context
 	shutdownCtx    context.Context
 	shutdownCancel context.CancelFunc
@@ -86,8 +89,14 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
+	// Initialize business application (includes migrated init service logic)
+	a.bizApp = biz.NewApp(a.config)
+	if err := a.bizApp.Initialize(context.Background()); err != nil {
+		return fmt.Errorf("failed to initialize business application: %w", err)
+	}
+
 	// Register enterprise plugins (no-op when enterprise features are disabled)
-	if err := registerEnterprisePlugin(); err != nil {
+	if err := a.registerEnterprisePlugin(); err != nil {
 		return err
 	}
 
@@ -139,60 +148,58 @@ func (a *App) Initialize() error {
 func (a *App) loadMysql() error {
 	tableInitializers := []func() (string, error){
 		func() (string, error) {
-			mysql.NewMcpCodePackageRepository()
-			return (&model.McpCodePackage{}).TableName(), nil
+			repo := mysql.NewMcpCodePackageRepository()
+			return (&model.McpCodePackage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpEnvironmentRepository()
-			return (&model.McpEnvironment{}).TableName(), nil
+			repo := mysql.NewMcpEnvironmentRepository()
+			return (&model.McpEnvironment{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewGatewayLogRepository()
-			return (&model.GatewayLog{}).TableName(), nil
+			repo := mysql.NewGatewayLogRepository()
+			return (&model.GatewayLog{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpInstanceRepository()
-			return (&model.McpInstance{}).TableName(), nil
+			repo := mysql.NewMcpInstanceRepository()
+			return (&model.McpInstance{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpMigrationRepository()
-			return (&model.Migration{}).TableName(), nil
+			repo := mysql.NewMcpMigrationRepository()
+			return (&model.Migration{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpOpenapiPackageRepository()
-			return (&model.McpOpenapiPackage{}).TableName(), nil
+			repo := mysql.NewMcpOpenapiPackageRepository()
+			return (&model.McpOpenapiPackage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpTemplateRepository()
-			return (&model.McpTemplate{}).TableName(), nil
+			repo := mysql.NewMcpTemplateRepository()
+			return (&model.McpTemplate{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpToIntelligentTaskRepository()
-			return (&model.McpToIntelligentTask{}).TableName(), nil
+			repo := mysql.NewMcpToIntelligentTaskRepository()
+			return (&model.McpToIntelligentTask{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpToIntelligentTaskLogRepository()
-			return (&model.McpToIntelligentTaskLog{}).TableName(), nil
+			repo := mysql.NewMcpToIntelligentTaskLogRepository()
+			return (&model.McpToIntelligentTaskLog{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewMcpTokenRepository()
-			return (&model.McpToken{}).TableName(), nil
+			repo := mysql.NewMcpTokenRepository()
+			return (&model.McpToken{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiSessionRepository()
-			return (&model.AiSession{}).TableName(), nil
+			repo := mysql.NewAiSessionRepository()
+			return (&model.AiSession{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiMessageRepository()
-			return (&model.AiMessage{}).TableName(), nil
+			repo := mysql.NewAiMessageRepository()
+			return (&model.AiMessage{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			mysql.NewAiModelAccessRepository()
-			return (&model.AiModelAccess{}).TableName(), nil
+			repo := mysql.NewAiModelAccessRepository()
+			return (&model.AiModelAccess{}).TableName(), repo.InitTable()
 		},
 		func() (string, error) {
-			// Kymo environment uses its own table and does not need to initialize the table structure here, as it already exists
-			// Not Kymo environment, initialize the table structure
 			if a.config.RunMode == common.RunModeKymo {
 				model.SetIntelligentAccessTableName("intelligent_access")
 				mod := &model.IntelligentAccess{}
@@ -206,8 +213,38 @@ func (a *App) loadMysql() error {
 		},
 	}
 
+	// Sys tables - only load when NOT in kymo mode
+	if a.config.RunMode != common.RunModeKymo {
+		tableInitializers = append(tableInitializers,
+			func() (string, error) {
+				repo := mysql.NewSysDeptRepository()
+				return (&model.SysDept{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRoleRepository()
+				return (&model.SysRole{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUserRepository()
+				return (&model.SysUser{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysUsersRolesRepository()
+				return (&model.SysUsersRoles{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysMenuRepository()
+				return (&model.SysMenu{}).TableName(), repo.InitTable()
+			},
+			func() (string, error) {
+				repo := mysql.NewSysRolesMenusRepository()
+				return (&model.SysRolesMenus{}).TableName(), repo.InitTable()
+			},
+		)
+	}
+
 	// Append enterprise table initializers (empty when enterprise features are disabled)
-	tableInitializers = append(tableInitializers, enterpriseTableInitializers()...)
+	tableInitializers = append(tableInitializers, a.enterpriseTableInitializers()...)
 
 	return database.Init(&a.config.Database.MySQL, tableInitializers...)
 }
@@ -395,6 +432,11 @@ func (a *App) setupHttpServer() {
 		a.ginEngine.GET(fmt.Sprintf("/%s/platform/list", routerPrefix), platformMarketService.ListMcpServer)
 	}
 
+	// Register Traefik Gateway interfaces
+	gatewayService := service.NewGatewayService()
+	a.ginEngine.GET(fmt.Sprintf("/%s/gateway/auth", routerPrefix), gatewayService.AuthHandler)
+	a.ginEngine.Any(fmt.Sprintf("%s/*any", common.GatewayRoutePrefix), gatewayService.ProxyHandler)
+
 	// Register gateway log interface
 	gatewayLogService := service.NewGatewayLogService()
 	a.ginEngine.POST(fmt.Sprintf("/%s/gateway-log/find", routerPrefix), gatewayLogService.FindHandler)
@@ -453,7 +495,7 @@ func (a *App) setupHttpServer() {
 	a.ginEngine.POST(fmt.Sprintf("/%s/ai/files/upload", routerPrefix), aiSessionService.UploadFileHandler)
 
 	// Register enterprise routes (no-op when enterprise features are disabled)
-	registerEnterpriseRoutes(a.ginEngine, routerPrefix)
+	a.registerEnterpriseRoutes(a.ginEngine, routerPrefix)
 
 	// Health check
 	a.ginEngine.GET("/health", func(c *gin.Context) {

@@ -278,28 +278,17 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Search,
-  Refresh,
-  VideoPlay,
-  ArrowRight,
-  ArrowDown,
-  DocumentCopy,
-} from '@element-plus/icons-vue'
+import { Search, VideoPlay, ArrowRight, ArrowDown, DocumentCopy } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useDebugToolsHooks } from './hooks/index.ts'
 import McpImage from '@/components/mcp-image/index.vue'
 import SchemaForm from './components/SchemaForm.vue'
-import {
-  generateDefaultValue,
-  isPropertyRequired,
-  resolveRef,
-  normalizeUnionType,
-} from '@/utils/schemaUtils'
-import { deBugAPI } from '@/api/mcp/instance.ts'
+import { generateDefaultValue, resolveRef, normalizeUnionType } from '@/utils/schemaUtils'
+import { InstanceAPI, TokenAPI } from '@/api/mcp/instance.ts'
 import { AccessType } from '@/types'
 import { setClipboardData } from '@/utils/system'
 import { useRouterHooks } from '@/utils/url'
+import { mcpListTools, mcpCallTool } from '@/utils/mcp-client'
 
 const {
   activeOptions,
@@ -310,7 +299,6 @@ const {
   inputJson,
   outputResult,
   history,
-  route,
   loading,
   running,
   instanceId,
@@ -319,11 +307,17 @@ const {
 const layout = useLayout()
 const { jumpBack } = useRouterHooks()
 const configUrl = computed(() => {
-  if (instanceInfo.value.accessType === AccessType.DIRECT) {
-    const mcpServers = JSON.parse(instanceInfo.value.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].url
+  if (instanceInfo.value.accessType === AccessType.DIRECT && instanceInfo.value.sourceConfig) {
+    try {
+      const config = JSON.parse(instanceInfo.value.sourceConfig)
+      if (config.mcpServers) {
+        return config.mcpServers[Object.keys(config.mcpServers)[0]].url
+      }
+    } catch (e) {
+      console.error('Failed to parse sourceConfig', e)
+    }
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${instanceInfo.value.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}${instanceInfo.value.publicProxyPath || ''}`
 })
 // Computed
 const filteredTools = computed(() => {
@@ -341,7 +335,7 @@ const parsedOutput = computed(() => {
   if (!outputResult.value) return null
   try {
     return JSON.parse(outputResult.value)
-  } catch (e) {
+  } catch {
     return null
   }
 })
@@ -356,23 +350,57 @@ const jsonError = computed(() => {
 })
 
 // Methods
-const formatTime = (ts: number) => {
-  return new Date(ts).toLocaleTimeString()
+
+// 获取默认 token（始终从 token 列表取 usages 包含 default 的，mcp-gateway 需要鉴权）
+const getDefaultToken = () => {
+  const tokens = instanceInfo.value.tokens
+  if (!tokens || tokens.length === 0) {
+    console.warn('[debug] token list empty, no auth will be sent')
+    return ''
+  }
+  // 优先取 usages 包含 'default' 的
+  const defaultTokenObj = tokens.find((t: any) => t.usages && t.usages.includes('default'))
+  if (defaultTokenObj) {
+    console.log('[debug] using default-usage token:', defaultTokenObj.token?.slice(0, 8) + '...')
+    return defaultTokenObj.token
+  }
+  // fallback：取第一个（不限制 enabled 状态）
+  const first = tokens[0]
+  console.log('[debug] using first token (fallback):', first.token?.slice(0, 8) + '...')
+  return first.token || ''
 }
 
 // handle get tool list
 const getTools = async () => {
   try {
     loading.value = true
-    const list = await deBugAPI.toolList({
-      instanceId: instanceId.value || '',
-      domain: configUrl.value,
+    // 获取最新实例详情
+    const detail = await InstanceAPI.detail({ instanceId: instanceId.value })
+    instanceInfo.value = { ...instanceInfo.value, ...detail }
+
+    // 始终获取 token 列表（mcp-gateway 鉴权需要，不受 enabledToken 控制）
+    const { tokens } = await TokenAPI.list({
+      instanceId: instanceId.value,
+      page: 1,
+      pageSize: 100,
     })
-    toolList.value = list || []
+    instanceInfo.value.tokens = tokens || []
+    console.log('[debug] fetched tokens:', tokens?.length, tokens)
+
+    const token = getDefaultToken()
+    console.log('[debug] mcpListTools url:', configUrl.value, 'token:', token ? '✓' : '✗ empty')
+
+    // 直接通过 MCP 协议获取工具列表（前端直连，无需后端中转）
+    const tools = await mcpListTools(configUrl.value, token || undefined)
+    toolList.value = tools || []
+  } catch (error: any) {
+    console.error('getTools error:', error)
+    ElMessage.error(error.message || 'Failed to fetch tools')
   } finally {
     loading.value = false
   }
 }
+
 
 const paramsForm = ref<Record<string, any>>({})
 const jsonMode = ref(false)
@@ -404,7 +432,7 @@ const handleFormChange = () => {
 const handleJsonChange = (val: string) => {
   try {
     paramsForm.value = JSON.parse(val)
-  } catch (e) {
+  } catch {
     // Ignore parse errors while typing
   }
 }
@@ -414,12 +442,14 @@ const handleRunTool = async () => {
   try {
     running.value = true
     const params = JSON.parse(inputJson.value)
-    const data = await deBugAPI.toolCall({
-      instanceId: instanceId.value || '',
-      toolName: currentTool.value.name,
-      domain: configUrl.value,
-      arguments: JSON.stringify(params),
-    })
+
+    // 直接通过 MCP 协议调用工具（前端直连，无需后端中转）
+    const data = await mcpCallTool(
+      configUrl.value,
+      currentTool.value.name,
+      params,
+      getDefaultToken() || undefined,
+    )
 
     const displayOutput = {
       tool: currentTool.value.name,
@@ -427,30 +457,17 @@ const handleRunTool = async () => {
       result: normalizeUnionType(data),
     }
     outputResult.value = JSON.stringify(displayOutput, null, 2)
-    // Add to history
     history.value.unshift({
       tool: currentTool.value.name,
       arguments: inputJson.value,
       timestamp: Date.now(),
       status: data.isError ? 'error' : 'success',
     })
-  } catch (err) {
-    outputResult.value = JSON.stringify({ error: 'Execution Failed', details: err }, null, 2)
+  } catch (err: any) {
+    outputResult.value = JSON.stringify({ error: 'Execution Failed', details: err?.message || err }, null, 2)
   } finally {
     running.value = false
   }
-}
-
-const restoreHistory = (item: any) => {
-  const tool = toolList.value.find((t) => t.name === item.tool)
-  if (tool) {
-    currentTool.value = tool
-    inputJson.value = item.params
-  }
-}
-
-const refreshInstance = () => {
-  getTools()
 }
 
 const clearOutput = () => {

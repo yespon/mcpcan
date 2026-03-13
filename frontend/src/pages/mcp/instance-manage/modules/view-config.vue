@@ -92,14 +92,8 @@
                 </SearchForm>
               </div>
             </div>
-            <RecycleScroller
-              class="scroller hide-scrollbar mt-4"
-              :items="showTokenList"
-              :item-size="140"
-              key-field="id"
-              v-slot="{ item: token, index }"
-            >
-              <div class="w-full">
+            <div class="mt-4">
+              <div v-for="(token, index) in showTokenList" :key="token.id" class="w-full mb-4">
                 <div class="flex items-center w-full">
                   <div class="mr-2 flex-shrink-0">
                     <el-checkbox
@@ -219,7 +213,7 @@
                   </div>
                 </div>
               </div>
-            </RecycleScroller>
+            </div>
           </div>
         </el-scrollbar>
       </el-col>
@@ -311,9 +305,6 @@ import SearchForm from '@/components/SearchForm/index.vue'
 import TokenForm from './components/token-form-list.vue'
 import BatchChangeHeader from './components/batch-change-header.vue'
 import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
-// @ts-expect-error - vue-virtual-scroller 缺少类型定义
-import { RecycleScroller } from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
 const { jumpToPage } = useRouterHooks()
 const { t } = useI18n()
@@ -438,10 +429,14 @@ const toggleTokenSelection = (id: number) => {
 
 const configUrl = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
-    const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
-    return mcpServers[Object.keys(mcpServers)[0]].url
+    try {
+      const mcpServers = JSON.parse(dialogInfo.value.instanceInfo.sourceConfig).mcpServers
+      return mcpServers[Object.keys(mcpServers)[0]].url
+    } catch {
+      return ''
+    }
   }
-  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH}${dialogInfo.value.instanceInfo.publicProxyPath}`
+  return `${window.location.origin}${(window as any).__APP_CONFIG__?.PUBLIC_PATH || ''}${dialogInfo.value.instanceInfo.publicProxyPath || ''}`
 })
 const configToken = computed(() => {
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
@@ -458,10 +453,12 @@ const configToken = computed(() => {
 })
 // config Info
 const config = computed(() => {
-  // "type": "${Object.keys(McpProtocol).filter((key) => isNaN(Number(key)))[dialogInfo.value.instanceInfo.proxyProtocol]}",
   if (dialogInfo.value.instanceInfo.accessType === AccessType.DIRECT) {
     return JsonFormatter.format(dialogInfo.value.instanceInfo.sourceConfig, 4)
   }
+  // 根据实际 URL 末尾推断协议类型，确保 URL 和 type 保持一致
+  const urlPath = configUrl.value || ''
+  const inferredType = urlPath.endsWith('/sse') ? 'sse' : 'streamable_http'
   if (dialogInfo.value.instanceInfo.enabledToken) {
     if (!tokenList.value) return JsonFormatter.format(`{}`, 4)
     if (dialogInfo.value.currentTokenIndex !== null && tokenList.value.length) {
@@ -470,7 +467,7 @@ const config = computed(() => {
           "mcpServers": {
                 "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
                       "url": "${configUrl.value}",
-                      "type": "streamable_http",
+                      "type": "${inferredType}",
                       "headers": {
                             "Authorization": "${tokenList.value[dialogInfo.value.currentTokenIndex].token}"
                       }
@@ -485,7 +482,8 @@ const config = computed(() => {
     `{
       "mcpServers": {
           "mcp-${dialogInfo.value.instanceInfo.instanceId.slice(0, 8)}": {
-              "url": "${configUrl.value}"
+              "url": "${configUrl.value}",
+              "type": "${inferredType}"
           }
       }
   }`,
@@ -788,9 +786,10 @@ const handleSaveTokens = async () => {
 const handleTokenList = async () => {
   dialogInfo.value.instanceInfo.loading = true
   try {
-    const { tokens } = await TokenAPI.list({
+    const res = await TokenAPI.list({
       instanceId: dialogInfo.value.instanceInfo.instanceId,
     })
+    const tokens = res.tokens || res.list || []
     // reverse the token list to show the latest created token on top
     tokenList.value = (tokens || [])
       .map((token: any) => ({

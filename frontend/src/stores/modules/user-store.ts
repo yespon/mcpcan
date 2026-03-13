@@ -326,25 +326,63 @@ export const useUserStore = defineStore('user', () => {
    * @returns menu tree with role auth
    */
   function handleMenuAuth() {
-    return Promise.all([getMenus(), getRoleAuth()]).then(([allMenus, roleMenus]) => {
-      // const menuMap = new Map<string, any>()
-      // allMenus.forEach((menu) => {
-      //   menuMap.set(menu.id, { ...menu, children: [] })
-      // })
-      // roleMenus.forEach((menu: any) => {
-      //   if (menuMap.has(menu.id)) {
-      //     menuMap.get(menu.id).checked = true
-      //   }
-      // })
-      // const menuTree: any[] = []
-      // menuMap.forEach((menu) => {
-      //   if (menu.parentId && menuMap.has(menu.parentId)) {
-      //     menuMap.get(menu.parentId).children.push(menu)
-      //   } else {
-      //     menuTree.push(menu)
-      //   }
-      // })
-      // return menuTree
+    const appConfig = (window as any).__APP_CONFIG__ || {}
+    if (appConfig.CodeMode === 'OpenCode') {
+      const openCodeMenus = [
+        { path: '/home', permission: 'mcpcan_home', type: 1, title: 'home' },
+        {
+          path: '/instance-manage',
+          permission: 'mcpcan_instance',
+          type: 1,
+          title: 'instanceManage',
+        },
+        {
+          path: '/market-manage',
+          permission: 'mcpcan_market_manage',
+          type: 1,
+          title: 'marketManage',
+        },
+        {
+          path: '/template-manage',
+          permission: 'mcpcan_template',
+          type: 1,
+          title: 'templateManage',
+        },
+        {
+          path: '/working-environment',
+          permission: 'mcpcan_working_environment',
+          type: 1,
+          title: 'runEnviroment',
+        },
+        {
+          path: '/resource-manage',
+          permission: 'mcpcan_resource_manage',
+          type: 1,
+          title: 'resourceManage',
+        },
+        { path: '/agent-manage', permission: 'mcpcan_agent_manage', type: 1, title: 'agentManage' },
+        { path: '/model-manage', permission: 'mcpcan_model_manage', type: 1, title: 'modelManage' },
+        { path: '/ai-chat', permission: 'mcpcan_ai_chat', type: 1, title: 'AI Chat' },
+      ]
+      allMenus.value = openCodeMenus
+      allAuths.value = {
+        permissions: openCodeMenus.map((m) => m.permission),
+        menus: openCodeMenus.map((m) => ({ ...m, permission: m.permission })),
+      }
+      return Promise.resolve({ menus: openCodeMenus, auths: allAuths.value })
+    }
+
+    // 企业版模式：如果当前缓存中只有开源版菜单（即没有 rbac 相关的菜单），强制刷新
+    const hasRbacMenu = (allMenus.value || []).some((m: any) =>
+      String(m.permission).includes('rbac_manage'),
+    )
+
+    if (hasRbacMenu && allMenus.value.length > 0 && allAuths.value.permissions) {
+      return Promise.resolve({ menus: allMenus.value, auths: allAuths.value })
+    }
+
+    return Promise.all([getMenus(), getRoleAuth()]).then(([menus, auths]) => {
+      return { menus, auths }
     })
   }
 

@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -218,8 +219,8 @@ type DockerPort struct {
 
 // Create creates container
 func (dcm *DockerContainerManager) Create(ctx context.Context, options ContainerCreateOptions) (string, error) {
-	// Build docker run command
-	args := []string{"run", "-d"}
+	// Build docker create command
+	args := []string{"create"}
 
 	// Set container name
 	if options.ContainerName != "" {
@@ -229,6 +230,11 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	// Set network
 	if dcm.networkName != "" {
 		args = append(args, "--network", dcm.networkName)
+	}
+	
+	// Set platform
+	if options.Platform != "" {
+		args = append(args, "--platform", options.Platform)
 	}
 
 	// Set restart policy
@@ -333,6 +339,23 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		args = append(args, "--entrypoint", options.Command[0])
 	}
 
+	// 行业通用方案：将配置内容写入宿主机临时文件，随后通过 docker cp 写入容器，规避 DinD -v 挂载路径不存在的问题
+	var configTmpFile string
+	if options.ConfigContent != "" {
+		tmpFile, err := os.CreateTemp("", "container-config-*.yaml")
+		if err != nil {
+			return "", fmt.Errorf("failed to create temp config file: %w", err)
+		}
+		configTmpFile = tmpFile.Name()
+		if _, err := tmpFile.WriteString(options.ConfigContent); err != nil {
+			tmpFile.Close()
+			os.Remove(configTmpFile)
+			return "", fmt.Errorf("failed to write config to temp file: %w", err)
+		}
+		tmpFile.Close()
+		log.Printf("[Docker Create] config written to temp file: %s (will be copied)", configTmpFile)
+	}
+
 	// Add image name
 	args = append(args, options.ImageName)
 
@@ -341,27 +364,151 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 		args = append(args, options.CommandArgs...)
 	}
 
-	// Execute docker run command
+	// Execute docker create command
+	log.Printf("[Docker Create] executing: docker %s", strings.Join(args, " "))
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Env = os.Environ()
 	if dcm.config.DockerHost != "" {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
 	}
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to create Docker container: %w", err)
+		if configTmpFile != "" {
+			os.Remove(configTmpFile)
+		}
+		log.Printf("[Docker Create] failed: %v, output: %s", err, string(output))
+		return "", fmt.Errorf("failed to create Docker container: %w, output: %s", err, string(output))
 	}
 
 	// Parse output to get container ID
-	// When image is not found locally, docker run outputs pull progress.
-	// The container ID is always the last line of the output.
 	outStr := strings.TrimSpace(string(output))
 	lines := strings.Split(outStr, "\n")
+	containerID := outStr
 	if len(lines) > 0 {
-		return strings.TrimSpace(lines[len(lines)-1]), nil
+		containerID = strings.TrimSpace(lines[len(lines)-1])
 	}
 
-	return outStr, nil
+	// If there's config content to copy, copy it (to /ag-config.yaml) and start
+	if configTmpFile != "" {
+		// 赋予 777 权限，确保 non-root 用户在容器内可读
+		_ = os.Chmod(configTmpFile, 0777)
+		cpArgs := []string{"cp", configTmpFile, fmt.Sprintf("%s:/ag-config.yaml", containerID)}
+		log.Printf("[Docker Create] executing: docker %s", strings.Join(cpArgs, " "))
+		cpCmd := exec.CommandContext(ctx, "docker", cpArgs...)
+		cpCmd.Env = cmd.Env
+		cpOutput, cpErr := cpCmd.CombinedOutput()
+		os.Remove(configTmpFile)
+		if cpErr != nil {
+			dcm.Delete(ctx, containerID) // cleanup
+			return "", fmt.Errorf("failed to copy config to container: %w, output: %s", cpErr, string(cpOutput))
+		}
+	}
+
+	// Now start the container
+	startArgs := []string{"start", containerID}
+	log.Printf("[Docker Create] executing: docker %s", strings.Join(startArgs, " "))
+	startCmd := exec.CommandContext(ctx, "docker", startArgs...)
+	startCmd.Env = cmd.Env
+	startOutput, startErr := startCmd.CombinedOutput()
+	if startErr != nil {
+		dcm.Delete(ctx, containerID)
+		return "", fmt.Errorf("failed to start container: %w, output: %s", startErr, string(startOutput))
+	}
+
+	// Start Sidecar if configured
+	if options.Sidecar != nil && options.Sidecar.ImageName != "" {
+		if err := dcm.createDockerSidecar(ctx, options.ContainerName, options.Sidecar); err != nil {
+			// rollback
+			dcm.Delete(ctx, options.ContainerName)
+			return "", fmt.Errorf("failed to create sidecar container: %w", err)
+		}
+	}
+
+	return containerID, nil
+}
+
+func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, mainContainerName string, sidecar *SidecarOptions) error {
+	// 行业标准方案：Sidecar 加入与主容器相同的 Docker 网络，通过容器名 DNS 互相通信
+	// 不再使用 --network container:xxx 共享命名空间，避免主容器进程退出导致 Runc 崩溃
+	args := []string{"create", "--name", sidecar.ContainerName, "--network", dcm.networkName}
+
+	if sidecar.Platform != "" {
+		args = append(args, "--platform", sidecar.Platform)
+	}
+
+	for key, value := range sidecar.EnvVars {
+		args = append(args, "-e", fmt.Sprintf("%s=%s", key, value))
+	}
+	for key, value := range sidecar.Labels {
+		args = append(args, "--label", fmt.Sprintf("%s=%s", key, value))
+	}
+
+	// 行业通用方案：将配置内容写入宿主机临时文件，随后通过 docker cp 写入容器
+	// 彻底避免 CLI 参数传递导致的 Runc 兼容性问题与 Dind 环境挂载问题
+	var configTmpFile string
+	if sidecar.ConfigContent != "" {
+		tmpFile, err := os.CreateTemp("", "agentgateway-config-*.yaml")
+		if err != nil {
+			return fmt.Errorf("failed to create temp config file: %w", err)
+		}
+		configTmpFile = tmpFile.Name()
+		if _, err := tmpFile.WriteString(sidecar.ConfigContent); err != nil {
+			tmpFile.Close()
+			os.Remove(configTmpFile)
+			return fmt.Errorf("failed to write config to temp file: %w", err)
+		}
+		tmpFile.Close()
+		log.Printf("[Docker Sidecar] config written to temp file: %s (will be copied)", configTmpFile)
+	}
+
+	if len(sidecar.Command) > 0 {
+		args = append(args, "--entrypoint", sidecar.Command[0])
+	}
+	args = append(args, sidecar.ImageName)
+	if len(sidecar.CommandArgs) > 0 {
+		args = append(args, sidecar.CommandArgs...)
+	}
+
+	log.Printf("[Docker Sidecar] executing: docker %s", strings.Join(args, " "))
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if configTmpFile != "" {
+			os.Remove(configTmpFile)
+		}
+		return fmt.Errorf("failed to create sidecar container: %w, output: %s", err, string(output))
+	}
+
+	if configTmpFile != "" {
+		// 赋予 777 权限，确保 non-root 用户在容器内可读
+		_ = os.Chmod(configTmpFile, 0777)
+		cpArgs := []string{"cp", configTmpFile, fmt.Sprintf("%s:/ag-config.yaml", sidecar.ContainerName)}
+		log.Printf("[Docker Sidecar] executing: docker %s", strings.Join(cpArgs, " "))
+		cpCmd := exec.CommandContext(ctx, "docker", cpArgs...)
+		cpCmd.Env = cmd.Env
+		cpOutput, cpErr := cpCmd.CombinedOutput()
+		os.Remove(configTmpFile)
+		if cpErr != nil {
+			dcm.Delete(ctx, sidecar.ContainerName)
+			return fmt.Errorf("failed to copy config to sidecar container: %w, output: %s", cpErr, string(cpOutput))
+		}
+	}
+
+	startArgs := []string{"start", sidecar.ContainerName}
+	log.Printf("[Docker Sidecar] executing: docker %s", strings.Join(startArgs, " "))
+	startCmd := exec.CommandContext(ctx, "docker", startArgs...)
+	startCmd.Env = cmd.Env
+	startOutput, startErr := startCmd.CombinedOutput()
+	if startErr != nil {
+		dcm.Delete(ctx, sidecar.ContainerName)
+		return fmt.Errorf("failed to start sidecar container: %w, output: %s", startErr, string(startOutput))
+	}
+
+	return nil
 }
 
 // Delete deletes container
@@ -374,8 +521,17 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	}
 	_ = stopCmd.Run() // ignore stop error, container might already be stopped
 
+	// Stop sidecar
+	sidecarName := containerName + "-sidecar"
+	stopSidecarCmd := exec.CommandContext(ctx, "docker", "stop", sidecarName)
+	stopSidecarCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		stopSidecarCmd.Env = append(stopSidecarCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	_ = stopSidecarCmd.Run()
+
 	// Delete container
-	rmCmd := exec.CommandContext(ctx, "docker", "rm", containerName)
+	rmCmd := exec.CommandContext(ctx, "docker", "rm", "-f", containerName)
 	rmCmd.Env = os.Environ()
 	if dcm.config.DockerHost != "" {
 		rmCmd.Env = append(rmCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
@@ -383,6 +539,14 @@ func (dcm *DockerContainerManager) Delete(ctx context.Context, containerName str
 	if err := rmCmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete Docker container: %w", err)
 	}
+
+	// Delete sidecar
+	rmSidecarCmd := exec.CommandContext(ctx, "docker", "rm", "-f", sidecarName)
+	rmSidecarCmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		rmSidecarCmd.Env = append(rmSidecarCmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	_ = rmSidecarCmd.Run()
 
 	return nil
 }
@@ -468,11 +632,23 @@ func (dcm *DockerContainerManager) IsReady(ctx context.Context, containerName st
 		return false, "", err
 	}
 
-	if info.Status == "running" {
-		return true, "Running", nil
+	if strings.ToLower(info.Status) != "running" {
+		return false, info.Status, nil
 	}
 
-	return false, info.Status, nil
+	// 主容器 running，额外检查伴生 sidecar (agentgateway) 是否存活
+	// Sidecar 异常会导致流量无法被代理，应视为整体不就绪
+	sidecarName := containerName + "-sidecar"
+	sidecarInfo, sidecarErr := dcm.GetInfo(ctx, sidecarName)
+	if sidecarErr != nil {
+		// sidecar 不存在或查询失败，视为不就绪
+		return false, "sidecar not found: " + sidecarErr.Error(), nil
+	}
+	if strings.ToLower(sidecarInfo.Status) != "running" {
+		return false, "sidecar status: " + sidecarInfo.Status, nil
+	}
+
+	return true, "Running", nil
 }
 
 // GetEvents gets container events
@@ -547,6 +723,46 @@ func (dcm *DockerContainerManager) GetWarningEvents(ctx context.Context, contain
 	}
 
 	return events, nil
+}
+
+// ListByLabel lists all Docker containers that match ALL of the given labels.
+// Only returns main containers (excludes sidecar containers which have "-sidecar" suffix).
+func (dcm *DockerContainerManager) ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error) {
+	args := []string{"ps", "-a", "--format", "{{json .}}"}
+	for k, v := range labels {
+		args = append(args, "--filter", fmt.Sprintf("label=%s=%s", k, v))
+	}
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Env = os.Environ()
+	if dcm.config.DockerHost != "" {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("DOCKER_HOST=%s", dcm.config.DockerHost))
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Docker containers by label: %w", err)
+	}
+
+	var result []ContainerInfo
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if line == "" {
+			continue
+		}
+		var m map[string]interface{}
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			continue
+		}
+		name, _ := m["Names"].(string)
+		name = strings.TrimPrefix(name, "/")
+		// Exclude sidecar containers — they are not independently tracked
+		if strings.HasSuffix(name, "-sidecar") {
+			continue
+		}
+		result = append(result, ContainerInfo{
+			Name:   name,
+			Status: fmt.Sprintf("%v", m["Status"]),
+		})
+	}
+	return result, nil
 }
 
 

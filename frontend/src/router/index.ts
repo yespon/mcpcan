@@ -209,13 +209,22 @@ const router = createRouter({
           component: () => import('../pages/login/user-center.vue'),
         },
         {
+          path: '/auth-manage',
+          name: 'authManage',
+          redirect: '/user-manage',
+          meta: {
+            isEnterprise: true,
+          },
+        },
+        {
           path: '/user-manage',
           name: 'userManage',
           meta: {
             title: 'userManage',
             isMenu: true,
+            isEnterprise: true,
           },
-          component: () => import('../pages/system-manage/user-manage/index.vue'),
+          component: () => import('../enterprise.ee/user-manage/index.vue'),
         },
         {
           path: '/department-manage',
@@ -223,8 +232,9 @@ const router = createRouter({
           meta: {
             title: 'departmentManage',
             isMenu: true,
+            isEnterprise: true,
           },
-          component: () => import('../pages/system-manage/department-manage/index.vue'),
+          component: () => import('../enterprise.ee/department-manage/index.vue'),
         },
         {
           path: '/role-manage',
@@ -232,13 +242,18 @@ const router = createRouter({
           meta: {
             title: 'roleManage',
             isMenu: true,
+            isEnterprise: true,
           },
-          component: () => import('../pages/system-manage/role-manage/index.vue'),
+          component: () => import('../enterprise.ee/role-manage/index.vue'),
         },
         {
           path: '/user-with-role',
           name: 'userWithRole',
-          component: () => import('../pages/system-manage/user-manage/user-with-role.vue'),
+          meta: {
+            title: 'userWithRole',
+            isEnterprise: true,
+          },
+          component: () => import('../enterprise.ee/user-manage/user-with-role.vue'),
         },
         {
           path: '/ai-chat',
@@ -305,7 +320,10 @@ router.beforeEach(async (to, from, next) => {
       await useUserStore()
         .handleMenuAuth()
         .catch(() => {
-          next('/403')
+          const appConfig = (window as any).__APP_CONFIG__ || {}
+          if (appConfig.CodeMode !== 'OpenCode') {
+            next('/403')
+          }
         })
       const { allAuthMenuList } = storeToRefs(useUserStore())
       const allowList = allAuthMenuList.value || []
@@ -330,7 +348,17 @@ router.beforeEach(async (to, from, next) => {
 
     // 菜单路由访问鉴权：仅判断菜单路径是否在 allAuthMenuList 中
     // 说明：这里不做按钮/接口鉴权，只做“菜单可见即允许访问”的粗粒度控制
-    if (to.meta?.isMenu) {
+    if (to.meta?.isMenu || (to.meta as any)?.isEnterprise) {
+      const appConfig = (window as any).__APP_CONFIG__ || {}
+      // 如果是开源版模式，且目标是企业版特有的路由，则拦截
+      if (appConfig.CodeMode === 'OpenCode') {
+        if ((to.meta as any)?.isEnterprise) {
+          next('/403')
+          return
+        }
+        next()
+        return
+      }
       if (useUserStore().allAuthMenuList.length === 0) {
         await useUserStore()
           .handleMenuAuth()

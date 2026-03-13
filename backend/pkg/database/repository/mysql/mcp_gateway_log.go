@@ -120,6 +120,10 @@ func (r *GatewayLogRepository) FindWithPagination(
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("token = ?", s)
 			}
+		case "toolName", "tool_name":
+			if s, ok := v.(string); ok && s != "" {
+				q = q.Where("tool_name = ?", s)
+			}
 		case "event":
 			if s, ok := v.(string); ok && s != "" {
 				q = q.Where("event = ?", s)
@@ -276,6 +280,16 @@ func (r *GatewayLogRepository) InitTable() error {
 		sql2 := fmt.Sprintf("CREATE INDEX idx_trace_id ON %v(trace_id)", mod.TableName())
 		if err := r.getDB().Exec(sql2).Error; err != nil {
 			return fmt.Errorf("failed to create trace_id index: %v", err)
+		}
+	}
+
+	// Index on tool_name for fast per-tool queries
+	sql = fmt.Sprintf("SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '%v' AND index_name = 'idx_tool_name'", mod.TableName())
+	r.getDB().Raw(sql).Count(&count)
+	if count == 0 {
+		sql2 := fmt.Sprintf("CREATE INDEX idx_tool_name ON %v(tool_name)", mod.TableName())
+		if err := r.getDB().Exec(sql2).Error; err != nil {
+			return fmt.Errorf("failed to create tool_name index: %v", err)
 		}
 	}
 

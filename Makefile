@@ -78,31 +78,24 @@ endef
 .PHONY: pnpm-build
 pnpm-build:
 	@echo "---------- Start build frontend ----------"
-	@cd $(FRONTEND_PATH) && CI=true pnpm i && pnpm build
+	@cd $(FRONTEND_PATH) && pnpm i && pnpm build
 	@echo "---------- End build frontend ----------"
 
 .PHONY: help
 help:
 	@echo "Usage: make [target]"
 	@echo "Targets:"
-	@echo "  push-all           - Build and push multi-arch images (Init, Market, Authz, Gateway, Web)"
-	@echo "  push-init          - Build and push multi-arch Init image"
+	@echo "  push-all           - Build and push multi-arch images (Market, Authz, Web)"
 	@echo "  push-market        - Build and push multi-arch Market image"
 	@echo "  push-authz         - Build and push multi-arch Authz image"
-	@echo "  push-gateway       - Build and push multi-arch Gateway image"
 	@echo "  push-frontend      - Build and push multi-arch Frontend (Web) image"
 	@echo "  proto-buf          - Generate protobuf files"
 	@echo "  go-build-market    - Local Go build for market"
+	@echo "  sync-docs          - Sync documentation from tools submodule"
 	@echo "  clean              - Remove build artifacts"
 
 .PHONY: push-all
-push-all: push-init push-market push-authz push-gateway push-frontend
-
-.PHONY: push-init
-push-init:
-	$(call push_multiarch_image,init,mcp-init,$(TENCENT_REGISTRY))
-	$(call push_multiarch_image,init,mcp-init,$(DOCK_REGISTRY))
-	$(call push_readme_doc,mcp-init,MCP Initialization Service)
+push-all: push-market push-authz push-frontend
 
 .PHONY: push-market
 push-market:
@@ -115,12 +108,6 @@ push-authz:
 	$(call push_multiarch_image,authz,mcp-authz,$(TENCENT_REGISTRY))
 	$(call push_multiarch_image,authz,mcp-authz,$(DOCK_REGISTRY))
 	$(call push_readme_doc,mcp-authz,MCP Authorization Service)
-
-.PHONY: push-gateway
-push-gateway:
-	$(call push_multiarch_image,gateway,mcp-gateway,$(TENCENT_REGISTRY))
-	$(call push_multiarch_image,gateway,mcp-gateway,$(DOCK_REGISTRY))
-	$(call push_readme_doc,mcp-gateway,MCP Gateway Service)
 
 .PHONY: push-frontend
 push-frontend:
@@ -152,10 +139,6 @@ proto-buf:
 go-mod-tidy:
 	@cd $(BACKEND_PATH) && go mod tidy
 
-.PHONY: go-build-init
-go-build-init:
-	$(call go_build_service,init)
-
 .PHONY: go-build-market
 go-build-market:
 	$(call go_build_service,market)
@@ -164,14 +147,24 @@ go-build-market:
 go-build-authz:
 	$(call go_build_service,authz)
 
-.PHONY: go-build-gateway
-go-build-gateway:
-	$(call go_build_service,gateway)
-
 .PHONY: clean
 clean:
 	@rm -rf $(BACKEND_PATH)/bin/*
 	@rm -rf $(FRONTEND_PATH)/dist
+
+.PHONY: sync-docs
+sync-docs:
+	@echo "---------- Syncing Documentation ----------"
+	@mkdir -p $(ROOT_PATH)/docs/zh $(ROOT_PATH)/docs/en
+	@if [ -d "../mcpcan-tools/mcpcan-platform-docs/zh/guide" ]; then \
+		cp -r ../mcpcan-tools/mcpcan-platform-docs/zh/guide $(ROOT_PATH)/docs/zh/; \
+		echo "Synced zh/guide to docs/zh/"; \
+	fi
+	@if [ -d "../mcpcan-tools/mcpcan-platform-docs/en/guide" ]; then \
+		cp -r ../mcpcan-tools/mcpcan-platform-docs/en/guide $(ROOT_PATH)/docs/en/; \
+		echo "Synced en/guide to docs/en/"; \
+	fi
+	@echo "---------- Sync Completed ----------"
 
 # @Deprecated / Removed targets marked as error to guide migration
 .PHONY: docker-build-init docker-build-gateway docker-build-sidecar

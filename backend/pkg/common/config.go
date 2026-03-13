@@ -17,8 +17,9 @@ const (
 
 // ServerConfig server configuration
 type ServerConfig struct {
-	GrpcPort int `mapstructure:"grpcPort"` // gRPC port
-	HttpPort int `mapstructure:"httpPort"` // HTTP port
+	GrpcPort 		 int 	`mapstructure:"grpcPort"` // gRPC port
+	HttpPort         int    `mapstructure:"httpPort"` // HTTP port
+	ServiceName      string `mapstructure:"serviceName"`
 }
 
 type StorageConfig struct {
@@ -102,16 +103,6 @@ type LogConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
 	Output string `mapstructure:"output"`
-}
-
-type Services struct {
-	McpMarket *Service `mapstructure:"mcpMarket"`
-	McpAuthz  *Service `mapstructure:"mcpAuthz"`
-}
-
-type Service struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
 }
 
 // findProjectRoot find project root directory

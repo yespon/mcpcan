@@ -11,7 +11,7 @@ type McpToken struct {
 	InstanceID string          `gorm:"type:varchar(100);not null;default:'';comment:Associated instance ID" json:"instanceID"`
 	Token      string          `gorm:"type:varchar(255);not null;default:'';comment:Value of the token" json:"token"`
 	Enabled    bool            `gorm:"type:tinyint(1);not null;default:false;comment:Whether to enable the token" json:"enabled"`
-	Headers    json.RawMessage `gorm:"type:text;comment:Custom request headers (JSON format)" json:"headers"`
+	Headers    json.RawMessage `gorm:"type:text;comment:Custom request headers per user/space (used by intelligent access)" json:"headers"`
 	Usages     json.RawMessage `gorm:"type:text;comment:Usage scenarios (JSON array format)" json:"usages"`
 	ExpireAt   int64           `gorm:"type:bigint;not null;default:0;comment:Expiration time (Millisecond timestamp)" json:"expireAt"`
 	PublishAt  int64           `gorm:"type:bigint;not null;default:0;comment:Publication time (Millisecond timestamp)" json:"publishAt"`

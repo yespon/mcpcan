@@ -1,3 +1,4 @@
+// Deprecated: 旧的网关代理核心逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
 package proxy
 
 import (
@@ -86,7 +87,7 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 					reqAuth = ra
 				}
 			}
-			WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
+			WriteMCPLog(xTraceID, xInstanceID, "", reqAuth.Token,
 				golibLog.ErrorLevel, model.EventPanicRecovered, reqAuth.Usages,
 				fmt.Sprintf("Panic recovered: %v", r))
 
@@ -106,7 +107,7 @@ func (mrp *McpReverseProxy) ServeHTTP(respWriter http.ResponseWriter, req *http.
 				reqAuth = ra
 			}
 		}
-		WriteMCPLog(xTraceID, xInstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, xInstanceID, "", reqAuth.Token,
 			golibLog.ErrorLevel, model.EventRequestValidationFail, reqAuth.Usages,
 			err.Error())
 		// respWriter.WriteHeader(http.StatusMethodNotAllowed)
@@ -143,7 +144,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	instanceId := parts[2]
 	// Validate if instanceId is valid
 	if len(instanceId) == 0 {
-		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
 			fmt.Sprintf("method Not Allowed: InstanceId is empty: %s", instanceId))
 		return fmt.Errorf("method Not Allowed: InstanceId is empty")
 	}
@@ -151,7 +152,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	// mcp config validation
 	instanceInfo, err := GetInstanceInfo(instanceId)
 	if err != nil {
-		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
 			fmt.Sprintf("failed to get MCP configuration: %v for instance: %s", err.Error(), instanceId))
 		return fmt.Errorf("failed to get MCP configuration: %v", err.Error())
 	}
@@ -167,7 +168,7 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 		var authErr error
 		reqAuth, authErr = validateMcpTokenForInstance(req, instanceId)
 		if authErr != nil {
-			WriteMCPLog(xTraceID, instanceId, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceId, "", reqAuth.Token,
 				golibLog.WarnLevel, model.EventRequestValidationFail, reqAuth.Usages,
 				fmt.Sprintf("failed to valid token: %v for instance: %s", authErr.Error(), instanceId))
 			return fmt.Errorf("failed to valid token: %v", authErr.Error())
@@ -184,7 +185,8 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 
 	if isSSEReq {
 		if instanceInfo.McpConfig.SseReadTimeout > 0 {
-			ctx2, _ := context.WithTimeout(req.Context(), time.Duration(instanceInfo.McpConfig.SseReadTimeout)*time.Second)
+			ctx2, cancel := context.WithTimeout(req.Context(), time.Duration(instanceInfo.McpConfig.SseReadTimeout)*time.Second)
+			_ = cancel // Usually we should cancel when request is done, but here it's passed to proxy
 			*req = *req.WithContext(ctx2)
 		} else {
 			*req = *req.WithContext(req.Context())
@@ -192,10 +194,12 @@ func (mrp *McpReverseProxy) reqHandler(req *http.Request) error {
 	} else {
 		timeout := instanceInfo.McpConfig.Timeout
 		if timeout > 0 {
-			ctx2, _ := context.WithTimeout(req.Context(), time.Duration(timeout)*time.Second)
+			ctx2, cancel := context.WithTimeout(req.Context(), time.Duration(timeout)*time.Second)
+			_ = cancel
 			*req = *req.WithContext(ctx2)
 		} else {
-			ctx2, _ := context.WithTimeout(req.Context(), DefaultReadTimeout)
+			ctx2, cancel := context.WithTimeout(req.Context(), DefaultReadTimeout)
+			_ = cancel
 			*req = *req.WithContext(ctx2)
 		}
 	}
@@ -221,8 +225,8 @@ func director(req *http.Request) {
 	instanceInfo, ok := req.Context().Value(InstanceInfoKey).(*InstanceInfo)
 	if !ok {
 		logger.Error("No InstanceInfo found in context", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, xInstanceID, "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
-			fmt.Sprintf("no InstanceInfo in context for instance: %s", instanceInfo.InstanceID))
+		WriteMCPLog(xTraceID, xInstanceID, "", "", golibLog.WarnLevel, model.EventInstanceMissing, []string{},
+			fmt.Sprintf("no InstanceInfo in context for instance: %s", xInstanceID))
 		return
 	}
 	reqAuth := &RequestAuth{}
@@ -233,7 +237,7 @@ func director(req *http.Request) {
 	isSSEReq, ok2 := req.Context().Value(IsSSEReqKey).(bool)
 	if !ok2 {
 		logger.Error("No IsSSEReqKey found in context", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 			golibLog.WarnLevel, model.EventSSEFlagMissing, reqAuth.Usages,
 			fmt.Sprintf("sse.flag.missing for instance: %s", instanceInfo.InstanceID))
 		return
@@ -242,7 +246,7 @@ func director(req *http.Request) {
 	pathNum := len(parts)
 	if pathNum <= 2 {
 		logger.Error("Path is too short", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 			golibLog.WarnLevel, model.EventPathTooShort, reqAuth.Usages,
 			fmt.Sprintf("path.too.short for instance: %s", instanceInfo.InstanceID))
 		return
@@ -252,7 +256,7 @@ func director(req *http.Request) {
 	targetUrl, err := url.Parse(instanceInfo.McpConfig.URL)
 	if err != nil {
 		logger.Error("Failed to parse URL", zap.String("traceID", xTraceID), zap.Error(err))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 			golibLog.ErrorLevel, model.EventUpstreamURLParseFail, reqAuth.Usages,
 			fmt.Sprintf("Failed to parse URL: %s for instance: %s", err.Error(), instanceInfo.InstanceID))
 		return
@@ -271,7 +275,7 @@ func director(req *http.Request) {
 			handleHostingStreamableHTTPReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported", zap.String("traceID", xTraceID))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
 				fmt.Sprintf("McpProtocol is not supported for instance: %s", instanceInfo.InstanceID))
 			return
@@ -288,14 +292,14 @@ func director(req *http.Request) {
 			handleProxyStreamableHTTPPathReq(req, instanceInfo, targetUrl)
 		default:
 			logger.Error("McpProtocol is not supported", zap.String("traceID", xTraceID))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 				golibLog.WarnLevel, model.EventProtocolUnsupported, reqAuth.Usages,
 				fmt.Sprintf("McpProtocol is not supported for instance: %s", instanceInfo.InstanceID))
 			return
 		}
 	default:
 		logger.Error("AccessType is not supported", zap.String("traceID", xTraceID))
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 			golibLog.WarnLevel, model.EventAccessUnsupported, reqAuth.Usages,
 			fmt.Sprintf("AccessType is not supported for instance: %s", instanceInfo.InstanceID))
 		return
@@ -328,7 +332,7 @@ func modifyResponse(resp *http.Response) error {
 				reqAuth = ra
 			}
 		}
-		WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+		WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 			golibLog.InfoLevel, model.EventSSEStart, reqAuth.Usages,
 			fmt.Sprintf("sse.start for instance: %s", instanceInfo.InstanceID))
 
@@ -337,7 +341,7 @@ func modifyResponse(resp *http.Response) error {
 		case <-resp.Request.Context().Done():
 			ctxErr := resp.Request.Context().Err()
 			logger.Debug("Request context canceled in modifyResponse", zap.String("traceID", xTraceID), zap.Error(ctxErr))
-			WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+			WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 				golibLog.InfoLevel, model.EventSSECancel, reqAuth.Usages,
 				fmt.Sprintf("sse.cancel for instance: %s", instanceInfo.InstanceID))
 			return &proxyError{
@@ -363,7 +367,7 @@ func modifyResponse(resp *http.Response) error {
 			// Use gzip.Reader to wrap original response body, it will auto-decompress
 			reader, err = gzip.NewReader(resp.Body)
 			if err != nil {
-				WriteMCPLog(xTraceID, instanceInfo.InstanceID, reqAuth.Token,
+				WriteMCPLog(xTraceID, instanceInfo.InstanceID, "", reqAuth.Token,
 					golibLog.ErrorLevel, model.EventGzipReaderFailed, reqAuth.Usages,
 					fmt.Sprintf("failed to create gzip reader: %v", err))
 				return &proxyError{
@@ -469,7 +473,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 					msgBytes = bytes.ReplaceAll(msgBytes, []byte("data:?"), []byte(fmt.Sprintf("data:/%s?", strings.Trim(prefix, "/"))))
 				}
 				logger.Info("Replace SSE event:endpoint", zap.String("traceID", xTraceID), zap.String("old", msgStr), zap.String("new", string(msgBytes)))
-				WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
+				WriteMCPLog(xTraceID, r.info.InstanceID, "", r.reqAuth.Token,
 					golibLog.DebugLevel, model.EventSSEEndpointRewrite, r.reqAuth.Usages,
 					fmt.Sprintf("endpoint rewritten for instance: %s", r.info.InstanceID))
 			}
@@ -480,7 +484,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If source is exhausted (EOF) and our buffer is also empty, return EOF
 		if readErr == io.EOF && r.buffer.Len() == 0 {
-			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
+			WriteMCPLog(xTraceID, r.info.InstanceID, "", r.reqAuth.Token,
 				golibLog.DebugLevel, model.EventSSEEof, r.reqAuth.Usages,
 				fmt.Sprintf("sse eof for instance: %s", r.info.InstanceID))
 			return 0, io.EOF
@@ -488,7 +492,7 @@ func (r *SSEResponseBodyReader) Read(p []byte) (n int, err error) {
 
 		// If other error occurs, return directly
 		if readErr != nil && readErr != io.EOF {
-			WriteMCPLog(xTraceID, r.info.InstanceID, r.reqAuth.Token,
+			WriteMCPLog(xTraceID, r.info.InstanceID, "", r.reqAuth.Token,
 				golibLog.WarnLevel, model.EventSSEReadError, r.reqAuth.Usages,
 				fmt.Sprintf("sse read error for instance: %s, error: %v", r.info.InstanceID, readErr))
 			return 0, readErr
@@ -683,17 +687,6 @@ func validateMcpTokenForInstance(req *http.Request, instanceID string) (*Request
 
 	if !mcpToken.Enabled {
 		return ra, fmt.Errorf("this token %v is disabled for instance %v", token, instanceID)
-	}
-
-	headers := map[string]string{}
-	if len(mcpToken.Headers) > 0 {
-		_ = json.Unmarshal(mcpToken.Headers, &headers)
-	}
-	if headers == nil {
-		headers = make(map[string]string)
-	}
-	for k, v := range headers {
-		req.Header.Set(k, v)
 	}
 
 	var usages []string

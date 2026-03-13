@@ -110,6 +110,24 @@ func (kcm *KubernetesContainerManager) Create(ctx context.Context, options Conta
 		deploymentOptions.ImagePullSecrets = options.ImagePullSecrets
 	}
 
+	// Set sidecar config
+	if options.Sidecar != nil {
+		// In Kubernetes, the sidecar and main container are deployed within the same Pod.
+		// Map the target URL to use localhost instead of querying DNS for the container hostname.
+		if targetUrl, ok := options.Sidecar.EnvVars["MCP_TARGET_URL"]; ok {
+			options.Sidecar.EnvVars["MCP_TARGET_URL"] = strings.Replace(targetUrl, options.ContainerName, "localhost", 1)
+		}
+
+		deploymentOptions.Sidecar = &k8s.SidecarOptions{
+			ImageName:     options.Sidecar.ImageName,
+			ContainerName: options.Sidecar.ContainerName,
+			Port:          options.Sidecar.Port,
+			Command:       options.Sidecar.Command,
+			CommandArgs:   options.Sidecar.CommandArgs,
+			EnvVars:       options.Sidecar.EnvVars,
+		}
+	}
+
 	// Create deployment
 	deploymentName, err := kcm.Entry.Client.Deployment().Create(deploymentOptions)
 	if err != nil {
@@ -359,6 +377,32 @@ func (kcm *KubernetesContainerManager) GetWarningEvents(ctx context.Context, con
 	}
 
 	return warnings, nil
+}
+
+// ListByLabel lists all Deployments in the namespace that match ALL of the given labels.
+func (kcm *KubernetesContainerManager) ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error) {
+	// Build label selector string, e.g. "managed-by=mcpcan"
+	var parts []string
+	for k, v := range labels {
+		parts = append(parts, k+"="+v)
+	}
+	selector := strings.Join(parts, ",")
+
+	deployments, err := kcm.Entry.Client.Deployment().ListByLabelSelector(selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list Deployments by label: %w", err)
+	}
+
+	var result []ContainerInfo
+	for _, d := range deployments {
+		result = append(result, ContainerInfo{
+			Name:      d.Name,
+			Status:    "unknown",
+			Labels:    d.Labels,
+			CreatedAt: d.CreationTimestamp.Format(time.RFC3339),
+		})
+	}
+	return result, nil
 }
 
 // KubernetesServiceManager Kubernetes service manager implementation

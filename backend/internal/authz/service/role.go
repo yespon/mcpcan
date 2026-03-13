@@ -262,6 +262,11 @@ func (s *RoleService) convertModelToProto(role *model.SysRole) *pb.SysRole {
 		resp.UpdatedBy = *role.UpdateBy
 	}
 
+	// Set data scope if exists
+	if role.DataScope != nil {
+		resp.DataScope = *role.DataScope
+	}
+
 	return resp
 }
 

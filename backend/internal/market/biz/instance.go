@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -113,17 +115,24 @@ func (biz *InstanceBiz) createInstanceDirectMode(ctx context.Context, req *insta
 	sourceConfig := json.RawMessage([]byte(req.McpServers))
 	// Create new instance record
 	instance := &model.McpInstance{
-		InstanceID:   instanceID,
-		InstanceName: req.Name,
-		AccessType:   accessType,
-		McpProtocol:  mcpProtocol,
-		SourceType:   sourceType,
-		SourceConfig: sourceConfig,
-		Status:       model.InstanceStatusActive,
-		IconPath:     req.IconPath,         // Add iconPath field handling
-		Notes:        req.Notes,            // Add notes field handling
-		McpServerID:  req.McpServerId,      // Add mcpServerId field handling
-		TemplateID:   uint(req.TemplateId), // Add templateId field handling
+		InstanceID:    instanceID,
+		InstanceName:  req.Name,
+		AccessType:    accessType,
+		McpProtocol:   mcpProtocol,
+		SourceType:    sourceType,
+		SourceConfig:  sourceConfig,
+		Status:        model.InstanceStatusActive,
+		IconPath:      req.IconPath,         // Add iconPath field handling
+		Notes:         req.Notes,            // Add notes field handling
+		McpServerID:   req.McpServerId,      // Add mcpServerId field handling
+		TemplateID:    uint(req.TemplateId), // Add templateId field handling
+		EnvironmentID: uint(req.EnvironmentId),
+		EnabledToken:  req.EnabledToken,
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
 	}
 
 	// Save instance to database
@@ -166,7 +175,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 	}
 
 	instanceID := uuid.New().String()
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, common.GetMcpHostingPort(), 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
@@ -194,7 +203,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		TemplateID:             0,
 		EnabledToken:           req.EnabledToken,
 		ImgAddr:                containerOptions.ImageName,
-		Port:                   8080,
+		Port:                   common.GetMcpHostingPort(),
 		InitScript:             "",
 		Command:                containerOptions.CommandArgs[0],
 		EnvironmentVariables:   nil,
@@ -204,7 +213,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		ContainerIsReady:       false,
 		ContainerCreateOptions: containerCreateOptions,
 		ContainerLastMessage:   "container is pending",
-		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp"),
+		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, "mcp"),
 		StartupTimeout:         int64(0),
 		RunningTimeout:         int64(0),
 		SourceConfig:           nil,
@@ -214,6 +223,11 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		PublicProxyPath:        biz.CreatePublicProxyPath(instanceID, model.McpProtocolStreamableHttp),
 		ProxyProtocol:          model.McpProtocolStreamableHttp,
 		OpenapiBaseUrl:         req.OpenapiBaseUrl,
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
 	}
 
 	if len(req.Tokens) > 0 {
@@ -275,6 +289,9 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 	proxyProtocol := mcpProtocol
 	publicProxyPath := biz.CreatePublicProxyPath(instanceID, proxyProtocol)
 
+	// DEBUG: 临时日志，验证 EnvironmentId 接收值
+	fmt.Printf("[DEBUG] createInstanceProxyMode: req.EnvironmentId=%d, mcpProtocol=%s\n", req.EnvironmentId, mcpProtocol)
+
 	// Create new instance record
 	instance := &model.McpInstance{
 		InstanceID:      instanceID,
@@ -291,6 +308,31 @@ func (biz *InstanceBiz) createInstanceProxyMode(ctx context.Context, req *instan
 		EnabledToken:    req.EnabledToken,
 		PublicProxyPath: publicProxyPath,
 		ProxyProtocol:   proxyProtocol,
+		EnvironmentID:   uint(req.EnvironmentId),
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
+	}
+
+	// 如果指定了环境，我们需要启动翻译代理 Sidecar，以此支持完整的代理鉴权及多重协议（如 stdio / http）的转发
+	if req.EnvironmentId > 0 {
+		options, err := GContainerBiz.BuildProxySidecarOptions(ctx, instanceID, validationResult.Url)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build proxy sidecar options: %w", err)
+		}
+		err = GContainerBiz.CreateContainer(ctx, options, req.EnvironmentId, req.StartupTimeout)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create proxy sidecar container: %w", err)
+		}
+		instance.ContainerName = options.ContainerName
+		instance.ContainerServiceName = options.ServiceName
+		instance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
+		instance.EnvironmentID = uint(req.EnvironmentId)
+		// 路由协议转换为 SSE (经 sidecar 重写)
+		instance.ProxyProtocol = model.McpProtocolSSE
+		instance.PublicProxyPath = biz.CreatePublicProxyPath(instanceID, model.McpProtocolSSE)
 	}
 
 	if len(req.Tokens) > 0 {
@@ -388,11 +430,11 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 	case model.McpProtocolStdio:
 		proxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, "mcp")
+		containerServiceURL = biz.getContainerServiceURL(containerOptions.ContainerName, containerOptions.ServiceName)
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		proxyProtocol = mcpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, proxyProtocol)
-		containerServiceURL = fmt.Sprintf("http://%s:%d/%s", containerOptions.ServiceName, containerOptions.Port, strings.Trim(req.ServicePath, "/"))
+		containerServiceURL = biz.getContainerServiceURL(containerOptions.ContainerName, containerOptions.ServiceName)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", mcpProtocol)
 	}
@@ -429,6 +471,11 @@ func (biz *InstanceBiz) createInstanceHosting(ctx context.Context, req *instance
 		IconPath:               req.IconPath,
 		PublicProxyPath:        publicProxyPath,
 		ProxyProtocol:          proxyProtocol,
+	}
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			instance.Headers = b
+		}
 	}
 	if len(req.Tokens) > 0 {
 		// add instance id to tokens
@@ -717,17 +764,12 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 		if req.Token != "" && req.Token != r.Token {
 			continue
 		}
-		var headers map[string]string
 		var usages []string
-		_ = json.Unmarshal(r.Headers, &headers)
 		_ = json.Unmarshal(r.Usages, &usages)
 		if len(req.Usages) > 0 {
 			if !usageIntersect(usages, req.Usages) {
 				continue
 			}
-		}
-		if headers == nil {
-			headers = make(map[string]string)
 		}
 		list = append(list, &instancepb.McpToken{
 			Id:         int64(r.ID),
@@ -737,7 +779,6 @@ func (biz *InstanceBiz) TokenListByInstanceID(req *instancepb.TokenListByInstanc
 			PublishAt:  r.PublishAt,
 			Usages:     usages,
 			Enabled:    r.Enabled,
-			Headers:    headers,
 		})
 	}
 
@@ -786,7 +827,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 		if t.InstanceId == "" {
 			return fmt.Errorf("missing required field: instanceId")
 		}
-		headersBytes, _ := json.Marshal(t.Headers)
 		usagesBytes, _ := json.Marshal(t.Usages)
 		publishAt := t.PublishAt
 		if publishAt == 0 {
@@ -817,7 +857,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 			existing.InstanceID = t.InstanceId
 			existing.Token = t.Token
 			existing.Enabled = t.Enabled
-			existing.Headers = json.RawMessage(headersBytes)
 			existing.Usages = json.RawMessage(usagesBytes)
 			existing.ExpireAt = t.ExpireAt
 			existing.PublishAt = publishAt
@@ -830,7 +869,6 @@ func (biz *InstanceBiz) SaveTokensForInstance(ctx context.Context, tokens []*ins
 				InstanceID: t.InstanceId,
 				Token:      t.Token,
 				Enabled:    t.Enabled,
-				Headers:    json.RawMessage(headersBytes),
 				Usages:     json.RawMessage(usagesBytes),
 				ExpireAt:   t.ExpireAt,
 				PublishAt:  publishAt,
@@ -890,6 +928,14 @@ func (biz *InstanceBiz) UpdateInstanceForDirect(ctx context.Context, req *instan
 		oriInstance.Notes = req.Notes
 	}
 	oriInstance.IconPath = req.IconPath
+
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil // allowed to clear headers
+	}
 
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
@@ -951,6 +997,14 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 	}
 	oriInstance.IconPath = req.IconPath
 
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
+
 	// Validate MCP configuration format
 	reqMcpResult, err := utils.ValidateMcpConfig([]byte(req.McpServers))
 	if err != nil {
@@ -972,6 +1026,23 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 		oriInstance.SourceConfig = sourceConfig
 		oriInstance.ProxyProtocol = model.McpProtocol(reqMcpResult.ProtocolType)
 		oriInstance.PublicProxyPath = biz.CreatePublicProxyPath(oriInstance.InstanceID, oriInstance.ProxyProtocol)
+
+		// 如果实例配置了运行环境，当发生上游基础信息变更时，需要同步重建对应的代理 Sidecar 容器
+		if oriInstance.EnvironmentID > 0 {
+			options, errBuild := GContainerBiz.BuildProxySidecarOptions(ctx, oriInstance.InstanceID, reqMcpResult.Url)
+			if errBuild != nil {
+				return nil, fmt.Errorf("failed to build proxy sidecar options: %w", errBuild)
+			}
+			_, _ = GContainerBiz.DeleteContainer(oriInstance)
+			// 重建容器
+			errCreate := GContainerBiz.CreateContainer(ctx, options, int32(oriInstance.EnvironmentID), 30) // 默认 30s 启动超时
+			if errCreate != nil {
+				return nil, fmt.Errorf("failed to recreate proxy sidecar container: %w", errCreate)
+			}
+			oriInstance.ContainerName = options.ContainerName
+			oriInstance.ContainerServiceName = options.ServiceName
+			oriInstance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
+		}
 	}
 
 	// Save to database
@@ -1014,7 +1085,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to get openapi file information")
 	}
 
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, oriInstance.Port, 0, 0, req.OpenapiBaseUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
@@ -1045,6 +1116,14 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 	oriInstance.ContainerIsReady = false
 	oriInstance.IconPath = req.IconPath
 	oriInstance.OpenapiBaseUrl = req.OpenapiBaseUrl
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
+
 	if req.ChooseOpenapiFileID != oriInstance.PackageID {
 		oriInstance.PackageID = req.ChooseOpenapiFileID
 	}
@@ -1140,11 +1219,13 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	case model.McpProtocolStdio:
 		ProxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, "mcp")
+		// For Hosting, we use sidecar's port
+		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), "mcp")
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		ProxyProtocol = oriInstance.McpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, newContainerCreateOptions.Port, req.ServicePath)
+		// For Hosting, we use sidecar's port
+		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), req.ServicePath)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", oriInstance.McpProtocol)
 	}
@@ -1170,6 +1251,14 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	oriInstance.PublicProxyPath = publicProxyPath
 	oriInstance.ProxyProtocol = ProxyProtocol
 	oriInstance.IconPath = req.IconPath
+
+	if req.Headers != nil && len(req.Headers) > 0 {
+		if b, err := json.Marshal(req.Headers); err == nil {
+			oriInstance.Headers = b
+		}
+	} else if len(req.Headers) == 0 && req.Headers != nil {
+		oriInstance.Headers = nil
+	}
 
 	// Save to database
 	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
@@ -1244,9 +1333,9 @@ func (biz *InstanceBiz) UpdateInstanceStatusToPending(ctx context.Context, insta
 }
 
 // ListTools list tools of instance
-func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain string) ([]mcp.Tool, error) {
+func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, mcpServerUrl string, token string) ([]mcp.Tool, error) {
 	// 获取 mcp 客户端
-	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	mcpClient, err := biz.getMcpClientInfo(instanceID, mcpServerUrl, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
@@ -1260,9 +1349,10 @@ func (biz *InstanceBiz) ListTools(ctx context.Context, instanceID string, domain
 	return tools.Tools, nil
 }
 
-func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolName string, arguments any, domain string) (interface{}, error) {
+// CallTool call tools of instance
+func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolName string, arguments any, mcpServerUrl string, token string) (interface{}, error) {
 	// 获取 mcp 客户端
-	mcpClient, err := biz.getMcpClientInfo(instanceID, domain)
+	mcpClient, err := biz.getMcpClientInfo(instanceID, mcpServerUrl, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mcp client: %s", err.Error())
 	}
@@ -1281,7 +1371,7 @@ func (biz *InstanceBiz) CallTool(ctx context.Context, instanceID string, toolNam
 	return resp, nil
 }
 
-func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*client.Client, error) {
+func (biz *InstanceBiz) getMcpClientInfo(instanceID string, mcpServerUrl string, token string) (*client.Client, error) {
 	mcpInstance, err := biz.GetInstance(instanceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get instance: %s", err.Error())
@@ -1290,22 +1380,44 @@ func (biz *InstanceBiz) getMcpClientInfo(instanceID string, domain string) (*cli
 		return nil, fmt.Errorf("instance does not exist")
 	}
 
-	tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list tokens: %s", err.Error())
-	}
-
-	var defaultTokens = getDefaultToken(tokens)
-	// 访问头
 	listToolsHeader := map[string]string{}
-	if defaultTokens != nil {
-		listToolsHeader["Authorization"] = defaultTokens.Token
+
+	// 根据要求：统一严格使用传入的 token。如果外部没有传入，但是实例开启了 token 验证，则去数据库取默认 token 兼容旧的逻辑。
+	if token != "" {
+		listToolsHeader["Authorization"] = token
+	} else if mcpInstance.EnabledToken {
+		tokens, err := mysql.McpTokenRepo.ListByInstanceID(context.Background(), mcpInstance.InstanceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list tokens: %s", err.Error())
+		}
+		var defaultTokens = getDefaultToken(tokens)
+		if defaultTokens != nil {
+			listToolsHeader["Authorization"] = defaultTokens.Token
+		}
 	}
 
-	// 外部访问地址
-	mcpServerUrl := domain
+	// Validate mcpServerUrl
+	if mcpServerUrl == "" {
+		return nil, fmt.Errorf("mcpServerUrl is required")
+	}
 
-	// 给该 mcp 实例创建对应的 http client
+	// 将前端传来的外部地址（如 http://localhost/mcp-gateway/...）转换为容器内可访问的内部地址
+	// 仅对 PROXY/HOSTING 模式生效（即网关路径），DIRECT 模式的 URL 直接连接外部不做替换
+	internalBase := os.Getenv("MCP_INTERNAL_BASE_URL")
+	if internalBase != "" && mcpInstance.AccessType != model.AccessTypeDirect {
+		// 解析 URL，替换 scheme+host 为内部地址
+		if parsed, parseErr := url.Parse(mcpServerUrl); parseErr == nil {
+			internalParsed, internalErr := url.Parse(internalBase)
+			if internalErr == nil {
+				parsed.Scheme = internalParsed.Scheme
+				parsed.Host = internalParsed.Host
+				mcpServerUrl = parsed.String()
+				fmt.Printf("[DEBUG] getMcpClientInfo: normalized mcpServerUrl to %s\n", mcpServerUrl)
+			}
+		}
+	}
+
+	// Give the mcp instance its corresponding http client
 	var mcpClient *client.Client
 	mcpClient, err = BuildMcpClient(mcpInstance, mcpServerUrl, listToolsHeader)
 	if err != nil {
@@ -1376,4 +1488,24 @@ func getDefaultToken(tokens []*model.McpToken) *model.McpToken {
 		}
 	}
 	return defaultTokens
+}
+
+func (biz *InstanceBiz) getSidecarServiceName(containerName string) string {
+	return containerName + common.SidecarContainerSuffix
+}
+
+// getContainerServiceURL 返回容器服务地址。
+// 在 k8s 模式下，serviceName 与 containerName 不同（如 mcp-instance-xx-service vs mcp-instance-xx-container），
+// 直接使用 serviceName（即 k8s Service DNS）。
+// 在 docker 模式下，serviceName == containerName，使用 sidecar 容器名。
+func (biz *InstanceBiz) getContainerServiceURL(containerName, serviceName string) string {
+	var host string
+	if serviceName != "" && serviceName != containerName {
+		// k8s 模式：Service 名已是正确的 k8s Service DNS
+		host = serviceName
+	} else {
+		// docker 模式：sidecar 是独立容器，用 containerName-sidecar
+		host = biz.getSidecarServiceName(containerName)
+	}
+	return fmt.Sprintf("http://%s:%d/", host, common.GetSidecarPort())
 }

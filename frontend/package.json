@@ -1,6 +1,6 @@
 {
   "name": "qm_mcp_market_admin",
-  "version": "v1.12",
+  "version": "v2.1",
   "private": true,
   "type": "module",
   "engines": {

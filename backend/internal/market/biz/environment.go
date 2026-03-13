@@ -121,46 +121,12 @@ func (biz *EnvironmentBiz) TestEnvironmentConnectivity(ctx context.Context, envi
 
 // testKubernetesConnectivity test Kubernetes connectivity
 func (biz *EnvironmentBiz) testKubernetesConnectivity(ctx context.Context, environment *model.McpEnvironment) (*mcp_environment.TestConnectivityResponse, error) {
-	// Create container runtime configuration
-	config := container.Config{
-		Runtime:    container.RuntimeKubernetes,
-		Namespace:  environment.Namespace,
-		Kubeconfig: common.SetKubeConfig([]byte(environment.Config)),
-		Docker:     container.DockerConfig{Network: "bridge"}, // Default network configuration
-	}
-
-	// Create container runtime entry
-	entry, err := container.NewEntry(config)
+	// Use the dedicated ListNamespaces logic to verify connectivity
+	_, err := biz.ListNamespaces(ctx, environment.Config, model.McpEnvironmentKubernetes)
 	if err != nil {
 		return &mcp_environment.TestConnectivityResponse{
 			Success: false,
-			Message: "Kubernetes client initialization failed",
-		}, nil
-	}
-
-	// Check if it's Kubernetes runtime
-	if !entry.IsKubernetes() {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "runtime type error",
-		}, nil
-	}
-
-	// Get K8s entry
-	k8sRuntime := entry.GetK8sRuntime()
-	if k8sRuntime == nil {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "Kubernetes client acquisition failed",
-		}, nil
-	}
-
-	// Test connection - try to get node information
-	containerManager := entry.GetContainerManager()
-	if containerManager == nil {
-		return &mcp_environment.TestConnectivityResponse{
-			Success: false,
-			Message: "container manager acquisition failed",
+			Message: fmt.Sprintf("Kubernetes connection test failed: %v", err),
 		}, nil
 	}
 
@@ -211,6 +177,38 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 		}, nil
 	}
 
+	// Actually test the connection by pinging the Docker client
+	runtime := entry.GetRuntime()
+	if runtime == nil {
+		return &mcp_environment.TestConnectivityResponse{
+			Success: false,
+			Message: "Docker runtime initialization failed",
+		}, nil
+	}
+
+	// Type assertion to get the DockerRuntime
+	if dockerRuntime, ok := runtime.(*container.DockerRuntime); ok {
+		cli := dockerRuntime.GetClient()
+		if cli == nil {
+			return &mcp_environment.TestConnectivityResponse{
+				Success: false,
+				Message: "docker client is not initialized (initialization failed earlier)",
+			}, nil
+		}
+		// Try to ping the docker engine
+		if _, err := cli.Ping(ctx); err != nil {
+			return &mcp_environment.TestConnectivityResponse{
+				Success: false,
+				Message: fmt.Sprintf("failed to connect to Docker engine: %v", err),
+			}, nil
+		}
+	} else {
+		return &mcp_environment.TestConnectivityResponse{
+			Success: false,
+			Message: "failed to cast to Docker runtime",
+		}, nil
+	}
+
 	details := "Docker connection test successful"
 	if environment.Config != "" {
 		details += fmt.Sprintf(", using configuration: %s", environment.Config)
@@ -225,48 +223,48 @@ func (biz *EnvironmentBiz) testDockerConnectivity(ctx context.Context, environme
 // ListNamespaces gets namespace list (only supports Kubernetes environment)
 func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, environmentType model.McpEnvironmentType) ([]string, error) {
 	if environmentType != model.McpEnvironmentKubernetes {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeOnlyK8sSupportNamespace))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeOnlyK8sSupportNamespace))
 	}
 
 	// Validate if config data is valid YAML format
 	var yamlData interface{}
 	if err := yaml.Unmarshal([]byte(config), &yamlData); err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigFormatError)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigFormatError), err)
 	}
 
 	// Validate if it's a valid kubeconfig structure
 	var kubeconfigStruct map[string]interface{}
 	if err := yaml.Unmarshal([]byte(config), &kubeconfigStruct); err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigParseFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigParseFailure), err)
 	}
 
 	// Check required kubeconfig fields
 	if _, exists := kubeconfigStruct["apiVersion"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "apiVersion"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "apiVersion"))
 	}
 	if _, exists := kubeconfigStruct["kind"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "kind"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "kind"))
 	}
 	if _, exists := kubeconfigStruct["clusters"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "clusters"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "clusters"))
 	}
 	if _, exists := kubeconfigStruct["contexts"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "contexts"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "contexts"))
 	}
 	if _, exists := kubeconfigStruct["users"]; !exists {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "users"))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigMissingField, "users"))
 	}
 
 	// Convert kubeconfigStruct to YAML string
 	configYAML, err := yaml.Marshal(kubeconfigStruct)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigYamlConversionFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigYamlConversionFailure), err)
 	}
 
 	// Use the fixed SetKubeConfig function
 	kubeconfig := common.SetKubeConfig([]byte(configYAML))
 	if kubeconfig == nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeKubeconfigConversionFailure))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeKubeconfigConversionFailure))
 	}
 
 	// Create container runtime configuration
@@ -280,18 +278,18 @@ func (biz *EnvironmentBiz) ListNamespaces(ctx context.Context, config string, en
 	// Create container runtime entry
 	entry, err := container.NewEntry(containerConfig)
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeK8sClientInitFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeK8sClientInitFailure), err)
 	}
 
 	// Check if it's Kubernetes runtime
 	if !entry.IsKubernetes() {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeRuntimeTypeError))
+		return nil, fmt.Errorf("%s", i18n.FormatWithContext(ctx, i18n.CodeRuntimeTypeError))
 	}
 
 	// Get K8s entry
 	namespaces, err := entry.ListNamespaces()
 	if err != nil {
-		return nil, fmt.Errorf(i18n.FormatWithContext(ctx, i18n.CodeListNamespacesFailure)+": %w", err)
+		return nil, fmt.Errorf("%s: %w", i18n.FormatWithContext(ctx, i18n.CodeListNamespacesFailure), err)
 	}
 	return namespaces, nil
 }

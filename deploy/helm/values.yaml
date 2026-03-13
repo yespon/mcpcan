@@ -1,0 +1,244 @@
+# =============================================================================
+# MCPCan Helm Chart Configuration
+# =============================================================================
+# This file contains all configurable values for the MCPCan deployment.
+# Modify these values according to your environment requirements.
+
+# =============================================================================
+# Global Configuration
+# =============================================================================
+global:
+  cn: false
+  # Domain name for the application (optional)
+  # Example: "mcpcan.example.com"
+  domain: ""
+
+  # Application version tag
+  version: v2.1
+
+  # Container registry for all images (unified: itqm-private CCR is accessible from CN servers)
+  registry: ccr.ccs.tencentyun.com/itqm-private
+
+  # Public registry URL for Docker Hub (used for external release / 77kymo)
+  # Note: docker.io is blocked on CN servers, do not use for K8s deployments
+  publicRegistry: 77kymo
+
+  # Image pull policy for all containers
+  # Options: Always, IfNotPresent, Never
+  imagePullPolicy: Always
+
+  imagePullSecrets: []
+  registryAuth:
+    enabled: false
+    createSecret: false
+    secretName: "mcpcan-registry-auth"
+    server: ""
+    username: ""
+    password: ""
+
+  # Used to override default image tags
+  enabledPreLoadImages: false
+
+  # Image tags for all services
+  images:
+    # 基础设施镜像：走腾讯 CCR (itqm-private)，国内服务器可直接拉取
+    busybox: "busybox:1.36"
+    mysql: "mysql:8.0.30"
+    redis: "redis:6-alpine"
+    mcpEntry: "mcp-entry:v3.5"
+    mcpHosting: "mcp-hosting:v4"
+    openapiToMcp: "openapi-to-mcp:v0.2.7"
+    # 自研业务镜像：走 77kymo (Docker Hub)
+    mcpMarket: "mcp-market:v2.1"
+    mcpAuthz: "mcp-authz:v2.1"
+    mcpWeb: "mcp-web:v2.1"
+
+  # Application secret key
+  appSecret: "MrKuvLNn0hc1kHRbA6EqjSPj1ecrbPDE"
+
+  # Run mode: "prod" | "demo"
+  runMode: "prod"
+
+  # Code operation mode for services
+  # ⚠️ mcp-dev 命名空间固定使用 OpenCode，不可更换
+  codeMode: "OpenCode"
+
+  # Host storage configuration
+  hostStorage:
+    rootPath: /data/mcpcan
+    staticPath: /data/mcpcan/static
+    codePackagePath: /data/mcpcan/code-package
+    mysqlPath: /data/mcpcan/mysql
+    redisPath: /data/mcpcan/redis
+
+  # Mount storage configuration
+  mountStorage:
+    rootPath: /data/mcpcan
+    staticPath: /data/mcpcan/static
+    codePackagePath: /data/mcpcan/code-package
+    openapiFilePath: /data/mcpcan/openapi-file
+    mysqlPath: /var/lib/mysql
+    redisPath: /data/redis
+
+  # web path rule
+  webPathRule: /
+  # api path rule
+  apiPathRule: /api
+  # mcp-gateway path rule : /mcp-gateway (fixed, do not modify)
+
+  # codeUploadMaxFileSize: 100MB (default)
+  codeUploadMaxFileSize: 100
+
+# =============================================================================
+# Kubernetes Access Configuration
+# =============================================================================
+kubeAccess:
+  serviceAccountName: mcpcan-user
+  clusterRoleBindingName: mcpcan-user-cluster-role-binding
+  clusterRoleName: mcpcan-user-cluster-role
+
+# =============================================================================
+# Infrastructure Configuration
+# =============================================================================
+infrastructure:
+  # MySQL Database Configuration
+  mysql:
+    enabled: true
+    auth:
+      rootPassword: dev-root-password
+      database: mcp_dev
+      username: mcp_user
+      password: dev-password
+    name: mysql
+    service:
+      name: mysql-svc
+      port: 3306
+      type: ClusterIP
+      enabledNodePort: true
+      nodePort: 31306
+    hostPath:
+      enabled: true
+      name: mysql-hostpath
+      type: DirectoryOrCreate
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Redis Cache Configuration
+  redis:
+    enabled: true
+    auth:
+      password: dev-redis-password
+      db: 0
+    name: redis
+    service:
+      name: redis-svc
+      port: 6379
+      type: ClusterIP
+      enabledNodePort: true
+      nodePort: 31379
+    hostPath:
+      enabled: true
+      name: redis-hostpath
+      type: DirectoryOrCreate
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+# =============================================================================
+# Services Configuration
+# =============================================================================
+services:
+  entry:
+    enabled: true
+    name: mcp-entry
+    replicas: 1
+    service:
+      name: mcp-entry-svc
+      port: 80
+      type: ClusterIP
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  web:
+    enabled: true
+    name: mcp-web
+    replicas: 1
+    service:
+      name: mcp-web-svc
+      port: 3000
+      type: ClusterIP
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  market:
+    enabled: true
+    name: mcp-market
+    replicas: 1
+    service:
+      name: mcp-market-svc
+      port: 8080
+      type: ClusterIP
+    config:
+      enabled: false
+    persistence:
+      enabled: false
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  authz:
+    enabled: true
+    name: mcp-authz
+    replicas: 1
+    service:
+      name: mcp-authz-svc
+      port: 8081
+      type: ClusterIP
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "64m"
+
+  # Initialization User config (used by Market service)
+  init:
+    loginUser:
+      username: admin
+      password: admin123
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,API-Key,X-API-Key,X-Auth-Key,X-Forwarded-For,X-Real-IP,Accept-Language,X-Trace-ID,X-Instance-ID"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range,Mcp-Session-Id,Date,Set-Cookie,Location,Content-Type,Connection,Transfer-Encoding,X-Accel-Buffering,X-Trace-ID,X-Instance-ID"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+  tls:
+    createSecret: true
+    enabled: false
+    secretName: "domain-tls"
+    crt: |
+      -----BEGIN CERTIFICATE-----
+      ...
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      ...
+      -----END PRIVATE KEY-----
+
+nodeSelector: {}

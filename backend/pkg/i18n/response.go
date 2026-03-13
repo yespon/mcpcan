@@ -27,7 +27,26 @@ func ErrorResponse(c *gin.Context, code int, message string) {
 	if message == "" {
 		message = GetLocalizedMessageWithGin(c, code)
 	}
-	c.JSON(http.StatusOK, Response{
+
+	status := http.StatusInternalServerError
+	switch {
+	case code == CodeSuccess:
+		status = http.StatusOK
+	case code == CodeBadRequest || (code >= 1000 && code < 1001) || (code >= 7000 && code < 7100) || (code >= 9100 && code < 9200):
+		status = http.StatusBadRequest
+	case code == CodeUnauthorized || code == CodeInvalidToken || code == CodeTokenExpired || code == CodeMissingToken || (code >= 8100 && code < 8114):
+		status = http.StatusUnauthorized
+	case code == CodeForbidden || code == CodeInsufficientPermissions || code == CodeAccessDenied || (code >= 3000 && code < 3100):
+		status = http.StatusForbidden
+	case code == CodeNotFound || code == CodeResourceNotFound || (code >= 1003 && code < 1004) || code == CodeUserNotFound:
+		status = http.StatusNotFound
+	case code == CodeMethodNotAllowed:
+		status = http.StatusMethodNotAllowed
+	case code == CodeTooManyRequests:
+		status = http.StatusTooManyRequests
+	}
+
+	c.JSON(status, Response{
 		Code:    code,
 		Message: message,
 		Data:    nil,
@@ -157,15 +176,15 @@ func HandleValidationError(c *gin.Context, message string) {
 
 // HandleAuthError 处理认证错误
 func HandleAuthError(c *gin.Context, message string) {
-	ErrorResponse(c, CodeUnauthorized, message)
+	Unauthorized(c, message)
 }
 
 // HandlePermissionError 处理权限错误
 func HandlePermissionError(c *gin.Context, message string) {
-	ErrorResponse(c, CodeInsufficientPermissions, message)
+	Forbidden(c, message)
 }
 
 // HandleSignatureError 处理签名错误
 func HandleSignatureError(c *gin.Context, message string) {
-	ErrorResponse(c, CodeInvalidSignature, message)
+	BadRequest(c, message)
 }

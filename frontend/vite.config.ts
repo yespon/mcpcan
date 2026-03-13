@@ -10,26 +10,26 @@ import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vu
 export default defineConfig({
   base: './', // 适配 自定义部署路径的情况
   server: {
-    open: true,
+    open: false,
     host: '0.0.0.0',
-    // 配置证书
-    // https: {
-    //   // 注意这里需要将证书配置放在https对象内
-    //   cert: fs.readFileSync(path.resolve(__dirname, './cert.pem')), // 使用path.resolve确保路径正确
-    //   key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
-    // },
-    // 可选配置
-    port: 3000, // HTTPS 默认端口
+    port: 3000,
+    watch: {
+      // macOS + Docker Desktop volume 挂载时 inotify 失效，需要开启轮询
+      usePolling: true,
+      interval: 500,
+    },
     proxy: {
       '/api/authz': {
-        target: 'https://mcp-dev.itqm.com',
+        target: 'http://mcp-entry-svc',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/api': {
-        target: 'http://192.168.5.15:8080',
+        target: 'http://mcp-entry-svc',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/api/, ''),
+      },
+      '/mcp-gateway': {
+        target: 'http://mcp-entry-svc',
+        changeOrigin: true,
       },
     },
   },

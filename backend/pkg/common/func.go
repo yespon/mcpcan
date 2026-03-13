@@ -142,22 +142,58 @@ func MarshalAndAssignConfig(config interface{}) (json.RawMessage, error) {
 	return json.RawMessage(b), nil
 }
 
-// mcp-hosting image ccr.ccs.tencentyun.com/itqm-private/mcp-hosting:v4 or 77kymo/mcp-hosting:v4
-// GetMcpHostingImage returns mcp-hosting image
-func GetMcpHostingImage() string {
-	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
-		return fmt.Sprintf("%s/mcp-hosting:v4", os.Getenv("REGISTORY_IMAGE_MIRROR"))
+// GetImage returns image with mirror prefix or default registry (77kymo)
+func GetImage(name string) string {
+	mirror := os.Getenv("REGISTORY_IMAGE_MIRROR")
+	if mirror == "" {
+		mirror = "77kymo"
 	}
-	return "77kymo/mcp-hosting:v4"
+	return fmt.Sprintf("%s/%s", mirror, name)
 }
 
-// openapi-to-mcp image ccr.ccs.tencentyun.com/itqm-private/openapi-to-mcp:v0.2.7 or 77kymo/openapi-to-mcp:v0.2.7
+// mcp-hosting image 77kymo/mcp-hosting:latest
+// GetMcpHostingImage returns mcp-hosting image
+func GetMcpHostingImage() string {
+	return GetImage("mcp-hosting:latest")
+}
+
+// mcp-sidecar image 77kymo/mcp-sidecar:latest
+// GetSidecarImage returns mcp-sidecar image
+func GetSidecarImage() string {
+	return GetImage("mcp-sidecar:latest")
+}
+
+// openapi-to-mcp image 77kymo/openapi-to-mcp:latest
 // GetOpenapiToMcpImage returns openapi-to-mcp image
 func GetOpenapiToMcpImage() string {
-	// get global environment variable REGISTORY_IMAGE_MIRROR
-	if os.Getenv("REGISTORY_IMAGE_MIRROR") != "" {
-		return fmt.Sprintf("%s/openapi-to-mcp:v0.2.7", os.Getenv("REGISTORY_IMAGE_MIRROR"))
+	return GetImage("openapi-to-mcp:latest")
+}
+
+// GetSidecarPort returns sidecar port from env or default 61180
+func GetSidecarPort() int32 {
+	port := os.Getenv(SidecarServerPortEnv)
+	if port == "" {
+		return 61180
 	}
-	return "77kymo/openapi-to-mcp:v0.2.7"
+	var p int
+	fmt.Sscanf(port, "%d", &p)
+	if p == 0 {
+		return 61180
+	}
+	return int32(p)
+}
+
+// GetMcpHostingPort returns mcp-hosting default port from env or default (depending on image/protocol)
+// Note: Hosting port is usually passed from request, but this getter provides a fallback or default for construction
+func GetMcpHostingPort() int32 {
+	port := os.Getenv(HostingServerPortEnv)
+	if port == "" {
+		return 8080 // Default for most hosting images
+	}
+	var p int
+	fmt.Sscanf(port, "%d", &p)
+	if p == 0 {
+		return 8080
+	}
+	return int32(p)
 }

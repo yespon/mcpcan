@@ -64,6 +64,11 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
+	// Register enterprise plugins
+	if err := a.registerEnterprisePlugin(); err != nil {
+		return fmt.Errorf("failed to register enterprise plugin: %w", err)
+	}
+
 	// Setup HTTP server
 	if err := a.setupHTTPServer(); err != nil {
 		return fmt.Errorf("failed to setup HTTP server: %w", err)

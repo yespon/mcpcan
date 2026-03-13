@@ -26,6 +26,17 @@ func (a *App) initRunEnvironment(ctx context.Context) error {
 	migrationName := "init_run_environment"
 	_, err := mysql.McpMigrationRepo.FindByName(ctx, migrationName)
 	if err == nil {
+		// Migration applied, but let's check if we need to repair existing default environment
+		existing, err := mysql.McpEnvironmentRepo.FindByName(ctx, cfg.Name)
+		if err == nil && existing != nil && existing.Config == "" && existing.Level == model.McpEnvironmentLevelSystem {
+			fmt.Printf("Repairing default environment '%s' configuration...\n", existing.Name)
+			if existing.Environment == model.McpEnvironmentDocker {
+				existing.Config = fmt.Sprintf("host: %s\nnetwork: %s", cfg.Docker.Host, cfg.Docker.Network)
+			}
+			if err := mysql.McpEnvironmentRepo.Update(ctx, existing); err != nil {
+				fmt.Printf("Failed to repair environment: %v\n", err)
+			}
+		}
 		return nil
 	}
 	if err != gorm.ErrRecordNotFound {
@@ -158,11 +169,13 @@ func (a *App) createDockerEnv(ctx context.Context, cfg common.RunEnvironmentConf
 	// Note: We do not support loading TLS certificates from file configuration anymore.
 	// Config file only supports local docker.sock. Non-local environments must be configured via system backend.
 	// Prepare DB config
+	configStr := fmt.Sprintf("host: %s\nnetwork: %s", dockerCfg.Host, dockerCfg.Network)
 	env := &model.McpEnvironment{
 		Name:          name,
 		Environment:   model.McpEnvironmentDocker,
 		DockerHost:    dockerCfg.Host,
 		DockerNetwork: dockerCfg.Network,
+		Config:        configStr,
 		CreatorID:     creatorID,
 		Level:         model.McpEnvironmentLevelSystem,
 	}

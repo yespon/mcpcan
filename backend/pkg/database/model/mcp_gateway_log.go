@@ -32,12 +32,15 @@ const (
 	EventProxyErrorLog           Event = "proxy.error.log"
 	EventUpstreamConnInterrupted Event = "upstream.connection.interrupted"
 	EventUpstreamError           Event = "upstream.error"
+	EventAuthSuccess             Event = "auth.success"
+	EventAuthFailed              Event = "auth.failed"
 )
 
 type GatewayLog struct {
 	ID         uint            `gorm:"primaryKey"`
 	TraceID    string          `gorm:"size:100;not null;default:'';comment:trace ID" json:"traceID"`
 	InstanceID string          `gorm:"size:100;not null;comment:instance ID" json:"instanceID"`
+	ToolName   string          `gorm:"size:100;not null;default:'';comment:tool name" json:"toolName"`
 	Token      string          `gorm:"size:1000;not null;default:'';comment:token" json:"token"`
 	Usages     string          `gorm:"size:1000;not null;default:'';comment:usage scenarios" json:"usages"`
 	Log        json.RawMessage `gorm:"type:text;not null;comment:log details" json:"log"`

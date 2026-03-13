@@ -270,6 +270,7 @@
               {{ t('mcp.instance.action.probe') }}
             </el-button>
             <el-button
+              v-if="!isOpenCodeMode"
               type="primary"
               size="small"
               link
@@ -436,7 +437,7 @@
                         </el-icon>
                       </el-tooltip>
                     </div>
-                    <div v-auth="'mcpcan_instance:data_permission'">
+                    <div v-if="!isOpenCodeMode" v-auth="'mcpcan_instance:data_permission'">
                       <el-tooltip
                         :content="t('mcp.instance.action.dataPermission')"
                         placement="top"
@@ -587,6 +588,12 @@ import DataPermissionDialog from '@/components/DataPermissionDialog/index.vue'
 
 const { t } = useI18n()
 const layout = useLayout()
+
+// OpenCode 模式下隐藏企业专属功能（如数据权限）
+const isOpenCodeMode = computed(() => {
+  const appConfig = (window as any).__APP_CONFIG__ || {}
+  return appConfig.CodeMode === 'OpenCode'
+})
 const {
   load,
   query,

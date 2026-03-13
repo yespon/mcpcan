@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
+	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/coze"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -831,9 +833,31 @@ func createDifyTools(domain string, insertInfo *model.InsertIntelligentInfo, mcp
 		gatewayHeader["Authorization"] = token
 	}
 
+	// 组装网关可访问层首选地址
+	mcpServerInternalUrl := ""
+	if mcpInstance.AccessType == model.AccessTypeDirect {
+		_, _, mcpConfig, _ := mcpInstance.GetSourceConfig()
+		if mcpConfig != nil {
+			mcpServerInternalUrl = mcpConfig.URL
+		}
+		if mcpServerInternalUrl == "" {
+			mcpServerInternalUrl = mcpInstance.ContainerServiceURL
+		}
+	} else {
+		// 使用配置中的域名 Host，确保通过域名请求网关触发中间件
+		host := strings.TrimRight(config.GetConfig().Market.Host, "/")
+		if host == "" {
+			return fmt.Errorf("domain is required for proxy/hosting mode requests in intelligent task")
+		}
+		if !strings.HasPrefix(host, "http") {
+			host = "http://" + host
+		}
+		mcpServerInternalUrl = fmt.Sprintf("%s%s", host, mcpInstance.PublicProxyPath)
+	}
+
 	var mcpClient *client.Client
 	var err error
-	mcpClient, err = biz.BuildMcpClient(mcpInstance, mcpInstance.ContainerServiceURL, listToolsHeaders)
+	mcpClient, err = biz.BuildMcpClient(mcpInstance, mcpServerInternalUrl, listToolsHeaders)
 	if err != nil {
 		return fmt.Errorf("create mcp client failed: %s", err.Error())
 	}

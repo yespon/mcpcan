@@ -99,8 +99,8 @@ func GetLocalizedMessage(code int, lang SupportedLanguage, args ...interface{}) 
 	// 获取消息模板
 	template := getMessageTemplate(lang, code)
 
-	// 如果有参数，进行格式化
-	if len(args) > 0 {
+	// 如果有参数且模板包含占位符，进行格式化
+	if len(args) > 0 && strings.Contains(template, "%") {
 		return fmt.Sprintf(template, args...)
 	}
 

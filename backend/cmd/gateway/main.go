@@ -1,3 +1,5 @@
+// Deprecated: 旧的网关启动入口，系统已迁移至 Traefik + Auth + Sidecar 模式。
+// 此入口已不再使用，待新模式验证后将被清理。
 package main
 
 import (

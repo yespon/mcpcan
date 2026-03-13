@@ -96,18 +96,18 @@ func (s *InstanceService) EditHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Get original instance information
 	oriInstance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		common.GinError(c, i18nresp.CodeResourceNotFound, fmt.Sprintf("failed to get instance information: %s", err.Error()))
 		return
 	}
 	if oriInstance == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		common.GinError(c, i18nresp.CodeResourceNotFound, "instance does not exist")
 		return
 	}
 
@@ -247,13 +247,17 @@ func (s *InstanceService) DeleteHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Use InstanceService to handle request
 	result, err := biz.GInstanceBiz.DeleteInstance(req.InstanceId)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "not exist") {
+			common.GinError(c, i18nresp.CodeResourceNotFound, err.Error())
+			return
+		}
 		common.GinError(c, i18nresp.CodeInternalError, err.Error())
 		return
 	}
@@ -351,15 +355,24 @@ func (s *InstanceService) detail(req *instancepb.DetailRequest) (*instancepb.Det
 
 	// Build response
 	resp := &instancepb.DetailResp{
-		InstanceId:     instance.InstanceID,
-		Name:           instance.InstanceName,
-		Status:         string(instance.Status),
-		AccessType:     pbAccessType,
-		McpProtocol:    pbMcpProtocol,
-		Notes:          instance.Notes,
-		IconPath:       instance.IconPath,
-		EnabledToken:   instance.EnabledToken,
-		OpenapiBaseUrl: instance.OpenapiBaseUrl,
+		InstanceId:      instance.InstanceID,
+		Name:            instance.InstanceName,
+		Status:          string(instance.Status),
+		AccessType:      pbAccessType,
+		McpProtocol:     pbMcpProtocol,
+		Notes:           instance.Notes,
+		IconPath:        instance.IconPath,
+		EnabledToken:    instance.EnabledToken,
+		OpenapiBaseUrl:  instance.OpenapiBaseUrl,
+		PublicProxyPath: instance.PublicProxyPath,
+	}
+
+	// 填充实例级 headers（通用：所有接入类型都需要回填）
+	if len(instance.Headers) > 0 {
+		headersMap := make(map[string]string)
+		if err := json.Unmarshal(instance.Headers, &headersMap); err == nil {
+			resp.Headers = headersMap
+		}
 	}
 
 	// Add specific fields based on access type
@@ -894,18 +907,18 @@ func (s *InstanceService) UpdateOpenapiHandler(c *gin.Context) {
 
 	// Validate required fields
 	if req.InstanceId == "" {
-		common.GinError(c, i18nresp.CodeInternalError, "missing required field: instanceId")
+		common.GinError(c, i18nresp.CodeParameterRequired, "missing required field: instanceId")
 		return
 	}
 
 	// Get original instance information
 	oriInstance, err := biz.GInstanceBiz.GetInstance(req.InstanceId)
 	if err != nil {
-		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to get instance information: %s", err.Error()))
+		common.GinError(c, i18nresp.CodeResourceNotFound, fmt.Sprintf("failed to get instance information: %s", err.Error()))
 		return
 	}
 	if oriInstance == nil {
-		common.GinError(c, i18nresp.CodeInternalError, "instance does not exist")
+		common.GinError(c, i18nresp.CodeResourceNotFound, "instance does not exist")
 		return
 	}
 
@@ -944,7 +957,7 @@ func (s *InstanceService) ListToolsHandler(c *gin.Context) {
 		return
 	}
 
-	tools, err := biz.GInstanceBiz.ListTools(c.Request.Context(), req.InstanceId, req.Domain)
+	tools, err := biz.GInstanceBiz.ListTools(c.Request.Context(), req.InstanceId, req.McpServerUrl, req.Token)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to list tools: %s", err.Error()))
 		return
@@ -966,7 +979,7 @@ func (s *InstanceService) CallToolHandler(c *gin.Context) {
 		}
 	}
 
-	resp, err := biz.GInstanceBiz.CallTool(c.Request.Context(), req.InstanceId, req.ToolName, args, req.Domain)
+	resp, err := biz.GInstanceBiz.CallTool(c.Request.Context(), req.InstanceId, req.ToolName, args, req.McpServerUrl, req.Token)
 	if err != nil {
 		common.GinError(c, i18nresp.CodeInternalError, fmt.Sprintf("failed to call tool: %s", err.Error()))
 		return

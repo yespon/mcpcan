@@ -1,0 +1,21 @@
+# agentgateway sidecar 配置模板 - Proxy 实例（外部 HTTP/SSE 代理）
+# 占位符：
+#   {{INSTANCE_PATH}}  - 路由路径前缀，如 /mcp-gateway/xxx-id/
+#   {{REMOTE_HOST}}    - 远端 MCP 服务 host，如 api.example.com
+#   {{REMOTE_PORT}}    - 远端 MCP 服务端口整数，如 443（u16，不加引号）
+#   {{REMOTE_PATH}}    - 远端 MCP 服务路径，如 /mcp
+#   {{REMOTE_SCHEME}}  - 协议，http 或 https
+binds:
+  - port: 80
+    listeners:
+      - routes:
+          - backends:
+              - mcp:
+                  instancePath: "{{INSTANCE_PATH}}"
+                  prefixMode: "always"
+                  targets:
+                    - name: remote-mcp
+                      sse:
+                        host: "{{REMOTE_HOST}}"
+                        port: REMOTE_PORT_PLACEHOLDER
+                        path: "{{REMOTE_PATH}}"

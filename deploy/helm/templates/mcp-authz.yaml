@@ -1,0 +1,103 @@
+{{- if .Values.services.authz.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.authz.name | default "mcp-authz" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.authz.name | default "mcp-authz" }}
+    app.kubernetes.io/name: {{ .Values.services.authz.name | default "mcp-authz" }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: authz
+    app.kubernetes.io/version: {{ .Values.global.version }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.services.authz.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.authz.name | default "mcp-authz" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.authz.name | default "mcp-authz" }}
+        app.kubernetes.io/name: {{ .Values.services.authz.name | default "mcp-authz" }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: authz
+        app.kubernetes.io/version: {{ .Values.global.version }}
+        {{- include "mcpcan.selectorLabels" . | nindent 8 }}
+      annotations:
+        mcpcan.io/version: {{ .Values.global.version }}
+        mcpcan.io/revision: "{{ .Release.Revision }}"
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- include "mcpcan.imagePullSecrets" . | nindent 6 }}
+      initContainers:
+      - name: wait-deps
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.busybox }}
+        command:
+        - sh
+        - -c
+        - >-
+          until nc -z {{ .Values.infrastructure.mysql.service.name | default "mysql" }} {{ .Values.infrastructure.mysql.service.port | default 3306 }}; do echo "waiting for mysql"; sleep 2; done;
+          until nc -z {{ .Values.infrastructure.redis.service.name | default "redis" }} {{ .Values.infrastructure.redis.service.port | default 6379 }}; do echo "waiting for redis"; sleep 2; done;
+          until wget -qO- http://{{ .Values.services.market.service.name | default "mcp-market-svc" }}:{{ .Values.services.market.service.port | default 8080 }}/health >/dev/null 2>&1; do echo "waiting for mcp-market"; sleep 3; done
+      containers:
+      - name: {{ .Values.services.authz.name | default "mcp-authz" }}
+        image: {{ .Values.global.registry }}/{{ .Values.global.images.mcpAuthz }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        {{- if .Values.services.authz.service.port }}
+        ports:
+        - containerPort: {{ .Values.services.authz.service.port }}
+          protocol: TCP
+        {{- end }}
+        env:
+        - name: CODE_MODE
+          value: {{ .Values.global.codeMode | default "OpenCode" }}
+        {{- if .Values.services.authz.resources }}
+        resources:
+          {{- toYaml .Values.services.authz.resources | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: "/app/config"
+          readOnly: true
+        - name: data-volume
+          mountPath: {{ .Values.global.mountStorage.rootPath | default "/data/mcpcan" }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mcp-config
+          items:
+          - key: authz.yaml
+            path: authz.yaml
+      - name: data-volume
+        hostPath:
+          path: {{ .Values.global.hostStorage.rootPath | default "/data/mcpcan" }}
+          type: DirectoryOrCreate
+---
+{{- if .Values.services.authz.service.port }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.services.authz.service.name | default "mcp-authz-svc" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.services.authz.name | default "mcp-authz" }}
+    {{- include "mcpcan.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.services.authz.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ .Values.services.authz.service.port }}
+    targetPort: {{ .Values.services.authz.service.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ .Values.services.authz.name | default "mcp-authz" }}
+{{- end }}
+
+{{- end }}

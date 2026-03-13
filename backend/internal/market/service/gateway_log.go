@@ -50,6 +50,9 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 	if req.Level != gatewaylogpb.Level(0) {
 		filters["level"] = protoLevelToInt(req.Level)
 	}
+	if req.ToolName != "" {
+		filters["toolName"] = req.ToolName
+	}
 	if len(req.Usages) > 0 {
 		filters["usages"] = req.Usages
 	}
@@ -80,6 +83,7 @@ func (s *GatewayLogService) FindHandler(c *gin.Context) {
 			CreatedAt:  g.CreatedAt.Format(time.RFC3339Nano),
 			Log:        string(g.Log),
 			TraceId:    g.TraceID,
+			ToolName:   g.ToolName,
 		})
 	}
 

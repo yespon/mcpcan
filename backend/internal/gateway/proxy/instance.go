@@ -1,7 +1,10 @@
+// Deprecated: 旧的网关代理逻辑，系统已迁移至 Traefik + Auth + Sidecar 模式。
+// 此部分逻辑仅供参考，待新模式验证通过后将被清理。
 package proxy
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -140,6 +143,20 @@ func (s *McpInstanceService) buildInstanceInfo(instance *model.McpInstance) (*In
 	}
 
 	// todo: get tokens from db
+
+	if instance.Headers != nil && len(instance.Headers) > 0 {
+		var headers map[string]string
+		if err := json.Unmarshal(instance.Headers, &headers); err == nil && len(headers) > 0 {
+			if mcpConfig.Headers == nil {
+				mcpConfig.Headers = make(map[string]string)
+			}
+			for k, v := range headers {
+				mcpConfig.Headers[k] = v
+			}
+		} else if err != nil {
+			logger.Warn("Failed to unmarshal instance headers", zap.Error(err), zap.String("instanceID", instance.InstanceID))
+		}
+	}
 
 	return &InstanceInfo{
 		InstanceID:       instance.InstanceID,

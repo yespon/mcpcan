@@ -22,19 +22,34 @@ type Config struct {
 	ServiceName string                `mapstructure:"-"`
 	VersionInfo *version.VersionInfo  `mapstructure:"-"`
 	Server      common.ServerConfig   `mapstructure:"server"`
-	Services    common.Services       `mapstructure:"services"`
 	Database    common.DatabaseConfig `mapstructure:"database"`
 	Code        common.CodeConfig     `mapstructure:"code"`
 	Market      common.MarketConfig   `mapstructure:"market"`
 	Log         common.LogConfig      `mapstructure:"log"`
 	Secret      string                `mapstructure:"secret"`
-	Storage     common.StorageConfig  `mapstructure:"storage"`
+	// Storage configuration
+	Storage common.StorageConfig `mapstructure:"storage"`
+	// Global Domain
+	Domain string `mapstructure:"domain"`
 	// RunEnvironment configuration
 	RunEnvironment common.RunEnvironmentConfig `mapstructure:"runEnvironment"`
 	// DemoMaxInstances specifies the maximum number of active instances allowed in demo mode
-	DemoMaxInstances int `mapstructure:"demoMaxInstances"`
-	// Domain specifies the official domain name for the service
-	Domain string `mapstructure:"domain"`
+	DemoMaxInstances int            `mapstructure:"demoMaxInstances"`
+	Init             InitUserConfig `mapstructure:"init"`
+	// CodeMode indicates whether it is OpenCode or EnterpriseCode
+	CodeMode common.CodeMode `mapstructure:"-"`
+}
+
+// InitUserConfig represents admin user initialization configuration
+type InitUserConfig struct {
+	AdminUsername        string `mapstructure:"admin_username"`
+	AdminPassword        string `mapstructure:"admin_password"`
+	AdminNickname        string `mapstructure:"admin_nickname"`
+	AdminRoleName        string `mapstructure:"admin_role_name"`
+	AdminRoleDescription string `mapstructure:"admin_role_description"`
+	AdminRoleLevel       int    `mapstructure:"admin_role_level"`
+	AdminDataScope       string `mapstructure:"admin_data_scope"`
+	AdminDeptName        string `mapstructure:"admin_dept_name"`
 }
 
 var serviceName = "market"
@@ -118,9 +133,21 @@ func Load() (*Config, error) {
 		config.DemoMaxInstances = 5
 	}
 
+	// Validate mandatory ServiceName
+	if strings.TrimSpace(config.Server.ServiceName) == "" {
+		return nil, fmt.Errorf("server.serviceName is required in config, but not found")
+	}
+
 	// Append Version information
 	config.ServiceName = serviceName
 	config.VersionInfo = version.GetVersionInfo()
+
+	// Prioritize CodeMode from environment variable for runtime switching (Single Image strategy)
+	if envCodeMode := os.Getenv("CODE_MODE"); envCodeMode != "" {
+		config.CodeMode = common.CodeMode(envCodeMode)
+	} else {
+		config.CodeMode = common.CodeMode(config.VersionInfo.CodeMode)
+	}
 
 	// If Market.Host is empty, fallback to top-level Domain
 	if strings.TrimSpace(config.Market.Host) == "" && config.Domain != "" {

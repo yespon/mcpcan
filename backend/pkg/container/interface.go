@@ -62,7 +62,26 @@ type ContainerCreateOptions struct {
 	RestartPolicy    string             `json:"restartPolicy"`    // restart policy (Docker: no/always/unless-stopped/on-failure)
 	WorkingDir       string             `json:"workingDir"`       // working directory
 	ImagePullSecrets []string           `json:"imagePullSecrets"` // image pull secret names list (only applicable to Kubernetes)
+	Platform         string             `json:"platform"`         // container platform (Docker: --platform, e.g. linux/amd64)
+	Sidecar          *SidecarOptions    `json:"sidecar"`          // optional sidecar container configuration
+	// ConfigContent 是需要写入文件并挂载进容器的配置内容
+	// 非空时，docker 层会自动写入临时文件并通过 -v 挂载，CommandArgs 中应使用 -f 引用挂载路径
+	ConfigContent string `json:"configContent,omitempty"`
+}
 
+// SidecarOptions sidecar container options
+type SidecarOptions struct {
+	ImageName     string            `json:"imageName"`
+	ContainerName string            `json:"containerName"`
+	Port          int32             `json:"port"`
+	Command       []string          `json:"command"`
+	CommandArgs   []string          `json:"commandArgs"`
+	EnvVars       map[string]string `json:"envVars"`
+	Labels        map[string]string `json:"labels"`
+	Platform      string            `json:"platform"`
+	// ConfigContent 是需要写入文件并挂载进容器的配置内容（如 agentgateway YAML/JSON）
+	// 非空时，docker 层会自动写入临时文件并通过 -v 挂载，CommandArgs 中应使用 -f 引用挂载路径
+	ConfigContent string `json:"configContent,omitempty"`
 }
 
 // ContainerInfo container information
@@ -111,6 +130,9 @@ type ContainerManager interface {
 	GetWarningEvents(ctx context.Context, containerName string) ([]ContainerEvent, error)
 	// GetLogs gets container logs
 	GetLogs(ctx context.Context, containerName string, lines int64) (string, error)
+	// ListByLabel lists all containers/deployments that have ALL of the given labels set to the given values.
+	// Used by orphan cleanup to find containers that have drifted out of system control.
+	ListByLabel(ctx context.Context, labels map[string]string) ([]ContainerInfo, error)
 }
 
 // VolumeInfo volume information

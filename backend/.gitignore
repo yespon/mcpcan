@@ -50,4 +50,9 @@ test/go-test/config.json
 .vscode
 __debug_bin*
 
+# Air hot-reload build output
+tmp/
+
+# Air config (managed by docker-compose mounts)
+.air.toml
 

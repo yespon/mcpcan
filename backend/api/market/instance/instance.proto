@@ -114,17 +114,19 @@ message CreateRequest {
   string iconPath = 20;
   // @inject_tag: json:"enabledToken" form:"enabledToken" desc:"Enable tokens"
   bool enabledToken = 21;
+  // @inject_tag: json:"headers" form:"headers" desc:"Custom headers"
+  map<string, string> headers = 22;
 }
 
 // McpToken MCP token
 message McpToken {
-  // @inject_tag: json:"id" desc:"Token ID"
+  // @inject_tag: json:"id" form:"id" desc:"Primary key ID"
   int64 id = 1;
-  // @inject_tag: json:"token" desc:"Token content"
-  string token = 2;
-  // @inject_tag: json:"headers" desc:"Optional custom headers"
-  map<string, string> headers = 3;
-  // @inject_tag: json:"enabled" desc:"Whether to enable the token"
+  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  string instanceId = 2;
+  // @inject_tag: json:"token" form:"token" desc:"Token value"
+  string token = 3;
+  // @inject_tag: json:"enabled" form:"enabled" desc:"Whether enabled"
   bool enabled = 4;
   // @inject_tag: json:"expireAt" desc:"Expiration time"
   int64 expireAt = 5;
@@ -132,8 +134,6 @@ message McpToken {
   int64 publishAt = 6;
   // @inject_tag: json:"usages" desc:"List of usage scenarios"
   repeated string usages = 7;
-  // @inject_tag: json:"instanceId" desc:"Instance ID"
-  string instanceId = 8;
 }
 
 // CreateResp create instance response
@@ -214,11 +214,15 @@ message DetailResp {
   string containerLastMessage = 28;
   // @inject_tag: json:"openapiBaseUrl" desc:"Base access path"
   string openapiBaseUrl = 29;
+  // @inject_tag: json:"publicProxyPath" desc:"MCP public proxy service path"
+  string publicProxyPath = 30;
+  // @inject_tag: json:"headers" desc:"Custom headers"
+  map<string, string> headers = 31;
 }
 
 // EditRequest edit instance request
 message EditRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
   // @inject_tag: json:"name" form:"name" desc:"Instance name"
   string name = 2;
@@ -246,6 +250,8 @@ message EditRequest {
   string servicePath = 13;
   // @inject_tag: json:"iconPath" form:"iconPath" desc:"Icon path"
   string iconPath = 14;
+  // @inject_tag: json:"headers" form:"headers" desc:"Custom headers"
+  map<string, string> headers = 15;
 }
 
 // EditResp edit instance response
@@ -356,12 +362,14 @@ message ListResp {
     string openapiBaseUrl = 28;
     // @inject_tag: json:"imageAddress" desc:"Image address"
     string imageAddress = 29;
+    // @inject_tag: json:"headers" desc:"Custom headers"
+    map<string, string> headers = 30;
   }
 }
 
 // RestartRequest restart instance request
 message RestartRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
 }
 
@@ -764,11 +772,13 @@ message CreateOpenapiRequest {
   string iconPath = 8;
   // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"Base access path"
   string openapiBaseUrl = 9;
+  // @inject_tag: json:"headers" form:"headers" desc:"Custom headers"
+  map<string, string> headers = 10;
 }
 
 // UpdateOpenapiRequest edit instance request
 message UpdateOpenapiRequest {
-  // @inject_tag: json:"instanceId" form:"instanceId" desc:"Instance ID"
+  // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
   string instanceId = 1;
   // @inject_tag: json:"name" form:"name" desc:"Instance name"
   string name = 2;
@@ -782,13 +792,17 @@ message UpdateOpenapiRequest {
   string iconPath = 6;
   // @inject_tag: json:"openapiBaseUrl" form:"openapiBaseUrl" desc:"Base access path"
   string openapiBaseUrl = 7;
+  // @inject_tag: json:"headers" form:"headers" desc:"Custom headers"
+  map<string, string> headers = 8;
 }
 
 message ListToolsRequest {
     // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
     string instanceId = 1;
-    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
-    string domain = 2;
+    // @inject_tag: json:"mcpServerUrl" form:"mcpServerUrl" desc:"MCP Server Absolute URL"
+    string mcpServerUrl = 2;
+    // @inject_tag: json:"token" form:"token" desc:"Token"
+    string token = 3;
 }
 
 message ListToolsResp {
@@ -797,12 +811,14 @@ message ListToolsResp {
 message CallToolRequest {
     // @inject_tag: json:"instanceId" form:"instanceId" uri:"instanceId" desc:"Instance ID"
     string instanceId = 1;
-    // @inject_tag: json:"domain" form:"domain" desc:"Domain"
-    string domain = 2;
+    // @inject_tag: json:"mcpServerUrl" form:"mcpServerUrl" desc:"MCP Server Absolute URL"
+    string mcpServerUrl = 2;
     // @inject_tag: json:"toolName" form:"toolName" desc:"Tool name"
     string toolName = 3;
     // @inject_tag: json:"arguments" form:"arguments" desc:"Tool arguments"
     string arguments = 4;
+    // @inject_tag: json:"token" form:"token" desc:"Token"
+    string token = 5;
 }
 
 message CallToolResp {
