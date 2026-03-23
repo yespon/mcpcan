@@ -31,7 +31,8 @@ type DeploymentCreateOptions struct {
 	WorkingDir  string            `json:"workingDir,omitempty"`
 
 	// 标签和选择器
-	Labels map[string]string `json:"labels,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"` // K8s only: Traefik routing config goes here to avoid label length/charset limits
 
 	// 重启策略（对于 Deployment 总是 Always）
 	RestartPolicy string `json:"restartPolicy,omitempty"`
@@ -135,9 +136,10 @@ func (dm *DeploymentManager) Create(options DeploymentCreateOptions) (string, er
 	// 构建 Deployment
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      options.AppName,
-			Namespace: targetNamespace,
-			Labels:    labels,
+			Name:        options.AppName,
+			Namespace:   targetNamespace,
+			Labels:      labels,
+			Annotations: options.Annotations,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &options.Replicas,

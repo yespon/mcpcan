@@ -59,6 +59,7 @@ type ContainerCreateOptions struct {
 	Mounts           []k8s.UnifiedMount `json:"mounts"`           // volume mounts
 	ReadinessProbe   *corev1.Probe      `json:"readinessProbe"`   // readiness probe
 	Labels           map[string]string  `json:"labels"`           // labels
+	Annotations      map[string]string  `json:"annotations"`      // annotations (K8s only: used for Traefik routing config to avoid label length/charset limits)
 	RestartPolicy    string             `json:"restartPolicy"`    // restart policy (Docker: no/always/unless-stopped/on-failure)
 	WorkingDir       string             `json:"workingDir"`       // working directory
 	ImagePullSecrets []string           `json:"imagePullSecrets"` // image pull secret names list (only applicable to Kubernetes)

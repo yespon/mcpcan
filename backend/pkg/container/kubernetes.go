@@ -90,6 +90,11 @@ func (kcm *KubernetesContainerManager) Create(ctx context.Context, options Conta
 		deploymentOptions.Labels = options.Labels
 	}
 
+	// Set annotations (if exist) — K8s 下 Traefik 路由配置通过 annotations 传递，规避 label 校验限制
+	if len(options.Annotations) > 0 {
+		deploymentOptions.Annotations = options.Annotations
+	}
+
 	// Set restart policy (if specified)
 	if options.RestartPolicy != "" {
 		deploymentOptions.RestartPolicy = options.RestartPolicy

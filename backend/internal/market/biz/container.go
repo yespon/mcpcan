@@ -997,10 +997,16 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 
 	instancePath := fmt.Sprintf("/%s/%s/", prefix, instanceID)
 
+	// traefik.enable 保留在 labels（合法短键），路由配置迁移到 annotations 避免 K8s label 校验失败
+	// K8s 下 Traefik 通过 Pod annotations 发现路由规则，和 Docker labels 等价
 	labels["traefik.enable"] = "true"
-	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
-	labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = "mcp-gateway-forward-auth@file"
-	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
+
+	// Traefik 路由配置写入 annotations（不受 K8s label 63字符/字符集限制）
+	annotations := map[string]string{
+		fmt.Sprintf("traefik.http.routers.%s.rule", routerName):                               fmt.Sprintf("PathPrefix(`%s`)", instancePath),
+		fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName):                        "mcp-gateway-forward-auth@file",
+		fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName):          fmt.Sprintf("%d", common.GetSidecarPort()),
+	}
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
@@ -1059,11 +1065,12 @@ EOF_STARTUP
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          common.GetSidecarPort(), // Sidecar 监听 80 端口，由 Traefik Label 自动发现
+		Port:          common.GetSidecarPort(), // Sidecar 监听端口，由 Traefik annotations 自动发现
 		Command:       []string{"bash", "-c"}, // Use bash for process substitution
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
 		Labels:        labels,
+		Annotations:   annotations,
 		EnvVars:       envVars,
 		WorkingDir:    "/app",
 	}
