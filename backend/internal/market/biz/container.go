@@ -1038,7 +1038,7 @@ EOF_PROXY
 
 		# Generate initialization script dynamically
 		cat > /app/init/startup.sh << 'EOF_STARTUP'
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "[$(date)] --- Startup Script Stage 1: Sidecar ---"
@@ -1051,7 +1051,7 @@ curl -f '%s' -o /app/run.yaml
 
 echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
 echo "[$(date)] Starting openapi-mcp: --base-url=%s"
-exec /app/openapi-mcp --no-log-truncation --log-file=>(tee debug.log) --extended --http=:%d --base-url=%s run.yaml
+exec /app/openapi-mcp --no-log-truncation --extended --http=:%d --base-url=%s run.yaml
 EOF_STARTUP
 		# Set script execution permissions
 		chmod +x /app/init/startup.sh
@@ -1066,7 +1066,7 @@ EOF_STARTUP
 		ContainerName: containerName,
 		ServiceName:   serviceName,
 		Port:          common.GetSidecarPort(), // Sidecar 监听端口，由 Traefik annotations 自动发现
-		Command:       []string{"bash", "-c"}, // Use bash for process substitution
+		Command:       []string{"/bin/sh", "-c"}, // Use sh (Alpine compatible, no bash dependency)
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
 		Labels:        labels,
