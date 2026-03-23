@@ -76,6 +76,7 @@ const protocolOptions = [
   { label: 'SSE', value: 1 },
   { label: 'STREAMABLE_HTTP', value: 2 },
 ]
+
 /**
  * Handle McpProtocol Changed
  */
@@ -161,3 +162,18 @@ defineExpose({
   handleSaveAsTemplate,
 })
 </script>
+<style lang="scss" scoped>
+.tip {
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  &.tip-warning {
+    background-color: #fff1f0;
+    border-left: 5px solid var(--el-color-danger);
+  }
+  &.tip-primary {
+    background-color: #409eff1a;
+    border-left: 5px solid var(--el-color-primary);
+  }
+}
+</style>

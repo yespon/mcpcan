@@ -7,7 +7,18 @@
     header-class="header-border"
     footer-class="footer-border"
   >
-    <template #title>{{ dialogInfo.title }}</template>
+    <template #title>
+      <div class="flex items-center">
+        <span class="mr-4">{{ dialogInfo.title }}</span>
+        <el-alert
+          :title="locale === 'en' ? 'Note: MCP services imported via OpenAPI will be accessed using the STREAMABLE_HTTP protocol.' : '注：通过 OpenAPI 文档导入的 MCP 服务将默认以 STREAMABLE_HTTP 协议访问'"
+          type="warning"
+          show-icon
+          :closable="false"
+          class="!w-auto !py-1 !my-0 flex-1 justify-start ml-2"
+        />
+      </div>
+    </template>
     <el-splitter v-loading="dialogInfo.loading">
       <el-splitter-panel size="50%" class="p-4">
         <div style="height: 75vh">
@@ -47,6 +58,9 @@
                 :placeholder="t('mcp.instance.openApi.serviceUrl')"
               />
             </el-form-item>
+            <InstanceHeaders
+              v-model:headers="formData.passthroughHeaders"
+            />
             <el-form-item :label="t('mcp.template.formData.notes')" prop="notes">
               <el-input
                 v-model="formData.notes"
@@ -58,9 +72,6 @@
             <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
               <Upload v-model="formData.iconPath"></Upload>
             </el-form-item>
-            <InstanceHeaders
-              v-model:headers="formData.passthroughHeaders"
-            />
           </el-form>
 
           <TokenForm
@@ -200,7 +211,7 @@ const { userInfo } = useUserStore()
 const { envList } = toRefs(useMcpStoreHook())
 const { handleGetEnvList } = useMcpStoreHook()
 const { jumpToPage } = useRouterHooks()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const emit = defineEmits(['on-refresh'])
 const dialogInfo = ref<any>({
   visible: false,
@@ -805,6 +816,19 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+.tip {
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  &.tip-warning {
+    background-color: #fff1f0;
+    border-left: 5px solid var(--el-color-danger);
+  }
+  &.tip-primary {
+    background-color: #409eff1a;
+    border-left: 5px solid var(--el-color-primary);
+  }
+}
 .api-info {
   border: 1px dashed var(--el-color-primary);
 }

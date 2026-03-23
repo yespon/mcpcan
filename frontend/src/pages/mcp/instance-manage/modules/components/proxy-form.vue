@@ -49,10 +49,6 @@
           </el-form-item>
           <!-- Headers 配置：紧跟 mcpServers 下方，创建/编辑均展示 -->
           <InstanceHeaders v-model:headers="pageInfo.formData.headers" />
-          <div
-            class="flex-1 tip tip-primary my-2 line-height-[18px]"
-            v-html="headerContentTips"
-          ></div>
         </el-col>
         <el-col :span="6">
           <div
@@ -103,21 +99,6 @@ For more startup configuration examples of different types, see <a href="#/templ
     : `若需上传代码包部署，需在配置信息中指定工作目录："cwd": "/app/codepkg/[codezip_name]"。
 实例启动时，平台将为当前 MCP 配置自动创建默认运行容器，容器内置 mcp-hosting 托管组件，通过协议适配器将本配置转换为 SSE/Streamable HTTP 协议，同时绑定至0.0.0.0:8080端口对外提供服务；MCPCAN 网关服务将自动探测并识别该容器的网络地址，完成对接。
 更多不同类型的启动配置示例，可参考<a href="#/template-manage">部署模板</a>。`
-})
-
-const headerContentTips = computed(() => {
-  return locale.value === 'en'
-    ? `
-      Notes:
-      <br/>
-      1. Custom headers do not need to be actively submitted by the client; the gateway will automatically include them in requests forwarded to the MCP service.
-      <br/>
-      2. If there are duplicate header names among client request headers, MCP configuration headers, and custom pass-through headers, the precedence order is: custom pass-through headers > MCP configuration headers > client request headers. That is, when retrieving values for duplicate header names, the custom pass-through configuration is used first, followed by the MCP configuration, and finally the value provided by the client request.`
-    : `注意事项：
-      <br/>
-      1.自定义 Header 无需客户端主动提交，网关在转发流量时，会自动将其携带至 MCP 服务的请求中。
-      <br/>
-      2.若客户端请求 Header、MCP 配置 Header、自定义透传 Header 三者存在同名项，优先级顺序为：自定义透传 Header > MCP 配置 Header > 客户端请求 Header。即同名 Header 取值时，优先采用自定义透传配置，其次为 MCP 配置，最后为客户端请求传入的值。`
 })
 
 /**

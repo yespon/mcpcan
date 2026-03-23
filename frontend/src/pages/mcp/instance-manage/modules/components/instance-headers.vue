@@ -1,57 +1,61 @@
 <template>
   <el-form-item prop="headers" class="enabledTransport">
     <template #label>
-      <div class="w-full flex justify-between items-center">
-        <span class="mr-2 pr-4"> 🚀 {{ t('mcp.token.passthrough') }} Headers </span>
-        <div class="center">
-          <div
-            class="cursor-pointer border border-style-solid border-rd-md border-white ml-2 p-1 center bg-gray-600 color-white hover-scale-110"
-            @click="handleAddHeader"
-          >
-            <el-icon>
-              <Plus />
-            </el-icon>
-          </div>
+      <div class="w-full mb-1">
+        <div class="flex items-center text-sm font-bold text-[var(--el-text-color-regular)]">
+          <!-- <span class="mr-2"> 🚀 {{ t('mcp.token.passthrough') }} Headers </span> -->
+          <span class="mr-2">🚀 {{ locale === 'en' ? 'Custom Headers' : '自定义请求头 (Headers)' }}</span>
+        </div>
+        <div class="text-[12px] text-gray-500 font-normal mt-1" style="line-height: 1.6;">
+          {{ locale === 'en' ? 'Used for backend authentication to MCP or OpenAPI services (e.g., API Key, Token). The gateway will attach these automatically; the client does not need to send them.' : '用于后端对 MCP 或 OpenAPI 服务进行隐式鉴权（如 API Key、Token 等）。网关转发时将自动携带，客户端无需感知和传入。' }}
         </div>
       </div>
     </template>
-    <div
-      v-for="(item, index) in localHeaders"
-      :key="index"
-      class="flex items-center my-2 pr-3 w-full"
-    >
-      <el-row :gutter="12" class="flex-sub align-center w-full">
-        <el-col :span="7">
-          <div class="flex h-full items-center justify-end">
-            <el-input
-              v-model="item.key"
-              :placeholder="t('mcp.instance.token.headersKey')"
-              class="flex-sub"
-              @input="updateHeaders"
-            >
-            </el-input>
-            <span class="ml-2">:</span>
-          </div>
-        </el-col>
-        <el-col :span="15" class="flex">
-          <div class="flex w-full">
-            <el-input
-              v-model="item.value"
-              :placeholder="t('mcp.instance.token.headersValue')"
-              class="flex-sub w-full"
-              @input="updateHeaders"
-            ></el-input>
-          </div>
-        </el-col>
-        <el-col :span="2">
-          <div
-            class="cursor-pointer border border-style-solid delete-header border-white px-1 ml-2 center bg-red-100/50 color-white hover-bg-red-400/90 hover-scale-105"
-            @click="handleDeleteHeader(index)"
-          >
-            <el-icon><Minus /></el-icon>
-          </div>
-        </el-col>
-      </el-row>
+
+    <div class="w-full border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50/50 dark:bg-gray-800/50 mt-1">
+      <div v-if="localHeaders.length === 0" class="text-center py-2 text-gray-400 text-sm">
+        <el-empty :image-size="40" :description="locale === 'en' ? 'No custom headers configured' : '暂未配置自定义请求头'" class="my-0 py-0"></el-empty>
+        <el-button plain type="primary" size="small" class="mt-2" @click="handleAddHeader" :icon="Plus">
+          {{ locale === 'en' ? 'Add Header' : '添加请求头' }}
+        </el-button>
+      </div>
+
+      <template v-else>
+        <div
+          v-for="(item, index) in localHeaders"
+          :key="index"
+          class="flex items-center mb-3 last:mb-0 w-full"
+        >
+          <el-row :gutter="12" class="flex-sub align-middle w-full">
+            <el-col :span="9">
+              <el-input
+                v-model="item.key"
+                :placeholder="t('mcp.instance.token.headersKey')"
+                @input="updateHeaders"
+              >
+                <template #prepend>Key</template>
+              </el-input>
+            </el-col>
+            <el-col :span="13">
+              <el-input
+                v-model="item.value"
+                :placeholder="t('mcp.instance.token.headersValue')"
+                @input="updateHeaders"
+              >
+                <template #prepend>Value</template>
+              </el-input>
+            </el-col>
+            <el-col :span="2" class="flex items-center justify-center">
+              <el-button type="danger" plain circle size="small" :icon="Minus" @click="handleDeleteHeader(index)"></el-button>
+            </el-col>
+          </el-row>
+        </div>
+        <div class="mt-2">
+          <el-button plain type="primary" size="small" @click="handleAddHeader" :icon="Plus">
+            {{ locale === 'en' ? 'Add Another Header' : '继续添加' }}
+          </el-button>
+        </div>
+      </template>
     </div>
   </el-form-item>
 </template>
@@ -62,7 +66,7 @@ import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ headers: { key: string; value: string }[] | null | undefined }>()
 const emit = defineEmits(['update:headers'])
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // We need a local array to drive the v-for since props.headers might be object or null
 const localHeaders = ref<{ key: string; value: string }[]>([])
