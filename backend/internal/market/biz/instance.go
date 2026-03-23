@@ -175,7 +175,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 	}
 
 	instanceID := uuid.New().String()
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, common.GetMcpHostingPort(), 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, instanceID, chooseOpenapiFileInfo.OpenapiFileID, common.GetMcpHostingPort(), 0, 0, req.OpenapiBaseUrl, req.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container options: %w", err)
 	}
@@ -1085,7 +1085,7 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to get openapi file information")
 	}
 
-	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, oriInstance.Port, 0, 0, req.OpenapiBaseUrl)
+	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, oriInstance.Port, 0, 0, req.OpenapiBaseUrl, req.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}

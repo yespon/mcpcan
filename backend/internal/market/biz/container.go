@@ -964,7 +964,7 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 }
 
 // BuildOpenapiContainerOptions builds openapi container creation options
-func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, port int32, startupTimeout int32, runningTimeout int32, openapiBaseUrl string) (*container.ContainerCreateOptions, error) {
+func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, port int32, startupTimeout int32, runningTimeout int32, openapiBaseUrl string, headers map[string]string) (*container.ContainerCreateOptions, error) {
 	containerName := cd.generateContainerName(instanceID)
 	serviceName := cd.generateServiceName(instanceID)
 	
@@ -1051,14 +1051,14 @@ curl -f '%s' -o /app/run.yaml
 
 echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
 echo "[$(date)] Starting openapi-mcp: --base-url=%s"
-exec /app/openapi-mcp --no-log-truncation --extended --http=:%d --base-url=%s run.yaml
+exec /app/openapi-mcp --no-log-truncation --extended --http=:%d --base-url=%s%s run.yaml
 EOF_STARTUP
 		# Set script execution permissions
 		chmod +x /app/init/startup.sh
 		
 		# Execute startup command script
 		exec /app/init/startup.sh
-	`, common.GetSidecarPort(), instancePath, port, downloadLink, openapiBaseUrl, port, openapiBaseUrl)
+	`, common.GetSidecarPort(), instancePath, port, downloadLink, openapiBaseUrl, port, openapiBaseUrl, buildHeaderArgs(headers))
 
 	// 8. Build container creation options
 	containerOptions := container.ContainerCreateOptions{
@@ -1158,4 +1158,17 @@ func (cd *ContainerBiz) BuildProxySidecarOptions(ctx context.Context, instanceID
 	}
 
 	return &containerOptions, nil
+}
+
+// buildHeaderArgs converts a headers map into openapi-mcp --header CLI args string.
+// Each header becomes " --header \"key:value\"". Returns empty string if headers is nil/empty.
+func buildHeaderArgs(headers map[string]string) string {
+	if len(headers) == 0 {
+		return ""
+	}
+	var sb strings.Builder
+	for k, v := range headers {
+		sb.WriteString(fmt.Sprintf(` --header "%s:%s"`, k, v))
+	}
+	return sb.String()
 }

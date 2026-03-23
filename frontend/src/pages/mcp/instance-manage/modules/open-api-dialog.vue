@@ -58,6 +58,9 @@
             <el-form-item :label="t('mcp.template.formData.icon')" prop="iconPath">
               <Upload v-model="formData.iconPath"></Upload>
             </el-form-item>
+            <InstanceHeaders
+              v-model:headers="formData.passthroughHeaders"
+            />
           </el-form>
 
           <TokenForm
@@ -189,6 +192,7 @@ import { getToken } from '@/utils/system'
 import { AccessType, McpProtocol, SourceType, TokenType } from '@/types'
 import { ElTooltip } from 'element-plus'
 import TokenForm from './components/token-form.vue'
+import InstanceHeaders from './components/instance-headers.vue'
 import { TemplateAPI } from '@/api/mcp/template'
 import { useRouterHooks } from '@/utils/url'
 
@@ -218,6 +222,7 @@ const formData = ref({
   chooseOpenapiFileID: '', // 选择的文档库文件ID
   enabledToken: true,
   sourceType: SourceType.OPENAPI,
+  passthroughHeaders: [] as { key: string; value: string }[],
   tokens: [
     {
       enabled: true,
@@ -598,11 +603,15 @@ const handleConfirm = async () => {
             formData.value.tokens[0].headers.map((header: any) => [header.key, header.value]),
           )
         }
+        // 将透传 headers 数组转换为 map 格式传给后端
+        const passthroughHeadersMap = Object.fromEntries(
+          (formData.value.passthroughHeaders || []).map((h: any) => [h.key, h.value]).filter((e: any) => e[0]),
+        )
         dialogInfo.value.loading = true
         // 提交数据
         await (formData.value.instanceId
-          ? InstanceAPI.editByOpenAPI(formData.value)
-          : InstanceAPI.createByOpenAPI(formData.value))
+          ? InstanceAPI.editByOpenAPI({ ...formData.value, headers: passthroughHeadersMap })
+          : InstanceAPI.createByOpenAPI({ ...formData.value, headers: passthroughHeadersMap }))
         dialogInfo.value.visible = false
         ElMessage.success(formData.value.instanceId ? t('action.edit') : t('action.create'))
         emit('on-refresh')
@@ -652,10 +661,13 @@ const handleGetDetail = async (id: string) => {
   try {
     dialogInfo.value.loading = true
     const data = await InstanceAPI.detail({ instanceId: id })
+    // 将 headers map 转换为 { key, value }[] 数组回填
+    const passthroughHeaders = Object.entries(data.headers || {}).map(([key, value]) => ({ key, value: value as string }))
     formData.value = {
       ...data,
       chooseOpenapiFileID: data.packageId,
       openapiFileID: '',
+      passthroughHeaders,
     }
     console.log('instance detail data1', data)
 
@@ -721,7 +733,7 @@ const handleTemplateDetail = async (id: string) => {
     ],
   }
   // get openapi file content
-  const { baseOpenapiFileID, content } = await DocsAPI.fileContent({
+  const { content } = await DocsAPI.fileContent({
     openapiFileId: data.packageId,
   })
   // validate file content
@@ -771,6 +783,7 @@ const init = async (id?: string, type?: string) => {
       openapiFileID: '',
       chooseOpenapiFileID: '',
       sourceType: SourceType.OPENAPI,
+      passthroughHeaders: [],
       tokens: [
         {
           enabled: true,
