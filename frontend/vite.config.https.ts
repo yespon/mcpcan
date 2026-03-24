@@ -6,8 +6,15 @@ import Unocss from 'unocss/vite'
 import fs from 'node:fs' // 使用ES模块风格导入fs
 import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
 
+const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, './package.json'), 'utf-8')) as {
+  version?: string
+}
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version || 'dev'),
+  },
   server: {
     open: true,
     host: '0.0.0.0',

@@ -85,18 +85,22 @@
                   </div>
                   <div class="user-info">
                     <div class="name">{{ userInfo.nickname || 'XXX' }}</div>
-                    <div class="role">
-                      <template v-if="userInfo.roleNames?.length === 1">
-                        {{ userInfo.roleNames[0] || '暂无角色' }}
-                      </template>
-                      <el-tooltip
-                        effect="dark"
-                        :content="userInfo.roleNames?.join(',')"
-                        placement="top-start"
-                        v-else
-                      >
-                        {{ userInfo.roleNames[0] }}
-                      </el-tooltip>
+                    <div class="meta">
+                      <div class="role">
+                        <template v-if="userInfo.roleNames?.length === 1">
+                          {{ userInfo.roleNames[0] || '暂无角色' }}
+                        </template>
+                        <el-tooltip
+                          effect="dark"
+                          :content="userInfo.roleNames?.join(',')"
+                          placement="top-start"
+                          v-else
+                        >
+                          {{ userInfo.roleNames[0] }}
+                        </el-tooltip>
+                      </div>
+                      <span class="meta-divider">·</span>
+                      <div class="version-badge">{{ appVersion }}</div>
                     </div>
                   </div>
                 </div>
@@ -163,6 +167,7 @@ const route = useRoute()
 const router = useRouter()
 const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'
 const isDev = import.meta.env.DEV
+const appVersion = __APP_VERSION__
 // condition of show back button
 const isShowBack = computed(() => {
   return !route.meta.isMenu
@@ -230,9 +235,33 @@ const handleLoginOut = () => {
   .name {
     font-size: 16px;
   }
-  .role {
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    min-height: 20px;
     font-size: 12px;
+    color: #9ca3af;
+    line-height: 1;
+  }
+  .meta-divider {
+    color: #6b7280;
+  }
+  .role {
     color: #ccc;
+  }
+  .version-badge {
+    padding: 3px 8px;
+    border: 1px solid rgba(156, 163, 175, 0.24);
+    border-radius: 999px;
+    color: #d1d5db;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 11px;
+    font-family:
+      ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
+      monospace;
+    letter-spacing: 0.02em;
   }
 }
 
