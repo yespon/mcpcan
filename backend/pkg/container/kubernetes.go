@@ -350,6 +350,8 @@ func (kcm *KubernetesContainerManager) GetEvents(ctx context.Context, containerN
 }
 
 // GetLogs gets container logs
+// K8S 实例 Pod 中包含主容器与 sidecar 容器，必须显式指定主容器名，否则 K8S API 会因歧义报错。
+// containerName 格式如 "mcp-instance-xxx-container"，即主容器名（不含 -sidecar 后缀）。
 func (kcm *KubernetesContainerManager) GetLogs(ctx context.Context, containerName string, lines int64) (string, error) {
 	deployment, err := kcm.Entry.Client.Deployment().Get(containerName)
 	if err != nil {
@@ -364,7 +366,8 @@ func (kcm *KubernetesContainerManager) GetLogs(ctx context.Context, containerNam
 		return "", fmt.Errorf("no pods found for deployment %s", containerName)
 	}
 
-	return kcm.Entry.Pod.GetLogs(pods[0].Name, lines)
+	// 多容器 Pod 需显式指定主容器名（containerName 即主容器名，不含 -sidecar）
+	return kcm.Entry.Pod.GetLogs(pods[0].Name, lines, containerName)
 }
 
 // GetWarningEvents gets container warning events

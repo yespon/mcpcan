@@ -792,13 +792,17 @@ func (pm *PodManager) setEnvironmentVariables(container *corev1.Container, envVa
 	}
 }
 
-// GetLogs 获取 Pod 日志
-func (pm *PodManager) GetLogs(podName string, lines int64) (string, error) {
-	return pm.GetLogsWithNamespace(podName, pm.client.namespace, lines)
+// GetLogs 获取 Pod 日志，containerName 可选，多容器 Pod 必须指定
+func (pm *PodManager) GetLogs(podName string, lines int64, containerName ...string) (string, error) {
+	container := ""
+	if len(containerName) > 0 {
+		container = containerName[0]
+	}
+	return pm.GetLogsWithNamespace(podName, pm.client.namespace, lines, container)
 }
 
-// GetLogsWithNamespace 获取指定命名空间中 Pod 的日志
-func (pm *PodManager) GetLogsWithNamespace(podName, namespace string, lines int64) (string, error) {
+// GetLogsWithNamespace 获取指定命名空间中 Pod 的日志，container 为空则由 K8S 自动选择（单容器 Pod 可用）
+func (pm *PodManager) GetLogsWithNamespace(podName, namespace string, lines int64, containerName ...string) (string, error) {
 	// 设置默认行数
 	if lines <= 0 {
 		lines = 100
@@ -808,6 +812,10 @@ func (pm *PodManager) GetLogsWithNamespace(podName, namespace string, lines int6
 	logOptions := &corev1.PodLogOptions{
 		TailLines: &lines,
 		Follow:    false, // 不跟踪，只获取现有日志
+	}
+	// 多容器 Pod 必须显式指定容器名，否则 K8S API 返回错误
+	if len(containerName) > 0 && containerName[0] != "" {
+		logOptions.Container = containerName[0]
 	}
 
 	// 获取日志请求
