@@ -403,6 +403,24 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 				zap.String("target", targetBase),
 				zap.Int("status", resp.StatusCode),
 			)
+			// 记录成功访问日志到数据库
+			method := resp.Request.Method
+			uri := resp.Request.URL.Path
+			statusCode := resp.StatusCode
+			go func() {
+				logData := map[string]interface{}{
+					"method": method,
+					"uri":    uri,
+					"status": statusCode,
+				}
+				logRaw, _ := json.Marshal(logData)
+				_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
+					InstanceID: instanceID,
+					Level:      3, // Info
+					Event:      model.EventAuthSuccess,
+					Log:        json.RawMessage(logRaw),
+				})
+			}()
 			return nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
@@ -411,6 +429,22 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 				zap.String("target", targetBase),
 				zap.Error(err),
 			)
+			// 记录失败访问日志到数据库
+			go func(errMsg string) {
+				logData := map[string]interface{}{
+					"method": r.Method,
+					"uri":    r.URL.Path,
+					"target": targetBase,
+					"error":  errMsg,
+				}
+				logRaw, _ := json.Marshal(logData)
+				_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
+					InstanceID: instanceID,
+					Level:      5, // Error
+					Event:      model.EventAuthFailed,
+					Log:        json.RawMessage(logRaw),
+				})
+			}(err.Error())
 			w.WriteHeader(http.StatusBadGateway)
 			_, _ = w.Write([]byte(`{"error":"upstream unavailable"}`))
 		},

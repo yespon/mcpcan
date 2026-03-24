@@ -1047,6 +1047,9 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	// 主容器启动脚本：只负责下载配置并启动 openapi-mcp，不内嵌 agentgateway
 	// openapi-mcp 不支持 --header flag，只在命令行传 base-url 即可
 	// headers 通过 sidecar 的 UPSTREAM_HEADERS 环境变量注入，由 sidecar 附加到上游请求
+	// 确保 openapiBaseUrl 无末尾斜杠，避免与 API 路径（以/开头）拼接时产生双斜杠导致 404
+	openapiBaseUrl = strings.TrimRight(strings.TrimSpace(openapiBaseUrl), "/")
+
 	startupScript := fmt.Sprintf(`
 mkdir -p /app/init
 
