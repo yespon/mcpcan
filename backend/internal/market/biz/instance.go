@@ -213,7 +213,7 @@ func (biz *InstanceBiz) CreateOpenapiInstance(ctx context.Context, req *instance
 		ContainerIsReady:       false,
 		ContainerCreateOptions: containerCreateOptions,
 		ContainerLastMessage:   "container is pending",
-		ContainerServiceURL:    fmt.Sprintf("http://%s:%d/%s", containerOptions.ContainerName, containerOptions.Port, "mcp"),
+		ContainerServiceURL:    biz.getContainerServiceURL(containerOptions.ContainerName, containerOptions.ServiceName),
 		StartupTimeout:         int64(0),
 		RunningTimeout:         int64(0),
 		SourceConfig:           nil,
@@ -635,6 +635,27 @@ func (biz *InstanceBiz) RestartInstance(ctx context.Context, req *instancepb.Res
 	}
 
 	if instance.AccessType == model.AccessTypeHosting {
+		// 对 openapi 实例：重新生成 ContainerOptions 并持久化到 DB
+		// 确保新代码（去掉 --header bug、更新 MCP_TARGET_URL=/mcp）生效
+		if instance.SourceType == model.SourceTypeOpenapi {
+			var headers map[string]string
+			if len(instance.Headers) > 0 {
+				_ = json.Unmarshal(instance.Headers, &headers)
+			}
+			newOptions, buildErr := GContainerBiz.BuildOpenapiContainerOptions(
+				ctx, instance.InstanceID, instance.PackageID,
+				instance.Port, int32(instance.StartupTimeout), int32(instance.RunningTimeout),
+				instance.OpenapiBaseUrl, headers)
+			if buildErr == nil {
+				// 持久化新的 ContainerCreateOptions 到 DB（更新旧 JSON blob）
+				if optJSON, marshalErr := common.MarshalAndAssignConfig(newOptions); marshalErr == nil {
+					instance.ContainerCreateOptions = optJSON
+					instance.ContainerServiceURL = biz.getContainerServiceURL(newOptions.ContainerName, newOptions.ServiceName)
+					_ = mysql.McpInstanceRepo.Update(ctx, instance)
+				}
+			}
+		}
+
 		_, err = GContainerBiz.RestartContainer(ctx, instance)
 		if err != nil {
 			return nil, err
@@ -1085,67 +1106,93 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to get openapi file information")
 	}
 
+	// 判断 API 相关字段是否变化（URL、headers、openapi 文件）
+	// 只有这些字段变化时才需要删除并重建容器
+	oldHeadersBytes, _ := json.Marshal(oriInstance.Headers)
+	newHeadersBytes, _ := json.Marshal(req.Headers)
+	apiFieldChanged := req.OpenapiBaseUrl != oriInstance.OpenapiBaseUrl ||
+		string(oldHeadersBytes) != string(newHeadersBytes) ||
+		req.ChooseOpenapiFileID != oriInstance.PackageID
+
+	// 更新通用字段（name/notes/icon/url/headers）到内存
+	oriInstance.InstanceName = req.Name
+	oriInstance.Notes = req.Notes
+	oriInstance.IconPath = req.IconPath
+	oriInstance.OpenapiBaseUrl = req.OpenapiBaseUrl
+	if len(req.Headers) > 0 {
+		if b, err2 := json.Marshal(req.Headers); err2 == nil {
+			oriInstance.Headers = b
+		}
+	} else if req.Headers != nil {
+		oriInstance.Headers = nil
+	}
+	if req.ChooseOpenapiFileID != oriInstance.PackageID {
+		oriInstance.PackageID = req.ChooseOpenapiFileID
+	}
+
+	if !apiFieldChanged {
+		// 非 API 字段变化：只保存数据库，不触发容器重建
+		if err = mysql.McpInstanceRepo.Update(ctx, oriInstance); err != nil {
+			return nil, fmt.Errorf("failed to update instance: %v", err)
+		}
+		biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
+		return &instancepb.EditResp{
+			InstanceId:  oriInstance.InstanceID,
+			Name:        oriInstance.InstanceName,
+			AccessType:  instancepb.AccessType_HOSTING,
+			McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
+			Status:      string(model.InstanceStatusActive),
+		}, nil
+	}
+
+	// API 字段变化：重建容器
 	containerOptions, err := GContainerBiz.BuildOpenapiContainerOptions(ctx, req.InstanceId, req.ChooseOpenapiFileID, oriInstance.Port, 0, 0, req.OpenapiBaseUrl, req.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build container configuration: %v", err)
 	}
 
-	// Check runtime type and adjust service name for Docker
+	// Adjust service name for Docker runtime
 	entry, err := GContainerBiz.GetRuntimeEntry(ctx, oriInstance.EnvironmentID)
 	if err == nil && entry.GetRuntimeType() == container.RuntimeDocker {
 		containerOptions.ServiceName = containerOptions.ContainerName
 	}
 
-	// Create new instance record
 	containerCreateOptions, err := common.MarshalAndAssignConfig(containerOptions)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal container create containerCreateOptions: %w", err)
+		return nil, fmt.Errorf("failed to marshal container create options: %w", err)
 	}
 
-	// Delete old container and svc service
-	_, err = GContainerBiz.DeleteContainer(oriInstance)
-	if err != nil {
+	// 删除旧容器和 sidecar
+	if _, err = GContainerBiz.DeleteContainer(oriInstance); err != nil {
 		return nil, fmt.Errorf("failed to delete container: %v", err)
 	}
 
-	// Update
-	oriInstance.InstanceName = req.Name
-	oriInstance.Notes = req.Notes
+	// 更新容器状态字段
 	oriInstance.ContainerCreateOptions = containerCreateOptions
 	oriInstance.ContainerStatus = model.ContainerStatusPending
 	oriInstance.ContainerIsReady = false
-	oriInstance.IconPath = req.IconPath
-	oriInstance.OpenapiBaseUrl = req.OpenapiBaseUrl
-	if req.Headers != nil && len(req.Headers) > 0 {
-		if b, err := json.Marshal(req.Headers); err == nil {
-			oriInstance.Headers = b
-		}
-	} else if len(req.Headers) == 0 && req.Headers != nil {
-		oriInstance.Headers = nil
-	}
+	oriInstance.ContainerLastMessage = "container is pending"
 
-	if req.ChooseOpenapiFileID != oriInstance.PackageID {
-		oriInstance.PackageID = req.ChooseOpenapiFileID
-	}
-
-	// Save to database
-	err = mysql.McpInstanceRepo.Update(ctx, oriInstance)
-	if err != nil {
+	if err = mysql.McpInstanceRepo.Update(ctx, oriInstance); err != nil {
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
 
-	// Update instance cache
+	// 修复：删除后重新创建容器（之前缺失此调用）
+	if err = GContainerBiz.CreateContainer(ctx, containerOptions, int32(oriInstance.EnvironmentID), int32(oriInstance.StartupTimeout)); err != nil {
+		return nil, fmt.Errorf("failed to recreate container: %v", err)
+	}
+
 	biz.UpdateInstanceCache(oriInstance.InstanceID, oriInstance)
 
-	resp := &instancepb.EditResp{
+	return &instancepb.EditResp{
 		InstanceId:  oriInstance.InstanceID,
 		Name:        oriInstance.InstanceName,
 		AccessType:  instancepb.AccessType_HOSTING,
 		McpProtocol: instancepb.McpProtocol_STREAMABLE_HTTP,
 		Status:      string(model.InstanceStatusActive),
-	}
-	return resp, nil
+	}, nil
 }
+
 
 // UpdateInstanceForHosting updates instance
 func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *instancepb.EditRequest, oriInstance *model.McpInstance) (*instancepb.EditResp, error) {
@@ -1219,13 +1266,11 @@ func (biz *InstanceBiz) UpdateInstanceForHosting(ctx context.Context, req *insta
 	case model.McpProtocolStdio:
 		ProxyProtocol = model.McpProtocolStreamableHttp
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		// For Hosting, we use sidecar's port
-		containerURL = fmt.Sprintf("http://%s:%d/%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), "mcp")
+		containerURL = biz.getContainerServiceURL(newContainerCreateOptions.ContainerName, newContainerCreateOptions.ServiceName)
 	case model.McpProtocolSSE, model.McpProtocolStreamableHttp:
 		ProxyProtocol = oriInstance.McpProtocol
 		publicProxyPath = biz.CreatePublicProxyPath(instanceID, oriInstance.McpProtocol)
-		// For Hosting, we use sidecar's port
-		containerURL = fmt.Sprintf("http://%s:%d%s", newContainerCreateOptions.ServiceName, common.GetSidecarPort(), req.ServicePath)
+		containerURL = biz.getContainerServiceURL(newContainerCreateOptions.ContainerName, newContainerCreateOptions.ServiceName)
 	default:
 		return nil, fmt.Errorf("unsupported mcp protocol: %v", oriInstance.McpProtocol)
 	}

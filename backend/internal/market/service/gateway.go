@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"path"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -339,17 +338,14 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 			req.URL.Scheme = targetURL.Scheme
 			req.URL.Host = targetURL.Host
 
-			// Keep original path but strip /mcp-gateway/<instanceID>
-			// Example: /mcp-gateway/xxx/sse -> /sse (or whatever targetURL.Path is + remaining)
-			prefix := fmt.Sprintf("/%s/%s", strings.Trim(common.GatewayRoutePrefix, "/"), instanceID)
-			remaining := strings.TrimPrefix(c.Request.URL.Path, prefix)
-			
-			// Join target path with remaining path
-			req.URL.Path = path.Join(targetURL.Path, remaining)
-			if strings.HasSuffix(c.Request.URL.Path, "/") && !strings.HasSuffix(req.URL.Path, "/") {
-				req.URL.Path += "/"
+			// 保留完整原始路径（不 strip instanceID 前缀）
+			// sidecar 内部配置了 MCP_ROUTE_PREFIX，会自行 strip /mcp-gateway/<instanceID> 前缀
+			// 与 Traefik → sidecar 的路由行为完全一致
+			req.URL.Path = c.Request.URL.Path
+			if c.Request.URL.RawPath != "" {
+				req.URL.RawPath = c.Request.URL.RawPath
 			}
-			
+
 			req.URL.RawQuery = c.Request.URL.RawQuery
 			if targetURL.RawQuery != "" {
 				if req.URL.RawQuery == "" {
@@ -359,17 +355,16 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 				}
 			}
 
-			// Add custom headers from instance level (highest priority after MCP config headers)
-			if len(instance.Headers) > 0 {
-				var extraHeaders map[string]string
-				if err := json.Unmarshal(instance.Headers, &extraHeaders); err == nil {
-					for k, v := range extraHeaders {
-						req.Header.Set(k, v)
-					}
-				}
+			// ① 先剥离客户端原始鉴权 headers，防止 MCP Token 透传到 sidecar/upstream
+			// 注：实例配置的 headers 会在下方按优先级注入覆盖
+			for _, sensitiveKey := range []string{"Authorization", "API-Key", "X-API-Key"} {
+				req.Header.Del(sensitiveKey)
 			}
-			
-			// Add MCP configuration headers
+
+			// ② 按优先级注入 headers：MCP config headers（低）→ 实例 headers（高，覆盖）
+			injectedKeys := make([]string, 0)
+
+			// 低优先级：MCP config headers（仅 proxy 类型实例有）
 			var mcpConfig *model.McpConfig
 			if instance.AccessType == model.AccessTypeProxy {
 				_, _, mcpConfig, _ = instance.GetSourceConfig()
@@ -377,14 +372,49 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 			if mcpConfig != nil && len(mcpConfig.Headers) > 0 {
 				for k, v := range mcpConfig.Headers {
 					req.Header.Set(k, v)
+					injectedKeys = append(injectedKeys, k)
+				}
+			}
+
+			// 高优先级：实例 headers（创建/编辑时配置，覆盖 MCP config headers）
+			if len(instance.Headers) > 0 {
+				var extraHeaders map[string]string
+				if err := json.Unmarshal(instance.Headers, &extraHeaders); err == nil {
+					for k, v := range extraHeaders {
+						req.Header.Set(k, v)
+						injectedKeys = append(injectedKeys, k)
+					}
 				}
 			}
 
 			req.Header.Set("X-Mcp-Instance-Id", instanceID)
 			req.Header.Set("X-Internal-Request", "true")
 			req.Host = targetURL.Host
+
+			logger.Info("[ProxyHandler] forwarding",
+				zap.String("instance", instanceID),
+				zap.String("target", req.URL.String()),
+				zap.Strings("injected_headers", injectedKeys),
+			)
 		},
-		FlushInterval: -1, // Crucial for SSE
+		ModifyResponse: func(resp *http.Response) error {
+			logger.Info("[ProxyHandler] upstream response",
+				zap.String("instance", instanceID),
+				zap.String("target", targetBase),
+				zap.Int("status", resp.StatusCode),
+			)
+			return nil
+		},
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			logger.Error("[ProxyHandler] upstream error",
+				zap.String("instance", instanceID),
+				zap.String("target", targetBase),
+				zap.Error(err),
+			)
+			w.WriteHeader(http.StatusBadGateway)
+			_, _ = w.Write([]byte(`{"error":"upstream unavailable"}`))
+		},
+		FlushInterval: -1, // SSE streaming 必须
 	}
 
 	proxy.ServeHTTP(c.Writer, c.Request)

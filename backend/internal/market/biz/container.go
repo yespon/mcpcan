@@ -421,6 +421,8 @@ exec /app/init/startup.sh
 		port,
 		port)
 
+	startupScript = strings.ReplaceAll(startupScript, "\r", "")
+
 	imgPms := &imageParams{
 		image:       imgAddress,
 		port:        port,
@@ -471,6 +473,8 @@ chmod +x /app/init/startup.sh
 exec /app/init/startup.sh
 `,
 		codepkgInstallScript, initScript, command, command)
+
+	startupScript = strings.ReplaceAll(startupScript, "\r", "")
 
 	imgPms := &imageParams{
 		image:       imgAddress,
@@ -626,38 +630,61 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 	// Parse container creation options
 	var containerOptions container.ContainerCreateOptions
 	if instance.AccessType == model.AccessTypeHosting {
-		// Rebuild options to incorporate latest logic (e.g. Sidecar path fixes)
-		var sourceCfg struct {
-			McpServers string `json:"mcpServers"`
-		}
-		if len(instance.SourceConfig) > 0 {
-			_ = json.Unmarshal(instance.SourceConfig, &sourceCfg)
-		}
-
-		var evs map[string]string
-		if len(instance.EnvironmentVariables) > 0 {
-			_ = json.Unmarshal(instance.EnvironmentVariables, &evs)
-		}
-
-		var vms []*instancepb.VolumeMount
-		if len(instance.VolumeMounts) > 0 {
-			_ = json.Unmarshal(instance.VolumeMounts, &vms)
-		}
-
-		newOptions, err := cd.BuildContainerOptions(ctx, instance.InstanceID, instance.McpProtocol,
-			sourceCfg.McpServers, instance.PackageID, instance.Port, instance.InitScript, instance.Command, instance.ImgAddr,
-			evs, vms, int32(instance.StartupTimeout), int32(instance.RunningTimeout))
-		if err != nil {
-			log.Printf("[RestartContainer] Warning: failed to rebuild options for instance %s: %v, falling back to stored options", instance.InstanceID, err)
-			if len(instance.ContainerCreateOptions) > 0 {
-				if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
-					return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+		if instance.SourceType == model.SourceTypeOpenapi {
+			// OpenAPI 实例：重新调用 BuildOpenapiContainerOptions，确保使用最新启动脚本（不含旧 --header bug）
+			var headers map[string]string
+			if len(instance.Headers) > 0 {
+				_ = json.Unmarshal(instance.Headers, &headers)
+			}
+			newOptions, err2 := cd.BuildOpenapiContainerOptions(ctx, instance.InstanceID, instance.PackageID,
+				instance.Port, int32(instance.StartupTimeout), int32(instance.RunningTimeout),
+				instance.OpenapiBaseUrl, headers)
+			if err2 != nil {
+				log.Printf("[RestartContainer] Warning: failed to rebuild openapi options for %s: %v, falling back", instance.InstanceID, err2)
+				if len(instance.ContainerCreateOptions) > 0 {
+					if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
+						return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+					}
+				} else {
+					return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
 				}
 			} else {
-				return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+				containerOptions = *newOptions
 			}
 		} else {
-			containerOptions = *newOptions
+			// Hosting 普通实例：重新调用 BuildContainerOptions，融入最新逻辑
+			var sourceCfg struct {
+				McpServers string `json:"mcpServers"`
+			}
+			if len(instance.SourceConfig) > 0 {
+				_ = json.Unmarshal(instance.SourceConfig, &sourceCfg)
+			}
+
+			var evs map[string]string
+			if len(instance.EnvironmentVariables) > 0 {
+				_ = json.Unmarshal(instance.EnvironmentVariables, &evs)
+			}
+
+			var vms []*instancepb.VolumeMount
+			if len(instance.VolumeMounts) > 0 {
+				_ = json.Unmarshal(instance.VolumeMounts, &vms)
+			}
+
+			newOptions, err := cd.BuildContainerOptions(ctx, instance.InstanceID, instance.McpProtocol,
+				sourceCfg.McpServers, instance.PackageID, instance.Port, instance.InitScript, instance.Command, instance.ImgAddr,
+				evs, vms, int32(instance.StartupTimeout), int32(instance.RunningTimeout))
+			if err != nil {
+				log.Printf("[RestartContainer] Warning: failed to rebuild options for instance %s: %v, falling back to stored options", instance.InstanceID, err)
+				if len(instance.ContainerCreateOptions) > 0 {
+					if e2 := json.Unmarshal(instance.ContainerCreateOptions, &containerOptions); e2 != nil {
+						return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeParseContainerOptionsFailure, e2))
+					}
+				} else {
+					return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
+				}
+			} else {
+				containerOptions = *newOptions
+			}
 		}
 	} else {
 		if len(instance.ContainerCreateOptions) > 0 {
@@ -668,6 +695,7 @@ func (cd *ContainerBiz) RestartContainer(ctx context.Context, instance *model.Mc
 			return nil, errors.New(i18n.FormatWithContext(ctx, i18n.CodeMissingContainerOptions))
 		}
 	}
+
 
 	// Ensure container name is consistent with instance
 	containerOptions.ContainerName = instance.ContainerName
@@ -966,8 +994,11 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 // BuildOpenapiContainerOptions builds openapi container creation options
 func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, port int32, startupTimeout int32, runningTimeout int32, openapiBaseUrl string, headers map[string]string) (*container.ContainerCreateOptions, error) {
 	containerName := cd.generateContainerName(instanceID)
-	serviceName := cd.generateServiceName(instanceID)
-	
+	// docker 模式下 serviceName == containerName，确保 getContainerServiceURL 走 docker 分支
+	// （不同名会被误判为 k8s 模式，ContainerServiceURL 指向不存在的 -service DNS）
+	serviceName := containerName
+	sidecarContainerName := containerName + common.SidecarContainerSuffix
+
 	if port <= 0 {
 		port = common.GetMcpHostingPort()
 	}
@@ -978,11 +1009,12 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	envVars["MCP_PORT"] = fmt.Sprintf("%d", port)
 	envVars["NODE_ENV"] = "production"
 
-	// Set labels
+	// Set labels — 主容器关闭 Traefik 发现，由 Sidecar 代劳（与托管模式一致）
 	labels := make(map[string]string)
 	labels["app"] = containerName
 	labels["instance"] = instanceID
 	labels["managed-by"] = common.SourceServerName
+	labels["traefik.enable"] = "false"
 	if startupTimeout > 0 {
 		labels["mcp.startup.timeout"] = fmt.Sprintf("%d", startupTimeout)
 	}
@@ -990,23 +1022,20 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 		labels["mcp.running.timeout"] = fmt.Sprintf("%d", runningTimeout)
 	}
 
-	// Traefik support labels
+	// Traefik labels — 挂在 Sidecar 容器上（与托管模式完全对齐）
 	prefix := common.GetGatewayRoutePrefix()
-	prefix = strings.Trim(prefix, "/")
+	strippedPrefix := strings.Trim(prefix, "/")
+	instancePath := fmt.Sprintf("/%s/%s", strippedPrefix, instanceID)
 	routerName := fmt.Sprintf("mcp-inst-%s", instanceID)
+	stripMiddleware := fmt.Sprintf("%s-strip", routerName)
 
-	instancePath := fmt.Sprintf("/%s/%s/", prefix, instanceID)
-
-	// traefik.enable 保留在 labels（合法短键），路由配置迁移到 annotations 避免 K8s label 校验失败
-	// K8s 下 Traefik 通过 Pod annotations 发现路由规则，和 Docker labels 等价
-	labels["traefik.enable"] = "true"
-
-	// Traefik 路由配置写入 annotations（不受 K8s label 63字符/字符集限制）
-	annotations := map[string]string{
-		fmt.Sprintf("traefik.http.routers.%s.rule", routerName):                               fmt.Sprintf("PathPrefix(`%s`)", instancePath),
-		fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName):                        "mcp-gateway-forward-auth@file",
-		fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", routerName):          fmt.Sprintf("%d", common.GetSidecarPort()),
-	}
+	traefikLabels := make(map[string]string)
+	traefikLabels["traefik.enable"] = "true"
+	traefikLabels[fmt.Sprintf("traefik.http.middlewares.%s.stripprefix.prefixes", stripMiddleware)] = instancePath
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = fmt.Sprintf("PathPrefix(`%s`)", instancePath)
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = fmt.Sprintf("%s@docker", stripMiddleware)
+	traefikLabels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = sidecarContainerName
+	traefikLabels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", sidecarContainerName)] = fmt.Sprintf("%d", common.GetSidecarPort())
 
 	// 构建下载链接
 	downloadLinkPath := fmt.Sprintf("/openapi/download/%s", openapiFileID)
@@ -1015,65 +1044,62 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 		return nil, err
 	}
 
+	// 主容器启动脚本：只负责下载配置并启动 openapi-mcp，不内嵌 agentgateway
+	// openapi-mcp 不支持 --header flag，只在命令行传 base-url 即可
+	// headers 通过 sidecar 的 UPSTREAM_HEADERS 环境变量注入，由 sidecar 附加到上游请求
 	startupScript := fmt.Sprintf(`
-		# Create working directory
-		mkdir -p /app/init
+mkdir -p /app/init
 
-		# =================【新增 Sidecar 静态配置】=================
-		cat > /app/agentgateway.yaml << 'EOF_PROXY'
-listeners:
-  - name: local-ingress
-    address: "0.0.0.0:%d"        # 向外部暴露端口给 Traefik 请求
-routes:
-  - id: "local-route"
-    backend_id: "local-backend"
-    match:
-      pathPrefix: "%s"           # 截取流量并重写 SSE Payload
-backends:
-  - id: "local-backend"
-    servers:
-      - url: "http://127.0.0.1:%d" # 代理给真实的同容器 MCP 服务
-EOF_PROXY
-		# ========================================================
-
-		# Generate initialization script dynamically
-		cat > /app/init/startup.sh << 'EOF_STARTUP'
+cat > /app/init/startup.sh << 'EOF_STARTUP'
 #!/bin/sh
 set -e
 
-echo "[$(date)] --- Startup Script Stage 1: Sidecar ---"
-echo "[$(date)] Starting local AgentGateway Sidecar..."
-agentgateway -f /app/agentgateway.yaml &
-
-echo "[$(date)] --- Startup Script Stage 2: App Prep ---"
-echo "[$(date)] Downloading openapi-mcp configuration..."
+echo "[$(date)] --- Stage 1: Downloading openapi-mcp configuration ---"
 curl -f '%s' -o /app/run.yaml
 
-echo "[$(date)] --- Startup Script Stage 3: Main Command ---"
-echo "[$(date)] Starting openapi-mcp: --base-url=%s"
-exec /app/openapi-mcp --no-log-truncation --extended --http=:%d --base-url=%s%s run.yaml
+echo "[$(date)] --- Stage 2: Starting openapi-mcp ---"
+exec /app/openapi-mcp --no-log-truncation --extended --log-file=/dev/stdout --http=:%d --base-url=%s run.yaml
 EOF_STARTUP
-		# Set script execution permissions
-		chmod +x /app/init/startup.sh
-		
-		# Execute startup command script
-		exec /app/init/startup.sh
-	`, common.GetSidecarPort(), instancePath, port, downloadLink, openapiBaseUrl, port, openapiBaseUrl, buildHeaderArgs(headers))
 
-	// 8. Build container creation options
+chmod +x /app/init/startup.sh
+exec /app/init/startup.sh
+`, downloadLink, port, openapiBaseUrl)
+
+	startupScript = strings.ReplaceAll(startupScript, "\r", "")
+
+	// 构建 sidecar 环境变量（headers 序列化为 JSON 注入 UPSTREAM_HEADERS）
+	sidecarEnvVars := map[string]string{
+		"MCP_TARGET_URL":   fmt.Sprintf("http://%s:%d", containerName, port),
+		"MCP_ROUTE_PREFIX": instancePath,
+		"PORT":             fmt.Sprintf("%d", common.GetSidecarPort()),
+	}
+	if len(headers) > 0 {
+		if headersJSON, err2 := json.Marshal(headers); err2 == nil {
+			sidecarEnvVars["UPSTREAM_HEADERS"] = string(headersJSON)
+		}
+	}
+
 	containerOptions := container.ContainerCreateOptions{
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          common.GetSidecarPort(), // Sidecar 监听端口，由 Traefik annotations 自动发现
-		Command:       []string{"/bin/sh", "-c"}, // Use sh (Alpine compatible, no bash dependency)
+		Port:          port,
+		Command:       []string{"/bin/sh", "-c"},
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
 		Labels:        labels,
-		Annotations:   annotations,
 		EnvVars:       envVars,
 		WorkingDir:    "/app",
+		// Sidecar：独立 agentgateway 容器，与托管模式完全对齐
+		Sidecar: &container.SidecarOptions{
+			ImageName:     common.GetSidecarImage(),
+			ContainerName: sidecarContainerName,
+			Port:          common.GetSidecarPort(),
+			EnvVars:       sidecarEnvVars,
+			Labels:        traefikLabels,
+		},
 	}
+
 
 	return &containerOptions, nil
 }
@@ -1168,7 +1194,9 @@ func buildHeaderArgs(headers map[string]string) string {
 	}
 	var sb strings.Builder
 	for k, v := range headers {
-		sb.WriteString(fmt.Sprintf(` --header "%s:%s"`, k, v))
+		cleanV := strings.ReplaceAll(v, "\r", "")
+		cleanV = strings.ReplaceAll(cleanV, "\n", "")
+		sb.WriteString(fmt.Sprintf(` --header "%s:%s"`, k, cleanV))
 	}
 	return sb.String()
 }

@@ -93,12 +93,17 @@ async function readFirstSSEMessage(response: Response): Promise<any> {
 /**
  * Streamable HTTP 模式：发送单条 JSON-RPC 请求并返回结果
  */
+interface StreamableHttpResult {
+  data: JsonRpcResponse
+  sessionId: string
+}
+
 async function sendStreamableHttp(
   url: string,
   request: JsonRpcRequest,
   token?: string,
   sessionId?: string,
-): Promise<JsonRpcResponse> {
+): Promise<StreamableHttpResult> {
   const headers = buildHeaders(token)
   if (sessionId) headers['Mcp-Session-Id'] = sessionId
 
@@ -112,15 +117,19 @@ async function sendStreamableHttp(
     throw new Error(`HTTP ${resp.status}: ${resp.statusText}`)
   }
 
+  // 从响应头获取 Mcp-Session-Id（openapi-mcp/hosting 均从此处返回）
+  const respSessionId = resp.headers.get('Mcp-Session-Id') || resp.headers.get('mcp-session-id') || ''
+
   const contentType = resp.headers.get('content-type') || ''
 
-  // 处理 SSE 流式响应
+  let data: JsonRpcResponse
   if (contentType.includes('text/event-stream')) {
-    return await readFirstSSEMessage(resp)
+    data = await readFirstSSEMessage(resp)
+  } else {
+    data = await resp.json()
   }
 
-  // 处理普通 JSON 响应
-  return await resp.json()
+  return { data, sessionId: respSessionId }
 }
 
 /**
@@ -319,10 +328,8 @@ export async function mcpCallTool(
 // ─── Streamable HTTP ────────────────────────────────────────────────────────
 
 async function listToolsViaStreamable(url: string, token?: string): Promise<McpTool[]> {
-  let sessionId = ''
-
-  // Step 1: initialize
-  const initResp = await sendStreamableHttp(
+  // Step 1: initialize —— session ID 在响应头 Mcp-Session-Id 中
+  const initResult = await sendStreamableHttp(
     url,
     {
       jsonrpc: '2.0',
@@ -336,19 +343,19 @@ async function listToolsViaStreamable(url: string, token?: string): Promise<McpT
     },
     token,
   )
-  if (initResp.error) throw new Error(initResp.error.message)
-  sessionId = initResp.result?.sessionId || ''
+  if (initResult.data.error) throw new Error(initResult.data.error.message)
+  const sessionId = initResult.sessionId
 
-  // Step 2: tools/list
-  const listResp = await sendStreamableHttp(
+  // Step 2: tools/list（携带 session ID）
+  const listResult = await sendStreamableHttp(
     url,
     { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} },
     token,
     sessionId,
   )
-  if (listResp.error) throw new Error(listResp.error.message)
+  if (listResult.data.error) throw new Error(listResult.data.error.message)
 
-  return listResp.result?.tools || []
+  return listResult.data.result?.tools || []
 }
 
 async function callToolViaStreamable(
@@ -357,10 +364,8 @@ async function callToolViaStreamable(
   args: Record<string, any>,
   token?: string,
 ): Promise<McpCallResult> {
-  let sessionId = ''
-
-  // initialize
-  const initResp = await sendStreamableHttp(
+  // initialize —— session ID 在响应头 Mcp-Session-Id 中
+  const initResult = await sendStreamableHttp(
     url,
     {
       jsonrpc: '2.0',
@@ -374,11 +379,11 @@ async function callToolViaStreamable(
     },
     token,
   )
-  if (initResp.error) throw new Error(initResp.error.message)
-  sessionId = initResp.result?.sessionId || ''
+  if (initResult.data.error) throw new Error(initResult.data.error.message)
+  const sessionId = initResult.sessionId
 
-  // tools/call
-  const callResp = await sendStreamableHttp(
+  // tools/call（携带 session ID）
+  const callResult = await sendStreamableHttp(
     url,
     {
       jsonrpc: '2.0',
@@ -389,9 +394,9 @@ async function callToolViaStreamable(
     token,
     sessionId,
   )
-  if (callResp.error) throw new Error(callResp.error.message)
+  if (callResult.data.error) throw new Error(callResult.data.error.message)
 
-  return callResp.result as McpCallResult
+  return callResult.data.result as McpCallResult
 }
 
 // ─── SSE ─────────────────────────────────────────────────────────────────────

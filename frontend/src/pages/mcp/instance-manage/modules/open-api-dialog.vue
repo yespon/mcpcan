@@ -731,6 +731,7 @@ const handleTemplateDetail = async (id: string) => {
     openapiFileID: data.packageId,
     chooseOpenapiFileID: '',
     sourceType: SourceType.OPENAPI,
+    passthroughHeaders: [],
     tokens: [
       {
         enabled: true,

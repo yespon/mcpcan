@@ -359,6 +359,11 @@ func (dcm *DockerContainerManager) Create(ctx context.Context, options Container
 	// Add image name
 	args = append(args, options.ImageName)
 
+	// Add remaining command arguments from Command array (like "-c")
+	if len(options.Command) > 1 {
+		args = append(args, options.Command[1:]...)
+	}
+
 	// Add command arguments (overrides image CMD)
 	if len(options.CommandArgs) > 0 {
 		args = append(args, options.CommandArgs...)
@@ -465,6 +470,11 @@ func (dcm *DockerContainerManager) createDockerSidecar(ctx context.Context, main
 		args = append(args, "--entrypoint", sidecar.Command[0])
 	}
 	args = append(args, sidecar.ImageName)
+	
+	if len(sidecar.Command) > 1 {
+		args = append(args, sidecar.Command[1:]...)
+	}
+
 	if len(sidecar.CommandArgs) > 0 {
 		args = append(args, sidecar.CommandArgs...)
 	}

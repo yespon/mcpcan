@@ -22,7 +22,7 @@ database:
     port: 6379
     password: dHaARm88OXXN6e
 log:
-  level: info
+  level: debug
   format: json
 code:
   upload:

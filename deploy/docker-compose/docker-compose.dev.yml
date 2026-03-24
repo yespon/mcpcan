@@ -10,7 +10,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - ${HOST_MYSQL_PATH:-./data/mysql}:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
       - ./config/mysql.conf:/etc/mysql/conf.d/mysql.conf:ro
       - ./config/mysql.init.sql:/docker-entrypoint-initdb.d/mysql.init.sql:ro
     ports:
@@ -41,7 +41,7 @@ services:
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
-      - ${HOST_REDIS_PATH:-./data/redis}:/data
+      - redis-data:/data
     ports:
       - "${REDIS_PUBLIC_PORT:-31379}:${REDIS_PORT:-6379}"
     networks:
@@ -75,7 +75,7 @@ services:
       - MCP_INTERNAL_BASE_URL=http://mcp-entry-svc
     ports:
       - "8080:8080"
-      - "2345:2345"
+      - "12345:2345"
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -109,8 +109,8 @@ services:
       - GO111MODULE=on
       - CODE_MODE=OpenCode
     ports:
-      - "8081:8081"
-      - "2346:2346"
+      - "18081:8081"
+      - "12346:2346"
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -126,7 +126,6 @@ services:
       redis:
         condition: service_healthy
 
-  # Frontend 服务：使用热加载
   mcp-web-svc:
     build:
       context: ../../
@@ -137,8 +136,7 @@ services:
       - /app/node_modules # 关键：使用匿名卷隔离 node_modules
       - ./config/env.js:/app/public/env.js:ro
       - ${HOST_DATA_PATH:-./data/mcpcan}/static:/app/public/static
-    ports:
-      - "3000:3000"
+    # 不对外暴露 3000，避免端口冲突；traefik 通过内部网络 mcp-web-svc:3000 访问
     environment:
       - VITE_API_BASE_URL=/api
       - NODE_ENV=development
@@ -149,7 +147,7 @@ services:
           - mcp-web-svc
           - web-service
 
-  # Gateway / Entry (Traefik) - 重要：从这里访问 http://localhost
+  # Gateway / Entry (Traefik) - 与正式部署一致，使用 80 端口
   mcp-entry-svc:
     image: traefik:v3.6.9
     container_name: mcp-entry-dev
@@ -160,7 +158,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "80:80"
+      - "80:80"    # 主入口，与正式部署完全一致
       - "8090:8080" # Traefik Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -181,3 +179,5 @@ networks:
 volumes:
   go-pkg-cache:
   go-build-cache:
+  mysql-data:
+  redis-data:

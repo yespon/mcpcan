@@ -231,7 +231,7 @@
                 >
                   <!-- Text Content -->
                   <div
-                    v-if="item.type === 'text'"
+                    v-if="item.type === 'text' || item.type === 'json'"
                     class="p-3 text-sm font-mono whitespace-pre-wrap break-words text-regular"
                   >
                     {{ item.text }}

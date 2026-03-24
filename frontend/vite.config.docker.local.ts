@@ -19,17 +19,15 @@ export default defineConfig({
     //   key: fs.readFileSync(path.resolve(__dirname, './key.pem')),
     // },
     // 可选配置
-    port: 3000, // HTTPS 默认端口
+    port: 3000, // 本地 dev 端口（pf 将 :80 → :3000）
     proxy: {
       '/api/authz': {
         target: 'http://127.0.0.1:80',
         changeOrigin: true,
-        // Do not remove /api prefix
       },
       '/api': {
         target: 'http://127.0.0.1:80',
         changeOrigin: true,
-        // rewrite: (path: string) => path.replace(/^\/api/, ''),
       },
       '/mcp-gateway': {
         target: 'http://127.0.0.1:80',

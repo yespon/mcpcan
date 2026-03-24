@@ -195,10 +195,15 @@
           </div>
         </el-col>
       </el-row>
-      <div class="tip tip-primary mt-2" v-html="commandDesc"></div>
-      <div class="font-size-3 mt-4">
-        <div class="tip tip-primary mt-2" v-html="buildNotes"></div>
-      </div>
+      <details class="tip tip-primary mt-2 cursor-pointer bg-opacity-50 !bg-gray-50 dark:!bg-gray-800 border border-[var(--ep-border-color-lighter)] rounded-md">
+        <summary class="font-bold select-none outline-none text-[var(--ep-text-color-regular)]">
+          💡 {{ locale === 'en' ? 'Click to view MCP container build notes and startup order details' : '点击查看 MCP 托管容器构建说明与启动顺序详情' }}
+        </summary>
+        <div class="mt-3 pt-3 border-t border-[var(--ep-border-color-lighter)] cursor-text text-[var(--ep-text-color-regular)]">
+          <div v-html="commandDesc"></div>
+          <div class="mt-4" v-html="buildNotes"></div>
+        </div>
+      </details>
 
       <el-form-item :label="t('mcp.instance.hostingForm.accessUrl')" class="mt-6">
         <el-radio-group>

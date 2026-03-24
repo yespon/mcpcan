@@ -30,6 +30,9 @@ WORKDIR /app
 # Copy binary from builder stage
 COPY --from=builder /app/backend/bin/market /app/market
 
+# Copy initialization data from builder stage
+COPY --from=builder /app/backend/init-data /app/init-data
+
 # Make binary executable
 RUN chmod +x /app/market
 

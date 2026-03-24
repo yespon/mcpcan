@@ -9,6 +9,11 @@
       </el-link>
     </div>
     <el-alert v-else-if="showNav" :title="t('desc.demoTips')" type="warning" :closable="false" />
+    <div v-if="isDev" class="dev-badge">
+      <span class="dev-badge__dot"></span>
+      <span class="dev-badge__text">DEV</span>
+      <span class="dev-badge__sub">热加载模式 · localhost:3000</span>
+    </div>
     <div class="flex align-center flex-1 justify-end">
       <el-tooltip class="box-item" effect="dark" :content="t('desc.docs')" placement="bottom">
         <el-icon
@@ -157,6 +162,7 @@ const docs = 'https://www.mcpcan.com/docs/en/guide/welcome'
 const route = useRoute()
 const router = useRouter()
 const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'
+const isDev = import.meta.env.DEV
 // condition of show back button
 const isShowBack = computed(() => {
   return !route.meta.isMenu
@@ -251,5 +257,42 @@ const handleLoginOut = () => {
 }
 :deep(.el-alert--warning.is-light) {
   background-color: transparent;
+}
+
+.dev-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 6px #10b981;
+    animation: dev-pulse 1.5s ease-in-out infinite;
+  }
+
+  &__text {
+    color: #10b981;
+    letter-spacing: 0.08em;
+  }
+
+  &__sub {
+    color: var(--el-text-color-secondary);
+    font-weight: 400;
+    font-size: 11px;
+  }
+}
+
+@keyframes dev-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 </style>
