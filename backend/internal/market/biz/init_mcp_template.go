@@ -210,19 +210,18 @@ func refreshEmbeddedTemplateIfNeeded(ctx context.Context, existing *model.McpTem
 
 // shouldRefreshEmbeddedOpenapiTemplate 判断是否需要刷新模板的 OpenapiBaseUrl / Notes
 // PackageID 的同步由 refreshEmbeddedTemplateIfNeeded 独立处理，此函数仅关注 URL/Notes 字段
+// 触发条件：只要 openapi_base_url 是旧格式（带 /api/market 后缀、含 CURRENT_DOMAIN 或为空），就执行刷新
 func shouldRefreshEmbeddedOpenapiTemplate(existing *model.McpTemplate, it embeddedTemplateItem) bool {
 	if existing == nil || it.OpenapiFileName == "" || it.Name != defaultOpenapiTemplateName || existing.Name != it.Name {
 		return false
 	}
 
-	if existing.Notes != legacyOpenapiTemplateNotes && existing.Notes != it.Notes {
-		return false
-	}
-
+	// 已是新格式（含内部占位符），无需刷新
 	if strings.Contains(existing.OpenapiBaseUrl, internalEntryBaseURLPlaceholder) {
 		return false
 	}
 
+	// 旧格式：空、含 CURRENT_DOMAIN 占位符、或末尾带 /api/market
 	return existing.OpenapiBaseUrl == "" ||
 		strings.Contains(existing.OpenapiBaseUrl, "{{CURRENT_DOMAIN}}") ||
 		isLegacyOpenapiTemplateURL(existing.OpenapiBaseUrl)
