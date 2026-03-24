@@ -1,9 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -287,6 +289,44 @@ func validateMcpTokenForInstance(c *gin.Context, instanceID string) (*model.McpT
 }
 
 
+// jsonRPCRequest MCP JSON-RPC 请求结构
+type jsonRPCRequest struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      interface{}     `json:"id"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params"`
+}
+
+// jsonRPCToolCallParams tools/call 的 params 结构，用于提取 toolName
+type jsonRPCToolCallParams struct {
+	Name      string          `json:"name"`
+	Arguments json.RawMessage `json:"arguments"`
+}
+
+// extractMCPToolName 从 JSON-RPC body 中提取工具名称和方法
+// method=tools/call 时从 params.name 取 toolName；其他方法直接用 method 作为 toolName
+func extractMCPToolName(body []byte) (rpcMethod, toolName string, params json.RawMessage) {
+	if len(body) == 0 {
+		return "", "", nil
+	}
+	var rpc jsonRPCRequest
+	if err := json.Unmarshal(body, &rpc); err != nil {
+		return "", "", nil
+	}
+	rpcMethod = rpc.Method
+	params = rpc.Params
+	if rpc.Method == "tools/call" {
+		var tp jsonRPCToolCallParams
+		if err := json.Unmarshal(rpc.Params, &tp); err == nil && tp.Name != "" {
+			toolName = tp.Name
+			params = tp.Arguments
+		}
+	} else {
+		toolName = rpc.Method
+	}
+	return rpcMethod, toolName, params
+}
+
 // ProxyHandler handles direct MCP gateway requests, performing authentication and reverse proxying to sidecars.
 func (s *GatewayService) ProxyHandler(c *gin.Context) {
 	instanceID := c.Param("instanceID")
@@ -332,7 +372,46 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 		return
 	}
 
-	// 4. Setup Reverse Proxy
+	// 4. 解析 MCP JSON-RPC 请求：仅对 POST 请求读取 body（GET 为 SSE 连接，不读取）
+	var reqBody []byte
+	var rpcMethod, toolName string
+	var reqParams json.RawMessage
+
+	if c.Request.Method == http.MethodPost && c.Request.Body != nil {
+		reqBody, _ = io.ReadAll(io.LimitReader(c.Request.Body, 1<<16)) // 最多读64KB
+		_ = c.Request.Body.Close()
+		// 还原 body 供后续代理使用
+		c.Request.Body = io.NopCloser(bytes.NewReader(reqBody))
+		c.Request.ContentLength = int64(len(reqBody))
+
+		rpcMethod, toolName, reqParams = extractMCPToolName(reqBody)
+	}
+
+	requestURI := c.Request.URL.Path
+	requestMethod := c.Request.Method
+
+	// 5. 异步写 request 日志（POST 工具调用才有意义）
+	if rpcMethod != "" {
+		go func() {
+			logData := map[string]interface{}{
+				"method":     requestMethod,
+				"uri":        requestURI,
+				"rpcMethod":  rpcMethod,
+				"toolName":   toolName,
+				"params":     json.RawMessage(reqParams),
+			}
+			logRaw, _ := json.Marshal(logData)
+			_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
+				InstanceID: instanceID,
+				ToolName:   toolName,
+				Level:      3, // Info
+				Event:      model.EventRequest,
+				Log:        json.RawMessage(logRaw),
+			})
+		}()
+	}
+
+	// 6. Setup Reverse Proxy
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			req.URL.Scheme = targetURL.Scheme
@@ -393,55 +472,72 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 
 			logger.Info("[ProxyHandler] forwarding",
 				zap.String("instance", instanceID),
+				zap.String("tool", toolName),
 				zap.String("target", req.URL.String()),
 				zap.Strings("injected_headers", injectedKeys),
 			)
 		},
 		ModifyResponse: func(resp *http.Response) error {
+			statusCode := resp.StatusCode
 			logger.Info("[ProxyHandler] upstream response",
 				zap.String("instance", instanceID),
-				zap.String("target", targetBase),
-				zap.Int("status", resp.StatusCode),
+				zap.String("tool", toolName),
+				zap.Int("status", statusCode),
 			)
-			// 记录成功访问日志到数据库
-			method := resp.Request.Method
-			uri := resp.Request.URL.Path
-			statusCode := resp.StatusCode
-			go func() {
-				logData := map[string]interface{}{
-					"method": method,
-					"uri":    uri,
-					"status": statusCode,
-				}
-				logRaw, _ := json.Marshal(logData)
-				_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
-					InstanceID: instanceID,
-					Level:      3, // Info
-					Event:      model.EventAuthSuccess,
-					Log:        json.RawMessage(logRaw),
-				})
-			}()
+
+			// 仅对非 SSE 的 POST 响应读取并记录 response body（SSE 为流式不读取）
+			contentType := resp.Header.Get("Content-Type")
+			isSSE := strings.Contains(contentType, "text/event-stream")
+			if !isSSE && resp.Request.Method == http.MethodPost {
+				respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<16)) // 最多64KB
+				_ = resp.Body.Close()
+				resp.Body = io.NopCloser(bytes.NewReader(respBody))
+				resp.ContentLength = int64(len(respBody))
+
+				go func(body []byte, code int, tn string) {
+					var respData interface{}
+					if err2 := json.Unmarshal(body, &respData); err2 != nil {
+						respData = string(body)
+					}
+					logData := map[string]interface{}{
+						"status":   code,
+						"toolName": tn,
+						"response": respData,
+					}
+					logRaw, _ := json.Marshal(logData)
+					_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
+						InstanceID: instanceID,
+						ToolName:   tn,
+						Level:      3, // Info
+						Event:      model.EventResponse,
+						Log:        json.RawMessage(logRaw),
+					})
+				}(respBody, statusCode, toolName)
+			}
 			return nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			logger.Error("[ProxyHandler] upstream error",
 				zap.String("instance", instanceID),
+				zap.String("tool", toolName),
 				zap.String("target", targetBase),
 				zap.Error(err),
 			)
-			// 记录失败访问日志到数据库
+			// 记录失败日志到数据库
 			go func(errMsg string) {
 				logData := map[string]interface{}{
-					"method": r.Method,
-					"uri":    r.URL.Path,
-					"target": targetBase,
-					"error":  errMsg,
+					"method":   r.Method,
+					"uri":      r.URL.Path,
+					"toolName": toolName,
+					"target":   targetBase,
+					"error":    errMsg,
 				}
 				logRaw, _ := json.Marshal(logData)
 				_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
 					InstanceID: instanceID,
+					ToolName:   toolName,
 					Level:      5, // Error
-					Event:      model.EventAuthFailed,
+					Event:      model.EventUpstreamError,
 					Log:        json.RawMessage(logRaw),
 				})
 			}(err.Error())
@@ -458,3 +554,4 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 func trimStr(s string) string {
 	return strings.TrimSpace(s)
 }
+
