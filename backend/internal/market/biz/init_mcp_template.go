@@ -176,22 +176,40 @@ func buildTemplateFromOpenapi(ctx context.Context, it embeddedTemplateItem) (*mo
 	}, nil
 }
 
-// refreshEmbeddedTemplateIfNeeded 如果现有的内置模板需要更新（例如从老的外部域名切换到内网占位符），则执行更新操作
+// refreshEmbeddedTemplateIfNeeded 在服务启动时自动修复内置模板的关联数据：
+// 1. 始终同步 PackageID → 确保模板引用的 openapi_file_id 与数据库一致（兼容旧环境升级）
+// 2. 若满足条件，同时更新 OpenapiBaseUrl / Notes
 func refreshEmbeddedTemplateIfNeeded(ctx context.Context, existing *model.McpTemplate, it embeddedTemplateItem) error {
-	if !shouldRefreshEmbeddedOpenapiTemplate(existing, it) {
+	if existing == nil || it.OpenapiFileName == "" {
 		return nil
 	}
 
-	existing.OpenapiBaseUrl = it.OpenapiBaseUrl
-	existing.Notes = it.Notes
+	changed := false
+
+	// 1. 始终同步 PackageID：从 DB 查出当前 openapi_file_id，确保模板引用正确
+	// 旧环境因各种原因（如手动操作、重新初始化）可能导致 package_id 与 openapi_file_id 不匹配，此处自动修复
+	currentFileID, err := findOpenapiFileIDByName(ctx, it.OpenapiFileName)
+	if err == nil && currentFileID != "" && existing.PackageID != currentFileID {
+		log.Printf("Syncing template '%s' PackageID: %s -> %s", it.Name, existing.PackageID, currentFileID)
+		existing.PackageID = currentFileID
+		changed = true
+	}
+
+	// 2. 按需更新 OpenapiBaseUrl / Notes（仅旧版本模板）
+	if shouldRefreshEmbeddedOpenapiTemplate(existing, it) {
+		existing.OpenapiBaseUrl = it.OpenapiBaseUrl
+		existing.Notes = it.Notes
+		changed = true
+	}
+
+	if !changed {
+		return nil
+	}
 	return mysql.McpTemplateRepo.Update(ctx, existing)
 }
 
-// shouldRefreshEmbeddedOpenapiTemplate 判断是否需要“刷新”现有的内置模板
-// 触发条件包括：
-// 1. 它是官方提供的 "MCPCAN OpenAPI" 模板
-// 2. 它的 Notes 字段是老版本的文案（或者完全一致）
-// 3. 它的 URL 还停留在老版本的 {{CURRENT_DOMAIN}} 模式或者为空，需要同步到新的内网占位符模式
+// shouldRefreshEmbeddedOpenapiTemplate 判断是否需要刷新模板的 OpenapiBaseUrl / Notes
+// PackageID 的同步由 refreshEmbeddedTemplateIfNeeded 独立处理，此函数仅关注 URL/Notes 字段
 func shouldRefreshEmbeddedOpenapiTemplate(existing *model.McpTemplate, it embeddedTemplateItem) bool {
 	if existing == nil || it.OpenapiFileName == "" || it.Name != defaultOpenapiTemplateName || existing.Name != it.Name {
 		return false

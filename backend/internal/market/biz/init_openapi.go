@@ -60,33 +60,22 @@ func (a *App) initOpenapi(ctx context.Context) error {
 		zap.Int("totalPackages", len(existingPackages)),
 		zap.Bool("foundExisting", existingPkg != nil))
 
-	// 3. If exists in database
+	// 3. 若数据库中已有记录
 	if existingPkg != nil {
-		// Convert relative path to absolute path
+		// 将文件路径转为绝对路径
 		absFilePath, err := fileManager.ToAbsolutePath(existingPkg.OpenapiFilePath)
 		if err != nil {
 			return fmt.Errorf("failed to convert to absolute path: %w", err)
 		}
 
-		// Check if file exists on disk
-		if _, err := os.Stat(absFilePath); err == nil {
-			// File exists, skip completely
-			logger.Info("OpenAPI package already exists with file, skipping initialization",
-				zap.String("openapiFileId", existingPkg.OpenapiFileID),
-				zap.String("filePath", absFilePath))
-			return nil
-		}
-
-		// File missing, only copy file to original path, don't update database
-		logger.Info("OpenAPI record exists but file missing, restoring file",
-			zap.String("openapiFileId", existingPkg.OpenapiFileID),
-			zap.String("filePath", absFilePath))
-
+		// 无论文件是否存在，始终用最新的 init-data 文件覆盖磁盘内容
+		// 保留 openapi_file_id 不变，确保模板的 package_id 引用始终有效
 		if err := copyFile(apiFile, absFilePath); err != nil {
-			return fmt.Errorf("failed to restore openapi file: %w", err)
+			return fmt.Errorf("failed to update openapi file: %w", err)
 		}
 
-		logger.Info("OpenAPI file restored successfully",
+		logger.Info("OpenAPI file updated (overwritten with latest init-data)",
+			zap.String("openapiFileId", existingPkg.OpenapiFileID),
 			zap.String("filePath", absFilePath))
 		return nil
 	}
