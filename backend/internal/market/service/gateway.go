@@ -485,24 +485,34 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 				zap.Int("status", statusCode),
 			)
 
-			// 仅对非 SSE 的 POST 响应读取并记录 response body（SSE 为流式不读取）
+			// 仅对非 SSE 的 POST 响应拦截并记录 response body（SSE 为流式不读取）
+			// 关键：必须完整读取 body 后还原，避免 LimitReader 导致大响应被截断（JSON Unterminated string）
 			contentType := resp.Header.Get("Content-Type")
 			isSSE := strings.Contains(contentType, "text/event-stream")
 			if !isSSE && resp.Request.Method == http.MethodPost {
-				respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<16)) // 最多64KB
-				_ = resp.Body.Close()
-				resp.Body = io.NopCloser(bytes.NewReader(respBody))
-				resp.ContentLength = int64(len(respBody))
+				const maxLogBytes = 1 << 16 // 64KB，仅用于日志截断
 
-				go func(body []byte, code int, tn string) {
+				// 读取完整 body，还原给客户端，不修改 ContentLength
+				respBodyFull, _ := io.ReadAll(resp.Body)
+				_ = resp.Body.Close()
+				resp.Body = io.NopCloser(bytes.NewReader(respBodyFull))
+
+				// 日志只记录前 64KB，避免写库数据过大
+				logBody := respBodyFull
+				if len(logBody) > maxLogBytes {
+					logBody = logBody[:maxLogBytes]
+				}
+
+				go func(body []byte, code int, tn string, truncated bool) {
 					var respData interface{}
 					if err2 := json.Unmarshal(body, &respData); err2 != nil {
 						respData = string(body)
 					}
 					logData := map[string]interface{}{
-						"status":   code,
-						"toolName": tn,
-						"response": respData,
+						"status":    code,
+						"toolName":  tn,
+						"response":  respData,
+						"truncated": truncated,
 					}
 					logRaw, _ := json.Marshal(logData)
 					_ = mysql.GatewayLogRepo.Create(context.Background(), &model.GatewayLog{
@@ -512,7 +522,7 @@ func (s *GatewayService) ProxyHandler(c *gin.Context) {
 						Event:      model.EventResponse,
 						Log:        json.RawMessage(logRaw),
 					})
-				}(respBody, statusCode, toolName)
+				}(logBody, statusCode, toolName, len(respBodyFull) > maxLogBytes)
 			}
 			return nil
 		},

@@ -75,7 +75,7 @@ const (
 // Global query range constraints
 const (
 	// DefaultQueryRange defines the default time window applied when no range is provided
-	DefaultQueryRange = 24 * time.Hour
+	DefaultQueryRange = 7 * 24 * time.Hour
 	// MaxQueryRange defines the maximum allowed query time window
 	MaxQueryRange = 180 * 24 * time.Hour
 )

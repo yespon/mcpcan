@@ -29,7 +29,8 @@ func NewCleanGatewayLog(
 func (c *CleanGatewayLogImpl) Run(ctx context.Context) error {
 	c.logger.Info("Starting gateway log cleaning task")
 
-	cutoff := time.Now().Add(-24 * time.Hour)
+	// 保留最近 7 天日志，清理更早的数据
+	cutoff := time.Now().Add(-7 * 24 * time.Hour)
 	rowsAffected, err := c.logRepo.DeleteBefore(ctx, cutoff)
 	if err != nil {
 		c.logger.Error("Failed to clean gateway logs", zap.Error(err))
@@ -39,6 +40,7 @@ func (c *CleanGatewayLogImpl) Run(ctx context.Context) error {
 	c.logger.Info("Gateway log cleaning task completed",
 		zap.Int64("deleted_rows", rowsAffected),
 		zap.Time("cutoff_time", cutoff),
+		zap.String("retention", "7 days"),
 	)
 
 	return nil
