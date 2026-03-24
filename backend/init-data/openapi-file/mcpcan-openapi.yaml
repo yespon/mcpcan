@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: MCPCAN OpenAPI
-  version: v1.10.0
+  version: v2.1.1
 paths:
   /api/market/ai/models:
     get:
