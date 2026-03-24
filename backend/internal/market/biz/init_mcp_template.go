@@ -19,6 +19,12 @@ import (
 //go:embed template.json
 var EmbeddedTemplatesFS embed.FS
 
+const (
+	defaultOpenapiTemplateName      = "MCPCAN OpenAPI"
+	internalEntryBaseURLPlaceholder = "{{MCPCAN_INTERNAL_ENTRY_BASE_URL}}"
+	legacyOpenapiTemplateNotes      = "MCPCAN OpenAPI template. The {{CURRENT_DOMAIN}} placeholder in openapi_base_url will be replaced with the current service domain during initialization. To invoke this template, set the server Authorization header with a Bearer token (for example: Bearer xxxxxxx, which can be obtained from the browser console of the current user in the MCPCAN system)."
+)
+
 // GetEmbeddedTemplateJSON returns embedded template JSON data
 func GetEmbeddedTemplateJSON() []byte {
 	data, err := fs.ReadFile(EmbeddedTemplatesFS, "template.json")
@@ -30,22 +36,22 @@ func GetEmbeddedTemplateJSON() []byte {
 }
 
 type embeddedTemplateItem struct {
-	Name           string `json:"name"`
-	Port           int32  `json:"port"`
-	InitScript     string `json:"init_script"`
-	Command        string `json:"command"`
-	StartupTimeout int32  `json:"startup_timeout"`
-	RunningTimeout int32  `json:"running_timeout"`
-	PackageID      string `json:"package_id"`
-	PackageName    string `json:"package_name"`
-	SourceType     string `json:"source_type"`
-	AccessType     string `json:"access_type"`
-	McpProtocol    string `json:"mcp_protocol"`
-	McpServers     string `json:"mcp_servers,omitempty"`
-	ImgAddress     string `json:"img_address"`
-	Notes          string `json:"notes,omitempty"`
-	ServicePath    string `json:"service_path,omitempty"`
-	IconPath       string `json:"icon_path,omitempty"`
+	Name            string `json:"name"`
+	Port            int32  `json:"port"`
+	InitScript      string `json:"init_script"`
+	Command         string `json:"command"`
+	StartupTimeout  int32  `json:"startup_timeout"`
+	RunningTimeout  int32  `json:"running_timeout"`
+	PackageID       string `json:"package_id"`
+	PackageName     string `json:"package_name"`
+	SourceType      string `json:"source_type"`
+	AccessType      string `json:"access_type"`
+	McpProtocol     string `json:"mcp_protocol"`
+	McpServers      string `json:"mcp_servers,omitempty"`
+	ImgAddress      string `json:"img_address"`
+	Notes           string `json:"notes,omitempty"`
+	ServicePath     string `json:"service_path,omitempty"`
+	IconPath        string `json:"icon_path,omitempty"`
 	OpenapiFileName string `json:"openapi_file_name,omitempty"`
 	OpenapiBaseUrl  string `json:"openapi_base_url,omitempty"`
 }
@@ -77,6 +83,9 @@ func (a *App) initMcpTemplateData(ctx context.Context) error {
 		// Check for duplicates by name
 		existing, err := mysql.McpTemplateRepo.FindByName(ctx, it.Name)
 		if err == nil && existing != nil {
+			if err := refreshEmbeddedTemplateIfNeeded(ctx, existing, it); err != nil {
+				return fmt.Errorf("failed to refresh embedded template '%s': %w", it.Name, err)
+			}
 			log.Printf("Template '%s' already exists, skipping", it.Name)
 			skippedCount++
 			continue
@@ -165,6 +174,55 @@ func buildTemplateFromOpenapi(ctx context.Context, it embeddedTemplateItem) (*mo
 		OpenapiBaseUrl: replaceCurrentDomainPlaceholder(it.OpenapiBaseUrl),
 		SourceType:     model.SourceTypeOpenapi,
 	}, nil
+}
+
+// refreshEmbeddedTemplateIfNeeded 如果现有的内置模板需要更新（例如从老的外部域名切换到内网占位符），则执行更新操作
+func refreshEmbeddedTemplateIfNeeded(ctx context.Context, existing *model.McpTemplate, it embeddedTemplateItem) error {
+	if !shouldRefreshEmbeddedOpenapiTemplate(existing, it) {
+		return nil
+	}
+
+	existing.OpenapiBaseUrl = it.OpenapiBaseUrl
+	existing.Notes = it.Notes
+	return mysql.McpTemplateRepo.Update(ctx, existing)
+}
+
+// shouldRefreshEmbeddedOpenapiTemplate 判断是否需要“刷新”现有的内置模板
+// 触发条件包括：
+// 1. 它是官方提供的 "MCPCAN OpenAPI" 模板
+// 2. 它的 Notes 字段是老版本的文案（或者完全一致）
+// 3. 它的 URL 还停留在老版本的 {{CURRENT_DOMAIN}} 模式或者为空，需要同步到新的内网占位符模式
+func shouldRefreshEmbeddedOpenapiTemplate(existing *model.McpTemplate, it embeddedTemplateItem) bool {
+	if existing == nil || it.OpenapiFileName == "" || it.Name != defaultOpenapiTemplateName || existing.Name != it.Name {
+		return false
+	}
+
+	if existing.Notes != legacyOpenapiTemplateNotes && existing.Notes != it.Notes {
+		return false
+	}
+
+	if strings.Contains(existing.OpenapiBaseUrl, internalEntryBaseURLPlaceholder) {
+		return false
+	}
+
+	return existing.OpenapiBaseUrl == "" ||
+		strings.Contains(existing.OpenapiBaseUrl, "{{CURRENT_DOMAIN}}") ||
+		isLegacyOpenapiTemplateURL(existing.OpenapiBaseUrl)
+}
+
+// isLegacyOpenapiTemplateURL 识别是否为旧版本的 OpenAPI 基础地址（硬编码了 http/https 且指向 market 后缀）
+func isLegacyOpenapiTemplateURL(rawURL string) bool {
+	trimmed := strings.TrimRight(strings.TrimSpace(rawURL), "/")
+	if trimmed == "" {
+		return false
+	}
+	if strings.Contains(trimmed, internalEntryBaseURLPlaceholder) || strings.Contains(trimmed, "mcp-entry-svc") {
+		return false
+	}
+	if !strings.HasSuffix(trimmed, "/api/market") {
+		return false
+	}
+	return strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://")
 }
 
 func findOpenapiFileIDByName(ctx context.Context, originalName string) (string, error) {

@@ -243,9 +243,9 @@
   {
     "openapi_file_name": "mcpcan-openapi.yaml",
     "name": "MCPCAN OpenAPI",
-    "openapi_base_url": "https://{{CURRENT_DOMAIN}}/api/market",
+    "openapi_base_url": "{{MCPCAN_INTERNAL_ENTRY_BASE_URL}}/api/market/",
     "mcp_protocol": "streamable-http",
     "access_type": "hosting",
-    "notes": "MCPCAN OpenAPI template. The {{CURRENT_DOMAIN}} placeholder in openapi_base_url will be replaced with the current service domain during initialization. To invoke this template, set the server Authorization header with a Bearer token (for example: Bearer xxxxxxx, which can be obtained from the browser console of the current user in the MCPCAN system)."
+    "notes": "MCPCAN OpenAPI template. During import, the default openapi_base_url will be resolved to the internal mcp-entry service address based on the selected runtime environment. To invoke this template, set the server Authorization header with a Bearer token (for example: Bearer xxxxxxx, which can be obtained from the browser console of the current user in the MCPCAN system)."
   }
 ]
