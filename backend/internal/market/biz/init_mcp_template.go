@@ -228,19 +228,19 @@ func shouldRefreshEmbeddedOpenapiTemplate(existing *model.McpTemplate, it embedd
 		isLegacyOpenapiTemplateURL(existing.OpenapiBaseUrl)
 }
 
-// isLegacyOpenapiTemplateURL 识别是否为旧版本的 OpenAPI 基础地址（硬编码了 http/https 且指向 market 后缀）
+// isLegacyOpenapiTemplateURL 识别是否为旧版本的 OpenAPI 基础地址
+// 旧格式：URL 末尾带有 /api/market（路径已内嵌到 yaml 中，新版本只需域名）
 func isLegacyOpenapiTemplateURL(rawURL string) bool {
 	trimmed := strings.TrimRight(strings.TrimSpace(rawURL), "/")
 	if trimmed == "" {
 		return false
 	}
-	if strings.Contains(trimmed, internalEntryBaseURLPlaceholder) || strings.Contains(trimmed, "mcp-entry-svc") {
+	// 新版本使用内部占位符，不需要刷新
+	if strings.Contains(trimmed, internalEntryBaseURLPlaceholder) {
 		return false
 	}
-	if !strings.HasSuffix(trimmed, "/api/market") {
-		return false
-	}
-	return strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://")
+	// 旧格式特征：末尾带 /api/market（无论 http:// 还是包含服务名）
+	return strings.HasSuffix(trimmed, "/api/market")
 }
 
 func findOpenapiFileIDByName(ctx context.Context, originalName string) (string, error) {
