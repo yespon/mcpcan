@@ -418,7 +418,8 @@ type KubernetesServiceManager struct {
 	Entry *k8s.Entry
 }
 
-// Create creates service
+// Create 创建 Service，若同名 Service 已存在则直接返回（幂等）。
+// 编辑实例时会重走 CreateContainer 流程，同名 Service 已存在属正常情况，不应报错。
 func (ksm *KubernetesServiceManager) Create(ctx context.Context, serviceName string, port int32, selector map[string]string) (*ServiceInfo, error) {
 	svcCfg := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -437,6 +438,13 @@ func (ksm *KubernetesServiceManager) Create(ctx context.Context, serviceName str
 
 	service, err := ksm.Entry.Service.Create(svcCfg)
 	if err != nil {
+		// 若 Service 已存在，直接 Get 返回，避免幂等场景下误报错误
+		if strings.Contains(err.Error(), "already exists") {
+			existing, getErr := ksm.Get(ctx, serviceName)
+			if getErr == nil {
+				return existing, nil
+			}
+		}
 		return nil, fmt.Errorf("failed to create Service: %w", err)
 	}
 
@@ -453,6 +461,7 @@ func (ksm *KubernetesServiceManager) Create(ctx context.Context, serviceName str
 		Labels:    service.Labels,
 	}, nil
 }
+
 
 // Delete deletes service
 func (ksm *KubernetesServiceManager) Delete(ctx context.Context, serviceName string) error {
