@@ -1,122 +1,36 @@
-# MCPCan v2.1 Release Notes
-
-> **Major Version Notice**: v2.x is a complete rewrite of v1.x. **v1.x is end-of-life due to fundamental design flaws and will no longer receive any PRs, security patches, or bug fixes.** Please migrate to v2.x immediately.
-
-**Scope**: `feature/v1.12` → `feature/v2.1` (mcpcan + mcpcan-tools, 67+ commits)
-
----
-
-## ⚠️ Breaking Changes: v1.x → v2.x
-
-> **Full reinstall is required. In-place upgrades are not supported.**
-
-| Area | v1.x (Old) | v2.x (New) | Impact |
-|------|-----------|-----------|--------|
-| **Gateway Architecture** | Standalone global `mcp-gateway` service | Traefik Sidecar injected per-instance; `mcp-gateway` removed | **Breaking** — requires full Helm reinstall |
-| **Initialization Service** | Dedicated `mcp-init` container | Init logic merged into `mcp-market` startup; `mcp-init` removed | **Breaking** — remove init from deployment |
-| **Image Strategy** | Separate open-source / enterprise images | Single image with runtime `CODE_MODE` env var switch | **Breaking** — update image pull strategy |
-| **Helm Chart** | `mcpcan-deploy` repo, chart name `mcpcan-deploy` | Merged into main repo `mcpcan/deploy`, chart name `mcpcan` | **Breaking** — re-add Helm repo |
-| **Repository URLs** | Codeup / Gitee | Migrated to GitHub `Kymo-MCP` org | Re-clone or update remotes |
-| **Service Boot Order** | No ordering constraint | `mcp-authz` requires `mcp-market` ready (initContainer wait) | Handled automatically on first deploy |
-| **Menu/Permission Data** | Manually seeded by `mcp-init` | `mcp-market` idempotently syncs menus on startup (incl. Enterprise menus) | No manual action needed |
-| **CodeMode Constant** | No unified convention | Must use `EnterpriseCode` (not `Enterprise`) | Update deployment scripts |
-
----
-
-## 🏗️ Refactor
-
-- **`refactor(gateway)`**: Replace global `mcp-gateway` with per-instance Traefik Sidecar architecture, eliminating single-point-of-failure (`e55e5a7`)
-- **`refactor(ee)`**: Single-image enterprise toggle via `CODE_MODE=EnterpriseCode` env var; no more dual-release images (`5e68c68`)
-- **`refactor`**: Centralize container image name generation; unify Sidecar suffix and service naming conventions (`1888a53`, `5f4d8f3`)
-- **`refactor`**: Market module init and data seeding fully consolidated into `biz` layer; `mcp-init` service retired (`9a5adfe`)
-- **`refactor`**: Standardize container image tags to `latest`, remove platform-specific container config redundancy (`6235a22`)
-- **`refactor`**: Improved API error handling with dynamic HTTP status codes and URI parameter support for instance IDs (`3068ba9`)
-
----
+# Release Notes
+**Scope**: `main` ... `HEAD` (v2.1.1)
 
 ## 🚀 Features
-
-### Gateway & Authentication
-- **Traefik gateway integration**: Dynamic routing and authentication with per-instance Sidecar injection (`faa2537`)
-- **Enhanced gateway auth**: Detailed request info extraction, hierarchical header management, DB logging for auth events (`ddb07e6`, `6fb9d85`)
-- **`toolName` field in gateway logs**: Filter logs by tool name (`c53af79`)
-- **`X-Mcp-Authorization` header**: Fallback token retrieval mechanism (`27b83a6`)
-- **Gateway proxy handler**: Configurable service name with updated auth middleware for gateway routes (`864dd69`)
-
-### Container & Instance Management
-- **Sidecar proxy + hosting modes**: Docker create/copy workflow with ARM64 support (`3f38a02`)
-- **Docker multi-platform support**: Config file injection for containers and sidecars, independent AMD64/ARM64 builds (`4bc5da8`, `509b70a`)
-- **Dynamic port configuration**: Sidecar and hosting service ports configurable via environment variables (`9dae8e6`, `7717bdd`)
-- **New frontend MCP client**: Full support for Streamable HTTP and SSE protocols, integrated into debug tools (`0c38a70`)
-
-### Enterprise Edition
-- **Enterprise code mode**: Admin department initialization + GORM data-permission plugin registration (`3be721b`)
-- **Enterprise environment config**: Development defaults to OpenCode; dedicated enterprise config provided (`5008a55`)
-- **`CODE_MODE` Helm injection**: `mcp-market` and `mcp-authz` receive CodeMode via unified global Helm value (`460d4c3`)
-- **Enterprise permission menu auto-sync**: `mcp-market` idempotently writes `mcpcan_rbac_manage` and related system menus on startup based on `CODE_MODE`
-
-### Infrastructure
-- **Helm Chart consolidation**: `mcpcan-deploy` repo merged into main repo `mcpcan/deploy`; chart name unified as `mcpcan` (`4340903`)
-- **CI/CD integration**: Helm chart deployment integrated into main release workflow (`663bae2`)
-- **Static asset decoupling**: System `/static` and user upload directories separated to prevent volume overwrites (`b58945a`, `9693882`)
-- **Local dev hot-reload**: Air hot-reload + Docker Compose local development environment (`2c1cabe`, `252756e`)
-- **Frontend auth context**: `useAuth` hook with automatic redirect to login for unauthenticated users (`ffa8d07`)
-- **OpenCode mode frontend**: Menu display and route auth separated by CodeMode (`141e7da`)
-
-### mcpcan-tools Submodule
-- **mcp-sidecar proxy service**: New implementation with multi-architecture build support (`f55d5ac`)
-- **Multi-platform image builds**: `openapi-mcp` and `mcp-hosting` support AMD64/ARM64 multi-arch pushes (`fdb4a9d`)
-- **SSE endpoint rewriting**: Use `ModifyResponse` for more robust SSE path handling (`9813345`)
-
----
+- **[gateway]**: Enhanced `ProxyHandler` request logging to support auditing and interception of structured MCP Tool invocations and responses. (93b07d3)
+- **[frontend]**: Added a version number and workflow indicator section to the user's sidebar menu, providing better visibility for enterprise and private-deployment customers. (ca1f97c)
+- **[openapi]**: Officially introduced comprehensive support for external enterprise OpenAPI mirrored instances, including dynamic routing fixes and robust UI optimizations. (8aa465b)
+- **[template]**: Unified the Proxy and Host proxy form models, introducing a new module for mounting passthrough request headers. (a6da165)
+- **[openapi]**: Underlying engine now officially supports appending passthrough interception headers to standard OpenAPI instances. (876ef24)
 
 ## 🐛 Bug Fixes
+- **[frontend]**: Added the missing `__COMMIT_HASH__` global environment declaration to the TS environment, resolving a major production build failure caused by type-check loop breakage. (0d59a20)
+- **[enterprise]**: Refactored to break a dead-lock loop dependency stack when triggering Vite HMR components from the request initiator layer; fixed the `/user-with-role` out-of-bounds 403 route interception and corrected fine-grained enterprise operation directives. (41831a5)
+- **[frontend]**: Rectified the flawed route guard mechanism's misjudgment of non-menu whitelists. Forced access validation is now strictly enforced only within actual menu pages. (98563c6)
+- **[openapi]**: The backend no longer forcefully overrides internal network path concatenations. The frontend's OpenAPI invocation links safely degrade to a path-less root trigger model to circumvent 504 Gateway errors. (ed5c61b)
+- **[k8s]**: Resolved sidecar communication issues and pod namespace preemption conflicts that led to missing or dropped OpenAPI DNS deliveries causing unreachable deadlocks. (01f2b6d)
+- **[k8s]**: Repaired the external communication gap for API models based on solid Sidecar namespace deductions and internal port overlaps. (c19ee05)
+- **[k8s]**: Implemented idempotent replacements to eliminate Deployment reconstruction storms under high-frequency concurrent operations, injecting debounce thresholds on the frontend UI to resist invalid rapid clicks. (5fba403)
+- **[k8s]**: Adjusted the recreation model to Background deletion policy to sidestep the object-lifecycle race condition errors resulting from upstream Delete requests. (493f799)
+- **[k8s]**: Added strategies including reconstruction spin-locks and exponential backoffs when discovering existing homonymous entities blocked by lingering deletion connections during the Foreground clearing interval. (e8284e3)
+- **[template]**: Removed legacy Notes guard clauses. Now, any access to the `/api/market` gateway domain forcefully stimulates a configuration update to prevent stalling from aging states. (ae32a1f)
+- **[template]**: Shifted the focus down to YAML configuration distribution node mounts, detaching from the internally hardcoded `openapi_base_url`. (4b20fcd)
+- **[init]**: Appended a backdoor script to automatically synchronize the current version's `openapi_file_id` backwards to accommodate all deprecated or offline template base resource pools. (3703711)
+- **[openapi]**: All routes now automatically prepend correct gateway directive prefixes like `/api`, enabling end-users to pair proxy link pools merely by passing the corresponding principal host domains. (0f0f4ec)
+- **[gateway]**: Debugged and severed a vulnerability where the gateway prematurely truncated overly long response payload packets, while extending the audit log expiration tolerance to 7 days. (5ccb204)
+- **[gateway]**: Reattached and patched the GatewayLog processing hooks at the gateway layer, eliminating potential 404 hazards caused by double slashes arising from OpenAPI base addresses with trailing slashes. (feb409b)
+- **[k8s]**: Alleviated frequent repetitive conflict rejection popups when making secondary updates to Service interfaces in the operations panel by utilizing idempotent object overlay patches. (5076a03)
+- **[k8s]**: Enforced fetching limits exclusively targeting specific containers (e.g., openapi or sidecar) under the GetLogs interaction layer to avoid multi-container mix-ups making query APIs unable to distinguish log streams resulting in rejected signatures. (24c7f42)
+- **[openapi]**: Correctly utilized `/bin/sh` as the embedded interactive layer to bypass container startup probe alarm reboot disconnections triggered when the `bash` runtime is unsupported by micro-images. (988a25b)
+- **[k8s]**: Fixed an issue by pushing down Traefik directive domains within underlying load mappings, now adopting annotations instead of labels to complete scheduling handshakes with externalized services. (6fea864)
 
-- **Container URL routing fix**: Sidecar container URL routed correctly; hosting protocol uses root path (`6f3d431`)
-- **Docker env config field fix**: Correctly populate Docker environment configuration and pass ID to connection handler (`3b0e801`)
-- **Dockerfile build context fix**: Standardize source copy to use current build context (`7c69593`)
-
----
-
-## ⚡ Performance
-
-- **Frontend Dockerfile multi-stage cache**: Reduce redundant layer builds, speed up CI builds (`9e11ea7`)
-- **Kubernetes internal URL normalization**: Automatic instance access path normalization, reducing routing errors (`252756e`)
-- **Makefile multi-arch refactor**: Independent AMD64/ARM64 compilation with separate registry pushes and parallel build support (`d940953` in mcpcan-tools)
-
----
+## ♻️ Refactor
+- **[style]**: Comprehensively optimized modules involving redundant parameter mounts when the backend directly passes through to the UI alongside secure display protocols for streamable inner-network connections. (ecdb3be)
 
 ## 📚 Documentation
-
-- **Full new documentation**: Covers installation, configuration, and features in both English and Chinese (`7f9b06f`)
-- **Helm deployment guide**: Updated chart name from `mcpcan-deploy` → `mcpcan`, pointing to main repo (`9ba72b8`)
-- **Deployment instructions consolidated**: Removed Gitee option, unified references to `mcpcan/deploy` directory (`4525bd3`)
-
----
-
-## 🔧 Chore
-
-- **Version bump**: v2.1 version number updated across all components (`c9abe46`)
-- **Cleanup**: Removed redundant Dockerfiles, deprecated `mcp-init`/`mcp-gateway` Helm templates (`a0dd608`, `8b8a752`)
-- **Repository migration**: Migrated from Codeup to GitHub `Kymo-MCP` org; `.gitmodules` updated
-
----
-
-## 📦 Migration Guide
-
-```bash
-# 1. Full uninstall required (no in-place upgrade)
-helm uninstall <release-name> -n <namespace>
-kubectl delete namespace <namespace>
-
-# 2. Re-add Helm repo (chart name has changed)
-helm repo add mcpcan https://kymo-mcp.github.io/mcpcan-mainsite
-helm repo update
-
-# 3. Install v2.x
-helm install mcpcan mcpcan/mcpcan \
-  --set global.codeMode=OpenCode \       # Enterprise: EnterpriseCode
-  -n <namespace> --create-namespace
-```
-
-> For detailed migration documentation, see: [docs/guide/install.md](../../docs/en/guide/install.md)
+- **[docs]**: Appended bilingual (Chinese/English) white-paper annotations covering internal template lifecycle logic and cross-container topological routing. (dfea43c)
