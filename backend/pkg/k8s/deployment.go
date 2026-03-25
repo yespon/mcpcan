@@ -208,8 +208,8 @@ func (dm *DeploymentManager) createDeploymentWithRetry(namespace string, deploym
 			continue
 		}
 		if existing.DeletionTimestamp == nil {
-			// 存在且未删除，直接报冲突
-			return nil, fmt.Errorf("创建 Deployment 失败: %w", err)
+			// 存在且未删除：另一个并发请求已完成创建（幂等场景），直接返回已有对象
+			return existing, nil
 		}
 
 		// 处于 Terminating — 轮询等待

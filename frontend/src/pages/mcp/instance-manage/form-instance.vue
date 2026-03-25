@@ -45,7 +45,7 @@
               </el-button>
             </div>
             <div class="flex justify-center">
-              <mcp-button @click="handleConfirm" class="mr-4">
+              <mcp-button @click="handleConfirm" class="mr-4" :loading="saving" :disabled="saving">
                 {{ t('mcp.instance.action.saveAndRun') }}
               </mcp-button>
               <mcp-button plain @click="handleSaveAsTemplate" class="mr-4">
@@ -123,8 +123,20 @@ const handleViewStatus = () => {
 const handleViewLog = () => {
   formComponent.value.handleViewLog()
 }
-const handleConfirm = () => {
-  formComponent.value.handleConfirm()
+const saving = ref(false)
+const handleConfirm = async () => {
+  if (saving.value) return
+  saving.value = true
+  try {
+    await formComponent.value.handleConfirm()
+  } catch (_) {
+    // 错误由子组件自行提示
+  } finally {
+    // 2 秒后恢复，防止连点；如子组件有 loading 可更早恢复
+    setTimeout(() => {
+      saving.value = false
+    }, 2000)
+  }
 }
 const handleSaveAsTemplate = () => {
   formComponent.value.handleSaveAsTemplate()
