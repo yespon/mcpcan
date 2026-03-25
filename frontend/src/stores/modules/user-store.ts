@@ -143,6 +143,10 @@ export const useUserStore = defineStore('user', () => {
    * @returns
    */
   async function login(LoginFormData: LoginFormData) {
+    // Force clear any stale menu/permission cache before new login
+    allMenus.value = []
+    allAuths.value = {}
+    
     loginFormData.value = btoa(JSON.stringify(LoginFormData))
     const encryptedPassword = await encryptPassword(LoginFormData.password || '')
     return new Promise((resolve, reject) => {
@@ -260,9 +264,12 @@ export const useUserStore = defineStore('user', () => {
   function resetUserState() {
     // remove token info
     Storage.remove('token')
-    Storage.remove('refresh_token')
-    // reset user info
+    Storage.remove('refreshToken')
+
+    // reset user info and permissions cache
     userInfo.value = {} as UserInfo
+    allMenus.value = []
+    allAuths.value = {}
   }
 
   /**

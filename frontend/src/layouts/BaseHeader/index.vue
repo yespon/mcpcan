@@ -12,7 +12,7 @@
     <div v-if="isDev" class="dev-badge">
       <span class="dev-badge__dot"></span>
       <span class="dev-badge__text">DEV</span>
-      <span class="dev-badge__sub">热加载模式 · localhost:3000</span>
+      <span class="dev-badge__sub">({{ isEnterprise ? 'EE模式' : '开源模式' }}) {{ appVersion }}-{{ commitHash }} · {{ currentHost }}</span>
     </div>
     <div class="flex align-center flex-1 justify-end">
       <el-tooltip class="box-item" effect="dark" :content="t('desc.docs')" placement="bottom">
@@ -168,6 +168,9 @@ const router = useRouter()
 const showNav = (window as any).__APP_CONFIG__?.VITE_DEMO === 'true'
 const isDev = import.meta.env.DEV
 const appVersion = __APP_VERSION__
+const commitHash = __COMMIT_HASH__
+const isEnterprise = (window as any).__APP_CONFIG__?.CodeMode !== 'OpenCode'
+const currentHost = window.location.host
 // condition of show back button
 const isShowBack = computed(() => {
   return !route.meta.isMenu

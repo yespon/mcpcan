@@ -1,21 +1,29 @@
 import { fileURLToPath, URL } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
-// import { defineConfig } from 'vite'
+import { execSync } from 'node:child_process'
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import Unocss from 'unocss/vite'
-import AutoImport from 'unplugin-auto-import/vite' // 自动根据需求导入vue的相关API如；ref、reactive等
+import AutoImport from 'unplugin-auto-import/vite'
 
 const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, './package.json'), 'utf-8')) as {
   version?: string
 }
 
+let commitHash = ''
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  commitHash = 'unknown'
+}
+
 // https://vite.dev/config/
 export default defineConfig({
-  base: './', // 适配 自定义部署路径的情况
+  base: './',
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version || 'dev'),
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   server: {
     open: false,

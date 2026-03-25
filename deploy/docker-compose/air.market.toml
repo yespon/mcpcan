@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   # 监听 mcp-market 服务的编译。
   # 增加 -gcflags="all=-N -l" 关闭编译器优化，确保断点精准
-  cmd = "go build -gcflags='all=-N -l' -o ./tmp/market ./cmd/market/main.go"
+  cmd = "go build -gcflags='all=-N -l' -ldflags=\"-X 'github.com/kymo-mcp/mcpcan/pkg/version.CodeMode=${CODE_MODE}'\" -o ./tmp/market ./cmd/market/main.go"
   # 编译后的二进制文件
   bin = "./tmp/market"
   # 使用 dlv 启动调试服务

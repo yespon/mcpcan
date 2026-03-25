@@ -1,12 +1,10 @@
 import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 import qs from 'qs'
-import { useUserStoreHook } from '@/stores/modules/user-store'
 import { Storage } from './storage'
 import { ElMessage, ElNotification } from 'element-plus'
 import router from '@/router'
 import baseConfig from '@/config/base_config.ts'
 import { t } from '@/utils/i18n'
-import { isEmbeddedInParent } from '@/utils/system'
 
 /**
  * 创建 HTTP 请求实例
@@ -141,9 +139,10 @@ async function refreshTokenAndRetry(config: InternalAxiosRequestConfig): Promise
     if (!isRefreshingToken) {
       isRefreshingToken = true
 
-      useUserStoreHook()
-        .refreshToken()
-        .then(() => {
+      import('@/stores/modules/user-store').then(({ useUserStoreHook }) => {
+        useUserStoreHook()
+          .refreshToken()
+          .then(() => {
           // 刷新成功，重试所有等待的请求
           pendingRequests.forEach((callback) => {
             try {
@@ -168,6 +167,7 @@ async function refreshTokenAndRetry(config: InternalAxiosRequestConfig): Promise
         .finally(() => {
           isRefreshingToken = false
         })
+      })
     }
   })
 }
@@ -187,6 +187,7 @@ async function redirectToLogin(message?: string): Promise<void> {
 
     // 跳转到登录页，保留当前路由用于登录后跳转
     const currentPath = router.currentRoute.value.fullPath
+    const { useUserStoreHook } = await import('@/stores/modules/user-store')
     await useUserStoreHook().resetUserState()
     // if (isEmbeddedInParent()) {
     //   // 如果嵌入在父级项目中，发送消息给父页面请求导航到登录页

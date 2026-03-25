@@ -71,7 +71,7 @@ services:
     environment:
       - GOPROXY=https://goproxy.cn,direct
       - GO111MODULE=on
-      - CODE_MODE=OpenCode
+      - CODE_MODE=EnterpriseCode
       - MCP_INTERNAL_BASE_URL=http://mcp-entry-svc
     ports:
       - "8080:8080"
@@ -107,7 +107,7 @@ services:
     environment:
       - GOPROXY=https://goproxy.cn,direct
       - GO111MODULE=on
-      - CODE_MODE=OpenCode
+      - CODE_MODE=EnterpriseCode
     ports:
       - "18081:8081"
       - "12346:2346"
