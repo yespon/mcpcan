@@ -3,9 +3,11 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -167,14 +169,55 @@ func (dm *DeploymentManager) Create(options DeploymentCreateOptions) (string, er
 		}
 	}
 
-	// 创建 Deployment
-	createdDeployment, err := dm.client.clientset.AppsV1().Deployments(targetNamespace).Create(
-		context.Background(), deployment, metav1.CreateOptions{})
+	// 创建 Deployment（含 being deleted 冲突重试）
+	createdDeployment, err := dm.createDeploymentWithRetry(targetNamespace, deployment)
 	if err != nil {
-		return "", fmt.Errorf("创建 Deployment 失败: %w", err)
+		return "", err
 	}
 
 	return createdDeployment.Name, nil
+}
+
+// createDeploymentWithRetry 创建 Deployment，若遇到 "object is being deleted" 则等待消失后重试
+// K8s Foreground 删除策略是异步的，旧对象可能还在 Terminating 期间就发起了新建请求
+func (dm *DeploymentManager) createDeploymentWithRetry(namespace string, deployment *appsv1.Deployment) (*appsv1.Deployment, error) {
+	const (
+		maxWait     = 60 * time.Second
+		pollInterval = 2 * time.Second
+	)
+
+	deadline := time.Now().Add(maxWait)
+
+	for {
+		created, err := dm.client.clientset.AppsV1().Deployments(namespace).Create(
+			context.Background(), deployment, metav1.CreateOptions{})
+		if err == nil {
+			return created, nil
+		}
+
+		// 若非 AlreadyExists，直接返回错误
+		if !k8serrors.IsAlreadyExists(err) {
+			return nil, fmt.Errorf("创建 Deployment 失败: %w", err)
+		}
+
+		// AlreadyExists：检查是否处于 Terminating 状态
+		existing, getErr := dm.client.clientset.AppsV1().Deployments(namespace).Get(
+			context.Background(), deployment.Name, metav1.GetOptions{})
+		if getErr != nil {
+			// 已经消失，重新尝试创建
+			continue
+		}
+		if existing.DeletionTimestamp == nil {
+			// 存在且未删除，直接报冲突
+			return nil, fmt.Errorf("创建 Deployment 失败: %w", err)
+		}
+
+		// 处于 Terminating — 轮询等待
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("创建 Deployment 失败: 等待旧 Deployment 删除超时 (%s): %w", maxWait, err)
+		}
+		time.Sleep(pollInterval)
+	}
 }
 
 // Delete 删除 Deployment
