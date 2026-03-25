@@ -1,7 +1,9 @@
 # Release Notes
+
 **Scope**: `main` ... `HEAD` (v2.1.1)
 
 ## 🚀 Features
+
 - **[gateway]**: Enhanced `ProxyHandler` request logging to support auditing and interception of structured MCP Tool invocations and responses. (93b07d3)
 - **[frontend]**: Added a version number and workflow indicator section to the user's sidebar menu, providing better visibility for enterprise and private-deployment customers. (ca1f97c)
 - **[openapi]**: Officially introduced comprehensive support for external enterprise OpenAPI mirrored instances, including dynamic routing fixes and robust UI optimizations. (8aa465b)
@@ -9,6 +11,7 @@
 - **[openapi]**: Underlying engine now officially supports appending passthrough interception headers to standard OpenAPI instances. (876ef24)
 
 ## 🐛 Bug Fixes
+
 - **[frontend]**: Added the missing `__COMMIT_HASH__` global environment declaration to the TS environment, resolving a major production build failure caused by type-check loop breakage. (0d59a20)
 - **[enterprise]**: Refactored to break a dead-lock loop dependency stack when triggering Vite HMR components from the request initiator layer; fixed the `/user-with-role` out-of-bounds 403 route interception and corrected fine-grained enterprise operation directives. (41831a5)
 - **[frontend]**: Rectified the flawed route guard mechanism's misjudgment of non-menu whitelists. Forced access validation is now strictly enforced only within actual menu pages. (98563c6)
@@ -30,7 +33,9 @@
 - **[k8s]**: Fixed an issue by pushing down Traefik directive domains within underlying load mappings, now adopting annotations instead of labels to complete scheduling handshakes with externalized services. (6fea864)
 
 ## ♻️ Refactor
+
 - **[style]**: Comprehensively optimized modules involving redundant parameter mounts when the backend directly passes through to the UI alongside secure display protocols for streamable inner-network connections. (ecdb3be)
 
 ## 📚 Documentation
+
 - **[docs]**: Appended bilingual (Chinese/English) white-paper annotations covering internal template lifecycle logic and cross-container topological routing. (dfea43c)
