@@ -1054,15 +1054,19 @@ func (biz *InstanceBiz) UpdateInstanceForProxy(ctx context.Context, req *instanc
 			if errBuild != nil {
 				return nil, fmt.Errorf("failed to build proxy sidecar options: %w", errBuild)
 			}
-			_, _ = GContainerBiz.DeleteContainer(oriInstance)
-			// 重建容器
-			errCreate := GContainerBiz.CreateContainer(ctx, options, int32(oriInstance.EnvironmentID), 30) // 默认 30s 启动超时
-			if errCreate != nil {
-				return nil, fmt.Errorf("failed to recreate proxy sidecar container: %w", errCreate)
+			if optJSON, errMarshal := common.MarshalAndAssignConfig(options); errMarshal == nil {
+				oriInstance.ContainerCreateOptions = optJSON
+				oriInstance.ContainerName = options.ContainerName
+				oriInstance.ContainerServiceName = options.ServiceName
+				oriInstance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
+
+				// 修复：K8s 环境下使用 RestartContainer 进行异步删除与重建等待，防止 "object is being deleted"
+				if _, errRestart := GContainerBiz.RestartContainer(ctx, oriInstance); errRestart != nil {
+					return nil, fmt.Errorf("failed to recreate proxy sidecar container: %w", errRestart)
+				}
+			} else {
+				return nil, fmt.Errorf("failed to marshal proxy sidecar options: %w", errMarshal)
 			}
-			oriInstance.ContainerName = options.ContainerName
-			oriInstance.ContainerServiceName = options.ServiceName
-			oriInstance.ContainerServiceURL = biz.getContainerServiceURL(options.ContainerName, options.ServiceName)
 		}
 	}
 
@@ -1162,11 +1166,6 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to marshal container create options: %w", err)
 	}
 
-	// 删除旧容器和 sidecar
-	if _, err = GContainerBiz.DeleteContainer(oriInstance); err != nil {
-		return nil, fmt.Errorf("failed to delete container: %v", err)
-	}
-
 	// 更新容器状态字段
 	oriInstance.ContainerCreateOptions = containerCreateOptions
 	oriInstance.ContainerStatus = model.ContainerStatusPending
@@ -1177,8 +1176,8 @@ func (biz *InstanceBiz) UpdateInstanceForOpenapi(ctx context.Context, req *insta
 		return nil, fmt.Errorf("failed to update instance: %v", err)
 	}
 
-	// 修复：删除后重新创建容器（之前缺失此调用）
-	if err = GContainerBiz.CreateContainer(ctx, containerOptions, int32(oriInstance.EnvironmentID), int32(oriInstance.StartupTimeout)); err != nil {
+	// 修复：针对 K8s 异步删除环境，统一使用 RestartContainer 解决 "object is being deleted" 竞态。
+	if _, err = GContainerBiz.RestartContainer(ctx, oriInstance); err != nil {
 		return nil, fmt.Errorf("failed to recreate container: %v", err)
 	}
 
