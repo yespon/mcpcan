@@ -53,6 +53,7 @@ type oaiMessage struct {
 }
 
 type oaiToolCall struct {
+	Index        *int            `json:"index,omitempty"`
 	ID           string          `json:"id"`
 	Type         string          `json:"type"`
 	Function     oaiFunctionCall `json:"function"`
@@ -329,7 +330,12 @@ func (p *OpenAICompatProvider) StreamChat(ctx context.Context, req ChatRequest) 
 				}
 				if len(choice.Delta.ToolCalls) > 0 {
 					for _, tc := range choice.Delta.ToolCalls {
+						tcIndex := 0
+						if tc.Index != nil {
+							tcIndex = *tc.Index
+						}
 						sr.ToolCalls = append(sr.ToolCalls, ToolCall{
+							Index:        tcIndex,
 							ID:           tc.ID,
 							Type:         tc.Type,
 							Function: ToolCallFunction{
