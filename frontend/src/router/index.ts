@@ -370,12 +370,14 @@ router.beforeEach(async (to, from, next) => {
       const allowList = allAuthMenuList.value || []
       // 部分页面可能通过 query/layout 隐藏布局，不影响鉴权，仍以 path 为准
       const targetPath = to.path
-      // next()
-      // return
 
-      if (!allowList.includes(targetPath)) {
-        next('/403')
-        return
+      // 仅对明确标记为菜单的页面进行 allowList 可视范围判断；
+      // 若是不作为菜单展示的拓展详情页（仅配置了 isEnterprise 标识），只要不属于 OpenCode 环境，即直接放行。
+      if (to.meta?.isMenu) {
+        if (!allowList.includes(targetPath)) {
+          next('/403')
+          return
+        }
       }
     }
 
