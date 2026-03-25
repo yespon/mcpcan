@@ -994,14 +994,12 @@ func (cd *ContainerBiz) BuildContainerOptions(ctx context.Context, instanceID st
 // BuildOpenapiContainerOptions builds openapi container creation options
 func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instanceID string, openapiFileID string, port int32, startupTimeout int32, runningTimeout int32, openapiBaseUrl string, headers map[string]string) (*container.ContainerCreateOptions, error) {
 	containerName := cd.generateContainerName(instanceID)
-	// docker 模式下 serviceName == containerName，确保 getContainerServiceURL 走 docker 分支
-	// （不同名会被误判为 k8s 模式，ContainerServiceURL 指向不存在的 -service DNS）
-	serviceName := containerName
+	// serviceName 必须使用 generateServiceName 生成，以便在 K8S 模式下带上 -service 后缀
+	// 这样 getContainerServiceURL 就能正确识别并使用 K8S Service 名作为 DNS
+	serviceName := cd.generateServiceName(instanceID)
 	sidecarContainerName := containerName + common.SidecarContainerSuffix
-
-	if port <= 0 {
-		port = common.GetMcpHostingPort()
-	}
+	// API 模式下，所有的流量也必须先经过 sidecar 转换，所以强制使用 SidecarPort 作为 Service 端口
+	port = common.GetSidecarPort()
 
 	// Set environment variables
 	envVars := make(map[string]string)
