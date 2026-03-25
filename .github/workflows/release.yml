@@ -1,11 +1,11 @@
 name: Auto Release
 
-# 触发条件：仅主分支 push 自动触发（禁止手动触发）
+# 触发条件：正式版本 Tag 推送触发（如 v2.1.2）
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch: # 补充人工点击重跑功能
+    tags:
+      - 'v*.*.*'   # 仅正式版本 Tag（如 v2.1.2）触发
+  workflow_dispatch: # 保留面板手动重跑功能
 
 jobs:
   release:

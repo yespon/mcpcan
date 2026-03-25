@@ -18,7 +18,6 @@ import (
 	iapb "github.com/kymo-mcp/mcpcan/api/market/intelligent_access"
 	pb "github.com/kymo-mcp/mcpcan/api/market/mcp_to_intelligent_task"
 	"github.com/kymo-mcp/mcpcan/internal/market/biz"
-	"github.com/kymo-mcp/mcpcan/internal/market/config"
 	"github.com/kymo-mcp/mcpcan/pkg/common"
 	"github.com/kymo-mcp/mcpcan/pkg/coze"
 	"github.com/kymo-mcp/mcpcan/pkg/database/model"
@@ -844,8 +843,8 @@ func createDifyTools(domain string, insertInfo *model.InsertIntelligentInfo, mcp
 			mcpServerInternalUrl = mcpInstance.ContainerServiceURL
 		}
 	} else {
-		// 使用配置中的域名 Host，确保通过域名请求网关触发中间件
-		host := strings.TrimRight(config.GetConfig().Market.Host, "/")
+		// 使用前端传入的域名 Host，确保回调路径完整
+		host := strings.TrimRight(domain, "/")
 		if host == "" {
 			return fmt.Errorf("domain is required for proxy/hosting mode requests in intelligent task")
 		}
