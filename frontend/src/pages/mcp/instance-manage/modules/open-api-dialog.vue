@@ -275,26 +275,30 @@ const rules = ref({
 const resolveInternalEntryBaseUrl = (environmentId?: number | string) => {
   const matchedEnv = envList.value.find((env) => String(env.id) === String(environmentId))
   if (matchedEnv?.environment === EnvType.K8S) {
-    const namespace = `${matchedEnv.namespace || ''}`.trim()
-    return namespace
-      ? `http://mcp-entry-svc.${namespace}.svc.cluster.local`
-      : 'http://mcp-entry-svc'
+    // User requested specifically to use https://mcp-entry-svc without path formatting
+    return 'https://mcp-entry-svc'
   }
   return 'http://mcp-entry-svc'
 }
 
 /**
  * 处理模板中的 OpenAPI Base URL 占位符
- * 如果 URL 包含内网地址占位符，则将其替换为对应运行环境的实际内网地址
+ * 如果 URL 包含内网地址占位符，则将其替换为对应运行环境的实际内网地址，并强制移除 Path 路径
  */
 const resolveTemplateOpenapiBaseUrl = (rawUrl: string, environmentId?: number | string) => {
   if (!rawUrl.includes(INTERNAL_ENTRY_BASE_URL_PLACEHOLDER)) {
     return rawUrl
   }
-  return rawUrl.replace(
+  const resolvedUrl = rawUrl.replace(
     INTERNAL_ENTRY_BASE_URL_PLACEHOLDER,
     resolveInternalEntryBaseUrl(environmentId),
   )
+  try {
+    const urlObj = new URL(resolvedUrl)
+    return urlObj.origin
+  } catch {
+    return resolvedUrl
+  }
 }
 const baseInfo = ref<any>(null)
 const apiNodeList = ref<any[]>([])

@@ -1047,6 +1047,11 @@ func (cd *ContainerBiz) BuildOpenapiContainerOptions(ctx context.Context, instan
 	// 确保 openapiBaseUrl 无末尾斜杠，避免与 API 路径（以/开头）拼接时产生双斜杠导致 404
 	openapiBaseUrl = strings.TrimRight(strings.TrimSpace(openapiBaseUrl), "/")
 
+	// 历史容错：K8s 内部 mcp-entry-svc 只提供 80 端口 HTTP 服务，若用户误配为 https 则强制纠正，避免引发由于试图访问 443 端口导致的 i/o timeout
+	if strings.HasPrefix(openapiBaseUrl, "https://mcp-entry-svc") {
+		openapiBaseUrl = strings.Replace(openapiBaseUrl, "https://", "http://", 1)
+	}
+
 	startupScript := fmt.Sprintf(`
 mkdir -p /app/init
 
@@ -1083,7 +1088,7 @@ exec /app/init/startup.sh
 		ImageName:     common.GetOpenapiToMcpImage(),
 		ContainerName: containerName,
 		ServiceName:   serviceName,
-		Port:          port,
+		Port:          common.GetSidecarPort(),
 		Command:       []string{"/bin/sh", "-c"},
 		CommandArgs:   []string{startupScript},
 		RestartPolicy: "Always",
