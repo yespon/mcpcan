@@ -222,8 +222,10 @@ func (dm *DeploymentManager) createDeploymentWithRetry(namespace string, deploym
 
 // Delete 删除 Deployment
 func (dm *DeploymentManager) Delete(deploymentName string) error {
-	// 设置级联删除策略，确保删除所有相关资源（ReplicaSet、Pod等）
-	deletePolicy := metav1.DeletePropagationForeground
+	// 使用 Background 级联删除策略：API 对象立即消失，GC 异步清理 ReplicaSet/Pod
+	// 不使用 Foreground，因为 Foreground 删除时 API 对象会留在 Terminating 状态，
+	// 导致紧跟着的同名 Create 报 "object is being deleted" 错误
+	deletePolicy := metav1.DeletePropagationBackground
 	deleteOptions := metav1.DeleteOptions{
 		PropagationPolicy: &deletePolicy,
 	}
