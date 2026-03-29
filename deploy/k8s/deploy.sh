@@ -5,20 +5,21 @@
 #
 # 功能：
 # 1. 检查 K8s 集群连接和依赖工具
-# 2. 分步骤应用 YAML 配置（namespace → RBAC → configmap → deployment → ingress）
-# 3. 等待服务就绪
-# 4. 显示部署结果和访问方式
+# 2. 校验当前部署清单中的关键占位符和固定约束
+# 3. 分步骤应用 YAML 配置（namespace → config → TOS storage → deployment → ingress）
+# 4. 等待 csi-s3 和业务服务就绪
+# 5. 显示部署结果和访问方式
 #
 # 使用方式：
 #   bash deploy.sh [options]
 #
 # 选项：
 #   --dry-run              - 模拟部署（不实际应用）
-#   --namespace            - K8s 命名空间（默认：mcpcan）
+#   --namespace            - K8s 命名空间（当前清单固定为 mcpcan）
 #   --harbor-registry      - Harbor 地址（用于镜像拉取）
 #   --skip-preflight       - 跳过预检查
 #   --wait-timeout         - 等待超时时间（默认：300秒）
-#   --ingress-class        - Ingress Class（默认：nginx）
+#   --ingress-class        - Ingress Class（当前清单固定为 nginx）
 # ============================================================================
 
 set -e
@@ -65,15 +66,15 @@ show_help() {
 
 选项:
     --dry-run              - 模拟部署（显示如何应用，不实际执行）
-    --namespace            - K8s 命名空间 (default: mcpcan)
+    --namespace            - K8s 命名空间 (default: mcpcan，当前 YAML 已写死为 mcpcan)
     --harbor-registry      - Harbor 私有仓库地址 (default: harbor.example.com)
     --skip-preflight       - 跳过预检查（检查 kubectl、集群连接等）
     --wait-timeout         - 等待 Pod 就绪的超时时间，单位秒 (default: 300)
-    --ingress-class        - Ingress Class 名称 (default: nginx)
+    --ingress-class        - Ingress Class 名称 (default: nginx，当前 YAML 已写死为 nginx)
     --help                 - 显示此帮助信息
 
 示例:
-    # 完整部署（包含预检查）
+    # 完整部署（外部 MySQL / Redis + 火山云 TOS）
     bash deploy.sh --namespace mcpcan --harbor-registry harbor.company.com
 
     # 模拟部署（不执行）
@@ -83,6 +84,47 @@ show_help() {
     bash deploy.sh --skip-preflight --namespace mcpcan
 
 EOF
+}
+
+# 校验当前静态清单约束
+validate_manifest_constraints() {
+    if [[ "$NAMESPACE" != "mcpcan" ]]; then
+        log_error "当前 deploy/k8s YAML 已写死 namespace=mcpcan，暂不支持通过 --namespace 覆盖"
+        exit 1
+    fi
+
+    if [[ "$INGRESS_CLASS" != "nginx" ]]; then
+        log_error "当前 deploy/k8s/3-ingress.yaml 已写死 ingressClassName=nginx，暂不支持通过 --ingress-class 覆盖"
+        exit 1
+    fi
+}
+
+# 校验关键配置是否仍为占位符
+validate_manifest_content() {
+    local config_file="$SCRIPT_DIR/1-configmap-secret.yaml"
+    local storage_file="$SCRIPT_DIR/4-storage-s3.yaml"
+
+    if grep -Eq 'host:[[:space:]]*mysql-svc' "$config_file"; then
+        log_error "1-configmap-secret.yaml 中仍存在 mysql-svc 默认地址，请改为真实外部 MySQL 地址"
+        exit 1
+    fi
+
+    if grep -Eq 'host:[[:space:]]*redis-svc' "$config_file"; then
+        log_error "1-configmap-secret.yaml 中仍存在 redis-svc 默认地址，请改为真实外部 Redis 地址"
+        exit 1
+    fi
+
+    if grep -q '<TOS_ACCESS_KEY_ID>' "$storage_file"; then
+        log_error "4-storage-s3.yaml 中仍存在 TOS AccessKey 占位符，请先替换为真实值"
+        exit 1
+    fi
+
+    if grep -q '<TOS_SECRET_ACCESS_KEY>' "$storage_file"; then
+        log_error "4-storage-s3.yaml 中仍存在 TOS SecretAccessKey 占位符，请先替换为真实值"
+        exit 1
+    fi
+
+    log_info "✓ 部署清单关键配置校验通过"
 }
 
 # 解析命令行参数
@@ -163,6 +205,23 @@ preflight_check() {
     log_info "✓ 预检查完成"
 }
 
+# 检查运行时前置条件
+check_runtime_prerequisites() {
+    log_step "检查运行时前置条件..."
+
+    if ! kubectl -n "$NAMESPACE" get secret mcpcan-kubeconfig &> /dev/null; then
+        log_error "缺少 Secret: mcpcan-kubeconfig，请先按 README 创建 market 服务所需 kubeconfig Secret"
+        exit 1
+    fi
+    log_info "✓ 已找到 mcpcan-kubeconfig Secret"
+
+    if ! kubectl -n "$NAMESPACE" get secret harbor-registry-secret &> /dev/null; then
+        log_warn "未找到 harbor-registry-secret，如 Harbor 需要认证，请手动创建并在 Deployment 中引用 imagePullSecrets"
+    else
+        log_info "✓ 已找到 harbor-registry-secret"
+    fi
+}
+
 # 应用 YAML
 apply_yaml() {
     local yaml_file="$1"
@@ -202,6 +261,63 @@ wait_deployment() {
     fi
 }
 
+# 等待 DaemonSet 就绪
+wait_daemonset() {
+    local namespace="$1"
+    local daemonset="$2"
+    local timeout="$3"
+
+    log_info "等待 DaemonSet/$daemonset 就绪（超时: ${timeout}秒）..."
+
+    if kubectl -n "$namespace" rollout status daemonset/$daemonset --timeout=${timeout}s 2>/dev/null; then
+        log_info "✓ DaemonSet/$daemonset 已就绪"
+        return 0
+    else
+        log_error "DaemonSet/$daemonset 未在时间内就绪"
+        return 1
+    fi
+}
+
+# 等待 StatefulSet 就绪
+wait_statefulset() {
+    local namespace="$1"
+    local statefulset="$2"
+    local timeout="$3"
+
+    log_info "等待 StatefulSet/$statefulset 就绪（超时: ${timeout}秒）..."
+
+    if kubectl -n "$namespace" rollout status statefulset/$statefulset --timeout=${timeout}s 2>/dev/null; then
+        log_info "✓ StatefulSet/$statefulset 已就绪"
+        return 0
+    else
+        log_error "StatefulSet/$statefulset 未在时间内就绪"
+        return 1
+    fi
+}
+
+# 等待 PVC 绑定
+wait_pvc_bound() {
+    local pvc="$1"
+    local timeout="$2"
+    local waited=0
+
+    log_info "等待 PVC/$pvc 绑定（超时: ${timeout}秒）..."
+
+    while [[ $waited -lt $timeout ]]; do
+        local phase
+        phase=$(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+        if [[ "$phase" == "Bound" ]]; then
+            log_info "✓ PVC/$pvc 已绑定"
+            return 0
+        fi
+        sleep 5
+        waited=$((waited + 5))
+    done
+
+    log_error "PVC/$pvc 未在时间内绑定"
+    return 1
+}
+
 # 检查并显示 Pod 状态
 show_pod_status() {
     log_step "Pod 状态"
@@ -212,6 +328,13 @@ show_pod_status() {
 show_services() {
     log_step "服务信息"
     kubectl -n "$NAMESPACE" get svc -o wide 2>/dev/null || true
+}
+
+# 显示存储信息
+show_storage_status() {
+    log_step "存储信息"
+    kubectl get storageclass volcengine-tos 2>/dev/null || true
+    kubectl -n "$NAMESPACE" get pvc 2>/dev/null || true
 }
 
 # 显示 Ingress 信息
@@ -279,14 +402,19 @@ main() {
     echo ""
 
     parse_args "$@"
+    validate_manifest_constraints
 
     # 显示配置
     log_info "部署配置:"
     log_info "  命名空间: $NAMESPACE"
     log_info "  Harbor 地址: $HARBOR_REGISTRY"
     log_info "  Ingress Class: $INGRESS_CLASS"
+    log_info "  外部依赖: MySQL / Redis / 火山云 TOS"
     log_info "  模拟模式: $([ $DRY_RUN -eq 1 ] && echo 'YES' || echo 'NO')"
     log_info "  等待超时: ${WAIT_TIMEOUT}秒"
+    echo ""
+
+    validate_manifest_content
     echo ""
 
     # 预检查
@@ -304,23 +432,38 @@ main() {
     apply_yaml "1-configmap-secret.yaml" "步骤2: 应用 ConfigMap 和 Secret"
     echo ""
 
-    apply_yaml "2-services-deployment.yaml" "步骤3: 应用服务和 Deployment"
+    if [[ $DRY_RUN -eq 0 ]]; then
+        check_runtime_prerequisites
+        echo ""
+    fi
+
+    apply_yaml "4-storage-s3.yaml" "步骤3: 应用火山云 TOS CSI 存储"
     echo ""
 
-    apply_yaml "3-ingress.yaml" "步骤4: 应用 Ingress"
+    if [[ $DRY_RUN -eq 0 ]]; then
+        log_step "等待火山云 TOS CSI 存储就绪..."
+        wait_statefulset "kube-system" "csi-s3-controller" "$WAIT_TIMEOUT"
+        wait_daemonset "kube-system" "csi-s3" "$WAIT_TIMEOUT"
+        wait_pvc_bound "mcpcan-data-pvc" "$WAIT_TIMEOUT"
+        echo ""
+    fi
+
+    apply_yaml "2-services-deployment.yaml" "步骤4: 应用服务和 Deployment"
+    echo ""
+
+    apply_yaml "3-ingress.yaml" "步骤5: 应用 Ingress"
     echo ""
 
     if [[ $DRY_RUN -eq 0 ]]; then
         # 等待各服务就绪
         log_step "等待服务就绪..."
-        wait_deployment "mysql" "$WAIT_TIMEOUT" || true
-        sleep 5
-        wait_deployment "redis" "$WAIT_TIMEOUT" || true
-        sleep 10
         wait_deployment "mcp-market" "$WAIT_TIMEOUT" || true
         wait_deployment "mcp-authz" "$WAIT_TIMEOUT" || true
         wait_deployment "mcp-web" "$WAIT_TIMEOUT" || true
         wait_deployment "mcp-entry" "$WAIT_TIMEOUT" || true
+        echo ""
+
+        show_storage_status
         echo ""
 
         # 显示状态

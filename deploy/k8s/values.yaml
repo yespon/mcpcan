@@ -1,166 +1,138 @@
-# MCPCan K8s 私有化部署 - 参数化配置文件
+# MCPCan K8s 私有化部署 - 当前参数参考
 #
 # 说明：
-# 此文件定义了所有可配置的参数，用于快速调整部署配置
-# 在运行 deploy.sh 或 build-images.sh 前，修改此文件以适应实际环境
+# 1. 本文件已对齐当前部署方案：外部 MySQL、外部 Redis、火山云 TOS S3 存储。
+# 2. 当前 deploy/k8s/*.yaml 仍是静态清单，修改本文件不会自动渲染到 YAML。
+# 3. 建议把本文件作为部署前核对清单，并将改动同步到：
+#    - 1-configmap-secret.yaml
+#    - 2-services-deployment.yaml
+#    - 3-ingress.yaml
+#    - 4-storage-s3.yaml
+
+# ============================================================================
+# [必填] 基础部署约束
+# ============================================================================
+# 当前静态清单固定命名空间为 mcpcan
+KUBE_NAMESPACE=mcpcan
+
+# 当前 Ingress 清单固定为 nginx
+INGRESS_CLASS=nginx
+
+# 部署等待超时（秒）
+WAIT_TIMEOUT=300
+
+# market 服务访问 K8s API 所需 Secret 名称
+KUBECONFIG_SECRET_NAME=mcpcan-kubeconfig
+
+# Harbor 拉取凭证 Secret 名称（如 Harbor 需要认证）
+HARBOR_PULL_SECRET=harbor-registry-secret
 
 # ============================================================================
 # [必填] 镜像仓库配置
 # ============================================================================
-# 私有 Harbor 地址（示例）
-# 修改为实际的 Harbor 地址，如: harbor.company.com/mcpcan
 HARBOR_REGISTRY=harbor.example.com
 HARBOR_PROJECT=mcpcan
 HARBOR_USER=admin
 HARBOR_PASS=Harbor12345
 
-# 镜像标签版本（对应项目 VERSION 文件）
+# 镜像版本（对应项目 VERSION）
 IMAGE_VERSION=v2.1.1
 
-# 镜像拉取策略（IfNotPresent / Always / Never）
+# 应用镜像
+AUTHZ_IMAGE=harbor.example.com/mcpcan/mcp-authz:v2.1.1
+MARKET_IMAGE=harbor.example.com/mcpcan/mcp-market:v2.1.1
+WEB_IMAGE=harbor.example.com/mcpcan/mcp-web:v2.1.1
+
+# 基础镜像（私有化集群建议同步至 Harbor）
+TRAEFIK_IMAGE=harbor.example.com/infra/traefik:v3.6.9
+CSI_S3_IMAGE=harbor.example.com/infra/csi-s3:v0.35.5
+CSI_PROVISIONER_IMAGE=harbor.example.com/infra/csi-provisioner:v4.0.0
+CSI_ATTACHER_IMAGE=harbor.example.com/infra/csi-attacher:v4.4.0
+CSI_NODE_DRIVER_REGISTRAR_IMAGE=harbor.example.com/infra/csi-node-driver-registrar:v2.9.0
+
+# 镜像拉取策略
 IMAGE_PULL_POLICY=IfNotPresent
 
 # ============================================================================
-# [必填] K8s 集群配置
+# [必填] 外部 MySQL 配置
 # ============================================================================
-# K8s 命名空间（建议独立 namespace）
-KUBE_NAMESPACE=mcpcan
-
-# Ingress Class 名称（与集群中的 IngressClass 匹配）
-# 常见值：nginx、traefik、haproxy 等
-INGRESS_CLASS=nginx
-
-# 当前 K8s 上下文（使用 kubectl config current-context 查看）
-KUBE_CONTEXT=default
-
-# 部署等待超时（秒）
-WAIT_TIMEOUT=300
+EXTERNAL_MYSQL_HOST=mysql.company.com
+EXTERNAL_MYSQL_PORT=3306
+EXTERNAL_MYSQL_DATABASE=mcp_dev
+EXTERNAL_MYSQL_USER=mcp_user
+EXTERNAL_MYSQL_PASSWORD=your_secure_password
 
 # ============================================================================
-# [关键] 存储配置
+# [必填] 外部 Redis 配置
 # ============================================================================
-# 工作节点本地存储路径（mcpcan Pod 将挂载此目录）
-# 确保所有工作节点都有此目录且有足够权限和空间（建议至少 100GB）
-HOST_DATA_PATH=/data/mcpcan
-
-# MySQL 本地存储路径
-# 注意：如果使用外部 MySQL，将 MySQL Deployment 从 2-services-deployment.yaml 删除
-MYSQL_DATA_PATH=/data/mcpcan/mysql
-MYSQL_DATA_SIZE=50Gi
-
-# Redis 本地存储路径
-# 建议改为 StatefulSet + PersistentVolume 以提升可靠性
-REDIS_DATA_PATH=/data/mcpcan/redis
-REDIS_DATA_SIZE=20Gi
+EXTERNAL_REDIS_HOST=redis.company.com
+EXTERNAL_REDIS_PORT=6379
+EXTERNAL_REDIS_PASSWORD=your_redis_password
+EXTERNAL_REDIS_DB=0
 
 # ============================================================================
-# [关键] 数据库配置
+# [必填] 火山云 TOS S3 存储配置
 # ============================================================================
-# 方案1：使用 K8s 内 MySQL（本脚本提供）
-USE_INTERNAL_MYSQL=true
-MYSQL_VERSION=8.0.30
-MYSQL_ROOT_PASSWORD=dev-root-password
-MYSQL_DATABASE=mcp_dev
-MYSQL_USER=mcp_user
-MYSQL_PASSWORD=dev-password
-MYSQL_PORT=3306
-MYSQL_REPLICAS=1
-MYSQL_CPU_REQUEST=500m
-MYSQL_MEMORY_REQUEST=256Mi
-MYSQL_CPU_LIMIT=1000m
-MYSQL_MEMORY_LIMIT=512Mi
+TOS_BUCKET=mcpcan-data
+TOS_REGION=cn-beijing
+TOS_ENDPOINT=https://tos-s3-cn-beijing.volces.com
+TOS_ACCESS_KEY_ID=replace_me
+TOS_SECRET_ACCESS_KEY=replace_me
 
-# 方案2：使用外部 MySQL（如已有生产 MySQL）
-# ⚠️ 如启用此方案，注释掉 USE_INTERNAL_MYSQL=true
-# EXTERNAL_MYSQL_HOST=mysql.company.com
-# EXTERNAL_MYSQL_PORT=3306
-# EXTERNAL_MYSQL_DATABASE=mcp_dev
-# EXTERNAL_MYSQL_USER=mcp_user
-# EXTERNAL_MYSQL_PASSWORD=your_secure_password
+# StorageClass / PVC
+TOS_STORAGE_CLASS=volcengine-tos
+TOS_PVC_NAME=mcpcan-data-pvc
+TOS_STORAGE_SIZE=75Gi
+TOS_MOUNTER=geesefs
 
-# Redis 配置
-USE_INTERNAL_REDIS=true
-REDIS_VERSION=6-alpine
-REDIS_PASSWORD=dev-redis-password
-REDIS_PORT=6379
-REDIS_REPLICAS=1
-REDIS_CPU_REQUEST=100m
-REDIS_MEMORY_REQUEST=128Mi
-REDIS_CPU_LIMIT=500m
-REDIS_MEMORY_LIMIT=256Mi
-
-# 方案2：使用外部 Redis
-# EXTERNAL_REDIS_HOST=redis.company.com
-# EXTERNAL_REDIS_PORT=6379
-# EXTERNAL_REDIS_PASSWORD=your_redis_password
+# 业务目录映射
+APP_ROOT_PATH=/data/mcpcan
+APP_CODE_PATH=/data/mcpcan/code-package
+APP_STATIC_PATH=/data/mcpcan/static
+APP_OPENAPI_PATH=/data/mcpcan/openapi-file
 
 # ============================================================================
-# [关键] 应用配置
+# [关键] 应用初始化配置
 # ============================================================================
-# 运行模式（prod / demo）
 RUN_MODE=prod
-
-# 代码运行方式（OpenCode / EnterpriseCode）
-# OpenCode：仅支持 Docker 运行环境
-# EnterpriseCode：支持 Docker + K8s + 其他运行环境（需企业版）
 CODE_MODE=OpenCode
 
-# 应用密钥（用于 JWT 和数据加密，建议修改）
-APP_SECRET=MrKuvLNn0hc1kHRbA6EqjSPj1ecrbPDE
+# 应用密钥（JWT / 加密）
+APP_SECRET=replace_with_random_secret
 
-# 初始管理员账号
+# 初始化管理员
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=replace_with_strong_password
 ADMIN_NICKNAME=管理员
 ADMIN_ROLE_NAME=admin
 ADMIN_ROLE_DESCRIPTION=系统管理员角色
 ADMIN_ROLE_LEVEL=1
 ADMIN_DATA_SCOPE=all
 
-# ============================================================================
-# [可选] 网络和入口配置
-# ============================================================================
-# Service 类型（ClusterIP / NodePort / LoadBalancer）
-# ClusterIP：仅支持集群内访问，需通过 Ingress 或 port-forward 暴露
-# NodePort：通过节点端口暴露，工作节点 IP:port 可访问
-# LoadBalancer：需要云平台支持（AWS/Azure/GCP），本地 K8s 不支持
-SERVICE_TYPE=ClusterIP
-
-# 如 SERVICE_TYPE=NodePort，指定 NodePort 端口范围（30000-32767）
-NODE_PORT=30080
-
-# Web 路径规则（Traefik/Nginx 路由）
-WEB_PATH_RULE=/
-API_PATH_RULE=/api
-
-# API 速率限制（可选）
-# API_RATE_LIMIT_PER_MINUTE=100
+# market 容器中的镜像前缀变量
+REGISTORY_IMAGE_MIRROR=harbor.example.com/mcpcan
 
 # ============================================================================
-# [可选] 服务副本数和资源配置
+# [可选] 服务规模与资源配置
 # ============================================================================
-# Authz 服务
 AUTHZ_REPLICAS=1
 AUTHZ_CPU_REQUEST=500m
 AUTHZ_MEMORY_REQUEST=256Mi
 AUTHZ_CPU_LIMIT=1000m
 AUTHZ_MEMORY_LIMIT=512Mi
 
-# Market 服务
 MARKET_REPLICAS=1
 MARKET_CPU_REQUEST=1000m
 MARKET_MEMORY_REQUEST=512Mi
 MARKET_CPU_LIMIT=2000m
 MARKET_MEMORY_LIMIT=1Gi
 
-# Web 服务
 WEB_REPLICAS=1
 WEB_CPU_REQUEST=256m
 WEB_MEMORY_REQUEST=128Mi
 WEB_CPU_LIMIT=512m
 WEB_MEMORY_LIMIT=256Mi
 
-# Entry 服务（Traefik）
 ENTRY_REPLICAS=1
 ENTRY_CPU_REQUEST=128m
 ENTRY_MEMORY_REQUEST=64Mi
@@ -168,49 +140,40 @@ ENTRY_CPU_LIMIT=512m
 ENTRY_MEMORY_LIMIT=256Mi
 
 # ============================================================================
-# [可选] 文件上传配置
+# [可选] 网络与入口配置
 # ============================================================================
-# 最大上传文件大小（MB）
-MAX_FILE_SIZE=100
+# 当前 2-services-deployment.yaml 默认使用 LoadBalancer
+ENTRY_SERVICE_TYPE=LoadBalancer
 
-# 允许的文件扩展名（逗号分隔）
-ALLOWED_EXTENSIONS=.zip,.tar.gz,.tar,.dxt,.mcpb
+# 如切换为 NodePort，可预留如下端口
+NODE_PORT_HTTP=30080
+NODE_PORT_HTTPS=30443
+NODE_PORT_DASHBOARD=30090
 
-# ============================================================================
-# [可选] HTTPS/TLS 配置
-# ============================================================================
-# 启用 HTTPS（需要证书）
+# Ingress / 域名
+WEB_PATH_RULE=/
+API_PATH_RULE=/api
+INGRESS_HOST=
+
+# TLS
 TLS_ENABLED=false
-
-# TLS 证书文件路径
+TLS_SECRET_NAME=mcpcan-tls
 TLS_CRT_PATH=/path/to/cert.crt
 TLS_KEY_PATH=/path/to/cert.key
 
-# 或使用 cert-manager 自动签发（Let's Encrypt）
-# CERT_MANAGER_ENABLED=true
-# LETSENCRYPT_EMAIL=admin@company.com
-
 # ============================================================================
-# [可选] 监控和日志配置
+# [可选] 文件上传 / 日志
 # ============================================================================
-# 日志级别（debug / info / warn / error）
+MAX_FILE_SIZE=100
+ALLOWED_EXTENSIONS=.zip,.tar.gz,.tar,.dxt,.mcpb
 LOG_LEVEL=debug
-
-# 日志格式（json / text）
 LOG_FORMAT=json
 
-# 启用指标收集（Prometheus）
-METRICS_ENABLED=false
-METRICS_PORT=9090
-
 # ============================================================================
-# [可选] 高级调试
+# [部署前核对]
 # ============================================================================
-# 部署模式（deploy / dry-run）
-DEPLOY_MODE=deploy
-
-# 详细输出（用于故障排查）
-VERBOSE=0
-
-# 跳过预检查（快速部署，需谨慎）
-SKIP_PREFLIGHT=0
+# 1. 1-configmap-secret.yaml 中 mysql.host / redis.host 已替换为外部地址
+# 2. 4-storage-s3.yaml 中 TOS AccessKey / Secret / endpoint / bucket 已替换
+# 3. 2-services-deployment.yaml 中镜像地址已替换为真实 Harbor 地址
+# 4. 如 Harbor 需要认证，已创建 harbor-registry-secret，并在 Deployment 中引用 imagePullSecrets
+# 5. 已创建 mcpcan-kubeconfig Secret
