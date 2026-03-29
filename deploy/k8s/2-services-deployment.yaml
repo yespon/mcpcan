@@ -1,0 +1,661 @@
+# MCPCan K8s 私有化部署 - 各服务 Deployment 和 Service 配置
+#
+# 说明：
+# - 如需使用外部 MySQL/Redis，只部署 Authz、Market、Web、Entry（跳过 MySQL/Redis Deployment）
+# - 本文件同时提供可选的 MySQL/Redis Deployment（采用 hostPath 存储）
+# - 修改 HARBOR_REGISTRY 为实际的 Harbor 地址
+# - 修改数据库连接信息
+
+---
+# ============================================================================
+# [可选] MySQL Deployment
+# 
+# 注意：
+# - 如已有外部 MySQL，删除此段并修改 ConfigMap 中的 mysql.host
+# - 采用 hostPath 存储（无外部存储时适用）
+# - 需预先在工作节点上创建 /data/mcpcan/mysql 目录
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: mcpcan
+  labels:
+    app: mysql
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: mcpcan
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # MySQL 应采用 Recreate，避免数据冲突
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+        app.kubernetes.io/name: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0.30
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mcpcan-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mcpcan-secrets
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mcpcan-secrets
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mcpcan-secrets
+              key: MYSQL_PASSWORD
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        - name: mysql-config
+          mountPath: /etc/mysql/conf.d
+        - name: mysql-init
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: mysql-data
+        hostPath:
+          path: /data/mcpcan/mysql
+          type: DirectoryOrCreate
+      - name: mysql-config
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: my.cnf
+            path: my.cnf
+      - name: mysql-init
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: mysql-init.sql
+            path: init.sql
+
+---
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  namespace: mcpcan
+  labels:
+    app: mysql
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3306
+    targetPort: 3306
+    protocol: TCP
+    name: mysql
+  selector:
+    app: mysql
+
+---
+# ============================================================================
+# [可选] Redis Deployment
+#
+# 注意：
+# - 如已有外部 Redis，删除此段并修改 ConfigMap 中的 redis.host
+# - 采用 hostPath 存储（建议改为 StatefulSet + PersistentVolume）
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: mcpcan
+  labels:
+    app: redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: mcpcan
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        app.kubernetes.io/name: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:6-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+          name: redis
+        command:
+        - redis-server
+        - "--requirepass"
+        - "dev-redis-password"
+        - "--appendonly"
+        - "yes"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+              - redis-cli
+              - -a
+              - dev-redis-password
+              - ping
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+              - redis-cli
+              - -a
+              - dev-redis-password
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        hostPath:
+          path: /data/mcpcan/redis
+          type: DirectoryOrCreate
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  namespace: mcpcan
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: redis
+
+---
+# ============================================================================
+# Authz Service Deployment
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-authz
+  namespace: mcpcan
+  labels:
+    app: mcp-authz
+    app.kubernetes.io/name: mcp-authz
+    app.kubernetes.io/component: authz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-authz
+  template:
+    metadata:
+      labels:
+        app: mcp-authz
+        app.kubernetes.io/name: mcp-authz
+    spec:
+      containers:
+      - name: mcp-authz
+        image: 77kymo/mcp-authz:v2.1.1  # 改为实际 Harbor 地址
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: CODE_MODE
+          value: "OpenCode"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: data-volume
+          mountPath: /data/mcpcan
+      # 初始化容器：等待依赖资源就绪
+      initContainers:
+      - name: wait-mysql
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z mysql-svc 3306; do
+            echo "waiting for mysql-svc:3306..."
+            sleep 2
+          done
+          echo "mysql is ready"
+      - name: wait-redis
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z redis-svc 6379; do
+            echo "waiting for redis-svc:6379..."
+            sleep 2
+          done
+          echo "redis is ready"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: authz.yaml
+            path: authz.yaml
+      - name: data-volume
+        hostPath:
+          path: /data/mcpcan
+          type: DirectoryOrCreate
+
+---
+# Authz Service（ClusterIP）
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-authz-svc
+  namespace: mcpcan
+  labels:
+    app: mcp-authz
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8081
+    targetPort: 8081
+    protocol: TCP
+    name: http
+  selector:
+    app: mcp-authz
+
+---
+# ============================================================================
+# Market Service Deployment
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-market
+  namespace: mcpcan
+  labels:
+    app: mcp-market
+    app.kubernetes.io/name: mcp-market
+    app.kubernetes.io/component: market
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-market
+  template:
+    metadata:
+      labels:
+        app: mcp-market
+        app.kubernetes.io/name: mcp-market
+    spec:
+      serviceAccountName: mcpcan-user  # 使用 ServiceAccount 访问 K8s API
+      containers:
+      - name: mcp-market
+        image: 77kymo/mcp-market:v2.1.1  # 改为实际 Harbor 地址
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: CODE_MODE
+          value: "OpenCode"
+        - name: REGISTORY_IMAGE_MIRROR
+          value: "77kymo"  # 改为实际 Harbor 地址
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "1000m"
+          limits:
+            memory: "1Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: data-volume
+          mountPath: /data/mcpcan
+        - name: kubeconfig
+          mountPath: /etc/kube
+          readOnly: true
+      initContainers:
+      - name: wait-mysql
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z mysql-svc 3306; do
+            echo "waiting for mysql-svc:3306..."
+            sleep 2
+          done
+      - name: wait-redis
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z redis-svc 6379; do
+            echo "waiting for redis-svc:6379..."
+            sleep 2
+          done
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: market.yaml
+            path: market.yaml
+      - name: data-volume
+        hostPath:
+          path: /data/mcpcan
+          type: DirectoryOrCreate
+      - name: kubeconfig
+        secret:
+          secretName: mcpcan-kubeconfig
+          items:
+          - key: kubeconfig.yaml
+            path: kubeconfig.yaml
+
+---
+# Market Service（ClusterIP）
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-market-svc
+  namespace: mcpcan
+  labels:
+    app: mcp-market
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: mcp-market
+
+---
+# ============================================================================
+# Web Service Deployment（前端）
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-web
+  namespace: mcpcan
+  labels:
+    app: mcp-web
+    app.kubernetes.io/name: mcp-web
+    app.kubernetes.io/component: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-web
+  template:
+    metadata:
+      labels:
+        app: mcp-web
+        app.kubernetes.io/name: mcp-web
+    spec:
+      containers:
+      - name: mcp-web
+        image: 77kymo/mcp-web:v2.1.1  # 改为实际 Harbor 地址
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: TZ
+          value: "Asia/Shanghai"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "256m"
+          limits:
+            memory: "256Mi"
+            cpu: "512m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+        volumeMounts:
+        - name: env-config
+          mountPath: /app/env.js
+          subPath: env.js
+          readOnly: true
+        - name: data-volume
+          mountPath: /app/static
+      volumes:
+      - name: env-config
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: env.js
+            path: env.js
+      - name: data-volume
+        hostPath:
+          path: /data/mcpcan/static
+          type: DirectoryOrCreate
+
+---
+# Web Service（ClusterIP）
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-web-svc
+  namespace: mcpcan
+  labels:
+    app: mcp-web
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: mcp-web
+
+---
+# ============================================================================
+# Entry Service Deployment（Traefik 入口网关）
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-entry
+  namespace: mcpcan
+  labels:
+    app: mcp-entry
+    app.kubernetes.io/name: mcp-entry
+    app.kubernetes.io/component: entry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-entry
+  template:
+    metadata:
+      labels:
+        app: mcp-entry
+        app.kubernetes.io/name: mcp-entry
+    spec:
+      containers:
+      - name: mcp-entry
+        image: traefik:v3.6.9
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: web
+        - containerPort: 443
+          name: websecure
+        - containerPort: 8080
+          name: dashboard
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "128m"
+          limits:
+            memory: "256Mi"
+            cpu: "512m"
+        volumeMounts:
+        - name: traefik-config
+          mountPath: /etc/traefik/traefik.yaml
+          subPath: traefik.yaml
+          readOnly: true
+        - name: dynamic-config
+          mountPath: /etc/traefik/dynamic.yaml
+          subPath: dynamic.yaml
+          readOnly: true
+      volumes:
+      - name: traefik-config
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: traefik.yaml
+            path: traefik.yaml
+      - name: dynamic-config
+        configMap:
+          name: mcpcan-config
+          items:
+          - key: dynamic.yaml
+            path: dynamic.yaml
+
+---
+# Entry Service（LoadBalancer 或 NodePort）
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-entry-svc
+  namespace: mcpcan
+  labels:
+    app: mcp-entry
+spec:
+  type: LoadBalancer  # 改为 NodePort（如无 LoadBalancer）
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: websecure
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: dashboard
+  selector:
+    app: mcp-entry

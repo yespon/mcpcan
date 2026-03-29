@@ -1,0 +1,233 @@
+# MCPCan K8s 私有化部署 - Ingress 配置
+#
+# 说明：
+# - 支持 Nginx Ingress Controller 和 Traefik Ingress（选其一）
+# - 如已用 Traefik Deployment 作网关，Ingress 可选（或使用 IngressRoute）
+# - Nginx Ingress 更通用，推荐用于私有集群
+
+---
+# ============================================================================
+# [选项1] Nginx Ingress（推荐用于私有集群）
+# ============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcpcan-ingress
+  namespace: mcpcan
+  annotations:
+    # Nginx 特定注解
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,API-Key,X-API-Key,X-Auth-Key,X-Forwarded-For,X-Real-IP,Accept-Language,X-Trace-ID,X-Instance-ID,X-Consum-User-Id"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length,Content-Range,Mcp-Session-Id,Date,Set-Cookie,Location,Content-Type,Connection,Transfer-Encoding,X-Accel-Buffering,X-Trace-ID,X-Instance-ID"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    # 上传文件大小限制（100MB）
+    nginx.ingress.kubernetes.io/client-max-body-size: "100m"
+    # 代理超时配置（长连接）
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/instance: mcpcan
+spec:
+  ingressClassName: nginx  # 改为实际的 Ingress 类名（如 ingress-nginx）
+  rules:
+  # HTTP 规则（可配置域名或 IP）
+  - http:
+      paths:
+      # 路由：认证公开端点（无需验证）
+      - path: ^/api/authz/(login|logout|register|refresh|validate|encryption-key)$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mcp-authz-svc
+            port:
+              number: 8081
+      
+      # 路由：健康检查
+      - path: ^/health$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mcp-authz-svc
+            port:
+              number: 8081
+      
+      # 路由：市场下载（无需验证）
+      - path: ^/api/market/(code|openapi)/download$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: mcp-market-svc
+            port:
+              number: 8080
+      
+      # 路由：MCP 网关（无需验证）
+      - path: ^/mcp-gateway
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-market-svc
+            port:
+              number: 8080
+      
+      # 路由：认证保护的端点
+      - path: ^/api/authz
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-authz-svc
+            port:
+              number: 8081
+      
+      # 路由：市场 API（需要验证）
+      - path: ^/api/market
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-market-svc
+            port:
+              number: 8080
+      
+      # 路由：API 基础路由
+      - path: ^/api
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-market-svc
+            port:
+              number: 8080
+      
+      # 路由：Web 前端（根路径）
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-web-svc
+            port:
+              number: 3000
+
+---
+# ============================================================================
+# [选项2] Traefik IngressRoute（如使用 Traefik Ingress Controller）
+# ============================================================================
+# 说明：如果用 Traefik Deployment 作网关，此 IngressRoute 可选
+# 如果用 Traefik Ingress Controller，需启用 CRD（kubectl apply -f traefik-crd.yaml）
+#
+# apiVersion: traefik.io/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: mcpcan-ingressroute
+#   namespace: mcpcan
+# spec:
+#   entryPoints:
+#     - web
+#   routes:
+#   - match: PathPrefix(`/api/authz/login`) || PathPrefix(`/api/authz/logout`) || PathPrefix(`/api/authz/register`) || PathPrefix(`/api/authz/refresh`)
+#     kind: Rule
+#     services:
+#     - name: mcp-authz-svc
+#       port: 8081
+#     middlewares:
+#     - name: strip-api-prefix
+#   - match: PathPrefix(`/api/authz`)
+#     kind: Rule
+#     services:
+#     - name: mcp-authz-svc
+#       port: 8081
+#     middlewares:
+#     - name: external-auth
+#     - name: strip-api-prefix
+#   - match: PathPrefix(`/api/market`)
+#     kind: Rule
+#     services:
+#     - name: mcp-market-svc
+#       port: 8080
+#     middlewares:
+#     - name: external-auth
+#     - name: strip-api-prefix
+#   - match: PathPrefix(`/mcp-gateway`)
+#     kind: Rule
+#     services:
+#     - name: mcp-market-svc
+#       port: 8080
+#   - match: PathPrefix(`/`)
+#     kind: Rule
+#     services:
+#     - name: mcp-web-svc
+#       port: 3000
+
+---
+# ============================================================================
+# [可选] Ingress + TLS（HTTPS）
+# ============================================================================
+# 说明：需预先创建 TLS Secret 或使用 cert-manager
+#
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: mcpcan-ingress-tls
+#   namespace: mcpcan
+#   annotations:
+#     cert-manager.io/cluster-issuer: "letsencrypt-prod"  # 如使用 cert-manager
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#   # TLS 证书（需预先创建 Secret：mcpcan-tls）
+#   - hosts:
+#     - mcpcan.example.com
+#     secretName: mcpcan-tls
+#   rules:
+#   - host: mcpcan.example.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: mcp-web-svc
+#             port:
+#               number: 3000
+
+---
+# ============================================================================
+# [可选] NetworkPolicy（网络隔离）
+# ============================================================================
+# 说明：加强网络安全性（非必须）
+#
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: mcpcan-network-policy
+#   namespace: mcpcan
+# spec:
+#   podSelector: {}
+#   policyTypes:
+#   - Ingress
+#   - Egress
+#   ingress:
+#   # 允许来自 Ingress Controller 的流量
+#   - from:
+#     - namespaceSelector:
+#         matchLabels:
+#           name: ingress-nginx
+#   # 允许同 namespace 内的 Pod 通信
+#   - from:
+#     - podSelector: {}
+#   egress:
+#   # 允许同 namespace 内的 Pod 通信
+#   - to:
+#     - podSelector: {}
+#   # 允许 DNS 查询
+#   - to:
+#     - namespaceSelector: {}
+#     ports:
+#     - protocol: UDP
+#       port: 53
+#   # 允许出站到外部服务
+#   - to:
+#     - namespaceSelector: {}

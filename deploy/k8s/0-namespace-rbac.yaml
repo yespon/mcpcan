@@ -1,0 +1,169 @@
+# MCPCan K8s 私有化部署 - Namespace 和 RBAC 配置
+# 
+# 功能：
+# 1. 创建 mcpcan 命名空间（隔离环境）
+# 2. 创建 ServiceAccount 和 RBAC 角色（mcp-market 访问 K8s API 需要）
+# 3. 绑定 ClusterRole 以支持 K8s 运行环境
+
+---
+# 1. 创建命名空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcpcan
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/instance: mcpcan
+
+---
+# 2. 创建网络策略（可选：如需隔离跨 namespace 流量）
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcpcan-internal-traffic
+  namespace: mcpcan
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # 允许同 namespace 内的 Pod 通信
+    - from:
+        - podSelector: {}
+    # 允许入站空（开放所有入站，仅出站受限）
+  egress:
+    # 允许同 namespace 内的 Pod 通信
+    - to:
+        - podSelector: {}
+    # 允许 DNS 查询
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # 允许出站到 Kubernetes DNS（kube-dns 或 coredns）
+    - to:
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # 允许出站到其他外部服务（私有 Harbor、数据库等）
+    - to:
+        - namespaceSelector: {}
+
+---
+# 3. 创建 ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcpcan-user
+  namespace: mcpcan
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/component: service-account
+
+---
+# 4. 创建 ClusterRole（允许 mcp-market 在 K8s 上运行代码）
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mcpcan-user-cluster-role
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/component: rbac
+rules:
+  # Pod 操作权限
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/status"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  
+  # Service, ConfigMap 查询权限
+  - apiGroups: [""]
+    resources: ["services", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  
+  # Namespace 查询权限
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  
+  # Deployment 权限（如需通过 K8s 部署代码容器）
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  
+  # Job / CronJob 权限（如需异步任务）
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  
+  # PVC 权限（如需持久化存储）
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch"]
+
+---
+# 5. 绑定 ServiceAccount 与 ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcpcan-user-cluster-role-binding
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcpcan-user-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: mcpcan-user
+    namespace: mcpcan
+
+---
+# 6. 创建 Role（namespace 级别权限定义，作为选项下放权限）
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mcpcan-user-namespace-role
+  namespace: mcpcan
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/component: rbac
+rules:
+  # 同 namespace 内的 Pod 操作权限
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec", "pods/attach"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  
+  # ConfigMap / Secret 权限
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  
+  # Event 权限
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+# 7. 绑定 ServiceAccount 与 namespace 级 Role（可选）
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mcpcan-user-namespace-role-binding
+  namespace: mcpcan
+  labels:
+    app.kubernetes.io/name: mcpcan
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mcpcan-user-namespace-role
+subjects:
+  - kind: ServiceAccount
+    name: mcpcan-user
+    namespace: mcpcan
