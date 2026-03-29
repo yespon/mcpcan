@@ -1,31 +1,32 @@
-# MCPCan K8s 私有化部署 - 快速开始指南
+# MCPCan K8s 私有化部署 - 部署说明
 
 ## 📋 部署流程概览
 
-MCPCan K8s 私有化部署脚本采用**分步骤、模块化**设计，支持完整的集群级部署和灵活的自定义扩展。
+MCPCan K8s 私有化部署脚本采用**分步骤、模块化**设计，依赖**外部 MySQL、Redis** 和**火山云 TOS 对象存储**。
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ 部署流程                                                         │
+│ 完整部署流程                                                     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│ 1. [前置准备] 集群和环境检查                                     │
-│    └─ 检查 kubectl、K8s 集群、节点、网络                         │
+│ Phase 0：基础设施准备（部署前，手动操作）                        │
+│    ├─ A. 准备外部 MySQL（建库、建用户、初始化表）                │
+│    ├─ B. 准备外部 Redis（启用密码认证）                          │
+│    ├─ C. 火山云 TOS 创建 Bucket + 访问密钥                      │
+│    └─ D. Harbor 或其他镜像仓库准备                              │
 │                                                                  │
-│ 2. [镜像构建] 根据源代码构建 Docker 镜像                         │
+│ Phase 1：镜像构建                                                │
 │    └─ build-images.sh 构建 3 个镜像 → 推送到 Harbor             │
 │                                                                  │
-│ 3. [配置部署] 按顺序应用 Kubernetes YAML 配置                   │
-│    3.1 Namespace + RBAC (0-namespace-rbac.yaml)                 │
-│    3.2 ConfigMap + Secret (1-configmap-secret.yaml)            │
-│    3.3 Services + Deployments (2-services-deployment.yaml)     │
-│    3.4 Ingress (3-ingress.yaml)                                │
+│ Phase 2：K8s 资源部署（顺序执行）                               │
+│    2.1 Namespace + RBAC       (0-namespace-rbac.yaml)           │
+│    2.2 ConfigMap + Secret     (1-configmap-secret.yaml)         │
+│    2.3 TOS CSI 存储           (4-storage-s3.yaml)  ← 新增      │
+│    2.4 Services + Deployments (2-services-deployment.yaml)     │
+│    2.5 Ingress               (3-ingress.yaml)                  │
 │                                                                  │
-│ 4. [就绪检查] 等待所有服务就绪                                   │
-│    └─ kubectl wait --for=condition=available deployment/xxx    │
-│                                                                  │
-│ 5. [验证访问] 显示服务状态和访问地址                             │
-│    └─ Pod 状态、Service 信息、Ingress 地址                       │
+│ Phase 3：验证                                                    │
+│    └─ Pod 就绪检查 / 健康探针 / 访问地址确认                    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```

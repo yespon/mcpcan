@@ -1,0 +1,333 @@
+# MCPCan K8s - 火山云 TOS (对象存储) S3 持久化存储配置
+#
+# 前置条件：
+#   1. 登录火山云控制台，创建 TOS Bucket（名称：mcpcan-data，按实际修改）
+#   2. 创建 IAM 访问密钥（AccessKeyID / SecretAccessKey），授予 Bucket 读写权限
+#   3. 确保 K8s 节点可访问 TOS 服务（网络连通），如在云上部署可直接访问
+#
+# 使用的 CSI 驱动：csi-s3（geesefs 挂载器，兼容 S3 协议）
+#   项目：https://github.com/yandex-cloud/k8s-csi-s3
+#   镜像：ghcr.io/yandex-cloud/k8s-csi-s3/csi-s3:v0.35.5
+#
+# 挂载说明：
+#   - mcpcan-data-pvc  → TOS Bucket 根目录（authz + market 挂载至 /data/mcpcan）
+#   - web 通过 subPath: static 挂载至 /app/static（与 market/authz 共享同一 Bucket）
+#
+# 部署顺序（在 deploy.sh 中通过 --use-s3 参数自动化）：
+#   kubectl apply -f 4-storage-s3.yaml  # 先部署此文件（等待 csi-s3 pod 运行后再创建 PVC）
+#
+# 火山云 TOS S3 兼容端点（按存储桶所在区域选择）：
+#   北京  → https://tos-s3-cn-beijing.volces.com
+#   上海  → https://tos-s3-cn-shanghai.volces.com
+#   广州  → https://tos-s3-cn-guangzhou.volces.com
+#   华东2 → https://tos-s3-cn-guilin.volces.com
+
+---
+# ============================================================================
+# 1. 火山云 TOS 认证凭证 Secret
+#    csi-s3 driver 运行在 kube-system，Secret 需与 driver 同 namespace
+# ============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: volcengine-tos-secret
+  namespace: kube-system
+type: Opaque
+stringData:
+  accessKeyID: "<TOS_ACCESS_KEY_ID>"           # ← 替换为火山云 AccessKey ID
+  secretAccessKey: "<TOS_SECRET_ACCESS_KEY>"   # ← 替换为火山云 SecretAccessKey
+  endpoint: "https://tos-s3-cn-beijing.volces.com"  # ← 按存储桶区域修改
+  region: "cn-beijing"                          # ← 按存储桶区域修改
+
+---
+# ============================================================================
+# 2. CSI Driver 注册（集群级别，只需一次）
+# ============================================================================
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: ru.yandex.s3.csi
+spec:
+  attachRequired: false
+  podInfoOnMount: false
+  volumeLifecycleModes:
+    - Persistent
+
+---
+# ============================================================================
+# 3. csi-s3 RBAC
+# ============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-s3
+  namespace: kube-system
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-s3
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "update"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments/status"]
+    verbs: ["patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-s3
+subjects:
+  - kind: ServiceAccount
+    name: csi-s3
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: csi-s3
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ============================================================================
+# 4. csi-s3 控制器（StatefulSet）—— 负责 PVC Provision
+# ============================================================================
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-s3-controller
+  namespace: kube-system
+spec:
+  serviceName: "csi-s3"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csi-s3-controller
+  template:
+    metadata:
+      labels:
+        app: csi-s3-controller
+    spec:
+      serviceAccountName: csi-s3
+      containers:
+        # csi-s3 主驱动
+        - name: csi-s3
+          image: ghcr.io/yandex-cloud/k8s-csi-s3/csi-s3:v0.35.5
+          # 离线/私有化环境：推送至 Harbor，替换为 <harbor>/k8s-infra/csi-s3:v0.35.5
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(NODE_ID)"
+            - "--v=4"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/kubelet/plugins/ru.yandex.s3.csi/csi.sock
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/ru.yandex.s3.csi
+        # Provisioner sidecar
+        - name: csi-provisioner
+          image: registry.k8s.io/sig-storage/csi-provisioner:v4.0.0
+          # 离线环境替换为 <harbor>/sig-storage/csi-provisioner:v4.0.0
+          args:
+            - "--provisioner=ru.yandex.s3.csi"
+            - "--csi-address=$(ADDRESS)"
+            - "--v=4"
+          env:
+            - name: ADDRESS
+              value: /var/lib/kubelet/plugins/ru.yandex.s3.csi/csi.sock
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/ru.yandex.s3.csi
+        # Attacher sidecar
+        - name: csi-attacher
+          image: registry.k8s.io/sig-storage/csi-attacher:v4.4.0
+          # 离线环境替换为 <harbor>/sig-storage/csi-attacher:v4.4.0
+          args:
+            - "--v=4"
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /var/lib/kubelet/plugins/ru.yandex.s3.csi/csi.sock
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/ru.yandex.s3.csi
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/ru.yandex.s3.csi
+            type: DirectoryOrCreate
+
+---
+# ============================================================================
+# 5. csi-s3 节点驱动（DaemonSet）—— 每个节点运行，负责 Fuse 挂载
+# ============================================================================
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: csi-s3
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: csi-s3
+  template:
+    metadata:
+      labels:
+        app: csi-s3
+    spec:
+      serviceAccountName: csi-s3
+      hostNetwork: true
+      containers:
+        # csi-s3 主驱动（需要 privileged 权限进行 fuse 挂载）
+        - name: csi-s3
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: ghcr.io/yandex-cloud/k8s-csi-s3/csi-s3:v0.35.5
+          # 离线环境：同上 controller 替换方式
+          args:
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--nodeid=$(NODE_ID)"
+            - "--v=4"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: pods-mount-dir
+              mountPath: /var/lib/kubelet/pods
+              mountPropagation: "Bidirectional"
+            - name: fuse-device
+              mountPath: /dev/fuse
+        # Node Driver Registrar sidecar
+        - name: node-driver-registrar
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+          # 离线环境替换为 <harbor>/sig-storage/csi-node-driver-registrar:v2.9.0
+          args:
+            - "--v=4"
+            - "--csi-address=$(ADDRESS)"
+            - "--kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)"
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/ru.yandex.s3.csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+            - name: registration-dir
+              mountPath: /registration
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/ru.yandex.s3.csi
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+        - name: pods-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: fuse-device
+          hostPath:
+            path: /dev/fuse
+
+---
+# ============================================================================
+# 6. StorageClass - 火山云 TOS（geesefs 挂载器）
+# ============================================================================
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: volcengine-tos
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: ru.yandex.s3.csi
+parameters:
+  mounter: geesefs
+  # geesefs 挂载参数：
+  #   --memory-limit     内存读写缓冲（MB），根据业务文件大小调整
+  #   --dir-mode         目录权限掩码
+  #   --file-mode        文件权限掩码
+  #   --endpoint         TOS S3 兼容端点（需与上方 Secret 中一致）
+  #   --region           存储桶区域
+  options: "--memory-limit 1000 --dir-mode 0777 --file-mode 0666 --endpoint https://tos-s3-cn-beijing.volces.com --region cn-beijing"
+  bucket: "mcpcan-data"    # ← 提前在火山云控制台创建的 Bucket 名称
+  # Secret 引用（使用 kube-system 中的 TOS 凭证）
+  csi.storage.k8s.io/provisioner-secret-name: volcengine-tos-secret
+  csi.storage.k8s.io/provisioner-secret-namespace: kube-system
+  csi.storage.k8s.io/controller-publish-secret-name: volcengine-tos-secret
+  csi.storage.k8s.io/controller-publish-secret-namespace: kube-system
+  csi.storage.k8s.io/node-stage-secret-name: volcengine-tos-secret
+  csi.storage.k8s.io/node-stage-secret-namespace: kube-system
+  csi.storage.k8s.io/node-publish-secret-name: volcengine-tos-secret
+  csi.storage.k8s.io/node-publish-secret-namespace: kube-system
+reclaimPolicy: Retain          # 删除 PVC 后保留数据（防止误删），需手动清理
+volumeBindingMode: Immediate
+allowVolumeExpansion: true     # 允许在线扩容
+
+---
+# ============================================================================
+# 7. PersistentVolumeClaim - MCPCan 应用数据（共享同一 TOS Bucket）
+#
+#  挂载关系：
+#    authz  → mcpcan-data-pvc → /data/mcpcan          （无 subPath，访问 bucket 根目录）
+#    market → mcpcan-data-pvc → /data/mcpcan          （同上，多 Pod 共享 ReadWriteMany）
+#    web    → mcpcan-data-pvc → /app/static            （subPath: static，仅访问 static/ 子目录）
+# ============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mcpcan-data-pvc
+  namespace: mcpcan
+  annotations:
+    description: "MCPCan 全量数据目录：code-package / openapi-file / static"
+spec:
+  accessModes:
+    - ReadWriteMany           # 多个 Pod 并发读写（authz + market + web 共用）
+  storageClassName: volcengine-tos
+  resources:
+    requests:
+      storage: 75Gi           # code-package(50Gi) + openapi-file(5Gi) + static(20Gi)
