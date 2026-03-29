@@ -1,28 +1,31 @@
+@use 'sass:math';
+@use 'sass:string';
+
 // body {
 //   background-color: black;
 // }
 
 @function createShadow($n) {
-  $shadow: '#{random(100)}vw #{random(100)}vh rgb(#{255 255 255})';
+  $shadow: '#{math.random(100)}vw #{math.random(100)}vh rgb(#{255 255 255})';
   @for $i from 1 through $n {
-    $shadow: '#{$shadow}, #{random(100)}vw #{random(100)}vh rgb(#{255 255 255})';
+    $shadow: '#{$shadow}, #{math.random(100)}vw #{math.random(100)}vh rgb(#{255 255 255})';
   }
-  @return unquote($shadow);
+  @return string.unquote($shadow);
 }
 
 @function createStart($n) {
-  $start: '#{random(100)}vw #{random(100)}vh 5px rgb(#{255 255 255})';
+  $start: '#{math.random(100)}vw #{math.random(100)}vh 5px rgb(#{255 255 255})';
   @for $i from 1 through $n {
-    $start: '#{$start}, #{random(100)}vw #{random(100)}vh 5px rgb(#{255 255 255})';
+    $start: '#{$start}, #{math.random(100)}vw #{math.random(100)}vh 5px rgb(#{255 255 255})';
   }
-  @return unquote($start);
+  @return string.unquote($start);
 }
 // rgb(#{random(255) random(255) random(255)})
 $conunt: 100;
 $duration: 80s;
 @for $i from 1 through 3 {
-  $conunt: floor(calc($conunt / 2));
-  $duration: floor(calc($duration / 2));
+  $conunt: math.floor(math.div($conunt, 2));
+  $duration: math.div($duration, 2);
   .layer#{$i} {
     z-index: -1;
     $size: #{$i * 2}px;

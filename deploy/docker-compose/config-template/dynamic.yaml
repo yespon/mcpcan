@@ -15,6 +15,7 @@ http:
     external-auth:
       forwardAuth:
         address: "http://${MCP_AUTHZ_SERVICE_NAME}:${MCP_AUTHZ_SERVICE_PORT}/authz/validate"
+        maxResponseBodySize: 1048576
         trustForwardHeader: true
         authRequestHeaders:
           - "Authorization"

@@ -163,7 +163,6 @@ const getNodeIcon = (nodeData: any) => {
     case 'tar':
     case 'gz':
       return Collection
-    case 'txt':
     case 'md':
     case 'markdown':
       return Notebook

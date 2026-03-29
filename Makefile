@@ -5,6 +5,7 @@ ROOT_PATH := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 BACKEND_PATH := $(ROOT_PATH)/backend
 FRONTEND_PATH := $(ROOT_PATH)/frontend
 DOCKERFILES_PATH := $(ROOT_PATH)/dockerfiles
+COMPOSE_PATH := $(ROOT_PATH)/deploy/docker-compose
 
 # Version and build info
 VERSION := $(shell cat $(ROOT_PATH)/VERSION 2>/dev/null || echo "v1.0.0")
@@ -91,6 +92,12 @@ help:
 	@echo "  push-frontend      - Build and push multi-arch Frontend (Web) image"
 	@echo "  proto-buf          - Generate protobuf files"
 	@echo "  go-build-market    - Local Go build for market"
+	@echo "  compose-init       - Create deploy/docker-compose/.env if missing"
+	@echo "  compose-config     - Generate docker-compose config files from templates"
+	@echo "  compose-build-local- Build local market/authz/web images for current VERSION"
+	@echo "  compose-up-local   - Build local images, generate config, then start compose"
+	@echo "  compose-down       - Stop compose services"
+	@echo "  compose-ps         - Show compose service status"
 	@echo "  sync-docs          - Sync documentation from tools submodule"
 	@echo "  clean              - Remove build artifacts"
 
@@ -151,6 +158,37 @@ go-build-authz:
 clean:
 	@rm -rf $(BACKEND_PATH)/bin/*
 	@rm -rf $(FRONTEND_PATH)/dist
+
+.PHONY: compose-init
+compose-init:
+	@if [ ! -f $(COMPOSE_PATH)/.env ]; then \
+		cp $(COMPOSE_PATH)/.example.env $(COMPOSE_PATH)/.env; \
+		echo "Created $(COMPOSE_PATH)/.env from .example.env"; \
+	else \
+		echo "Using existing $(COMPOSE_PATH)/.env"; \
+	fi
+
+.PHONY: compose-config
+compose-config: compose-init
+	@cd $(COMPOSE_PATH) && chmod +x replace.sh && ./replace.sh
+
+.PHONY: compose-build-local
+compose-build-local:
+	@docker build -f $(DOCKERFILES_PATH)/Dockerfile.market -t $(DOCK_REGISTRY)/mcp-market:$(VERSION) --build-arg CodeMode=$(CodeMode) .
+	@docker build -f $(DOCKERFILES_PATH)/Dockerfile.authz -t $(DOCK_REGISTRY)/mcp-authz:$(VERSION) --build-arg CodeMode=$(CodeMode) .
+	@docker build -f $(DOCKERFILES_PATH)/Dockerfile.frontend -t $(DOCK_REGISTRY)/mcp-web:$(VERSION) --build-arg CodeMode=$(CodeMode) .
+
+.PHONY: compose-up-local
+compose-up-local: compose-build-local compose-config
+	@cd $(COMPOSE_PATH) && docker compose up -d
+
+.PHONY: compose-down
+compose-down:
+	@cd $(COMPOSE_PATH) && docker compose down
+
+.PHONY: compose-ps
+compose-ps:
+	@cd $(COMPOSE_PATH) && docker compose ps
 
 .PHONY: sync-docs
 sync-docs:

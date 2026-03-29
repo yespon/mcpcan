@@ -2,8 +2,7 @@
   font-family: "iconfont"; /* Project id 5029591 */
   src: url('iconfont.woff2?t=1772090126929') format('woff2'),
        url('iconfont.woff?t=1772090126929') format('woff'),
-       url('iconfont.ttf?t=1772090126929') format('truetype'),
-       url('iconfont.svg?t=1772090126929#iconfont') format('svg');
+  url('iconfont.ttf?t=1772090126929') format('truetype');
 }
 
 .iconfont {

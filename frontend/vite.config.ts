@@ -25,6 +25,10 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(packageJson.version || 'dev'),
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
+  build: {
+    // Monaco worker chunks are intentionally large in this project.
+    chunkSizeWarningLimit: 8192,
+  },
   server: {
     open: false,
     host: '0.0.0.0',
